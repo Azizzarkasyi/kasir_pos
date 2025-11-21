@@ -103,7 +103,13 @@ const DashboardScreen = () => {
                     />
                 }
             >
-
+                <View style={styles.sectionCard}>
+                    <ThemedText type="subtitle-2" >Paket Berlangganan</ThemedText>
+                    <Image
+                        source={require("@/assets/banners/subscription.jpg")}
+                        style={styles.bannerImage}
+                    />
+                </View>
                 <View style={styles.sectionCard}>
                     <View style={styles.sectionHeader}>
                         <ThemedText type="subtitle-2" >Laporan</ThemedText>
@@ -119,9 +125,9 @@ const DashboardScreen = () => {
                     >
                         {isLoading ? (
                             <>
-                                <ReportCardSkeleton  />
-                                <ReportCardSkeleton  />
-                                <ReportCardSkeleton  />
+                                <ReportCardSkeleton />
+                                <ReportCardSkeleton />
+                                <ReportCardSkeleton />
                             </>
                         ) : (
                             <>
@@ -150,13 +156,7 @@ const DashboardScreen = () => {
                     <MenuItem label="Outlet" icon="storefront-outline" />
                     <MenuItem label="Bantuan" icon="help-circle-outline" />
                 </View>
-                <View style={styles.sectionCard}>
-                    <ThemedText type="subtitle-2" >Paket Berlangganan</ThemedText>
-                    <Image
-                        source={require("@/assets/banners/subscription.jpg")}
-                        style={styles.bannerImage}
-                    />
-                </View>
+
 
                 <View style={styles.sectionCard}>
                     <ThemedText type="subtitle-2">Perangkat Tambahan</ThemedText>
@@ -172,8 +172,8 @@ const DashboardScreen = () => {
             </View>
 
             {isDrawerOpen && (
-                <Animated.View style={[styles.drawerOverlay, { opacity: backdropOpacity }] }>
-                    <Animated.View style={[styles.drawer, { transform: [{ translateX: drawerTranslateX }] }] }>
+                <Animated.View style={[styles.drawerOverlay, { opacity: backdropOpacity }]}>
+                    <Animated.View style={[styles.drawer, { transform: [{ translateX: drawerTranslateX }] }]}>
                         <Sidebar
                             activeKey={activeMenu}
                             onSelect={(key) => {
@@ -330,6 +330,7 @@ const createStyles = (colorScheme: "light" | "dark") =>
             ...StyleSheet.absoluteFillObject,
             flexDirection: "row",
             backgroundColor: "rgba(0,0,0,0.3)",
+            zIndex: 3,
         },
         drawerBackdrop: {
             flex: 1,

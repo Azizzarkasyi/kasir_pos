@@ -8,9 +8,10 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 type DashboardHeaderProps = {
   onPressBack: () => void;
+  title: string;
 };
 
-const HeaderWithoutSidebar = ({ onPressBack }: DashboardHeaderProps) => {
+const HeaderWithoutSidebar = ({ onPressBack, title }: DashboardHeaderProps) => {
   const colorScheme = useColorScheme() ?? "light";
   const insets = useSafeAreaInsets();
   const styles = createStyles(colorScheme, insets.top);
@@ -20,14 +21,14 @@ const HeaderWithoutSidebar = ({ onPressBack }: DashboardHeaderProps) => {
       <TouchableOpacity style={styles.iconButton} onPress={onPressBack}>
         <AntDesign
           name="close"
-          size={20}
+          size={18}
           style={{
             color: Colors[colorScheme].icon,
           }}
         />
       </TouchableOpacity>
       <ThemedText type="title" style={styles.title}>
-        Beranda
+        {title}
       </ThemedText>
     </View>
   );
@@ -58,7 +59,7 @@ const createStyles = (colorScheme: "light" | "dark", topInset: number) =>
     },
     title: {
       fontSize: 20,
-      fontWeight: "bold",
+      fontWeight: "500",
       flex: 1,
 
     },

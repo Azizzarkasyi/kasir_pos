@@ -50,19 +50,23 @@ const DashboardHeader = ({ onPressMenu }: DashboardHeaderProps) => {
 const createStyles = (colorScheme: "light" | "dark", topInset: number) =>
   StyleSheet.create({
     container: {
-      paddingTop: topInset +10,
+      paddingTop: topInset + 10,
       paddingHorizontal: 8,
       paddingBottom: 12,
       flexDirection: "row",
       alignItems: "center",
-      shadowColor: Colors[colorScheme].icon,
+      shadowColor: "#000000",
       shadowOffset: {
         width: 0,
         height: 2,
       },
-      shadowOpacity: 0.25,
-      shadowRadius: 3.84,
-      elevation: 5,
+      gap: 16,
+      shadowOpacity: 0.16,
+      shadowRadius: 6,
+      elevation: 6,
+      zIndex: 2,
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderBottomColor: "rgba(0,0,0,0.06)",
       justifyContent: "space-between",
       backgroundColor: Colors[colorScheme].background,
     },

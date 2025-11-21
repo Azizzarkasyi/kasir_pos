@@ -13,7 +13,7 @@ const NotificationScreen = () => {
 
   return (
     <View style={styles.container}>
-      <HeaderWithoutSidebar onPressBack={() => router.back()} />
+      <HeaderWithoutSidebar onPressBack={() => router.back()} title="Notifikasi" />
 
       <View style={styles.tabRow}>
         <View style={[styles.tabButton, styles.tabButtonActive]}>
