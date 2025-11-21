@@ -7,13 +7,8 @@ import {Colors} from "@/constants/theme";
 import {useColorScheme} from "@/hooks/use-color-scheme";
 import {useNavigation} from "@react-navigation/native";
 import React, {useState} from "react";
-import {
-  FlatList,
-  KeyboardAvoidingView,
-  Platform,
-  StyleSheet,
-  View,
-} from "react-native";
+import {FlatList, StyleSheet, View} from "react-native";
+import {KeyboardAwareScrollView} from "react-native-keyboard-aware-scroll-view";
 import {useSafeAreaInsets} from "react-native-safe-area-context";
 
 const countries = [
@@ -50,17 +45,18 @@ const SelectCountryScreen = () => {
   );
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
-      style={{flex: 1, backgroundColor: Colors[colorScheme].background}}
-    >
-      <View
-        style={[
-          styles.container,
-          {paddingTop: insets.top},
-        ]}
-      >
+    <View style={{flex: 1, backgroundColor: Colors[colorScheme].background}}>
+      <View style={{paddingTop: insets.top, paddingHorizontal: 20}}>
         <Header />
+      </View>
+      <KeyboardAwareScrollView
+        contentContainerStyle={{paddingHorizontal: 20, paddingBottom: insets.bottom + 80}}
+        enableOnAndroid
+        keyboardOpeningTime={0}
+        extraScrollHeight={24}
+        keyboardShouldPersistTaps="handled"
+        style={{backgroundColor: Colors[colorScheme].background}}
+      >
         <View style={styles.content}>
           <ThemedText type="title" style={styles.title}>
             Pilih Negara
@@ -79,21 +75,20 @@ const SelectCountryScreen = () => {
             data={filteredCountries}
             renderItem={renderItem}
             keyExtractor={item => item.id}
-            style={styles.list}
-            contentContainerStyle={{paddingBottom: insets.bottom}}
+            style={[styles.list]}
+            contentContainerStyle={{paddingBottom: 20}}
             keyboardShouldPersistTaps="handled"
           />
-          <ThemedButton
-            title="Lanjutkan"
-            variant="primary"
-            style={{marginTop: 20}}
-            onPress={() =>
-              navigation.navigate("auth/Register/register" as never)
-            }
-          />
         </View>
+      </KeyboardAwareScrollView>
+      <View style={styles.bottomBar}>
+        <ThemedButton
+          title="Lanjutkan"
+          variant="primary"
+          onPress={() => navigation.navigate("auth/Register/register" as never)}
+        />
       </View>
-    </KeyboardAvoidingView>
+    </View>
   );
 };
 
@@ -117,6 +112,16 @@ const createStyles = (colorScheme: "light" | "dark") =>
     },
     list: {
       marginTop: 20,
+    },
+    bottomBar: {
+      position: "absolute",
+      left: 0,
+      right: 0,
+      bottom: 0,
+      paddingHorizontal: 20,
+      paddingBottom: 16,
+      paddingTop: 8,
+      backgroundColor: Colors[colorScheme].background,
     },
   });
 

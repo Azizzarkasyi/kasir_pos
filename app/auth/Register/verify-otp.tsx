@@ -7,13 +7,8 @@ import {Colors} from "@/constants/theme";
 import {useColorScheme} from "@/hooks/use-color-scheme";
 import {Ionicons} from "@expo/vector-icons";
 import React, {useEffect, useState} from "react";
-import {
-  KeyboardAvoidingView,
-  Platform,
-  StyleSheet,
-  TouchableOpacity,
-  View,
-} from "react-native";
+import {StyleSheet, TouchableOpacity, View} from "react-native";
+import {KeyboardAwareScrollView} from "react-native-keyboard-aware-scroll-view";
 import {useSafeAreaInsets} from "react-native-safe-area-context";
 
 const VerifyOtpScreen = () => {
@@ -43,11 +38,15 @@ const VerifyOtpScreen = () => {
   };
   // Modal ditampilkan melalui state isModalVisible
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
-      style={{flex: 1, backgroundColor: Colors[colorScheme].background}}
-    >
-      <View style={[styles.container, {paddingTop: insets.top}]}>
+    <View style={{flex: 1, backgroundColor: Colors[colorScheme].background}}>
+      <KeyboardAwareScrollView
+        contentContainerStyle={{paddingTop: insets.top, paddingHorizontal: 20}}
+        enableOnAndroid
+        keyboardOpeningTime={0}
+        extraScrollHeight={24}
+        keyboardShouldPersistTaps="handled"
+        style={{backgroundColor: Colors[colorScheme].background}}
+      >
         <Header />
         <ChangePhoneModal
           isOpen={isModalVisible}
@@ -92,8 +91,8 @@ const VerifyOtpScreen = () => {
             style={{marginTop: 24}}
           />
         </View>
-      </View>
-    </KeyboardAvoidingView>
+      </KeyboardAwareScrollView>
+    </View>
   );
 };
 

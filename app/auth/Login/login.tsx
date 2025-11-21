@@ -1,21 +1,23 @@
+import CountryCodePicker from "@/components/country-code-picker";
 import Header from "@/components/header";
 import Logo from "@/components/logo";
+import SplashScreen from "@/components/splash-screen";
 import {ThemedButton} from "@/components/themed-button";
 import {ThemedInput} from "@/components/themed-input";
 import {ThemedText} from "@/components/themed-text";
 import {Colors} from "@/constants/theme";
 import {useColorScheme} from "@/hooks/use-color-scheme";
+import {useRouter} from "expo-router";
 import React, {useState} from "react";
 import {
-  KeyboardAvoidingView,
+  Keyboard, // <--- 1. Tambahkan Import Keyboard
   Platform,
-  ScrollView,
   StyleSheet,
   TouchableOpacity,
   View,
 } from "react-native";
+import {KeyboardAwareScrollView} from "react-native-keyboard-aware-scroll-view";
 import {useSafeAreaInsets} from "react-native-safe-area-context";
-import CountryCodePicker from "@/components/country-code-picker";
 
 export default function LoginScreen() {
   const colorScheme = useColorScheme() ?? "light";
@@ -25,6 +27,8 @@ export default function LoginScreen() {
   const [pin, setPin] = useState("");
   const [credentialError, setCredentialError] = useState("");
   const [pinError, setPinError] = useState("");
+  const router = useRouter();
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
 
   const styles = createStyles(colorScheme);
   const countryItems = [
@@ -37,10 +41,14 @@ export default function LoginScreen() {
   ];
   const [countryCode, setCountryCode] = useState(countryItems[0].value);
 
-  // kode negara tidak digunakan; hanya bendera untuk tampilan
-
   const handleLogin = () => {
+    // Reset error state dulu
+    setCredentialError("");
+    setPinError("");
+
     let valid = true;
+
+    // 1. Validasi Input
     if (credential.trim() === "") {
       setCredentialError(
         isPhoneLogin
@@ -48,112 +56,125 @@ export default function LoginScreen() {
           : "Email tidak boleh kosong"
       );
       valid = false;
-    } else {
-      setCredentialError("");
     }
 
     if (pin.trim() === "") {
       setPinError("PIN tidak boleh kosong");
       valid = false;
-    } else {
-      setPinError("");
     }
 
+    // 2. Jika Valid, baru jalankan proses Login
     if (valid) {
-      // Lanjutkan proses login
+      // A. Tutup Keyboard SECARA PAKSA di sini
+      Keyboard.dismiss();
+
+      // B. Tampilkan Loading Screen
+      setIsLoggingIn(true);
+
+      // C. Proses Login (Simulasi)
       const finalCredential = credential;
       console.log("Login diproses", finalCredential);
+
+      setTimeout(() => {
+        setIsLoggingIn(false);
+        router.replace("/dasboard/home" as never);
+      }, 3000);
     }
   };
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
-      style={styles.container}
-    >
-      <View style={[styles.container, {paddingTop: insets.top}]}>
-        <ScrollView
-          contentContainerStyle={[
-            styles.scrollContainer,
-            {paddingBottom: insets.bottom},
-          ]}
-          showsVerticalScrollIndicator={false}
-          keyboardShouldPersistTaps="handled"
-          style={{backgroundColor: Colors[colorScheme].background}}
-        >
-          <Header />
+    <View style={styles.container}>
+      <KeyboardAwareScrollView
+        contentContainerStyle={[
+          styles.scrollContainer,
+          {paddingBottom: insets.bottom, paddingTop: insets.top},
+        ]}
+        enableOnAndroid
+        keyboardOpeningTime={0}
+        extraScrollHeight={Platform.OS === "ios" ? 16 : 24}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+        style={{backgroundColor: Colors[colorScheme].background}}
+      >
+        <Header />
 
-          <Logo />
+        <Logo />
 
-          <View style={styles.formContainer}>
-            {isPhoneLogin ? (
-              <View style={{flexDirection: "row", alignItems: "center"}}>
-                <CountryCodePicker
-                  value={countryCode}
-                  onChange={setCountryCode}
-                  items={countryItems}
-                />
-                <View style={{flex: 1, marginLeft: 12}}>
-                  <ThemedInput
-                    label="No. Handphone"
-                    value={credential}
-                    onChangeText={text => {
-                      setCredential(text);
-                      if (credentialError) setCredentialError("");
-                    }}
-                    keyboardType="phone-pad"
-                    error={credentialError}
-                  />
-                </View>
-              </View>
-            ) : (
-              <ThemedInput
-                label="Email"
-                value={credential}
-                onChangeText={text => {
-                  setCredential(text);
-                  if (credentialError) setCredentialError("");
-                }}
-                keyboardType="email-address"
-                error={credentialError}
+        <View style={styles.formContainer}>
+          {isPhoneLogin ? (
+            <View style={{flexDirection: "row", alignItems: "center"}}>
+              <CountryCodePicker
+                value={countryCode}
+                onChange={setCountryCode}
+                items={countryItems}
               />
-            )}
-
-            <View style={{height: 20}} />
-
+              <View style={{flex: 1, marginLeft: 12}}>
+                <ThemedInput
+                  label="No. Handphone"
+                  value={credential}
+                  onChangeText={text => {
+                    setCredential(text);
+                    if (credentialError) setCredentialError("");
+                  }}
+                  keyboardType="phone-pad"
+                  error={credentialError}
+                />
+              </View>
+            </View>
+          ) : (
             <ThemedInput
-              label="No PIN"
-              value={pin}
+              label="Email"
+              value={credential}
               onChangeText={text => {
-                setPin(text);
-                if (pinError) setPinError("");
+                setCredential(text);
+                if (credentialError) setCredentialError("");
               }}
-              keyboardType="number-pad"
-              error={pinError}
-              isPassword={true}
+              keyboardType="email-address"
+              error={credentialError}
             />
+          )}
 
-            <TouchableOpacity onPress={() => setIsPhoneLogin(!isPhoneLogin)}>
-              <ThemedText style={styles.toggleLoginText}>
-                Masuk menggunakan {isPhoneLogin ? "Email" : "No. Handphone"}?
-              </ThemedText>
-            </TouchableOpacity>
+          <View style={{height: 20}} />
 
-            <ThemedButton
-              title="Masuk"
-              style={{marginTop: 32}}
-              onPress={handleLogin}
-            />
-          </View>
+          <ThemedInput
+            label="No PIN"
+            value={pin}
+            onChangeText={text => {
+              setPin(text);
+              if (pinError) setPinError("");
+            }}
+            keyboardType="number-pad"
+            error={pinError}
+            isPassword={true}
+          />
 
-          <View style={styles.footer}>
-            <TouchableOpacity>
-              <ThemedText style={styles.footerText}>Lupa PIN ?</ThemedText>
-            </TouchableOpacity>
-          </View>
-        </ScrollView>
-      </View>
-    </KeyboardAvoidingView>
+          <TouchableOpacity onPress={() => setIsPhoneLogin(!isPhoneLogin)}>
+            <ThemedText style={styles.toggleLoginText}>
+              Masuk menggunakan {isPhoneLogin ? "Email" : "No. Handphone"}?
+            </ThemedText>
+          </TouchableOpacity>
+
+          <ThemedButton
+            title="Masuk"
+            style={{marginTop: 32}}
+            onPress={handleLogin}
+          />
+        </View>
+
+        <View style={styles.footer}>
+          <TouchableOpacity>
+            <ThemedText style={styles.footerText}>Lupa PIN ?</ThemedText>
+          </TouchableOpacity>
+        </View>
+      </KeyboardAwareScrollView>
+
+      {/* Overlay Loading */}
+      {isLoggingIn ? (
+        <View style={styles.overlay}>
+          <SplashScreen />
+        </View>
+      ) : null}
+    </View>
   );
 }
 
@@ -168,7 +189,6 @@ const createStyles = (colorScheme: "light" | "dark") =>
       paddingHorizontal: 20,
       justifyContent: "space-between",
     },
-
     formContainer: {
       flex: 1,
     },
@@ -183,5 +203,17 @@ const createStyles = (colorScheme: "light" | "dark") =>
     },
     footerText: {
       color: Colors[colorScheme].icon,
+    },
+    overlay: {
+      position: "absolute",
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      zIndex: 100,
+      elevation: 12,
+      backgroundColor: Colors[colorScheme].background,
+      alignItems: "center", // Pastikan splash screen di tengah
+      justifyContent: "center",
     },
   });
