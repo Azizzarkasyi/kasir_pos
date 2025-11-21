@@ -1,7 +1,7 @@
-import {Colors} from "@/constants/theme";
-import {useColorScheme} from "@/hooks/use-color-scheme";
-import {Ionicons} from "@expo/vector-icons";
-import React, {useEffect, useRef, useState} from "react";
+import { Colors } from "@/constants/theme";
+import { useColorScheme } from "@/hooks/use-color-scheme";
+import { AntDesign, Ionicons } from "@expo/vector-icons";
+import React, { useEffect, useRef, useState } from "react";
 import {
   Animated,
   StyleSheet,
@@ -75,8 +75,8 @@ export function ThemedInput({
             <Ionicons name="alert-circle" size={24} color={"red"} />
           ) : isPassword ? (
             <TouchableOpacity onPress={() => setIsPinVisible(!isPinVisible)}>
-              <Ionicons
-                name={isPinVisible ? "eye-off" : "eye"}
+              <AntDesign
+                name={isPinVisible ? "eye-invisible" : "eye"}
                 size={24}
                 color={Colors[colorScheme].icon}
               />
