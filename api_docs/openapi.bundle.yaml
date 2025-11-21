@@ -1,0 +1,1180 @@
+openapi: 3.0.3
+info:
+  title: Tapsite API (Bundled)
+  version: 1.0.0
+  description: |
+    Dokumentasi gabungan Tapsite API dalam satu file (tanpa $ref ke file lain).
+
+servers:
+  - url: /api/v1
+    description: API v1 base path
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    # ==== PRODUCTS ====
+    ProductListItem:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        photo_url:
+          type: string
+          nullable: true
+        variant_count:
+          type: integer
+        price_count:
+          type: integer
+        stock:
+          type: integer
+
+    ProductVariant:
+      type: object
+      properties:
+        id:
+          type: string
+          nullable: true
+        name:
+          type: string
+        price:
+          type: integer
+        capital_price:
+          type: integer
+          nullable: true
+        barcode:
+          type: string
+          nullable: true
+        stock:
+          type: integer
+          nullable: true
+        min_stock:
+          type: integer
+          nullable: true
+        notify_on_stock_ronouts:
+          type: boolean
+          nullable: true
+
+    ProductDetail:
+      allOf:
+        - $ref: '#/components/schemas/ProductListItem'
+        - type: object
+          properties:
+            merk_id:
+              type: string
+              nullable: true
+            category_id:
+              type: string
+              nullable: true
+            is_favorite:
+              type: boolean
+            is_stock_active:
+              type: boolean
+            min_stock:
+              type: integer
+              nullable: true
+            notify_on_stock_ronouts:
+              type: boolean
+              nullable: true
+            unit_id:
+              type: string
+              nullable: true
+            capital_price:
+              type: integer
+            barcode:
+              type: string
+              nullable: true
+            variants:
+              type: array
+              items:
+                $ref: '#/components/schemas/ProductVariant'
+
+    ProductCreateUpdatePayload:
+      type: object
+      properties:
+        photo_url:
+          type: string
+          nullable: true
+        name:
+          type: string
+        price:
+          type: integer
+        merk_id:
+          type: string
+          nullable: true
+        category_id:
+          type: string
+          nullable: true
+        is_favorite:
+          type: boolean
+        is_stock_active:
+          type: boolean
+        stock:
+          type: integer
+          nullable: true
+        min_stock:
+          type: integer
+          nullable: true
+        notify_on_stock_ronouts:
+          type: boolean
+          nullable: true
+        unit_id:
+          type: string
+          nullable: true
+        capital_price:
+          type: integer
+        barcode:
+          type: string
+          nullable: true
+        variants:
+          type: array
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+              price:
+                type: integer
+              capital_price:
+                type: integer
+                nullable: true
+              barcode:
+                type: string
+                nullable: true
+              stock:
+                type: integer
+                nullable: true
+              min_stock:
+                type: integer
+                nullable: true
+              notify_on_stock_ronouts:
+                type: boolean
+                nullable: true
+      required:
+        - name
+        - price
+        - is_favorite
+        - is_stock_active
+        - capital_price
+
+    ProductBranchCreatePayload:
+      type: object
+      properties:
+        photo_url:
+          type: string
+          nullable: true
+        custom_name:
+          type: string
+        price:
+          type: integer
+        is_favorite:
+          type: boolean
+        is_stock_active:
+          type: boolean
+        stock:
+          type: integer
+          nullable: true
+        min_stock:
+          type: integer
+          nullable: true
+        notify_on_stock_ronouts:
+          type: boolean
+        unit_id:
+          type: string
+          nullable: true
+        capital_price:
+          type: integer
+        variants:
+          type: array
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+              price:
+                type: integer
+              capital_price:
+                type: integer
+                nullable: true
+              barcode:
+                type: string
+                nullable: true
+              stock:
+                type: integer
+                nullable: true
+              min_stock:
+                type: integer
+                nullable: true
+              notify_on_stock_ronouts:
+                type: boolean
+                nullable: true
+      required:
+        - custom_name
+        - price
+        - is_favorite
+        - is_stock_active
+        - capital_price
+
+    # ==== TRANSACTIONS ====
+    TransactionProductVariant:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        price:
+          type: integer
+
+    TransactionProduct:
+      type: object
+      properties:
+        name:
+          type: string
+        quantity:
+          type: integer
+        price:
+          type: integer
+        variant:
+          $ref: '#/components/schemas/TransactionProductVariant'
+          nullable: true
+
+    TransactionAdditionalFee:
+      type: object
+      properties:
+        name:
+          type: string
+        amount:
+          type: integer
+
+    TransactionDetail:
+      type: object
+      properties:
+        id:
+          type: string
+        payment_method:
+          type: string
+        cashier:
+          type: object
+          properties:
+            id:
+              type: string
+            name:
+              type: string
+        status:
+          type: string
+        products:
+          type: array
+          items:
+            $ref: '#/components/schemas/TransactionProduct'
+        additional_fees:
+          type: array
+          items:
+            $ref: '#/components/schemas/TransactionAdditionalFee'
+        subtotal:
+          type: integer
+        total:
+          type: integer
+        paid_amount:
+          type: integer
+        change_amount:
+          type: integer
+        note:
+          type: string
+          nullable: true
+        struck_url:
+          type: string
+          nullable: true
+        created_at:
+          type: string
+
+    # ==== SETTINGS / STORE ====
+    RegionRef:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+
+    StorePayload:
+      type: object
+      properties:
+        bussiness_type:
+          type: string
+        bussiness_name:
+          type: string
+        tax:
+          type: integer
+        owner_name:
+          type: string
+        owner_phone:
+          type: string
+        currency:
+          type: string
+          enum: [idr]
+        language:
+          type: string
+          enum: [id, en]
+        branch:
+          type: object
+          properties:
+            id:
+              type: string
+            name:
+              type: string
+        province:
+          $ref: '#/components/schemas/RegionRef'
+        country:
+          $ref: '#/components/schemas/RegionRef'
+        subdistrict:
+          $ref: '#/components/schemas/RegionRef'
+        city:
+          $ref: '#/components/schemas/RegionRef'
+        village:
+          $ref: '#/components/schemas/RegionRef'
+        address:
+          type: string
+      required:
+        - bussiness_type
+        - bussiness_name
+        - tax
+        - owner_name
+        - owner_phone
+        - currency
+        - language
+        - province
+        - country
+        - subdistrict
+        - city
+        - village
+        - address
+
+    # ==== ASSET ====
+    AssetUploadResponse:
+      type: object
+      properties:
+        asset_url:
+          type: string
+        size:
+          type: string
+          description: String terformat, contoh "123 KB" atau "2 MB"
+        filename:
+          type: string
+
+  parameters:
+    BranchIdHeader:
+      name: branch_id
+      in: header
+      schema:
+        type: string
+      description: "Digunakan untuk menentukan branch aktif (lihat catatan 'Untuk branching menggunakan header branch_id')"
+
+paths:
+  # ==== AUTH ====
+  /auth/login:
+    post:
+      summary: Login merchant
+      tags: [Auth]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  format: email
+                phone:
+                  type: string
+                pin:
+                  type: string
+                device_id:
+                  type: string
+              required: [pin, device_id]
+      responses:
+        '200':
+          description: Login berhasil
+        '400':
+          description: Login gagal
+        '401':
+          description: Unauthorized
+
+  /auth/register:
+    post:
+      summary: Registrasi merchant baru
+      tags: [Auth]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                country:
+                  type: string
+                bussiness_name:
+                  type: string
+                business_type:
+                  type: string
+                bussiness_regency:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                    name:
+                      type: string
+                bussiness_address:
+                  type: string
+                owner_name:
+                  type: string
+                owner_phone:
+                  type: string
+                pin:
+                  type: string
+                owner_email:
+                  type: string
+                  format: email
+                is_accept_tos:
+                  type: boolean
+              required:
+                [country, bussiness_name, business_type, bussiness_address, owner_name, owner_phone, pin, is_accept_tos]
+      responses:
+        '201':
+          description: Registrasi berhasil
+        '422':
+          description: Validasi gagal
+
+  /auth/otp/request:
+    post:
+      summary: Request OTP ke nomor ponsel
+      tags: [Auth]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                phone:
+                  type: string
+              required: [phone]
+      responses:
+        '200':
+          description: OTP dikirim
+
+  /auth/otp/validate:
+    post:
+      summary: Validasi OTP
+      tags: [Auth]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                phone:
+                  type: string
+                otp:
+                  type: string
+              required: [phone, otp]
+      responses:
+        '200':
+          description: OTP valid
+        '400':
+          description: OTP tidak valid
+
+  /auth/logout:
+    post:
+      summary: Logout
+      tags: [Auth]
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Logout berhasil
+        '401':
+          description: Unauthorized
+
+  # ==== STATS ====
+  /stats/sales:
+    get:
+      summary: Statistik penjualan
+      tags: [Stats]
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/BranchIdHeader'
+      responses:
+        '200':
+          description: Data statistik penjualan
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      current_month:
+                        type: object
+                        properties:
+                          amount:
+                            type: integer
+                          percentage_than_prev_month:
+                            type: integer
+                      today:
+                        type: object
+                        properties:
+                          amount:
+                            type: integer
+                          percentage_than_prev_day:
+                            type: integer
+
+  # ==== ASSET ====
+  /asset/upload:
+    post:
+      summary: Upload file asset
+      description: |
+        Upload file menggunakan form-data. Backend akan memvalidasi tipe file dan ukuran maksimal
+        (contoh: hanya image, maksimal 2MB).
+      tags: [Asset]
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/BranchIdHeader'
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+              required:
+                - file
+      responses:
+        '200':
+          description: Upload berhasil
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    $ref: '#/components/schemas/AssetUploadResponse'
+
+  # ==== PRODUCTS ====
+  /products:
+    get:
+      summary: List produk
+      tags: [Products]
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: query
+          name: category_id
+          schema:
+            type: array
+            items:
+              type: string
+          style: form
+          explode: true
+          description: Boleh multiple (repeatable)
+        - in: query
+          name: search
+          schema:
+            type: string
+        - in: query
+          name: is_favorite
+          schema:
+            type: boolean
+        - $ref: '#/components/parameters/BranchIdHeader'
+      responses:
+        '200':
+          description: List produk
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ProductListItem'
+
+    post:
+      summary: Buat produk baru
+      tags: [Products]
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProductCreateUpdatePayload'
+      responses:
+        '201':
+          description: Produk dibuat
+        '422':
+          description: Validasi gagal
+
+  /products/{id}:
+    get:
+      summary: Detail produk
+      tags: [Products]
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/BranchIdHeader'
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Detail produk
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    $ref: '#/components/schemas/ProductDetail'
+
+    put:
+      summary: Update produk
+      tags: [Products]
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/BranchIdHeader'
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProductCreateUpdatePayload'
+      responses:
+        '200':
+          description: Produk diupdate
+
+    delete:
+      summary: Hapus produk
+      tags: [Products]
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/BranchIdHeader'
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Produk dihapus
+
+  /products/{id}/stock:
+    put:
+      summary: Update stok produk
+      tags: [Products]
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/BranchIdHeader'
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                action_type:
+                  type: string
+                  enum: [adjust_stock, add_stock, reduce_stock]
+                amount:
+                  type: integer
+              required: [action_type, amount]
+      responses:
+        '200':
+          description: Stok diperbarui
+
+  /products/add-from-branch/{product_id}:
+    post:
+      summary: Tambah produk cabang dari main store
+      tags: [Products]
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/BranchIdHeader'
+        - in: path
+          name: product_id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProductBranchCreatePayload'
+      responses:
+        '201':
+          description: Produk cabang ditambahkan dari main store
+
+  # ==== CATEGORIES ====
+  /product-categories:
+    get:
+      summary: List kategori produk
+      tags: [Categories]
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/BranchIdHeader'
+      responses:
+        '200':
+          description: List kategori
+    post:
+      summary: Buat kategori baru
+      tags: [Categories]
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/BranchIdHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+              required: [name]
+      responses:
+        '201':
+          description: Kategori dibuat
+
+  /product-categories/{id}:
+    put:
+      summary: Update kategori
+      tags: [Categories]
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/BranchIdHeader'
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+              required: [name]
+      responses:
+        '200':
+          description: Kategori diupdate
+
+    delete:
+      summary: Hapus kategori
+      tags: [Categories]
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/BranchIdHeader'
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Kategori dihapus
+
+  # ==== MERKS ====
+  /product-merks:
+    get:
+      summary: List merk
+      tags: [Merks]
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/BranchIdHeader'
+      responses:
+        '200':
+          description: List merk
+    post:
+      summary: Buat merk baru
+      tags: [Merks]
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/BranchIdHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+              required: [name]
+      responses:
+        '201':
+          description: Merk dibuat
+
+  /product-merks/{id}:
+    put:
+      summary: Update merk
+      tags: [Merks]
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/BranchIdHeader'
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+              required: [name]
+      responses:
+        '200':
+          description: Merk diupdate
+
+    delete:
+      summary: Hapus merk
+      tags: [Merks]
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/BranchIdHeader'
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Merk dihapus
+
+  # ==== TRANSACTIONS ====
+  /transactions:
+    get:
+      summary: List transaksi
+      tags: [Transactions]
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/BranchIdHeader'
+      responses:
+        '200':
+          description: List transaksi
+    post:
+      summary: Buat transaksi baru
+      tags: [Transactions]
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/BranchIdHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                products:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      porduct_id:
+                        type: string
+                      quantity:
+                        type: string
+                      variant_id:
+                        type: string
+                        nullable: true
+                additional_fees:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      name:
+                        type: string
+                      amount:
+                        type: integer
+                paid_ammout:
+                  type: integer
+                change_amount:
+                  type: integer
+                payment_method:
+                  type: string
+                  enum: [cash]
+              required:
+                [products, paid_ammout, payment_method]
+      responses:
+        '201':
+          description: Transaksi dibuat
+
+  /transactions/{id}:
+    get:
+      summary: Detail transaksi
+      tags: [Transactions]
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/BranchIdHeader'
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Detail transaksi
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    $ref: '#/components/schemas/TransactionDetail'
+
+    post:
+      summary: Batalkan transaksi
+      tags: [Transactions]
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/BranchIdHeader'
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Transaksi dibatalkan
+
+  # ==== SETTINGS & ACCOUNT ====
+  /profile:
+    get:
+      summary: Get profil user
+      tags: [Settings]
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/BranchIdHeader'
+      responses:
+        '200':
+          description: Profil user
+    put:
+      summary: Update profil user
+      tags: [Settings]
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/BranchIdHeader'
+      responses:
+        '200':
+          description: Profil diupdate
+
+  /account/delete:
+    delete:
+      summary: Hapus akun
+      tags: [Settings]
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/BranchIdHeader'
+      responses:
+        '200':
+          description: Akun dihapus
+
+  /account/pin:
+    put:
+      summary: Update PIN akun
+      tags: [Settings]
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/BranchIdHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                old_pin:
+                  type: string
+                new_pin:
+                  type: string
+                new_pin_confirmation:
+                  type: string
+              required:
+                [old_pin, new_pin, new_pin_confirmation]
+      responses:
+        '200':
+          description: PIN diupdate
+
+  /setting/store:
+    get:
+      summary: Get detail toko
+      tags: [Settings]
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/BranchIdHeader'
+      responses:
+        '200':
+          description: Detail toko
+    put:
+      summary: Update detail toko
+      tags: [Settings]
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/BranchIdHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StorePayload'
+      responses:
+        '200':
+          description: Detail toko diupdate
+
+  # ==== POS DEVICES ====
+  /pos-devices:
+    get:
+      summary: List perangkat POS
+      tags: [POS Devices]
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/BranchIdHeader'
+      responses:
+        '200':
+          description: List perangkat POS
+    post:
+      summary: Tambah perangkat POS
+      tags: [POS Devices]
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/BranchIdHeader'
+      responses:
+        '201':
+          description: Perangkat POS ditambahkan
+
+  /pos-devices/set-default:
+    put:
+      summary: Set perangkat default
+      tags: [POS Devices]
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/BranchIdHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                device_id:
+                  type: string
+                type:
+                  type: string
+                  enum: [printer, scanner]
+              required:
+                [device_id, type]
+      responses:
+        '200':
+          description: Default device diupdate
+
+  # ==== STRUCK SETTINGS ====
+  /setting/struck:
+    get:
+      summary: Get konfigurasi struk
+      tags: [Settings]
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/BranchIdHeader'
+      responses:
+        '200':
+          description: Konfigurasi struk
+    put:
+      summary: Update konfigurasi struk
+      tags: [Settings]
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/BranchIdHeader'
+      responses:
+        '200':
+          description: Konfigurasi struk diupdate
