@@ -1,11 +1,13 @@
+import CountryCodePicker from "@/components/country-code-picker";
 import Header from "@/components/header";
 import Logo from "@/components/logo";
-import {ThemedButton} from "@/components/themed-button";
-import {ThemedInput} from "@/components/themed-input";
-import {ThemedText} from "@/components/themed-text";
-import {Colors} from "@/constants/theme";
-import {useColorScheme} from "@/hooks/use-color-scheme";
-import React, {useState} from "react";
+import { ThemedButton } from "@/components/themed-button";
+import { ThemedInput } from "@/components/themed-input";
+import { ThemedText } from "@/components/themed-text";
+import { Colors } from "@/constants/theme";
+import { useColorScheme } from "@/hooks/use-color-scheme";
+import { useNavigation } from "expo-router";
+import React, { useState } from "react";
 import {
   KeyboardAvoidingView,
   Platform,
@@ -14,8 +16,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import {useSafeAreaInsets} from "react-native-safe-area-context";
-import CountryCodePicker from "@/components/country-code-picker";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function LoginScreen() {
   const colorScheme = useColorScheme() ?? "light";
@@ -25,6 +26,7 @@ export default function LoginScreen() {
   const [pin, setPin] = useState("");
   const [credentialError, setCredentialError] = useState("");
   const [pinError, setPinError] = useState("");
+  const navigation = useNavigation();
 
   const styles = createStyles(colorScheme);
   const countryItems = [
@@ -62,7 +64,7 @@ export default function LoginScreen() {
     if (valid) {
       // Lanjutkan proses login
       const finalCredential = credential;
-      console.log("Login diproses", finalCredential);
+      navigation.navigate("dashboard/home/index" as never);
     }
   };
 
