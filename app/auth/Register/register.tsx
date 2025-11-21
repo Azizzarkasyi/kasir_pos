@@ -1,21 +1,16 @@
-import React, {useState} from "react";
-import {
-  View,
-  StyleSheet,
-  ScrollView,
-  KeyboardAvoidingView,
-  Platform,
-} from "react-native";
-import {ThemedText} from "@/components/themed-text";
-import {useColorScheme} from "@/hooks/use-color-scheme";
-import {Colors} from "@/constants/theme";
-import Header from "@/components/header";
-import {ThemedInput} from "@/components/themed-input";
-import ComboInput from "@/components/combo-input";
 import Checkbox from "@/components/checkbox";
-import {useSafeAreaInsets} from "react-native-safe-area-context";
+import ComboInput from "@/components/combo-input";
+import Header from "@/components/header";
 import {ThemedButton} from "@/components/themed-button";
+import {ThemedInput} from "@/components/themed-input";
+import {ThemedText} from "@/components/themed-text";
+import {Colors} from "@/constants/theme";
+import {useColorScheme} from "@/hooks/use-color-scheme";
 import {useNavigation} from "@react-navigation/native";
+import React, {useState} from "react";
+import {StyleSheet, View} from "react-native";
+import {KeyboardAwareScrollView} from "react-native-keyboard-aware-scroll-view";
+import {useSafeAreaInsets} from "react-native-safe-area-context";
 
 const businessTypes = [
   {label: "Pilih Tipe Bisnis", value: ""},
@@ -49,19 +44,17 @@ const RegisterScreen = () => {
   const [agreedToTerms, setAgreedToTerms] = useState(false);
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
-      style={{flex: 1, backgroundColor: Colors[colorScheme].background}}
-    >
-      <View
-        style={[
-          styles.container,
-          {paddingTop: insets.top},
-        ]}
-      >
+    <View style={{flex: 1, backgroundColor: Colors[colorScheme].background}}>
+      <View style={[styles.container, {paddingTop: insets.top}]}> 
         <Header />
-        <ScrollView
-          contentContainerStyle={[styles.scrollContainer, {paddingBottom: insets.bottom}]}
+        <KeyboardAwareScrollView
+          contentContainerStyle={[
+            styles.scrollContainer,
+            {paddingBottom: insets.bottom + 80},
+          ]}
+          enableOnAndroid
+          keyboardOpeningTime={0}
+          extraScrollHeight={24}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
           style={{backgroundColor: Colors[colorScheme].background}}
@@ -138,15 +131,17 @@ const RegisterScreen = () => {
             </ThemedText>
           </View>
 
-          <ThemedButton
-            title="Daftar"
-            onPress={() =>
-              navigation.navigate("auth/Register/verify-otp" as never)
-            }
-          />
-        </ScrollView>
+        </KeyboardAwareScrollView>
       </View>
-    </KeyboardAvoidingView>
+      <View style={styles.bottomBar}>
+        <ThemedButton
+          title="Daftar"
+          onPress={() =>
+            navigation.navigate("auth/Register/verify-otp" as never)
+          }
+        />
+      </View>
+    </View>
   );
 };
 
@@ -183,6 +178,16 @@ const createStyles = (colorScheme: "light" | "dark") =>
     link: {
       color: Colors[colorScheme].primary,
       textDecorationLine: "underline",
+    },
+    bottomBar: {
+      position: "absolute",
+      left: 0,
+      right: 0,
+      bottom: 0,
+      paddingHorizontal: 20,
+      paddingBottom: 16,
+      paddingTop: 8,
+      backgroundColor: Colors[colorScheme].background,
     },
   });
 
