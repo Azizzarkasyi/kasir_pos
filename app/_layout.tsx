@@ -10,6 +10,7 @@ export default function RootLayout() {
         options={{headerShown: false}}
       />
       <Stack.Screen name="auth/Register/register" options={{headerShown: false}} />
+      <Stack.Screen name="auth/Register/verify-otp" options={{headerShown: false}} />
     </Stack>
   );
 }

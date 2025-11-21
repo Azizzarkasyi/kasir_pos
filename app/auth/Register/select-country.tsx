@@ -1,10 +1,12 @@
 import CountryListItem from "@/components/country-list-item";
 import Header from "@/components/header";
+import {ThemedButton} from "@/components/themed-button";
 import {ThemedInput} from "@/components/themed-input";
 import {ThemedText} from "@/components/themed-text";
 import {Colors} from "@/constants/theme";
 import {useColorScheme} from "@/hooks/use-color-scheme";
-import {useSafeAreaInsets} from "react-native-safe-area-context";
+import {useNavigation} from "@react-navigation/native";
+import React, {useState} from "react";
 import {
   FlatList,
   KeyboardAvoidingView,
@@ -12,9 +14,7 @@ import {
   StyleSheet,
   View,
 } from "react-native";
-import React, {useState} from "react";
-import {ThemedButton} from "@/components/themed-button";
-import {useNavigation} from "@react-navigation/native";
+import {useSafeAreaInsets} from "react-native-safe-area-context";
 
 const countries = [
   {id: "1", name: "Indonesia"},
@@ -52,12 +52,12 @@ const SelectCountryScreen = () => {
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === "ios" ? "padding" : "height"}
-      style={{flex: 1}}
+      style={{flex: 1, backgroundColor: Colors[colorScheme].background}}
     >
       <View
         style={[
           styles.container,
-          {paddingTop: insets.top, paddingBottom: insets.bottom},
+          {paddingTop: insets.top},
         ]}
       >
         <Header />
@@ -75,10 +75,13 @@ const SelectCountryScreen = () => {
             onChangeText={setSearchQuery}
           />
           <FlatList
+            showsVerticalScrollIndicator={false}
             data={filteredCountries}
             renderItem={renderItem}
             keyExtractor={item => item.id}
             style={styles.list}
+            contentContainerStyle={{paddingBottom: insets.bottom}}
+            keyboardShouldPersistTaps="handled"
           />
           <ThemedButton
             title="Lanjutkan"

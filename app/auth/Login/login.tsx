@@ -6,8 +6,16 @@ import {ThemedText} from "@/components/themed-text";
 import {Colors} from "@/constants/theme";
 import {useColorScheme} from "@/hooks/use-color-scheme";
 import React, {useState} from "react";
-import {KeyboardAvoidingView, Platform, ScrollView, StyleSheet, TouchableOpacity, View} from "react-native";
+import {
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import {useSafeAreaInsets} from "react-native-safe-area-context";
+import CountryCodePicker from "@/components/country-code-picker";
 
 export default function LoginScreen() {
   const colorScheme = useColorScheme() ?? "light";
@@ -19,6 +27,17 @@ export default function LoginScreen() {
   const [pinError, setPinError] = useState("");
 
   const styles = createStyles(colorScheme);
+  const countryItems = [
+    {label: "Indonesia", value: "🇮🇩"},
+    {label: "Malaysia", value: "🇲🇾"},
+    {label: "Singapore", value: "🇸🇬"},
+    {label: "Thailand", value: "🇹🇭"},
+    {label: "Philippines", value: "🇵🇭"},
+    {label: "Brunei", value: "🇧🇳"},
+  ];
+  const [countryCode, setCountryCode] = useState(countryItems[0].value);
+
+  // kode negara tidak digunakan; hanya bendera untuk tampilan
 
   const handleLogin = () => {
     let valid = true;
@@ -42,7 +61,8 @@ export default function LoginScreen() {
 
     if (valid) {
       // Lanjutkan proses login
-      console.log("Login diproses");
+      const finalCredential = credential;
+      console.log("Login diproses", finalCredential);
     }
   };
 
@@ -51,28 +71,53 @@ export default function LoginScreen() {
       behavior={Platform.OS === "ios" ? "padding" : "height"}
       style={styles.container}
     >
-      <View
-        style={[
-          styles.container,
-          {paddingTop: insets.top, paddingBottom: insets.bottom},
-        ]}
-      >
-        <ScrollView contentContainerStyle={styles.scrollContainer}>
+      <View style={[styles.container, {paddingTop: insets.top}]}>
+        <ScrollView
+          contentContainerStyle={[
+            styles.scrollContainer,
+            {paddingBottom: insets.bottom},
+          ]}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+          style={{backgroundColor: Colors[colorScheme].background}}
+        >
           <Header />
 
           <Logo />
 
           <View style={styles.formContainer}>
-            <ThemedInput
-              label={isPhoneLogin ? "No. Handphone" : "Email"}
-              value={credential}
-              onChangeText={text => {
-                setCredential(text);
-                if (credentialError) setCredentialError("");
-              }}
-              keyboardType={isPhoneLogin ? "phone-pad" : "email-address"}
-              error={credentialError}
-            />
+            {isPhoneLogin ? (
+              <View style={{flexDirection: "row", alignItems: "center"}}>
+                <CountryCodePicker
+                  value={countryCode}
+                  onChange={setCountryCode}
+                  items={countryItems}
+                />
+                <View style={{flex: 1, marginLeft: 12}}>
+                  <ThemedInput
+                    label="No. Handphone"
+                    value={credential}
+                    onChangeText={text => {
+                      setCredential(text);
+                      if (credentialError) setCredentialError("");
+                    }}
+                    keyboardType="phone-pad"
+                    error={credentialError}
+                  />
+                </View>
+              </View>
+            ) : (
+              <ThemedInput
+                label="Email"
+                value={credential}
+                onChangeText={text => {
+                  setCredential(text);
+                  if (credentialError) setCredentialError("");
+                }}
+                keyboardType="email-address"
+                error={credentialError}
+              />
+            )}
 
             <View style={{height: 20}} />
 

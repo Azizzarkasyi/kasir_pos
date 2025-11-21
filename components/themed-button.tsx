@@ -11,9 +11,18 @@ interface ThemedButtonProps extends TouchableOpacityProps {
 export function ThemedButton({ title, variant = 'primary', style, ...rest }: ThemedButtonProps) {
   const colorScheme = useColorScheme() ?? 'light';
 
-  const backgroundColor = variant === 'primary' ? Colors[colorScheme].primary : 'transparent';
-  const textColor = variant === 'primary' ? Colors[colorScheme].secondary : Colors[colorScheme].primary;
-  const borderColor = Colors[colorScheme].primary;
+  const disabled = Boolean((rest as any).disabled);
+  const backgroundColor = disabled
+    ? Colors[colorScheme].background
+    : variant === 'primary'
+    ? Colors[colorScheme].primary
+    : 'transparent';
+  const textColor = disabled
+    ? Colors[colorScheme].icon
+    : variant === 'primary'
+    ? Colors[colorScheme].secondary
+    : Colors[colorScheme].primary;
+  const borderColor = disabled ? Colors[colorScheme].icon : Colors[colorScheme].primary;
 
   return (
     <TouchableOpacity
