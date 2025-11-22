@@ -41,7 +41,7 @@ const Header: React.FC<HeaderProps> = ({
   };
 
   return (
-    <View style={[styles.headerContainer, {paddingTop: insets.top + 12}]}>
+    <View style={[styles.headerContainer, {paddingTop: insets.top + 10}]}>
       <View style={styles.leftArea}>
         {showBack ? (
           <TouchableOpacity onPress={handleBack}>
@@ -74,7 +74,6 @@ const Header: React.FC<HeaderProps> = ({
         ) : null}
         {right}
       </View>
-      <View style={styles.shadowBar} />
     </View>
   );
 };
@@ -86,12 +85,18 @@ const createStyles = (colorScheme: "light" | "dark") =>
       justifyContent: "space-between",
       alignItems: "center",
       width: "100%",
-      height: "13%",
-      paddingVertical: 10,
-      paddingHorizontal: 10,
+      paddingVertical: 12,
+      paddingHorizontal: 8,
       backgroundColor: Colors[colorScheme].background,
       position: "relative",
+      shadowColor: "#000000",
       shadowOffset: {width: 0, height: 2},
+      shadowOpacity: 0.16,
+      shadowRadius: 6,
+      elevation: 6,
+      zIndex: 2,
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderBottomColor: "rgba(0,0,0,0.06)",
     },
     leftArea: {
       flexDirection: "row",
@@ -100,9 +105,8 @@ const createStyles = (colorScheme: "light" | "dark") =>
     },
     centerArea: {
       flex: 1,
-      alignItems: "flex-start",
-      justifyContent: "flex-start",
-      marginStart: 16,
+      alignItems: "center",
+      justifyContent: "center",
     },
     rightArea: {
       flexDirection: "row",
@@ -123,20 +127,8 @@ const createStyles = (colorScheme: "light" | "dark") =>
     },
     titleText: {
       fontSize: 20,
-      fontWeight: "bold",
-    },
-    shadowBar: {
-      position: "absolute",
-      left: 0,
-      right: 0,
-      bottom: 0,
-      height: 2,
-      backgroundColor: Colors[colorScheme].background,
-      shadowColor: "#000",
-      shadowOpacity: 0.08,
-      shadowOffset: {width: 0, height: 2},
-      shadowRadius: 4,
-      elevation: 6,
+      fontWeight: "700",
+      textAlign: "center",
     },
   });
 

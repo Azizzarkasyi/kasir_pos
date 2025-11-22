@@ -5,7 +5,7 @@ import {ThemedInput} from "@/components/themed-input";
 import {ThemedText} from "@/components/themed-text";
 import {Colors} from "@/constants/theme";
 import {useColorScheme} from "@/hooks/use-color-scheme";
-import {useNavigation} from "@react-navigation/native";
+import {useNavigation} from "expo-router";
 import React, {useState} from "react";
 import {FlatList, StyleSheet, View} from "react-native";
 import {KeyboardAwareScrollView} from "react-native-keyboard-aware-scroll-view";
@@ -48,7 +48,10 @@ const SelectCountryScreen = () => {
     <View style={{flex: 1, backgroundColor: Colors[colorScheme].background}}>
       <Header />
       <KeyboardAwareScrollView
-        contentContainerStyle={{paddingHorizontal: 20, paddingBottom: insets.bottom + 80}}
+        contentContainerStyle={{
+          paddingHorizontal: 20,
+          paddingBottom: insets.bottom + 80,
+        }}
         enableOnAndroid
         keyboardOpeningTime={0}
         extraScrollHeight={24}

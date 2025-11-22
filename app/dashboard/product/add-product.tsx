@@ -1,16 +1,13 @@
 import ComboInput from "@/components/combo-input";
-import Header from "@/components/header";
 import ImageUpload from "@/components/image-upload";
+import MenuRow from "@/components/menu-row";
 import {ThemedButton} from "@/components/themed-button";
 import {ThemedInput} from "@/components/themed-input";
-import {ThemedText} from "@/components/themed-text";
-import Toggle from "@/components/toggle";
 import {Colors} from "@/constants/theme";
 import {useColorScheme} from "@/hooks/use-color-scheme";
-import {Ionicons} from "@expo/vector-icons";
 import {useRouter} from "expo-router";
 import React, {useState} from "react";
-import {StyleSheet, TouchableOpacity, View} from "react-native";
+import {StyleSheet, View} from "react-native";
 import {KeyboardAwareScrollView} from "react-native-keyboard-aware-scroll-view";
 import {useSafeAreaInsets} from "react-native-safe-area-context";
 
@@ -44,7 +41,6 @@ export default function AddProductScreen() {
 
   return (
     <View style={{flex: 1, backgroundColor: Colors[colorScheme].background}}>
-      <Header title="Tambah Produk" showHelp={false} />
       <KeyboardAwareScrollView
         contentContainerStyle={{
           paddingTop: 8,
@@ -100,33 +96,28 @@ export default function AddProductScreen() {
 
         <View style={styles.sectionDivider} />
 
-        <Toggle
-          label="Produk Favorit"
-          badgeText="Baru"
-          description="Tampilkan produk di kategori terdepan."
+        <MenuRow
+          title="Produk Favorit"
+          subtitle="Tampilkan produk di kategori terdepan."
+          variant="toggle"
           value={favorite}
           onValueChange={setFavorite}
+          badgeText="Baru"
         />
 
-        <Toggle
-          label="Atur Harga Modal dan Barcode"
+        <MenuRow
+          title="Atur Harga Modal dan Barcode"
+          variant="toggle"
           value={enableCostBarcode}
           onValueChange={setEnableCostBarcode}
         />
 
-        <TouchableOpacity style={styles.manageRow}>
-          <ThemedText style={styles.manageTitle}>Kelola Stok</ThemedText>
-          <View style={styles.manageRight}>
-            <ThemedText style={styles.manageStatus}>
-              Stok Tidak Aktif
-            </ThemedText>
-            <Ionicons
-              name="chevron-forward-outline"
-              size={18}
-              color={Colors[colorScheme].icon}
-            />
-          </View>
-        </TouchableOpacity>
+        <MenuRow
+          title="Kelola Stok"
+          rightText="Stok Tidak Aktif"
+          variant="link"
+          onPress={() => {}}
+        />
 
         <View style={styles.sectionDivider} />
 
@@ -143,26 +134,8 @@ export default function AddProductScreen() {
 const createStyles = (colorScheme: "light" | "dark") =>
   StyleSheet.create({
     sectionDivider: {
-      height: 1,
-      backgroundColor: Colors[colorScheme].icon,
+      backgroundColor: Colors[colorScheme].tint,
       marginVertical: 16,
-    },
-    manageRow: {
-      flexDirection: "row",
-      alignItems: "center",
-      justifyContent: "space-between",
-      paddingVertical: 12,
-    },
-    manageTitle: {
-      fontWeight: "700",
-    },
-    manageRight: {
-      flexDirection: "row",
-      alignItems: "center",
-      gap: 6,
-    },
-    manageStatus: {
-      color: Colors[colorScheme].icon,
     },
     bottomBar: {
       position: "absolute",

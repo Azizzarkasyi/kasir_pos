@@ -16,12 +16,6 @@ export default function RootLayout() {
   return (
     <Stack>
       <Stack.Screen name="index" options={{headerShown: false}} />
-      <Stack.Screen name="dashboard/_layout" options={{headerShown: false}} />
-      <Stack.Screen name="dasboard/products" options={{headerShown: false}} />
-      <Stack.Screen
-        name="dasboard/add-product"
-        options={{headerShown: false}}
-      />
       <Stack.Screen name="auth/Login/login" options={{headerShown: false}} />
       <Stack.Screen
         name="auth/Register/select-country"
@@ -48,6 +42,18 @@ export default function RootLayout() {
       <Stack.Screen
         name="dashboard/select-branch/index"
         options={{headerShown: true, title: "Pilih Outlet"}}
+      />
+      <Stack.Screen
+        name="dashboard/product/products"
+        options={{headerShown: true, title: "Produk"}}
+      />
+      <Stack.Screen
+        name="dashboard/product/add-product"
+        options={{headerShown: true, title: "Tambah Produk"}}
+      />
+      <Stack.Screen
+        name="dashboard/product/manage"
+        options={{headerShown: true, title: "Kelola Produk"}}
       />
     </Stack>
   );
