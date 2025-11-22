@@ -1,8 +1,8 @@
+import {Colors} from "@/constants/theme";
+import {useColorScheme} from "@/hooks/use-color-scheme";
+import {Ionicons} from "@expo/vector-icons";
 import React from "react";
 import {Image, StyleSheet, TouchableOpacity, View} from "react-native";
-import {useColorScheme} from "@/hooks/use-color-scheme";
-import {Colors} from "@/constants/theme";
-import {Ionicons} from "@expo/vector-icons";
 import {ThemedText} from "./themed-text";
 
 interface ImageUploadProps {
@@ -11,7 +11,11 @@ interface ImageUploadProps {
   onPress?: () => void;
 }
 
-const ImageUpload: React.FC<ImageUploadProps> = ({uri, initials = "NP", onPress}) => {
+const ImageUpload: React.FC<ImageUploadProps> = ({
+  uri,
+  initials = "NP",
+  onPress,
+}) => {
   const colorScheme = useColorScheme() ?? "light";
   const styles = createStyles(colorScheme);
 
@@ -36,6 +40,7 @@ const createStyles = (colorScheme: "light" | "dark") =>
     container: {
       alignItems: "center",
       marginTop: 12,
+      marginBottom: 12,
     },
     square: {
       width: 104,

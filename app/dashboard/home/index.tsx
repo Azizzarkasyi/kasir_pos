@@ -231,6 +231,8 @@ const DashboardScreen = () => {
                   router.replace("/dashboard/home" as never);
                 } else if (key === "outlet") {
                   handleSelectOutlet();
+                } else if (key === "settings") {
+                  router.replace("/dashboard/setting" as never);
                 }
               }}
               onSelectOutlet={handleSelectOutlet}

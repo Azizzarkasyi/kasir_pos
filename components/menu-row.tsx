@@ -16,6 +16,7 @@ type MenuRowProps = {
   badgeText?: string;
   showTopBorder?: boolean;
   showBottomBorder?: boolean;
+  leftIconName?: React.ComponentProps<typeof Ionicons>["name"];
 };
 
 const MenuRow: React.FC<MenuRowProps> = ({
@@ -29,16 +30,82 @@ const MenuRow: React.FC<MenuRowProps> = ({
   badgeText,
   showTopBorder = true,
   showBottomBorder = true,
+  leftIconName,
 }) => {
   const colorScheme = useColorScheme() ?? "light";
   const styles = createStyles(colorScheme);
-  const top = typeof StyleSheet.hairlineWidth === "number" ? StyleSheet.hairlineWidth : 1;
-  const bottom = typeof StyleSheet.hairlineWidth === "number" ? StyleSheet.hairlineWidth : 1;
+  const top =
+    typeof StyleSheet.hairlineWidth === "number" ? StyleSheet.hairlineWidth : 1;
+  const bottom =
+    typeof StyleSheet.hairlineWidth === "number" ? StyleSheet.hairlineWidth : 1;
+
+  if (variant === "link") {
+    return (
+      <TouchableOpacity
+        style={[
+          styles.row,
+          {
+            borderTopWidth: showTopBorder ? top : 0,
+            borderBottomWidth: showBottomBorder ? bottom : 0,
+          },
+        ]}
+        onPress={onPress}
+        activeOpacity={0.8}
+      >
+        <View style={{flex: 1}}>
+          <View style={styles.titleRow}>
+            {leftIconName ? (
+              <Ionicons
+                name={leftIconName}
+                size={20}
+                color={Colors[colorScheme].primary}
+              />
+            ) : null}
+            <ThemedText style={styles.rowTitle}>{title}</ThemedText>
+            {badgeText ? (
+              <View style={styles.badge}>
+                <ThemedText style={styles.badgeText}>{badgeText}</ThemedText>
+              </View>
+            ) : null}
+          </View>
+          {subtitle ? (
+            <ThemedText style={styles.rowSubtitle}>{subtitle}</ThemedText>
+          ) : null}
+        </View>
+
+        <View style={styles.rightRow}>
+          {rightText ? (
+            <ThemedText style={styles.rightText}>{rightText}</ThemedText>
+          ) : null}
+          <Ionicons
+            name="chevron-forward-outline"
+            size={18}
+            color={Colors[colorScheme].icon}
+          />
+        </View>
+      </TouchableOpacity>
+    );
+  }
 
   return (
-    <View style={[styles.row, {borderTopWidth: showTopBorder ? top : 0, borderBottomWidth: showBottomBorder ? bottom : 0}]}>
+    <View
+      style={[
+        styles.row,
+        {
+          borderTopWidth: showTopBorder ? top : 0,
+          borderBottomWidth: showBottomBorder ? bottom : 0,
+        },
+      ]}
+    >
       <View style={{flex: 1}}>
         <View style={styles.titleRow}>
+          {leftIconName ? (
+            <Ionicons
+              name={leftIconName}
+              size={20}
+              color={Colors[colorScheme].primary}
+            />
+          ) : null}
           <ThemedText style={styles.rowTitle}>{title}</ThemedText>
           {badgeText ? (
             <View style={styles.badge}>
@@ -51,34 +118,17 @@ const MenuRow: React.FC<MenuRowProps> = ({
         ) : null}
       </View>
 
-      {variant === "toggle" ? (
-        <View style={styles.rightRow}>
-          <Switch
-            value={value}
-            onValueChange={onValueChange}
-            trackColor={{
-              false: Colors[colorScheme].icon,
-              true: Colors[colorScheme].primary,
-            }}
-            thumbColor={Colors[colorScheme].background}
-          />
-        </View>
-      ) : (
-        <TouchableOpacity
-          style={styles.rightRow}
-          onPress={onPress}
-          activeOpacity={0.8}
-        >
-          {rightText ? (
-            <ThemedText style={styles.rightText}>{rightText}</ThemedText>
-          ) : null}
-          <Ionicons
-            name="chevron-forward-outline"
-            size={18}
-            color={Colors[colorScheme].icon}
-          />
-        </TouchableOpacity>
-      )}
+      <View style={styles.rightRow}>
+        <Switch
+          value={value}
+          onValueChange={onValueChange}
+          trackColor={{
+            false: Colors[colorScheme].icon,
+            true: Colors[colorScheme].primary,
+          }}
+          thumbColor={Colors[colorScheme].background}
+        />
+      </View>
     </View>
   );
 };
@@ -89,8 +139,8 @@ const createStyles = (colorScheme: "light" | "dark") =>
       flexDirection: "row",
       alignItems: "center",
       justifyContent: "space-between",
-      paddingVertical: 14,
-      minHeight: 86,
+      paddingVertical: 12,
+      minHeight: 64,
       borderTopColor: Colors[colorScheme].icon,
       borderBottomWidth: StyleSheet.hairlineWidth,
       borderBottomColor: Colors[colorScheme].icon,
