@@ -1,4 +1,5 @@
 import ComboInput from "@/components/combo-input";
+import ConfirmPopup from "@/components/atoms/confirm-popup";
 import ImageUpload from "@/components/image-upload";
 import {ThemedButton} from "@/components/themed-button";
 import {ThemedInput} from "@/components/themed-input";
@@ -26,6 +27,7 @@ export default function StoreSettingScreen() {
   const [country, setCountry] = React.useState("id");
   const [province, setProvince] = React.useState("JAWA TIMUR");
   const [cityRegion, setCityRegion] = React.useState("");
+  const [confirmOpen, setConfirmOpen] = React.useState(false);
 
   return (
     <View style={styles.container}>
@@ -147,8 +149,18 @@ export default function StoreSettingScreen() {
         </View>
 
         <View style={styles.bottomButtonWrapper}>
-          <ThemedButton title="SAVE" onPress={() => {}} />
+          <ThemedButton title="SAVE" onPress={() => setConfirmOpen(true)} />
         </View>
+
+        <ConfirmPopup
+          visible={confirmOpen}
+          title="WARNING"
+          message="Data has not been saved. Are you sure you want to return?"
+          onCancel={() => setConfirmOpen(false)}
+          onConfirm={() => {
+            setConfirmOpen(false);
+          }}
+        />
       </ScrollView>
     </View>
   );

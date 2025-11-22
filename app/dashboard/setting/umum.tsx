@@ -3,6 +3,7 @@ import {ThemedButton} from "@/components/themed-button";
 import {ThemedText} from "@/components/themed-text";
 import {Colors} from "@/constants/theme";
 import {useColorScheme} from "@/hooks/use-color-scheme";
+import {useRouter} from "expo-router";
 import React from "react";
 import {StyleSheet, View} from "react-native";
 import {ScrollView} from "react-native-gesture-handler";
@@ -10,6 +11,7 @@ import {ScrollView} from "react-native-gesture-handler";
 export default function GeneralSettingScreen() {
   const colorScheme = useColorScheme() ?? "light";
   const styles = createStyles(colorScheme);
+  const router = useRouter();
 
   return (
     <View style={styles.container}>
@@ -56,9 +58,13 @@ export default function GeneralSettingScreen() {
             rightText="Belum Terhubung"
             variant="link"
             showTopBorder={false}
-            onPress={() => {}}
+            onPress={() => router.push("/dashboard/setting/printer" as never)}
           />
-          <MenuRow title="Atur Struk" variant="link" onPress={() => {}} />
+          <MenuRow
+            title="Atur Struk"
+            variant="link"
+            onPress={() => router.push("/dashboard/setting/receipt" as never)}
+          />
         </View>
       </ScrollView>
     </View>

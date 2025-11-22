@@ -73,14 +73,26 @@ export default function RootLayout() {
           name="dashboard/setting/profile"
           options={{headerShown: true, title: "Profil"}}
         />
-        <Stack.Screen
-          name="dashboard/setting/store"
-          options={{headerShown: true, title: "Store"}}
-        />
-        <Stack.Screen
-          name="dashboard/setting/umum"
-          options={{headerShown: true, title: "Umum"}}
-        />
+      <Stack.Screen
+        name="dashboard/setting/store"
+        options={{headerShown: true, title: "Store"}}
+      />
+      <Stack.Screen
+        name="dashboard/setting/receipt"
+        options={{headerShown: true, title: "Atur Struk"}}
+      />
+      <Stack.Screen
+        name="dashboard/setting/order-receipt"
+        options={{headerShown: true, title: "Struk Order"}}
+      />
+      <Stack.Screen
+        name="dashboard/setting/printer"
+        options={{headerShown: true, title: "Printer"}}
+      />
+      <Stack.Screen
+        name="dashboard/setting/umum"
+        options={{headerShown: true, title: "Umum"}}
+      />
       </Stack>
     </GestureHandlerRootView>
   );

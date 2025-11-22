@@ -1,6 +1,6 @@
 import Header from "@/components/header";
 import Sidebar from "@/components/layouts/dashboard/sidebar";
-import SettingListItem from "@/components/setting-list-item";
+import SettingListItem from "@/components/atoms/setting-list-item";
 import {ThemedButton} from "@/components/themed-button";
 import {ThemedText} from "@/components/themed-text";
 import {Colors} from "@/constants/theme";

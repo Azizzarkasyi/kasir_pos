@@ -3,7 +3,7 @@ import {useColorScheme} from "@/hooks/use-color-scheme";
 import {Ionicons} from "@expo/vector-icons";
 import React from "react";
 import {StyleSheet, TouchableOpacity, View} from "react-native";
-import {ThemedText} from "./themed-text";
+import {ThemedText} from "../themed-text";
 
 type SettingListItemProps = {
   title: string;

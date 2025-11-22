@@ -96,7 +96,7 @@ export function ThemedInput({
             : null}
         </View>
         <TextInput
-          style={styles.input}
+          style={[styles.input, rest.multiline ? {textAlignVertical: 'center'} : null]}
           {...rest}
           onFocus={() => setIsFocused(true)}
           onBlur={() => setIsFocused(false)}
