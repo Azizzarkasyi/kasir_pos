@@ -45,9 +45,8 @@ const RegisterScreen = () => {
 
   return (
     <View style={{flex: 1, backgroundColor: Colors[colorScheme].background}}>
-      <View style={[styles.container, {paddingTop: insets.top}]}> 
-        <Header />
-        <KeyboardAwareScrollView
+      <Header />
+      <KeyboardAwareScrollView
           contentContainerStyle={[
             styles.scrollContainer,
             {paddingBottom: insets.bottom + 80},
@@ -132,7 +131,6 @@ const RegisterScreen = () => {
           </View>
 
         </KeyboardAwareScrollView>
-      </View>
       <View style={styles.bottomBar}>
         <ThemedButton
           title="Daftar"
@@ -154,6 +152,7 @@ const createStyles = (colorScheme: "light" | "dark") =>
     },
     scrollContainer: {
       paddingBottom: 20,
+      paddingHorizontal: 20,
     },
     title: {
       marginTop: 20,

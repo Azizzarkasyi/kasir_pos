@@ -16,12 +16,20 @@ export type ThemedInputProps = TextInputProps & {
   label: string;
   error?: string;
   isPassword?: boolean;
+  leftIcon?: React.ReactNode;
+  leftIconName?: keyof typeof Ionicons.glyphMap;
+  width?: number | string;
+  showLabel?: boolean;
 };
 
 export function ThemedInput({
   label,
   error,
   isPassword = false,
+  leftIcon,
+  leftIconName,
+  width = "100%",
+  showLabel = true,
   ...rest
 }: ThemedInputProps) {
   const [isFocused, setIsFocused] = useState(false);
@@ -58,11 +66,26 @@ export function ThemedInput({
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, {width}]}> 
       <View style={styles.inputContainer}>
-        <Animated.Text style={[styles.label, labelStyle]}>
-          {label}
-        </Animated.Text>
+        {showLabel ? (
+          <Animated.Text style={[styles.label, labelStyle]}>
+            {label}
+          </Animated.Text>
+        ) : null}
+        <View style={styles.leftIconContainer}>
+          {leftIcon
+            ? leftIcon
+            : leftIconName
+            ? (
+                <Ionicons
+                  name={leftIconName}
+                  size={20}
+                  color={Colors[colorScheme].icon}
+                />
+              )
+            : null}
+        </View>
         <TextInput
           style={styles.input}
           {...rest}
@@ -116,6 +139,9 @@ const createStyles = (
     label: {
       position: "absolute",
       left: 12,
+    },
+    leftIconContainer: {
+      marginRight: 8,
     },
     input: {
       flex: 1,

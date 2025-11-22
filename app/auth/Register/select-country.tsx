@@ -46,9 +46,7 @@ const SelectCountryScreen = () => {
 
   return (
     <View style={{flex: 1, backgroundColor: Colors[colorScheme].background}}>
-      <View style={{paddingTop: insets.top, paddingHorizontal: 20}}>
-        <Header />
-      </View>
+      <Header />
       <KeyboardAwareScrollView
         contentContainerStyle={{paddingHorizontal: 20, paddingBottom: insets.bottom + 80}}
         enableOnAndroid

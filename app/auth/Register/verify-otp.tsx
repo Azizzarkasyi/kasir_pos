@@ -9,12 +9,10 @@ import {Ionicons} from "@expo/vector-icons";
 import React, {useEffect, useState} from "react";
 import {StyleSheet, TouchableOpacity, View} from "react-native";
 import {KeyboardAwareScrollView} from "react-native-keyboard-aware-scroll-view";
-import {useSafeAreaInsets} from "react-native-safe-area-context";
 
 const VerifyOtpScreen = () => {
   const colorScheme = useColorScheme() ?? "light";
   const styles = createStyles(colorScheme);
-  const insets = useSafeAreaInsets();
 
   const [phone] = useState("+6285152566988");
   const [countdown, setCountdown] = useState(60);
@@ -39,15 +37,15 @@ const VerifyOtpScreen = () => {
   // Modal ditampilkan melalui state isModalVisible
   return (
     <View style={{flex: 1, backgroundColor: Colors[colorScheme].background}}>
+      <Header />
       <KeyboardAwareScrollView
-        contentContainerStyle={{paddingTop: insets.top, paddingHorizontal: 20}}
+        contentContainerStyle={{paddingHorizontal: 20}}
         enableOnAndroid
         keyboardOpeningTime={0}
         extraScrollHeight={24}
         keyboardShouldPersistTaps="handled"
         style={{backgroundColor: Colors[colorScheme].background}}
       >
-        <Header />
         <ChangePhoneModal
           isOpen={isModalVisible}
           onClose={() => setModalVisible(false)}

@@ -2,13 +2,13 @@ import CountryCodePicker from "@/components/country-code-picker";
 import Header from "@/components/header";
 import Logo from "@/components/logo";
 import SplashScreen from "@/components/splash-screen";
-import { ThemedButton } from "@/components/themed-button";
-import { ThemedInput } from "@/components/themed-input";
-import { ThemedText } from "@/components/themed-text";
-import { Colors } from "@/constants/theme";
-import { useColorScheme } from "@/hooks/use-color-scheme";
-import { useRouter } from "expo-router";
-import React, { useState } from "react";
+import {ThemedButton} from "@/components/themed-button";
+import {ThemedInput} from "@/components/themed-input";
+import {ThemedText} from "@/components/themed-text";
+import {Colors} from "@/constants/theme";
+import {useColorScheme} from "@/hooks/use-color-scheme";
+import {useRouter} from "expo-router";
+import React, {useState} from "react";
 import {
   Keyboard, // <--- 1. Tambahkan Import Keyboard
   Platform,
@@ -16,8 +16,8 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+import {KeyboardAwareScrollView} from "react-native-keyboard-aware-scroll-view";
+import {useSafeAreaInsets} from "react-native-safe-area-context";
 
 export default function LoginScreen() {
   const colorScheme = useColorScheme() ?? "light";
@@ -84,10 +84,11 @@ export default function LoginScreen() {
 
   return (
     <View style={styles.container}>
+      <Header />
       <KeyboardAwareScrollView
         contentContainerStyle={[
           styles.scrollContainer,
-          {paddingBottom: insets.bottom, paddingTop: insets.top},
+          {paddingBottom: insets.bottom},
         ]}
         enableOnAndroid
         keyboardOpeningTime={0}
@@ -96,8 +97,6 @@ export default function LoginScreen() {
         keyboardShouldPersistTaps="handled"
         style={{backgroundColor: Colors[colorScheme].background}}
       >
-        <Header />
-
         <Logo />
 
         <View style={styles.formContainer}>
