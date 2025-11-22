@@ -28,7 +28,7 @@ export default function ManageProductsScreen() {
           title="Atur Stok"
           subtitle="Ubah, tambah, atau kurangi stok produk dengan cepat."
           variant="link"
-          onPress={() => {}}
+          onPress={() => router.push("/dashboard/product/stock" as never)}
         />
 
         <MenuRow

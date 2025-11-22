@@ -55,6 +55,14 @@ export default function RootLayout() {
         name="dashboard/product/manage"
         options={{headerShown: true, title: "Kelola Produk"}}
       />
+      <Stack.Screen
+        name="dashboard/product/stock"
+        options={{headerShown: false, title: "Kelola Stok"}}
+      />
+      <Stack.Screen
+        name="dashboard/product/variant"
+        options={{headerShown: true, title: "Variasi Produk"}}
+      />
     </Stack>
   );
 }

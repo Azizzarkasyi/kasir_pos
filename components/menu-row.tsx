@@ -14,6 +14,8 @@ type MenuRowProps = {
   value?: boolean;
   onValueChange?: (val: boolean) => void;
   badgeText?: string;
+  showTopBorder?: boolean;
+  showBottomBorder?: boolean;
 };
 
 const MenuRow: React.FC<MenuRowProps> = ({
@@ -25,12 +27,16 @@ const MenuRow: React.FC<MenuRowProps> = ({
   value = false,
   onValueChange,
   badgeText,
+  showTopBorder = true,
+  showBottomBorder = true,
 }) => {
   const colorScheme = useColorScheme() ?? "light";
   const styles = createStyles(colorScheme);
+  const top = typeof StyleSheet.hairlineWidth === "number" ? StyleSheet.hairlineWidth : 1;
+  const bottom = typeof StyleSheet.hairlineWidth === "number" ? StyleSheet.hairlineWidth : 1;
 
   return (
-    <View style={styles.row}>
+    <View style={[styles.row, {borderTopWidth: showTopBorder ? top : 0, borderBottomWidth: showBottomBorder ? bottom : 0}]}>
       <View style={{flex: 1}}>
         <View style={styles.titleRow}>
           <ThemedText style={styles.rowTitle}>{title}</ThemedText>
@@ -85,7 +91,6 @@ const createStyles = (colorScheme: "light" | "dark") =>
       justifyContent: "space-between",
       paddingVertical: 14,
       minHeight: 86,
-      borderTopWidth: StyleSheet.hairlineWidth,
       borderTopColor: Colors[colorScheme].icon,
       borderBottomWidth: StyleSheet.hairlineWidth,
       borderBottomColor: Colors[colorScheme].icon,

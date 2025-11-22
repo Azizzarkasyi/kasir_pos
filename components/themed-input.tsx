@@ -8,6 +8,7 @@ import {
   Text,
   TextInput,
   type TextInputProps,
+  type ViewStyle,
   TouchableOpacity,
   View,
 } from "react-native";
@@ -20,6 +21,10 @@ export type ThemedInputProps = TextInputProps & {
   leftIconName?: keyof typeof Ionicons.glyphMap;
   width?: number | string;
   showLabel?: boolean;
+  rightIcon?: React.ReactNode;
+  rightIconName?: keyof typeof Ionicons.glyphMap;
+  inputContainerStyle?: ViewStyle;
+  containerStyle?: ViewStyle;
 };
 
 export function ThemedInput({
@@ -30,6 +35,10 @@ export function ThemedInput({
   leftIconName,
   width = "100%",
   showLabel = true,
+  rightIcon,
+  rightIconName,
+  inputContainerStyle,
+  containerStyle,
   ...rest
 }: ThemedInputProps) {
   const [isFocused, setIsFocused] = useState(false);
@@ -66,8 +75,8 @@ export function ThemedInput({
   };
 
   return (
-    <View style={[styles.container, {width}]}> 
-      <View style={styles.inputContainer}>
+    <View style={[styles.container, {width}, containerStyle]}> 
+      <View style={[styles.inputContainer, inputContainerStyle]}>
         {showLabel ? (
           <Animated.Text style={[styles.label, labelStyle]}>
             {label}
@@ -104,6 +113,10 @@ export function ThemedInput({
                 color={Colors[colorScheme].icon}
               />
             </TouchableOpacity>
+          ) : rightIcon ? (
+            rightIcon
+          ) : rightIconName ? (
+            <Ionicons name={rightIconName} size={20} color={Colors[colorScheme].icon} />
           ) : null}
         </View>
       </View>
