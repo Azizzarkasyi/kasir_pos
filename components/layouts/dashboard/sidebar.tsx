@@ -1,6 +1,7 @@
 import { Colors } from "@/constants/theme";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { AntDesign } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
 import React from "react";
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
@@ -8,6 +9,7 @@ type SidebarItemProps = {
   label: string;
   icon: React.ComponentProps<typeof AntDesign>["name"];
   active?: boolean;
+  
   onPress?: () => void;
   styles: ReturnType<typeof createStyles>;
 };
@@ -29,8 +31,9 @@ const SidebarItem: React.FC<SidebarItemProps> = ({ label, icon, active, onPress,
 
 type SidebarProps = {
   activeKey?: string;
+  isOpen: boolean;
+  onClose?: () => void;
   onSelect?: (key: string) => void;
-  onSelectOutlet?: () => void;
 };
 
 const MENU_ITEMS: { key: string; label: string; icon: React.ComponentProps<typeof AntDesign>["name"] }[] = [
@@ -44,77 +47,144 @@ const MENU_ITEMS: { key: string; label: string; icon: React.ComponentProps<typeo
   { key: "help", label: "Bantuan", icon: "question-circle" },
 ];
 
-const Sidebar: React.FC<SidebarProps> = ({ activeKey, onSelect, onSelectOutlet }) => {
+const Sidebar: React.FC<SidebarProps> = ({ activeKey, isOpen, onClose, onSelect }) => {
   const colorScheme = useColorScheme() ?? "light";
   const styles = createStyles(colorScheme);
+  const router = useRouter();
+
+  const getRouteForKey = (key: string): string | null => {
+    switch (key) {
+      case "home":
+        return "/dashboard/home";
+      case "products":
+        return "/dashboard/product/manage";
+      case "transactions":
+        return "/dashboard/transaction";
+      case "settings":
+        return "/dashboard/setting";
+      case "history":
+        return "/dashboard/transaction/history";
+      default:
+        return null;
+    }
+  };
+
+  const handleSelectItem = (key: string) => {
+    onSelect?.(key);
+
+    if (key === "outlet") {
+      router.push("/dashboard/select-branch" as never);
+      onClose?.();
+      return;
+    }
+
+    const route = getRouteForKey(key);
+    if (route) {
+      router.replace(route as never);
+    }
+
+    onClose?.();
+  };
+
+  if (!isOpen) {
+    return null;
+  }
 
   return (
-    <View style={styles.container}>
-      <View style={styles.topSection}>
-        <View style={styles.profileRow}>
-          <View style={styles.avatarCircle}>
-            <AntDesign name="user" size={28} color={Colors[colorScheme].primary} />
-            <View style={styles.badgeFree}>
-              <Text style={styles.badgeFreeText}>FREE</Text>
+    <View style={styles.overlay}>
+      <View style={styles.drawer}>
+        <View style={styles.container}>
+          <View style={styles.topSection}>
+            <View style={styles.profileRow}>
+              <View style={styles.avatarCircle}>
+                <AntDesign name="user" size={28} color={Colors[colorScheme].primary} />
+                <View style={styles.badgeFree}>
+                  <Text style={styles.badgeFreeText}>FREE</Text>
+                </View>
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.profileName}>Basofi Rswt</Text>
+                <Text style={styles.profileRole}>Pemilik</Text>
+              </View>
+              <AntDesign name="right" size={16} color="#B0B0B0" />
+            </View>
+
+            <View style={styles.outletRow}>
+              <View>
+                <Text style={styles.outletName}>Basofi Rswt</Text>
+                <Text style={styles.outletLocation}>Pusat</Text>
+              </View>
+              <TouchableOpacity
+                style={styles.outletButton}
+                onPress={() => {
+                  router.push("/dashboard/select-branch" as never);
+                  onClose?.();
+                }}
+              >
+                <Text style={styles.outletButtonText}>Pilih Outlet</Text>
+              </TouchableOpacity>
             </View>
           </View>
-          <View style={{ flex: 1 }}>
-            <Text style={styles.profileName}>Basofi Rswt</Text>
-            <Text style={styles.profileRole}>Pemilik</Text>
-          </View>
-          <AntDesign name="right" size={16} color="#B0B0B0" />
-        </View>
 
-        <View style={styles.outletRow}>
-          <View>
-            <Text style={styles.outletName}>Basofi Rswt</Text>
-            <Text style={styles.outletLocation}>Pusat</Text>
+          <ScrollView contentContainerStyle={styles.scrollContent}>
+            {MENU_ITEMS.map((item) => (
+              <SidebarItem
+                key={item.key}
+                label={item.label}
+                icon={item.icon}
+                active={activeKey === item.key}
+                onPress={() => handleSelectItem(item.key)}
+                styles={styles}
+              />
+            ))}
+          </ScrollView>
+
+          <View style={styles.bottomSection}>
+            <View style={styles.feedbackCard}>
+              <Text style={styles.feedbackTitle}>Bantu kami jadi lebih baik</Text>
+              <View style={styles.feedbackRow}>
+                <Text style={styles.feedbackSubtitle}>Beri masukan untuk </Text>
+                <Text style={styles.feedbackLink}>Qasir</Text>
+                <AntDesign name="right" size={14} color={Colors[colorScheme].primary} />
+              </View>
+            </View>
+
+            <View style={styles.versionWrapper}>
+              <Text style={styles.versionBrand}>Qasir</Text>
+              <Text style={styles.versionText}>Versi 4.99.0-build.4</Text>
+            </View>
           </View>
-          <TouchableOpacity
-            style={styles.outletButton}
-            onPress={onSelectOutlet}
-          >
-            <Text style={styles.outletButtonText}>Pilih Outlet</Text>
-          </TouchableOpacity>
         </View>
       </View>
 
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        {MENU_ITEMS.map((item) => (
-          <SidebarItem
-            key={item.key}
-            label={item.label}
-            icon={item.icon}
-            active={activeKey === item.key}
-            onPress={() => onSelect?.(item.key)}
-            styles={styles}
-          />
-        ))}
-      </ScrollView>
-
-      <View style={styles.bottomSection}>
-        <View style={styles.feedbackCard}>
-          <Text style={styles.feedbackTitle}>Bantu kami jadi lebih baik</Text>
-          <View style={styles.feedbackRow}>
-            <Text style={styles.feedbackSubtitle}>Beri masukan untuk </Text>
-            <Text style={styles.feedbackLink}>Qasir</Text>
-            <AntDesign name="right" size={14} color={Colors[colorScheme].primary} />
-          </View>
-        </View>
-
-        <View style={styles.versionWrapper}>
-          <Text style={styles.versionBrand}>Qasir</Text>
-          <Text style={styles.versionText}>Versi 4.99.0-build.4</Text>
-        </View>
-      </View>
+      <TouchableOpacity
+        style={styles.backdrop}
+        activeOpacity={1}
+        onPress={onClose}
+      />
     </View>
   );
-};
+}
 
 export default Sidebar;
 
 const createStyles = (colorScheme: "light" | "dark") =>
   StyleSheet.create({
+  overlay: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    flexDirection: "row",
+    backgroundColor: "rgba(0,0,0,0.3)",
+    zIndex: 30,
+  },
+  drawer: {
+    width: 260,
+    maxWidth: "80%",
+    backgroundColor: "#FFFFFF",
+  },
   container: {
     flex: 1,
     paddingTop: 40,
@@ -270,5 +340,8 @@ const createStyles = (colorScheme: "light" | "dark") =>
     color: "#999999",
     marginTop: 2,
   },
+  backdrop: {
+    flex: 1,
+    backgroundColor: "transparent",
+  },
 });
-

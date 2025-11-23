@@ -7,10 +7,10 @@ import {
   StyleSheet,
   Text,
   TextInput,
-  type TextInputProps,
-  type ViewStyle,
   TouchableOpacity,
   View,
+  type TextInputProps,
+  type ViewStyle,
 } from "react-native";
 
 export type ThemedInputProps = TextInputProps & {
@@ -25,6 +25,10 @@ export type ThemedInputProps = TextInputProps & {
   rightIconName?: keyof typeof Ionicons.glyphMap;
   inputContainerStyle?: ViewStyle;
   containerStyle?: ViewStyle;
+  /** Optional external ref to control the underlying TextInput (e.g. focusing from a Modal). */
+  inputRef?: React.RefObject<TextInput | null>;
+  /** When true, input will try to auto-focus reliably inside a Modal when modalVisible becomes true. */
+  isAutoFocusOnModal?: boolean;
 };
 
 export function ThemedInput({
@@ -39,6 +43,8 @@ export function ThemedInput({
   rightIconName,
   inputContainerStyle,
   containerStyle,
+  inputRef: externalInputRef,
+  isAutoFocusOnModal,
   ...rest
 }: ThemedInputProps) {
   const [isFocused, setIsFocused] = useState(false);
@@ -48,6 +54,8 @@ export function ThemedInput({
   const styles = createStyles(colorScheme, !!error, isFocused);
 
   const focusAnim = useRef(new Animated.Value(value ? 1 : 0)).current;
+  const internalRef = useRef<TextInput | null>(null);
+  const inputRef = externalInputRef ?? internalRef;
 
   useEffect(() => {
     Animated.timing(focusAnim, {
@@ -56,6 +64,16 @@ export function ThemedInput({
       useNativeDriver: false,
     }).start();
   }, [isFocused, value, focusAnim]);
+
+  useEffect(() => {
+    if (!isAutoFocusOnModal) return;
+
+    const timeout = setTimeout(() => {
+      inputRef.current?.focus();
+    }, 150);
+
+    return () => clearTimeout(timeout);
+  }, [isAutoFocusOnModal, inputRef]);
 
   const labelStyle = {
     top: focusAnim.interpolate({
@@ -75,7 +93,7 @@ export function ThemedInput({
   };
 
   return (
-    <View style={[styles.container, {width}, containerStyle]}> 
+    <View style={[styles.container, {width}, containerStyle as any]}> 
       <View style={[styles.inputContainer, inputContainerStyle]}>
         {showLabel ? (
           <Animated.Text style={[styles.label, labelStyle]}>
@@ -96,6 +114,7 @@ export function ThemedInput({
             : null}
         </View>
         <TextInput
+          ref={inputRef}
           style={[styles.input, rest.multiline ? {textAlignVertical: 'center'} : null]}
           {...rest}
           onFocus={() => setIsFocused(true)}

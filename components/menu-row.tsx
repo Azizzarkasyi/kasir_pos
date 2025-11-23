@@ -1,9 +1,9 @@
-import {Colors} from "@/constants/theme";
-import {useColorScheme} from "@/hooks/use-color-scheme";
-import {Ionicons} from "@expo/vector-icons";
+import { Colors } from "@/constants/theme";
+import { useColorScheme } from "@/hooks/use-color-scheme";
+import { Ionicons } from "@expo/vector-icons";
 import React from "react";
-import {StyleSheet, Switch, TouchableOpacity, View} from "react-native";
-import {ThemedText} from "./themed-text";
+import { StyleSheet, Switch, TouchableOpacity, View } from "react-native";
+import { ThemedText } from "./themed-text";
 
 type MenuRowProps = {
   title: string;
@@ -45,7 +45,6 @@ const MenuRow: React.FC<MenuRowProps> = ({
         style={[
           styles.row,
           {
-            borderTopWidth: showTopBorder ? top : 0,
             borderBottomWidth: showBottomBorder ? bottom : 0,
           },
         ]}
@@ -88,16 +87,11 @@ const MenuRow: React.FC<MenuRowProps> = ({
   }
 
   return (
-    <View
-      style={[
-        styles.row,
-        {
-          borderTopWidth: showTopBorder ? top : 0,
-          borderBottomWidth: showBottomBorder ? bottom : 0,
-        },
-      ]}
-    >
-      <View style={{flex: 1}}>
+    <TouchableOpacity
+      style={styles.row}
+      onPress={onPress}
+      activeOpacity={0.8}>
+      <View style={{ flex: 1 }}>
         <View style={styles.titleRow}>
           {leftIconName ? (
             <Ionicons
@@ -118,18 +112,31 @@ const MenuRow: React.FC<MenuRowProps> = ({
         ) : null}
       </View>
 
-      <View style={styles.rightRow}>
-        <Switch
-          value={value}
-          onValueChange={onValueChange}
-          trackColor={{
-            false: Colors[colorScheme].icon,
-            true: Colors[colorScheme].primary,
-          }}
-          thumbColor={Colors[colorScheme].background}
-        />
-      </View>
-    </View>
+      {variant === "toggle" ? (
+        <View style={styles.rightRow}>
+          <Switch
+            value={value}
+            onValueChange={onValueChange}
+            trackColor={{
+              false: Colors[colorScheme].icon,
+              true: Colors[colorScheme].primary,
+            }}
+            thumbColor={Colors[colorScheme].background}
+          />
+        </View>
+      ) : (
+        <View style={styles.rightRow}>
+          {rightText ? (
+            <ThemedText style={styles.rightText}>{rightText}</ThemedText>
+          ) : null}
+          <Ionicons
+            name="chevron-forward-outline"
+            size={18}
+            color={Colors[colorScheme].icon}
+          />
+        </View>
+      )}
+    </TouchableOpacity>
   );
 };
 
@@ -144,7 +151,7 @@ const createStyles = (colorScheme: "light" | "dark") =>
       borderTopColor: Colors[colorScheme].icon,
       borderBottomWidth: StyleSheet.hairlineWidth,
       borderBottomColor: Colors[colorScheme].icon,
-      gap: 12,
+      gap: 50,
     },
     titleRow: {
       flexDirection: "row",
@@ -157,6 +164,7 @@ const createStyles = (colorScheme: "light" | "dark") =>
     rowSubtitle: {
       marginTop: 2,
       color: Colors[colorScheme].icon,
+      fontSize: 12,
     },
     badge: {
       borderWidth: 1,
@@ -173,9 +181,8 @@ const createStyles = (colorScheme: "light" | "dark") =>
       flexDirection: "row",
       alignItems: "center",
       justifyContent: "flex-end",
-      width: 140,
       alignSelf: "center",
-      gap: 6,
+      gap: 10,
     },
     rightText: {
       color: Colors[colorScheme].icon,

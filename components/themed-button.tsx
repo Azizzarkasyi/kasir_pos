@@ -1,5 +1,5 @@
-import {Colors} from "@/constants/theme";
-import {useColorScheme} from "@/hooks/use-color-scheme";
+import { Colors } from "@/constants/theme";
+import { useColorScheme } from "@/hooks/use-color-scheme";
 import React from "react";
 import {
   StyleSheet,
@@ -10,49 +10,86 @@ import {
 
 interface ThemedButtonProps extends TouchableOpacityProps {
   title: string;
-  variant?: "primary" | "secondary";
+  variant?: "primary" | "secondary" | "danger" | "cancel";
+  size?: "base" | "sm" | "medium";
 }
 
 export function ThemedButton({
   title,
   variant = "primary",
+  size = "base",
   style,
   ...rest
 }: ThemedButtonProps) {
   const colorScheme = useColorScheme() ?? "light";
 
   const disabled = Boolean((rest as any).disabled);
-  const backgroundColor = disabled
-    ? Colors[colorScheme].background
-    : variant === "primary"
-    ? Colors[colorScheme].primary
-    : "transparent";
-  const textColor = disabled
-    ? Colors[colorScheme].icon
-    : variant === "primary"
-    ? Colors[colorScheme].secondary
-    : Colors[colorScheme].primary;
-  const borderColor = disabled
-    ? Colors[colorScheme].icon
-    : Colors[colorScheme].primary;
+  let backgroundColor: string;
+  let textColor: string;
+  let borderColor: string;
+
+  if (disabled) {
+    backgroundColor = Colors[colorScheme].background;
+    textColor = Colors[colorScheme].icon;
+    borderColor = Colors[colorScheme].icon;
+  } else {
+    switch (variant) {
+      case "secondary": {
+        backgroundColor = "transparent";
+        textColor = Colors[colorScheme].primary;
+        borderColor = Colors[colorScheme].primary;
+        break;
+      }
+      case "danger": {
+        backgroundColor = "#ff3b30";
+        textColor = Colors[colorScheme].secondary;
+        borderColor = "#ff3b30";
+        break;
+      }
+      case "cancel": {
+        backgroundColor = Colors[colorScheme].background;
+        textColor = Colors[colorScheme].icon;
+        borderColor = Colors[colorScheme].border ?? Colors[colorScheme].icon;
+        break;
+      }
+      case "primary":
+      default: {
+        backgroundColor = Colors[colorScheme].primary;
+        textColor = Colors[colorScheme].secondary;
+        borderColor = Colors[colorScheme].primary;
+        break;
+      }
+    }
+  }
 
   return (
     <TouchableOpacity
       style={[
-        styles.button,
-        {backgroundColor, borderColor},
+        styles.buttonBase,
+        size === "sm" && styles.buttonSm,
+        size === "medium" && styles.buttonMd,
+        { backgroundColor, borderColor },
         variant === "secondary" && styles.secondaryButton,
         style,
       ]}
       {...rest}
     >
-      <Text style={[styles.text, {color: textColor}]}>{title}</Text>
+      <Text
+        style={[
+          styles.textBase,
+          size === "sm" && styles.textSm,
+          size === "medium" && styles.textMd,
+          { color: textColor },
+        ]}
+      >
+        {title}
+      </Text>
     </TouchableOpacity>
   );
 }
 
 const styles = StyleSheet.create({
-  button: {
+  buttonBase: {
     paddingVertical: 16,
     paddingHorizontal: 24,
     borderRadius: 8,
@@ -60,11 +97,25 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     borderWidth: 1,
   },
+  buttonSm: {
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+  },
+  buttonMd: {
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+  },
   secondaryButton: {
     borderWidth: 1,
   },
-  text: {
+  textBase: {
     fontSize: 16,
     fontWeight: "bold",
+  },
+  textSm: {
+    fontSize: 14,
+  },
+  textMd: {
+    fontSize: 15,
   },
 });

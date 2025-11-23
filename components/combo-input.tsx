@@ -1,7 +1,7 @@
-import {Colors} from "@/constants/theme";
-import {useColorScheme} from "@/hooks/use-color-scheme";
-import {Ionicons} from "@expo/vector-icons";
-import React, {useEffect, useRef, useState} from "react";
+import { Colors } from "@/constants/theme";
+import { useColorScheme } from "@/hooks/use-color-scheme";
+import { Ionicons } from "@expo/vector-icons";
+import React, { useEffect, useRef, useState } from "react";
 import {
   Animated,
   FlatList,
@@ -9,6 +9,7 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
+  TouchableWithoutFeedback,
   View,
 } from "react-native";
 
@@ -20,6 +21,7 @@ type ComboInputProps = {
   onChangeText: (text: string) => void;
   items: ComboItem[];
   error?: string;
+  disableAutoComplete?: boolean;
 };
 
 const ComboInput: React.FC<ComboInputProps> = ({
@@ -28,6 +30,7 @@ const ComboInput: React.FC<ComboInputProps> = ({
   onChangeText,
   items,
   error,
+  disableAutoComplete,
 }) => {
   const colorScheme = useColorScheme() ?? "light";
   const styles = createStyles(colorScheme, !!error);
@@ -58,13 +61,15 @@ const ComboInput: React.FC<ComboInputProps> = ({
     paddingHorizontal: 4,
   } as any;
 
-  const filtered = items.filter(i =>
-    i.label.toLowerCase().includes((value || "").toLowerCase())
-  );
+  const filtered = disableAutoComplete
+    ? items
+    : items.filter(i =>
+        i.label.toLowerCase().includes((value || "").toLowerCase())
+      );
 
   return (
     <View style={styles.container}>
-      <View
+      <TouchableOpacity
         style={[
           styles.inputContainer,
           {
@@ -75,6 +80,11 @@ const ComboInput: React.FC<ComboInputProps> = ({
               : Colors[colorScheme].icon,
           },
         ]}
+        onPress={() => {
+          if (!disableAutoComplete) return;
+          setOpen(true);
+        }}
+        activeOpacity={1}
       >
         <Animated.Text style={[styles.label, labelStyle]}>
           {label}
@@ -82,11 +92,15 @@ const ComboInput: React.FC<ComboInputProps> = ({
         <TextInput
           style={styles.input}
           value={value}
+          editable={!disableAutoComplete}
+          pointerEvents={disableAutoComplete ? "none" : "auto"}
           onChangeText={text => {
+            if (disableAutoComplete) return;
             onChangeText(text);
             if (!open) setOpen(true);
           }}
           onFocus={() => {
+            if (disableAutoComplete) return;
             setIsFocused(true);
             setOpen(true);
           }}
@@ -104,31 +118,35 @@ const ComboInput: React.FC<ComboInputProps> = ({
             />
           </TouchableOpacity>
         ) : null}
-      </View>
+      </TouchableOpacity>
       {!!error && <Text style={styles.errorText}>{error}</Text>}
 
       {open && filtered.length > 0 && (
-        <View style={styles.dropdown}>
-          <FlatList
-            data={filtered}
-            keyExtractor={item => item.value}
-            renderItem={({item}) => (
-              <TouchableOpacity
-                style={styles.item}
-                onPress={() => {
-                  onChangeText(item.label);
-                  setOpen(false);
-                }}
-              >
-                <Text
-                  style={[styles.itemText, {color: Colors[colorScheme].text}]}
-                >
-                  {item.label}
-                </Text>
-              </TouchableOpacity>
-            )}
-          />
-        </View>
+        <TouchableWithoutFeedback onPress={() => setOpen(false)}>
+          <View style={styles.dropdownOverlay}>
+            <View style={styles.dropdown}>
+              <FlatList
+                data={filtered}
+                keyExtractor={item => item.value}
+                renderItem={({item}) => (
+                  <TouchableOpacity
+                    style={styles.item}
+                    onPress={() => {
+                      onChangeText(item.label);
+                      setOpen(false);
+                    }}
+                  >
+                    <Text
+                      style={[styles.itemText, {color: Colors[colorScheme].text}]}
+                    >
+                      {item.label}
+                    </Text>
+                  </TouchableOpacity>
+                )}
+              />
+            </View>
+          </View>
+        </TouchableWithoutFeedback>
       )}
     </View>
   );
@@ -139,6 +157,7 @@ const createStyles = (colorScheme: "light" | "dark", hasError: boolean) =>
     container: {
       width: "100%",
       marginVertical: 10,
+      position: "relative",
     },
     inputContainer: {
       borderWidth: 1,
@@ -169,19 +188,38 @@ const createStyles = (colorScheme: "light" | "dark", hasError: boolean) =>
       marginTop: 4,
       marginLeft: 12,
     },
+    dropdownOverlay: {
+      position: "absolute",
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      zIndex: 19,
+    },
     dropdown: {
+      position: "absolute",
+      top: 60,
+      left: 0,
+      right: 0,
+      shadowColor: Colors[colorScheme].shadow,
       borderWidth: 1,
-      borderColor: Colors[colorScheme].icon,
+      borderColor: Colors[colorScheme].border,
       borderRadius: 8,
       maxHeight: 200,
       overflow: "hidden",
       backgroundColor: Colors[colorScheme].background,
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.4,
+      shadowRadius: 30,
+      paddingHorizontal: 8,
+      paddingVertical: 6,
+      elevation: 20,
+      zIndex: 20,
     },
     item: {
       paddingVertical: 12,
       paddingHorizontal: 12,
-      borderBottomWidth: 1,
-      borderBottomColor: Colors[colorScheme].icon,
+
     },
     itemText: {
       fontSize: 16,

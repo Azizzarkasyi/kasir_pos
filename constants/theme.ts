@@ -18,6 +18,13 @@ export const Colors = {
     tabIconSelected: tintColorLight,
     primary: '#00b960ff',
     secondary: '#FFFFFF',
+    border: '#d3d3d3ff',
+    border2: '#efefefff',
+    shadow: '#b4b4b4ff',
+    tabBackground: '#e7e7e7ff',
+    tabActive: '#ffffffff',
+    badgeBackground: '#ffffffff',
+    badgeActive: '#00b960ff',
   },
   dark: {
     text: '#ECEDEE',
@@ -28,30 +35,37 @@ export const Colors = {
     tabIconSelected: tintColorDark,
     primary: '#00b960ff',
     secondary: '#FFFFFF',
+    border: '#d3d3d3ff',
+    border2: '#efefefff',
+    shadow: '#d3d3d3ff',
+    tabBackground: '#8e8e8eff',
+    tabActive: '#ffffffff',
+    badgeBackground: '#ffffffff',
+    badgeActive: '#00b960ff',
   },
 };
 
 export const Fonts = Platform.select({
   ios: {
     /** iOS `UIFontDescriptorSystemDesignDefault` */
-    sans: 'system-ui',
+    sans: 'Roboto',
     /** iOS `UIFontDescriptorSystemDesignSerif` */
-    serif: 'ui-serif',
+    serif: 'Roboto',
     /** iOS `UIFontDescriptorSystemDesignRounded` */
-    rounded: 'ui-rounded',
+    rounded: 'Roboto',
     /** iOS `UIFontDescriptorSystemDesignMonospaced` */
     mono: 'ui-monospace',
   },
   default: {
-    sans: 'normal',
-    serif: 'serif',
-    rounded: 'normal',
+    sans: 'Roboto',
+    serif: 'Roboto',
+    rounded: 'Roboto',
     mono: 'monospace',
   },
   web: {
-    sans: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
-    serif: "Georgia, 'Times New Roman', serif",
-    rounded: "'SF Pro Rounded', 'Hiragino Maru Gothic ProN', Meiryo, 'MS PGothic', sans-serif",
+    sans: "'Roboto', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif",
+    serif: "'Roboto', Georgia, 'Times New Roman', serif",
+    rounded: "'Roboto', 'SF Pro Rounded', 'Hiragino Maru Gothic ProN', Meiryo, 'MS PGothic', sans-serif",
     mono: "SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace",
   },
 });

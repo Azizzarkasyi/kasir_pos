@@ -1,10 +1,10 @@
-import {Colors} from "@/constants/theme";
-import {Ionicons} from "@expo/vector-icons";
-import {useNavigation} from "@react-navigation/native";
+import { Colors } from "@/constants/theme";
+import { Ionicons } from "@expo/vector-icons";
+import { useNavigation } from "@react-navigation/native";
 import React from "react";
-import {StyleSheet, TouchableOpacity, useColorScheme, View} from "react-native";
-import {useSafeAreaInsets} from "react-native-safe-area-context";
-import {ThemedText} from "./themed-text";
+import { StyleSheet, TouchableOpacity, useColorScheme, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { ThemedText } from "./themed-text";
 
 interface HeaderProps {
   onBackPress?: () => void;
@@ -15,6 +15,7 @@ interface HeaderProps {
   left?: React.ReactNode;
   right?: React.ReactNode;
   center?: React.ReactNode;
+  withNotificationButton?: boolean;
 }
 
 const Header: React.FC<HeaderProps> = ({
@@ -26,6 +27,7 @@ const Header: React.FC<HeaderProps> = ({
   left,
   right,
   center,
+  withNotificationButton = true,
 }) => {
   const navigation = useNavigation();
   const colorScheme = useColorScheme() ?? "light";
@@ -41,7 +43,7 @@ const Header: React.FC<HeaderProps> = ({
   };
 
   return (
-    <View style={[styles.headerContainer, {paddingTop: insets.top + 10}]}>
+    <View style={[styles.headerContainer, {paddingTop: insets.top + 16}]}>
       <View style={styles.leftArea}>
         {showBack ? (
           <TouchableOpacity onPress={handleBack}>
@@ -72,7 +74,7 @@ const Header: React.FC<HeaderProps> = ({
             />
           </TouchableOpacity>
         ) : null}
-        {right}
+        {withNotificationButton ? right : null}
       </View>
     </View>
   );
@@ -85,7 +87,7 @@ const createStyles = (colorScheme: "light" | "dark") =>
       justifyContent: "space-between",
       alignItems: "center",
       width: "100%",
-      paddingVertical: 12,
+      paddingVertical: 16,
       paddingHorizontal: 8,
       backgroundColor: Colors[colorScheme].background,
       position: "relative",
@@ -126,7 +128,7 @@ const createStyles = (colorScheme: "light" | "dark") =>
       color: Colors[colorScheme].text,
     },
     titleText: {
-      fontSize: 20,
+      fontSize: 18,
       fontWeight: "700",
       textAlign: "center",
     },

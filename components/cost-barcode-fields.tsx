@@ -1,8 +1,9 @@
-import {Colors} from "@/constants/theme";
-import {useColorScheme} from "@/hooks/use-color-scheme";
+import { Colors } from "@/constants/theme";
+import { useColorScheme } from "@/hooks/use-color-scheme";
+import { Ionicons } from "@expo/vector-icons";
 import React from "react";
-import {StyleSheet, View} from "react-native";
-import {ThemedInput} from "./themed-input";
+import { StyleSheet, TouchableOpacity, View } from "react-native";
+import { ThemedInput } from "./themed-input";
 
 type Props = {
   capitalPrice: number;
@@ -40,19 +41,36 @@ const CostBarcodeFields: React.FC<Props> = ({
         containerStyle={{marginVertical: 0}}
       />
 
-      <ThemedInput
-        label="Kode Produk / Barcode"
-        value={barcode}
-        onChangeText={onBarcodeChange}
-        showLabel={false}
-        placeholder="Kode Produk / Barcode"
-        placeholderTextColor={Colors[colorScheme].icon}
-        rightIconName="barcode-outline"
-        inputContainerStyle={{
-          backgroundColor: colorScheme === "dark" ? "#1F1F1F" : "#ffffffff",
-        }}
-        containerStyle={{marginVertical: 0}}
-      />
+      <View style={styles.inputRow}>
+        <View style={{ flex: 1 }}>
+          <ThemedInput
+            label="Kode Produk / Barcode"
+            value={barcode}
+            onChangeText={onBarcodeChange}
+            showLabel={false}
+            placeholder="Kode Produk / Barcode"
+            placeholderTextColor={Colors[colorScheme].icon}
+            inputContainerStyle={{
+              backgroundColor: colorScheme === "dark" ? "#1F1F1F" : "#ffffffff",
+            }}
+            containerStyle={{ marginVertical: 0 }}
+          />
+        </View>
+
+        {onPressScan ? (
+          <TouchableOpacity
+            style={styles.iconButton}
+            onPress={onPressScan}
+            activeOpacity={0.8}
+          >
+            <Ionicons
+              name="barcode-outline"
+              size={22}
+              color={Colors[colorScheme].primary}
+            />
+          </TouchableOpacity>
+        ) : null}
+      </View>
     </View>
   );
 };
@@ -66,9 +84,21 @@ const createStyles = (colorScheme: "light" | "dark") =>
       gap: 12,
       backgroundColor: Colors[colorScheme].background,
     },
-    inputRow: {},
+    inputRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 8,
+    },
     input: {},
-    iconButton: {},
+    iconButton: {
+      width: 48,
+      height: 48,
+      borderRadius: 8,
+      borderWidth: 1,
+      borderColor: Colors[colorScheme].icon,
+      alignItems: "center",
+      justifyContent: "center",
+    },
   });
 
 export default CostBarcodeFields;
