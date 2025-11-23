@@ -1,9 +1,9 @@
-import {Colors} from "@/constants/theme";
-import {useColorScheme} from "@/hooks/use-color-scheme";
-import {useRouter} from "expo-router";
-import React from "react";
-import {ScrollView, View} from "react-native";
 import MenuRow from "@/components/menu-row";
+import { Colors } from "@/constants/theme";
+import { useColorScheme } from "@/hooks/use-color-scheme";
+import { useRouter } from "expo-router";
+import React from "react";
+import { ScrollView, View } from "react-native";
 
 export default function ManageProductsScreen() {
   const colorScheme = useColorScheme() ?? "light";
@@ -35,11 +35,14 @@ export default function ManageProductsScreen() {
           title="Bahan Baku & Resep"
           subtitle="Buat resep produk dari bahan baku."
           variant="link"
-          onPress={() => {}}
+          onPress={() =>
+            router.push("/dashboard/recipe-and-materials" as never)
+          }
         />
       </ScrollView>
     </View>
   );
 }
 
-export {};
+export { };
+

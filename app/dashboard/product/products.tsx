@@ -1,14 +1,16 @@
+import CategoryItem from "@/components/atoms/category-item";
+import CategoryModal from "@/components/drawers/category-modal";
 import ProductCard from "@/components/product-card";
-import {ThemedInput} from "@/components/themed-input";
-import {ThemedText} from "@/components/themed-text";
-import {Colors} from "@/constants/theme";
-import {useColorScheme} from "@/hooks/use-color-scheme";
-import {Ionicons} from "@expo/vector-icons";
-import {useRouter} from "expo-router";
-import React, {useState} from "react";
-import {StyleSheet, TouchableOpacity, View} from "react-native";
-import {KeyboardAwareScrollView} from "react-native-keyboard-aware-scroll-view";
-import {useSafeAreaInsets} from "react-native-safe-area-context";
+import { ThemedInput } from "@/components/themed-input";
+import { ThemedText } from "@/components/themed-text";
+import { Colors } from "@/constants/theme";
+import { useColorScheme } from "@/hooks/use-color-scheme";
+import { Ionicons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
+import React, { useState } from "react";
+import { StyleSheet, TouchableOpacity, View } from "react-native";
+import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function ProductsScreen() {
   const colorScheme = useColorScheme() ?? "light";
@@ -18,8 +20,101 @@ export default function ProductsScreen() {
 
   const [activeTab, setActiveTab] = useState<"produk" | "kategori">("produk");
   const [search, setSearch] = useState("");
+  const [isCategoryModalVisible, setIsCategoryModalVisible] = useState(false);
+  const [editingCategoryId, setEditingCategoryId] = useState<string | null>(null);
+  const [editingCategoryName, setEditingCategoryName] = useState("");
 
-  const goAdd = () => router.push("/dashboard/product/add-product" as never);
+  const [products] = useState(
+    [
+      {
+        id: "1",
+        name: "Aqua gelas",
+        price: "2000",
+        brand: "Qasir",
+        category: "minuman",
+        favorite: true,
+        enableCostBarcode: true,
+        imageUri: null as string | null,
+        capitalPrice: 1000,
+        barcode: "1234567890",
+      },
+      {
+        id: "2",
+        name: "Nasi Goreng",
+        price: "15000",
+        brand: "",
+        category: "makanan",
+        favorite: false,
+        enableCostBarcode: false,
+        imageUri: null as string | null,
+        capitalPrice: 0,
+        barcode: "",
+      },
+    ],
+  );
+
+  const categories = [
+    {id: "umum", name: "Umum"},
+    {id: "makanan", name: "Makanan"},
+    {id: "minuman", name: "Minuman"},
+  ];
+
+  const handleEditCategory = (categoryId: string) => {
+    const found = categories.find(c => c.id === categoryId);
+    setEditingCategoryId(categoryId);
+    setEditingCategoryName(found?.name ?? "");
+    setIsCategoryModalVisible(true);
+  };
+
+  const handleOpenAddCategory = () => {
+    setEditingCategoryId(null);
+    setEditingCategoryName("");
+    setIsCategoryModalVisible(true);
+  };
+
+  const handleSubmitCategory = (name: string) => {
+    // TODO: Integrasikan dengan API / state nyata
+    console.log("Simpan kategori", {id: editingCategoryId, name});
+    setIsCategoryModalVisible(false);
+  };
+
+  const handlePressProduct = (product: {
+    id: string;
+    name: string;
+    price: string;
+    brand: string;
+    category: string;
+    favorite: boolean;
+    enableCostBarcode: boolean;
+    imageUri: string | null;
+    capitalPrice: number;
+    barcode: string;
+  }) => {
+    router.push({
+      pathname: "/dashboard/product/edit-product",
+      params: {
+        id: product.id,
+        name: product.name,
+        price: product.price,
+        brand: product.brand,
+        category: product.category,
+        favorite: String(product.favorite),
+        enableCostBarcode: String(product.enableCostBarcode),
+        imageUri: product.imageUri ?? "",
+        capitalPrice: String(product.capitalPrice),
+        barcode: product.barcode,
+      },
+    } as never);
+  };
+
+  const goAdd = () => {
+    if (activeTab === "kategori") {
+      handleOpenAddCategory();
+      return;
+    }
+
+    router.push("/dashboard/product/add-product" as never);
+  };
 
   return (
     <View style={{flex: 1, backgroundColor: Colors[colorScheme].background}}>
@@ -100,18 +195,28 @@ export default function ProductsScreen() {
                 </TouchableOpacity>
               </View>
 
-              <ProductCard
-                initials="AG"
-                name="Aqua gelas"
-                subtitle="2 Harga"
-                rightText="Stok 20"
-              />
+              <View style={{marginTop: 16}}>
+                {products.map(product => (
+                  <ProductCard
+                    key={product.id}
+                    initials={(product.name || "PR").slice(0, 2).toUpperCase()}
+                    name={product.name}
+                    subtitle={product.brand || "Tanpa merk"}
+                    rightText={product.category || "Umum"}
+                    onPress={() => handlePressProduct(product)}
+                  />
+                ))}
+              </View>
             </View>
           ) : (
             <View style={{marginTop: 20}}>
-              <ThemedText style={{color: Colors[colorScheme].icon}}>
-                Belum ada kategori.
-              </ThemedText>
+              {categories.map(category => (
+                <CategoryItem
+                  key={category.id}
+                  title={category.name}
+                  onEdit={() => handleEditCategory(category.id)}
+                />
+              ))}
             </View>
           )}
         </View>
@@ -123,6 +228,13 @@ export default function ProductsScreen() {
       >
         <Ionicons name="add" size={28} color={Colors[colorScheme].background} />
       </TouchableOpacity>
+
+      <CategoryModal
+        visible={isCategoryModalVisible}
+        initialName={editingCategoryName}
+        onClose={() => setIsCategoryModalVisible(false)}
+        onSubmit={handleSubmitCategory}
+      />
     </View>
   );
 }

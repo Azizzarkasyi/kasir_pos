@@ -9,14 +9,13 @@ import { ThemedInput } from "@/components/themed-input";
 import { ThemedText } from "@/components/themed-text";
 import { Colors } from "@/constants/theme";
 import { useColorScheme } from "@/hooks/use-color-scheme";
-import { useProductFormStore } from "@/stores/product-form-store";
 import { useLocalSearchParams, useNavigation, useRouter } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
 import { StyleSheet, View } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-export default function AddProductScreen() {
+export default function EditProductScreen() {
   const colorScheme = useColorScheme() ?? "light";
   const styles = createStyles(colorScheme);
   const insets = useSafeAreaInsets();
@@ -33,16 +32,25 @@ export default function AddProductScreen() {
   const [enableCostBarcode, setEnableCostBarcode] = useState(false);
   const [imageUri, setImageUri] = useState<string | null>(null);
   const [capitalPrice, setCapitalPrice] = useState(0);
-  const barcode = useProductFormStore(state => state.barcode);
-  const setBarcode = useProductFormStore(state => state.setBarcode);
+  const [barcode, setBarcode] = useState("");
   const [variants, setVariants] = useState<
     {name: string; price: number; stockText?: string}[]
   >([]);
-  const {variant_name, variant_price} =
-    useLocalSearchParams<{
-      variant_name?: string;
-      variant_price?: string;
-    }>();
+  const params = useLocalSearchParams<{
+    id?: string;
+    name?: string;
+    price?: string;
+    brand?: string;
+    category?: string;
+    favorite?: string;
+    enableCostBarcode?: string;
+    imageUri?: string;
+    capitalPrice?: string;
+    barcode?: string;
+    variant_name?: string;
+    variant_price?: string;
+  }>();
+  const {variant_name, variant_price} = params;
 
   React.useEffect(() => {
     if (variant_name && variant_price) {
@@ -52,8 +60,38 @@ export default function AddProductScreen() {
     }
   }, [variant_name, variant_price, router]);
 
-  // Barcode sekarang dikelola via Zustand store dan diisi langsung dari layar scan,
-  // jadi tidak lagi diambil dari query param.
+  useEffect(() => {
+    if (params.name !== undefined) {
+      setName(String(params.name));
+    }
+    if (params.price !== undefined) {
+      setPrice(String(params.price));
+    }
+    if (params.brand !== undefined) {
+      setBrand(String(params.brand));
+    }
+    if (params.category !== undefined) {
+      setCategory(String(params.category));
+    }
+    if (params.favorite !== undefined) {
+      setFavorite(params.favorite === "true");
+    }
+    if (params.enableCostBarcode !== undefined) {
+      setEnableCostBarcode(params.enableCostBarcode === "true");
+    }
+    if (params.imageUri !== undefined && params.imageUri !== "") {
+      setImageUri(String(params.imageUri));
+    }
+    if (params.capitalPrice !== undefined) {
+      const parsed = Number(String(params.capitalPrice).replace(/[^0-9]/g, ""));
+      if (!Number.isNaN(parsed)) {
+        setCapitalPrice(parsed);
+      }
+    }
+    if (params.barcode !== undefined) {
+      setBarcode(String(params.barcode));
+    }
+  }, [params]);
 
   const isDirty =
     name.trim() !== "" ||
@@ -187,9 +225,6 @@ export default function AddProductScreen() {
             onCapitalPriceChange={setCapitalPrice}
             barcode={barcode}
             onBarcodeChange={setBarcode}
-            onPressScan={() =>
-              router.push("/dashboard/product/add-barcode" as never)
-            }
           />
         ) : null}
 

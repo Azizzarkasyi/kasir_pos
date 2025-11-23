@@ -1,22 +1,20 @@
-import {ReportCard, ReportCardSkeleton} from "@/components/atoms/report-card";
+import { ReportCard, ReportCardSkeleton } from "@/components/atoms/report-card";
 import Header from "@/components/header";
 import Sidebar from "@/components/layouts/dashboard/sidebar";
-import {ThemedButton} from "@/components/themed-button";
-import {ThemedText} from "@/components/themed-text";
-import {Colors} from "@/constants/theme";
-import {useColorScheme} from "@/hooks/use-color-scheme";
-import {Ionicons} from "@expo/vector-icons";
-import {useRouter} from "expo-router";
+import { ThemedButton } from "@/components/themed-button";
+import { ThemedText } from "@/components/themed-text";
+import { Colors } from "@/constants/theme";
+import { useColorScheme } from "@/hooks/use-color-scheme";
+import { Ionicons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
 import React from "react";
 import {
-  Animated,
-  Easing,
   Image,
   RefreshControl,
   ScrollView,
   StyleSheet,
   TouchableOpacity,
-  View,
+  View
 } from "react-native";
 
 const DashboardScreen = () => {
@@ -28,9 +26,6 @@ const DashboardScreen = () => {
   const [isDrawerOpen, setIsDrawerOpen] = React.useState(false);
   const router = useRouter();
 
-  const drawerTranslateX = React.useRef(new Animated.Value(-260)).current;
-  const backdropOpacity = React.useRef(new Animated.Value(0)).current;
-
   React.useEffect(() => {
     const timer = setTimeout(() => {
       setIsLoading(false);
@@ -41,48 +36,11 @@ const DashboardScreen = () => {
 
   const openDrawer = React.useCallback(() => {
     setIsDrawerOpen(true);
-
-    Animated.parallel([
-      Animated.timing(drawerTranslateX, {
-        toValue: 0,
-        duration: 220,
-        easing: Easing.out(Easing.cubic),
-        useNativeDriver: true,
-      }),
-      Animated.timing(backdropOpacity, {
-        toValue: 1,
-        duration: 220,
-        easing: Easing.out(Easing.cubic),
-        useNativeDriver: true,
-      }),
-    ]).start();
-  }, [backdropOpacity, drawerTranslateX]);
+  }, []);
 
   const closeDrawer = React.useCallback(() => {
-    Animated.parallel([
-      Animated.timing(drawerTranslateX, {
-        toValue: -260,
-        duration: 200,
-        easing: Easing.in(Easing.cubic),
-        useNativeDriver: true,
-      }),
-      Animated.timing(backdropOpacity, {
-        toValue: 0,
-        duration: 200,
-        easing: Easing.in(Easing.cubic),
-        useNativeDriver: true,
-      }),
-    ]).start(({finished}) => {
-      if (finished) {
-        setIsDrawerOpen(false);
-      }
-    });
-  }, [backdropOpacity, drawerTranslateX]);
-
-  const handleSelectOutlet = React.useCallback(() => {
-    closeDrawer();
-    router.push("/dashboard/select-branch" as never);
-  }, [closeDrawer, router]);
+    setIsDrawerOpen(false);
+  }, []);
 
   const onRefresh = React.useCallback(() => {
     setRefreshing(true);
@@ -207,44 +165,17 @@ const DashboardScreen = () => {
       </ScrollView>
 
       <View style={styles.bottomButtonWrapper}>
-        <ThemedButton title="Transaksi" onPress={() => {}} />
+        <ThemedButton title="Transaksi" onPress={() => {
+          router.push("/dashboard/transaction" as never);
+        }} />
       </View>
 
-      {isDrawerOpen && (
-        <Animated.View
-          style={[styles.drawerOverlay, {opacity: backdropOpacity}]}
-        >
-          <Animated.View
-            style={[
-              styles.drawer,
-              {transform: [{translateX: drawerTranslateX}]},
-            ]}
-          >
-            <Sidebar
-              activeKey={activeMenu}
-              onSelect={key => {
-                setActiveMenu(key);
-                closeDrawer();
-                if (key === "products") {
-                  router.push("/dashboard/product/manage" as never);
-                } else if (key === "home") {
-                  router.replace("/dashboard/home" as never);
-                } else if (key === "outlet") {
-                  handleSelectOutlet();
-                } else if (key === "settings") {
-                  router.replace("/dashboard/setting" as never);
-                }
-              }}
-              onSelectOutlet={handleSelectOutlet}
-            />
-          </Animated.View>
-          <TouchableOpacity
-            style={styles.drawerBackdrop}
-            activeOpacity={1}
-            onPress={closeDrawer}
-          />
-        </Animated.View>
-      )}
+      <Sidebar
+        activeKey={activeMenu}
+        isOpen={isDrawerOpen}
+        onClose={closeDrawer}
+        onSelect={key => setActiveMenu(key)}
+      />
     </View>
   );
 };

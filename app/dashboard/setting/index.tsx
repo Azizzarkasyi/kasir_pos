@@ -1,21 +1,19 @@
+import SettingListItem from "@/components/atoms/setting-list-item";
 import Header from "@/components/header";
 import Sidebar from "@/components/layouts/dashboard/sidebar";
-import SettingListItem from "@/components/atoms/setting-list-item";
-import {ThemedButton} from "@/components/themed-button";
-import {ThemedText} from "@/components/themed-text";
-import {Colors} from "@/constants/theme";
-import {useColorScheme} from "@/hooks/use-color-scheme";
-import {Ionicons} from "@expo/vector-icons";
-import {useRouter} from "expo-router";
+import { ThemedButton } from "@/components/themed-button";
+import { ThemedText } from "@/components/themed-text";
+import { Colors } from "@/constants/theme";
+import { useColorScheme } from "@/hooks/use-color-scheme";
+import { Ionicons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
 import React from "react";
 import {
-  Animated,
-  Easing,
   StyleSheet,
   TouchableOpacity,
   View,
 } from "react-native";
-import {ScrollView} from "react-native-gesture-handler";
+import { ScrollView } from "react-native-gesture-handler";
 
 export default function SettingScreen() {
   const colorScheme = useColorScheme() ?? "light";
@@ -24,45 +22,14 @@ export default function SettingScreen() {
 
   const [isDrawerOpen, setIsDrawerOpen] = React.useState(false);
   const [activeMenu, setActiveMenu] = React.useState("settings");
-  const drawerTranslateX = React.useRef(new Animated.Value(-260)).current;
-  const backdropOpacity = React.useRef(new Animated.Value(0)).current;
 
   const openDrawer = React.useCallback(() => {
     setIsDrawerOpen(true);
-    Animated.parallel([
-      Animated.timing(drawerTranslateX, {
-        toValue: 0,
-        duration: 220,
-        easing: Easing.out(Easing.cubic),
-        useNativeDriver: true,
-      }),
-      Animated.timing(backdropOpacity, {
-        toValue: 1,
-        duration: 220,
-        easing: Easing.out(Easing.cubic),
-        useNativeDriver: true,
-      }),
-    ]).start();
-  }, [backdropOpacity, drawerTranslateX]);
+  }, []);
 
   const closeDrawer = React.useCallback(() => {
-    Animated.parallel([
-      Animated.timing(drawerTranslateX, {
-        toValue: -260,
-        duration: 200,
-        easing: Easing.in(Easing.cubic),
-        useNativeDriver: true,
-      }),
-      Animated.timing(backdropOpacity, {
-        toValue: 0,
-        duration: 200,
-        easing: Easing.in(Easing.cubic),
-        useNativeDriver: true,
-      }),
-    ]).start(({finished}) => {
-      if (finished) setIsDrawerOpen(false);
-    });
-  }, [backdropOpacity, drawerTranslateX]);
+    setIsDrawerOpen(false);
+  }, []);
 
   return (
     <View style={styles.container}>
@@ -137,41 +104,12 @@ export default function SettingScreen() {
         <View style={{height: 80}} />
       </ScrollView>
 
-      {isDrawerOpen && (
-        <Animated.View
-          style={[styles.drawerOverlay, {opacity: backdropOpacity}]}
-        >
-          <TouchableOpacity
-            style={styles.drawerBackdrop}
-            onPress={closeDrawer}
-          />
-          <Animated.View
-            style={[
-              styles.drawer,
-              {transform: [{translateX: drawerTranslateX}]},
-            ]}
-          >
-            <Sidebar
-              activeKey={activeMenu}
-              onSelect={key => {
-                setActiveMenu(key);
-                closeDrawer();
-                if (key === "home") {
-                  router.replace("/dashboard/home" as never);
-                } else if (key === "products") {
-                  router.push("/dashboard/product/manage" as never);
-                } else if (key === "settings") {
-                  router.replace("/dashboard/setting" as never);
-                }
-              }}
-              onSelectOutlet={() => {
-                closeDrawer();
-                router.push("/dashboard/select-branch" as never);
-              }}
-            />
-          </Animated.View>
-        </Animated.View>
-      )}
+      <Sidebar
+        activeKey={activeMenu}
+        isOpen={isDrawerOpen}
+        onClose={closeDrawer}
+        onSelect={key => setActiveMenu(key)}
+      />
       <View style={styles.bottomButtonWrapper}>
         <ThemedButton title="Keluar" variant="secondary" onPress={() => {}} />
       </View>
@@ -252,30 +190,5 @@ const createStyles = (colorScheme: "light" | "dark") =>
     headerIconButton: {
       paddingHorizontal: 8,
       paddingVertical: 6,
-    },
-    drawerOverlay: {
-      position: "absolute",
-      left: 0,
-      right: 0,
-      top: 0,
-      bottom: 0,
-      zIndex: 1000,
-    },
-    drawerBackdrop: {
-      position: "absolute",
-      left: 260,
-      right: 0,
-      top: 0,
-      bottom: 0,
-      backgroundColor: "rgba(0,0,0,0.3)",
-    },
-    drawer: {
-      position: "absolute",
-      left: 0,
-      top: 0,
-      bottom: 0,
-      width: 260,
-      backgroundColor: Colors[colorScheme].background,
-      elevation: 8,
     },
   });
