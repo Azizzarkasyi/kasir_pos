@@ -1,9 +1,9 @@
-import React from 'react';
-import { TouchableOpacity, StyleSheet } from 'react-native';
-import { ThemedText } from './themed-text';
-import RadioButton from './radio-button';
-import { useColorScheme } from '@/hooks/use-color-scheme';
 import { Colors } from '@/constants/theme';
+import { useColorScheme } from '@/hooks/use-color-scheme';
+import React from 'react';
+import { StyleSheet, TouchableOpacity } from 'react-native';
+import RadioButton from './radio-button';
+import { ThemedText } from './themed-text';
 
 interface CountryListItemProps {
   item: { id: string; name: string };
@@ -17,7 +17,7 @@ const CountryListItem: React.FC<CountryListItemProps> = ({ item, selected, onPre
 
   return (
     <TouchableOpacity style={styles.container} onPress={onPress}>
-      <RadioButton selected={selected} onPress={onPress} />
+      <RadioButton selected={selected}  onPress={onPress} />
       <ThemedText style={styles.text}>{item.name}</ThemedText>
     </TouchableOpacity>
   );
@@ -30,7 +30,7 @@ const createStyles = (colorScheme: 'light' | 'dark') =>
       alignItems: 'center',
       paddingVertical: 16,
       borderBottomWidth: 1,
-      borderBottomColor: Colors[colorScheme].icon,
+      borderBottomColor: Colors[colorScheme].border2,
     },
     text: {
       marginLeft: 16,

@@ -1,4 +1,4 @@
-import HeaderWithoutSidebar from "@/components/layouts/dashboard/header-without-sidebar";
+import Header from "@/components/header";
 import { ThemedText } from "@/components/themed-text";
 import { Colors } from "@/constants/theme";
 import { useColorScheme } from "@/hooks/use-color-scheme";
@@ -13,7 +13,7 @@ const NotificationScreen = () => {
 
   return (
     <View style={styles.container}>
-      <HeaderWithoutSidebar onPressBack={() => router.back()} title="Notifikasi" />
+      <Header title="Notifikasi" showHelp={false} />
 
       <View style={styles.tabRow}>
         <View style={[styles.tabButton, styles.tabButtonActive]}>

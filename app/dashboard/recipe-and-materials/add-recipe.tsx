@@ -1,14 +1,15 @@
+import RecipeIngredientItem from "@/components/atoms/recipe-ingredient-item";
 import ComboInput from "@/components/combo-input";
 import ConfirmationDialog, { ConfirmationDialogHandle } from "@/components/drawers/confirmation-dialog";
 import ImageUpload from "@/components/image-upload";
-import ProductCard from "@/components/product-card";
 import { ThemedButton } from "@/components/themed-button";
 import { ThemedInput } from "@/components/themed-input";
 import { ThemedText } from "@/components/themed-text";
 import { Colors } from "@/constants/theme";
 import { useColorScheme } from "@/hooks/use-color-scheme";
-import { useLocalSearchParams, useNavigation, useRouter } from "expo-router";
-import React, { useEffect, useRef, useState } from "react";
+import { useRecipeFormStore } from "@/stores/recipe-form-store";
+import { useNavigation, useRouter } from "expo-router";
+import React, { useEffect, useRef } from "react";
 import { StyleSheet, View } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -22,41 +23,21 @@ export default function AddProductScreen() {
 
   const confirmationRef = useRef<ConfirmationDialogHandle | null>(null);
 
-  const [name, setName] = useState("");
-  const [price, setPrice] = useState("");
-  const [category, setCategory] = useState("");
-  const [imageUri, setImageUri] = useState<string | null>(null);
-  const [capitalPrice, setCapitalPrice] = useState(0);
-  const [variants, setVariants] = useState<
-    {name: string; price: number; stockText?: string}[]
-  >([]);
-  const {ingredient_name, ingredient_qty} =
-    useLocalSearchParams<{
-      ingredient_name?: string;
-      ingredient_qty?: string;
-    }>();
+  const name = useRecipeFormStore(state => state.name);
+  const category = useRecipeFormStore(state => state.category);
+  const imageUri = useRecipeFormStore(state => state.imageUri);
+  const ingredients = useRecipeFormStore(state => state.ingredients);
+  const setName = useRecipeFormStore(state => state.setName);
+  const setCategory = useRecipeFormStore(state => state.setCategory);
+  const setImageUri = useRecipeFormStore(state => state.setImageUri);
+  const resetForm = useRecipeFormStore(state => state.reset);
 
-  React.useEffect(() => {
-    if (ingredient_name && ingredient_qty) {
-      const qtyNum = Number(String(ingredient_qty).replace(/[^0-9]/g, ""));
-      setVariants(prev => [
-        ...prev,
-        {name: String(ingredient_name), price: qtyNum},
-      ]);
-      router.replace("/dashboard/recipe-and-materials/add-recipe" as never);
-    }
-  }, [ingredient_name, ingredient_qty, router]);
-
-  // Barcode sekarang dikelola via Zustand store dan diisi langsung dari layar scan,
-  // jadi tidak lagi diambil dari query param.
 
   const isDirty =
     name.trim() !== "" ||
-    price.trim() !== "" ||
     category.trim() !== "" ||
     imageUri !== null ||
-    capitalPrice > 0 ||
-    variants.length > 0;
+    ingredients.length > 0;
 
   useEffect(() => {
     const sub = navigation.addListener("beforeRemove", e => {
@@ -87,18 +68,17 @@ export default function AddProductScreen() {
   const handleSave = () => {
     const payload = {
       name,
-      price,
       category,
       imageUri,
-      capitalPrice,
-      variants,
+      ingredients,
     };
-    console.log("Tambah produk", payload);
+    console.log("Tambah resep", payload);
+    resetForm();
     router.back();
   };
 
   return (
-    <View style={{flex: 1, backgroundColor: Colors[colorScheme].background}}>
+    <View style={{ flex: 1, backgroundColor: Colors[colorScheme].background }}>
       <KeyboardAwareScrollView
         contentContainerStyle={{
           paddingTop: 8,
@@ -120,7 +100,7 @@ export default function AddProductScreen() {
           }}
         />
 
-        <View style={{height: 24}} />
+        <View style={{ height: 24 }} />
 
         <ThemedInput label="Nama Resep" value={name} onChangeText={setName} />
 
@@ -130,10 +110,10 @@ export default function AddProductScreen() {
           value={category}
           onChangeText={setCategory}
           items={[
-            {label: "Pilih Kategori", value: ""},
-            {label: "Umum", value: "umum"},
-            {label: "Minuman", value: "minuman"},
-            {label: "Makanan", value: "makanan"},
+            { label: "Pilih Kategori", value: "" },
+            { label: "Umum", value: "umum" },
+            { label: "Minuman", value: "minuman" },
+            { label: "Makanan", value: "makanan" },
           ]}
         />
 
@@ -141,17 +121,18 @@ export default function AddProductScreen() {
 
         <ThemedText type="subtitle-2">Bahan</ThemedText>
 
-        {variants.length > 0 ? (
+        {ingredients.length > 0 ? (
           <>
             <View style={styles.sectionDivider} />
-            {variants.map((v, idx) => (
-              <ProductCard
+            {ingredients.map((v, idx) => (
+              <RecipeIngredientItem
                 key={idx}
-                initials={(v.name || "VR").slice(0, 2).toUpperCase()}
-                name={v.name}
-                subtitle={`Jumlah: ${formatIDR(v.price)}`}
-                rightText={v.stockText || ""}
-                onPress={() => {}}
+                initials={(v.ingredient.name || "VR").slice(0, 2).toUpperCase()}
+                name={v.ingredient.name}
+                variantName={v.ingredient.name}
+                count={v.amount}
+                unitName={v.unit?.name}
+                onPress={() => { }}
               />
             ))}
           </>

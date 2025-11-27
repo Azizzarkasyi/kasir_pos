@@ -1,8 +1,8 @@
-import React, {useState} from 'react';
-import {StyleSheet, Text, TouchableOpacity, View} from 'react-native';
-import {useColorScheme} from '@/hooks/use-color-scheme';
-import {Colors} from '@/constants/theme';
-import {Ionicons} from '@expo/vector-icons';
+import { Colors } from '@/constants/theme';
+import { useColorScheme } from '@/hooks/use-color-scheme';
+import { Ionicons } from '@expo/vector-icons';
+import React, { useState } from 'react';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 type CodeItem = {label: string; value: string};
 
@@ -49,15 +49,15 @@ const CountryCodePicker: React.FC<Props> = ({value, onChange, items}) => {
 const createStyles = (colorScheme: 'light' | 'dark') =>
   StyleSheet.create({
     box: {
-      width: 56,
-      height: 56,
+      paddingVertical: 16,
       borderWidth: 1,
-      borderColor: Colors[colorScheme].icon,
+      borderColor: Colors[colorScheme].border,
       borderRadius: 8,
       paddingHorizontal: 12,
       alignItems: 'center',
       justifyContent: 'space-between',
       flexDirection: 'row',
+      gap:8,
       backgroundColor: Colors[colorScheme].background,
     },
     flagEmoji: {
@@ -72,7 +72,7 @@ const createStyles = (colorScheme: 'light' | 'dark') =>
       left: 0,
       width: 220,
       borderWidth: 1,
-      borderColor: Colors[colorScheme].icon,
+      borderColor: Colors[colorScheme].border,
       borderRadius: 8,
       backgroundColor: Colors[colorScheme].background,
       zIndex: 100,
@@ -83,10 +83,10 @@ const createStyles = (colorScheme: 'light' | 'dark') =>
       shadowOffset: {width: 0, height: 4},
     },
     item: {
-      paddingHorizontal: 12,
-      paddingVertical: 10,
+      paddingHorizontal: 18,
+      paddingVertical: 14,
       borderBottomWidth: 1,
-      borderBottomColor: Colors[colorScheme].icon,
+      borderBottomColor: Colors[colorScheme].border2,  
       flexDirection: 'row',
       alignItems: 'center',
       gap: 8,

@@ -1,27 +1,27 @@
 import CountryListItem from "@/components/country-list-item";
 import Header from "@/components/header";
-import {ThemedButton} from "@/components/themed-button";
-import {ThemedInput} from "@/components/themed-input";
-import {ThemedText} from "@/components/themed-text";
-import {Colors} from "@/constants/theme";
-import {useColorScheme} from "@/hooks/use-color-scheme";
-import {useNavigation} from "expo-router";
-import React, {useState} from "react";
-import {FlatList, StyleSheet, View} from "react-native";
-import {KeyboardAwareScrollView} from "react-native-keyboard-aware-scroll-view";
-import {useSafeAreaInsets} from "react-native-safe-area-context";
+import { ThemedButton } from "@/components/themed-button";
+import { ThemedInput } from "@/components/themed-input";
+import { ThemedText } from "@/components/themed-text";
+import { Colors } from "@/constants/theme";
+import { useColorScheme } from "@/hooks/use-color-scheme";
+import { Ionicons } from "@expo/vector-icons";
+import { useNavigation } from "expo-router";
+import React, { useState } from "react";
+import { FlatList, StyleSheet, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const countries = [
-  {id: "1", name: "Indonesia"},
-  {id: "2", name: "Brunei"},
-  {id: "3", name: "Cambodia"},
-  {id: "4", name: "Laos"},
-  {id: "5", name: "Malaysia"},
-  {id: "6", name: "Myanmar"},
-  {id: "7", name: "Philippines"},
-  {id: "8", name: "Singapore"},
-  {id: "9", name: "Thailand"},
-  {id: "10", name: "Timor Leste"},
+  { id: "1", name: "Indonesia" },
+  { id: "2", name: "Brunei" },
+  { id: "3", name: "Cambodia" },
+  { id: "4", name: "Laos" },
+  { id: "5", name: "Malaysia" },
+  { id: "6", name: "Myanmar" },
+  { id: "7", name: "Philippines" },
+  { id: "8", name: "Singapore" },
+  { id: "9", name: "Thailand" },
+  { id: "10", name: "Timor Leste" },
 ];
 
 const SelectCountryScreen = () => {
@@ -36,7 +36,7 @@ const SelectCountryScreen = () => {
     country.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const renderItem = ({item}: {item: {id: string; name: string}}) => (
+  const renderItem = ({ item }: { item: { id: string; name: string } }) => (
     <CountryListItem
       item={item}
       selected={selectedCountry === item.id}
@@ -45,43 +45,64 @@ const SelectCountryScreen = () => {
   );
 
   return (
-    <View style={{flex: 1, backgroundColor: Colors[colorScheme].background}}>
-      <Header />
-      <KeyboardAwareScrollView
+    <View style={{ flex: 1, backgroundColor: Colors[colorScheme].background }}>
+      <Header title="Pilih Negara" />
+      <View style={styles.headerContentWrapper}>
+        <ThemedText style={styles.subtitle}>
+          Kamu tidak bisa mengubah pilihan negaramu setelah proses verifikasi
+          selesai.
+        </ThemedText>
+        <View>
+          <ThemedInput
+            label="Cari Negara"
+            value={searchQuery}
+            size="base"
+            containerStyle={{ backgroundColor: Colors[colorScheme].border2 }}
+            inputContainerStyle={{ paddingInlineStart: 40 }}
+            showLabel={false}
+            placeholder="Cari Negara"
+            onChangeText={setSearchQuery}
+          />
+          <Ionicons
+            name="search"
+            size={25}
+            color={Colors[colorScheme].shadow}
+            style={{ position: "absolute", left: 15, top: 25 }}
+          />
+        </View>
+      </View>
+      <FlatList
+        data={filteredCountries}
+        renderItem={renderItem}
+        keyExtractor={item => item.id}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+        style={{ backgroundColor: Colors[colorScheme].background }}
         contentContainerStyle={{
           paddingHorizontal: 20,
           paddingBottom: insets.bottom + 80,
         }}
-        enableOnAndroid
-        keyboardOpeningTime={0}
-        extraScrollHeight={24}
-        keyboardShouldPersistTaps="handled"
-        style={{backgroundColor: Colors[colorScheme].background}}
-      >
-        <View style={styles.content}>
-          <ThemedText type="title" style={styles.title}>
-            Pilih Negara
-          </ThemedText>
-          <ThemedText style={styles.subtitle}>
-            Kamu tidak bisa mengubah pilihan negaramu setelah proses verifikasi
-            selesai.
-          </ThemedText>
-          <ThemedInput
-            label="Cari Negara"
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-          />
-          <FlatList
-            showsVerticalScrollIndicator={false}
-            data={filteredCountries}
-            renderItem={renderItem}
-            keyExtractor={item => item.id}
-            style={[styles.list]}
-            contentContainerStyle={{paddingBottom: 20}}
-            keyboardShouldPersistTaps="handled"
-          />
-        </View>
-      </KeyboardAwareScrollView>
+        ListEmptyComponent={
+          searchQuery
+            ? (
+              <View style={styles.emptyStateContainer}>
+                <Ionicons
+                  name="search"
+                  size={40}
+                  color={Colors[colorScheme].icon}
+                  style={{ marginBottom: 8 }}
+                />
+                <ThemedText style={styles.emptyStateTitle}>
+                  Negara tidak ditemukan
+                </ThemedText>
+                <ThemedText style={styles.emptyStateSubtitle}>
+                  Coba periksa kembali kata kunci pencarianmu.
+                </ThemedText>
+              </View>
+            )
+            : null
+        }
+      />
       <View style={styles.bottomBar}>
         <ThemedButton
           title="Lanjutkan"
@@ -103,16 +124,31 @@ const createStyles = (colorScheme: "light" | "dark") =>
     content: {
       flex: 1,
     },
-    title: {
+    headerContentWrapper: {
+      paddingHorizontal: 20,
       marginTop: 20,
     },
     subtitle: {
-      marginTop: 8,
-      marginBottom: 20,
+      marginBottom: 12,
+      fontSize: 14,
       color: Colors[colorScheme].icon,
     },
-    list: {
-      marginTop: 20,
+    emptyStateContainer: {
+      flex: 1,
+      alignItems: "center",
+      justifyContent: "center",
+      paddingTop: 40,
+    },
+    emptyStateTitle: {
+      fontSize: 16,
+      fontWeight: "600",
+      marginBottom: 4,
+      color: Colors[colorScheme].text,
+    },
+    emptyStateSubtitle: {
+      fontSize: 14,
+      color: Colors[colorScheme].icon,
+      textAlign: "center",
     },
     bottomBar: {
       position: "absolute",

@@ -34,19 +34,23 @@ export default function ProductsScreen() {
         favorite: true,
         enableCostBarcode: false,
         imageUri: null as string | null,
+        stock: 10,
         capitalPrice: 0,
+        variants: [],
         barcode: "",
       },
       {
         id: "2",
         name: "Tepung Terigu",
         price: "12000",           // harga per kg
-        brand: "",
+        brand: "",  
         category: "Bahan Kering",
         favorite: false,
         enableCostBarcode: false,
         imageUri: null as string | null,
+        stock: 10,
         capitalPrice: 0,
+        variants: [],
         barcode: "",
       },
       {
@@ -58,7 +62,9 @@ export default function ProductsScreen() {
         favorite: false,
         enableCostBarcode: false,
         imageUri: null as string | null,
+        stock: 10,
         capitalPrice: 0,
+        variants: [],
         barcode: "",
       },
     ],
@@ -208,6 +214,7 @@ export default function ProductsScreen() {
                     value={search}
                     onChangeText={setSearch}
                     leftIconName="search"
+                    size="md"
                     width="100%" // Input mengisi wrapper flex:1 tadi
                     showLabel={false}
                     placeholder="Cari Bahan"
@@ -229,8 +236,8 @@ export default function ProductsScreen() {
                     key={product.id}
                     initials={(product.name || "PR").slice(0, 2).toUpperCase()}
                     name={product.name}
-                    subtitle={product.brand || "Tanpa merk"}
-                    rightText={product.category || "Umum"}
+                    stockCount={product.stock}
+                    variantCount={product.variants?.length ?? 0}
                     onPress={() => handlePressProduct(product)}
                   />
                 ))}
@@ -249,6 +256,7 @@ export default function ProductsScreen() {
                       value={search}
                       onChangeText={setSearch}
                       leftIconName="search"
+                      size="md"
                       width="100%" // Input mengisi wrapper flex:1 tadi
                       showLabel={false}
                       placeholder="Cari Resep"
@@ -263,7 +271,7 @@ export default function ProductsScreen() {
                     key={recipe.id}
                     initials={(recipe.name || "RC").slice(0, 2).toUpperCase()}
                     name={recipe.name}
-                    subtitle={`${recipe.ingredientCount} bahan  b7 Modal Rp${new Intl.NumberFormat("id-ID").format(recipe.cost)}`}
+                    subtitle={`${recipe.ingredientCount} bahan `}
                     onPress={() =>
                       router.push(
                         "/dashboard/recipe-and-materials/edit-recipe" as never,
@@ -305,7 +313,7 @@ const createStyles = (colorScheme: "light" | "dark") =>
     },
     tabItem: {
       flex: 1, // Membagi lebar 50:50
-      paddingVertical: 16,
+      paddingVertical: 12,
       alignItems: "center",
       justifyContent: "center",
       position: "relative",
@@ -319,7 +327,7 @@ const createStyles = (colorScheme: "light" | "dark") =>
       backgroundColor: Colors[colorScheme].primary,
     },
     tabText: {
-      fontSize: 15,
+      fontSize: 14,
       fontWeight: "600",
     },
 
@@ -338,12 +346,11 @@ const createStyles = (colorScheme: "light" | "dark") =>
       width: 50, // Sesuaikan lebar tombol
       height: 50, // Sesuaikan tinggi agar sama dengan Input Anda (biasanya input sekitar 48-50)
       borderWidth: 1,
-      borderColor: Colors[colorScheme].icon,
+      borderColor: Colors[colorScheme].border,
       borderRadius: 8,
       alignItems: "center",
       justifyContent: "center",
-      // Pastikan marginTop input tidak mengganggu alignment,
-      // jika input punya margin internal, sesuaikan disini.
+
     },
 
     fab: {

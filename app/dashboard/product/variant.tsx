@@ -5,7 +5,8 @@ import { ThemedButton } from "@/components/themed-button";
 import { ThemedInput } from "@/components/themed-input";
 import { Colors } from "@/constants/theme";
 import { useColorScheme } from "@/hooks/use-color-scheme";
-import { useNavigation, useRouter } from "expo-router";
+import { useProductFormStore } from "@/stores/product-form-store";
+import { useLocalSearchParams, useNavigation, useRouter } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
 import { StyleSheet, View } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
@@ -17,24 +18,124 @@ export default function VariantScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const navigation = useNavigation();
+  const {
+    offlineStock: qsOfflineStock,
+    unit: qsUnit,
+    minStock: qsMinStock,
+    notifyMin: qsNotifyMin,
+    from: qsFrom,
+    name: qsName,
+    price: qsPrice,
+    brand: qsBrand,
+    category: qsCategory,
+    favorite: qsFavorite,
+    enableCostBarcode: qsEnableCostBarcode,
+    imageUri: qsImageUri,
+    capitalPrice: qsCapitalPrice,
+    barcode: qsBarcode,
+    variants: qsVariants,
+  } = useLocalSearchParams<{
+    offlineStock?: string;
+    unit?: string;
+    minStock?: string;
+    notifyMin?: string;
+    from?: string;
+    name?: string;
+    price?: string;
+    brand?: string;
+    category?: string;
+    favorite?: string;
+    enableCostBarcode?: string;
+    imageUri?: string;
+    capitalPrice?: string;
+    barcode?: string;
+    variants?: string;
+  }>();
 
   const confirmationRef = useRef<ConfirmationDialogHandle | null>(null);
-
+  const setVariants = useProductFormStore(state => state.setVariants);
   const [name, setName] = useState("");
   const [price, setPrice] = useState("");
   const [enableCostBarcode, setEnableCostBarcode] = useState(false);
   const [capitalPrice, setCapitalPrice] = useState(0);
   const [barcode, setBarcode] = useState("");
+  const [stock, setStock] = useState<{
+    offlineStock: number;
+    unit: string;
+    minStock: number;
+    notifyMin: boolean;
+  } | null>(null);
+  const [isSubmit, setIsSubmit] = useState(false);
+
+  useEffect(() => {
+    if (qsOfflineStock || qsUnit || qsMinStock || qsNotifyMin) {
+      const parsed = {
+        offlineStock: qsOfflineStock ? Number(String(qsOfflineStock).replace(/[^0-9]/g, "")) : 0,
+        unit: qsUnit ? String(qsUnit) : "pcs",
+        minStock: qsMinStock ? Number(String(qsMinStock).replace(/[^0-9]/g, "")) : 0,
+        notifyMin: qsNotifyMin === "1" || qsNotifyMin === "true",
+      };
+      setStock(parsed);
+      if (qsName) {
+        setName(String(qsName));
+      }
+      if (qsPrice) {
+        setPrice(String(qsPrice));
+      }
+      if (qsEnableCostBarcode) {
+        setEnableCostBarcode(String(qsEnableCostBarcode) === "true");
+      }
+      if (qsCapitalPrice) {
+        const parsedCapital = Number(String(qsCapitalPrice).replace(/[^0-9]/g, ""));
+        if (!Number.isNaN(parsedCapital)) {
+          setCapitalPrice(parsedCapital);
+        }
+      }
+      if (qsBarcode) {
+        setBarcode(String(qsBarcode));
+      }
+    }
+  }, [
+    qsOfflineStock,
+    qsUnit,
+    qsMinStock,
+    qsNotifyMin,
+    qsFrom,
+    qsName,
+    qsPrice,
+    qsCapitalPrice,
+    qsBarcode,
+    qsBrand,
+    qsCategory,
+    qsFavorite,
+    qsEnableCostBarcode,
+    qsImageUri,
+    router,
+  ]);
 
   const handleSave = () => {
+    setIsSubmit(true);
     const priceNum = Number((price || "").replace(/[^0-9]/g, ""));
-    router.replace({
-      pathname: "/dashboard/product/add-product",
-      params: {
-        variant_name: name,
-        variant_price: String(priceNum),
+
+    setVariants(prev => [
+      ...prev,
+      {
+        name,
+        price: priceNum,
+        ...(stock
+          ? {
+              stock: {
+                count: stock.offlineStock,
+                unit: stock.unit,
+                minStock: stock.minStock,
+                notifyMin: stock.notifyMin,
+              },
+            }
+          : {}),
       },
-    } as never);
+    ]);
+
+    router.back();
   };
 
   const isDirty =
@@ -46,11 +147,11 @@ export default function VariantScreen() {
 
   useEffect(() => {
     const sub = navigation.addListener("beforeRemove", e => {
-      if (!isDirty) {
+      const action = e.data.action;
+      if (!isDirty || isSubmit || action.type === "REPLACE") {
         return;
       }
 
-      const action = e.data.action;
       e.preventDefault();
 
       confirmationRef.current?.showConfirmationDialog({
@@ -66,14 +167,14 @@ export default function VariantScreen() {
     });
 
     return sub;
-  }, [navigation, isDirty]);
+  }, [navigation, isDirty, isSubmit]);
 
   return (
-    <View style={{flex: 1, backgroundColor: Colors[colorScheme].background}}>
+    <View style={{ flex: 1, backgroundColor: Colors[colorScheme].background }}>
       <KeyboardAwareScrollView
         contentContainerStyle={{
-          paddingHorizontal: 20,
           paddingBottom: insets.bottom + 80,
+          paddingVertical: 12,
         }}
         enableOnAndroid
         keyboardOpeningTime={0}
@@ -81,39 +182,72 @@ export default function VariantScreen() {
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
-        <ThemedInput label="Nama Variasi" value={name} onChangeText={setName} />
-        <ThemedInput
-          label="Harga Jual"
-          value={price}
-          onChangeText={setPrice}
-          keyboardType="number-pad"
-        />
+        <View style={[styles.contentSection, { paddingVertical: 12 }]}>
+          <ThemedInput label="Nama Variasi" size="md" value={name} onChangeText={setName} />
+          <ThemedInput
+            label="Harga Jual"
+            value={price}
+            size="md"
+            onChangeText={setPrice}
+            keyboardType="number-pad"
+          />
+        </View>
 
         <View style={styles.sectionDivider} />
 
-        <MenuRow
-          title="Atur Harga Modal dan Barcode"
-          variant="toggle"
-          value={enableCostBarcode}
-          onValueChange={setEnableCostBarcode}
-          showBottomBorder={!enableCostBarcode}
-        />
-
-        {enableCostBarcode ? (
-          <CostBarcodeFields
-            capitalPrice={capitalPrice}
-            onCapitalPriceChange={setCapitalPrice}
-            barcode={barcode}
-            onBarcodeChange={setBarcode}
+        <View style={styles.contentSection}>
+          <MenuRow
+            title="Atur Harga Modal dan Barcode"
+            variant="toggle"
+            value={enableCostBarcode}
+            onValueChange={setEnableCostBarcode}
+            showBottomBorder={!enableCostBarcode}
           />
-        ) : null}
 
-        <MenuRow
-          title="Kelola Stok"
-          rightText="Stok Tidak Aktif"
-          variant="link"
-          onPress={() => {}}
-        />
+          {enableCostBarcode ? (
+            <CostBarcodeFields
+              capitalPrice={capitalPrice}
+              onCapitalPriceChange={setCapitalPrice}
+              barcode={barcode}
+              onBarcodeChange={setBarcode}
+            />
+          ) : null}
+
+
+        </View>
+
+        <View style={styles.sectionDivider} />
+
+        <View style={styles.contentSection}>
+          <MenuRow
+            title="Kelola Stok"
+            rightText={stock ? `Stok Aktif (${stock.offlineStock} ${stock.unit})` : "Stok Tidak Aktif"}
+            showBottomBorder={false}
+            variant="link"
+            onPress={() => {
+              router.push({
+                pathname: "/dashboard/product/variant-stock",
+                params: {
+                  ...(qsFrom ? { from: String(qsFrom) } : {}),
+                  ...(name ? { name } : {}),
+                  ...(price ? { price } : {}),
+                  ...(capitalPrice ? { capitalPrice: String(capitalPrice) } : {}),
+                  ...(barcode ? { barcode } : {}),
+                  ...(stock
+                    ? {
+                        offlineStock: String(stock.offlineStock),
+                        unit: stock.unit,
+                        minStock: String(stock.minStock),
+                        notifyMin: stock.notifyMin ? "1" : "0",
+                      }
+                    : {}),
+                },
+              } as never);
+            }}
+          />
+        </View>
+
+        <View style={styles.sectionDivider} />
       </KeyboardAwareScrollView>
 
       <View style={styles.bottomBar}>
@@ -128,9 +262,12 @@ export default function VariantScreen() {
 const createStyles = (colorScheme: "light" | "dark") =>
   StyleSheet.create({
     sectionDivider: {
-      height: 1,
-      backgroundColor: Colors[colorScheme].icon,
-      marginVertical: 12,
+      backgroundColor: Colors[colorScheme].border2,
+      height: 12,
+    },
+    contentSection: {
+      paddingHorizontal: 20,
+
     },
     bottomBar: {
       position: "absolute",
@@ -138,7 +275,7 @@ const createStyles = (colorScheme: "light" | "dark") =>
       right: 0,
       bottom: 0,
       paddingHorizontal: 20,
-      paddingBottom: 16,
+      paddingBottom: 24,
       paddingTop: 8,
       backgroundColor: Colors[colorScheme].background,
     },

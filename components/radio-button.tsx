@@ -1,7 +1,7 @@
-import React from 'react';
-import { TouchableOpacity, View, StyleSheet } from 'react-native';
-import { useColorScheme } from '@/hooks/use-color-scheme';
 import { Colors } from '@/constants/theme';
+import { useColorScheme } from '@/hooks/use-color-scheme';
+import React from 'react';
+import { StyleSheet, TouchableOpacity, View } from 'react-native';
 
 interface RadioButtonProps {
   selected: boolean;
@@ -10,7 +10,7 @@ interface RadioButtonProps {
 
 const RadioButton: React.FC<RadioButtonProps> = ({ selected, onPress }) => {
   const colorScheme = useColorScheme() ?? 'light';
-  const styles = createStyles(colorScheme);
+  const styles = createStyles(colorScheme  , selected);
 
   return (
     <TouchableOpacity style={styles.radioButton} onPress={onPress}>
@@ -19,14 +19,14 @@ const RadioButton: React.FC<RadioButtonProps> = ({ selected, onPress }) => {
   );
 };
 
-const createStyles = (colorScheme: 'light' | 'dark') =>
+const createStyles = (colorScheme: 'light' | 'dark', selected: boolean) =>
   StyleSheet.create({
     radioButton: {
       height: 24,
       width: 24,
       borderRadius: 12,
       borderWidth: 2,
-      borderColor: Colors[colorScheme].primary,
+      borderColor: selected ? Colors[colorScheme].primary : Colors[colorScheme].border,
       alignItems: 'center',
       justifyContent: 'center',
     },
@@ -34,7 +34,7 @@ const createStyles = (colorScheme: 'light' | 'dark') =>
       height: 12,
       width: 12,
       borderRadius: 6,
-      backgroundColor: Colors[colorScheme].primary,
+      backgroundColor: selected ? Colors[colorScheme].primary : Colors[colorScheme].border,
     },
   });
 

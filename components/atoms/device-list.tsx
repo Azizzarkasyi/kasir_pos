@@ -1,9 +1,9 @@
-import {Colors} from "@/constants/theme";
-import {useColorScheme} from "@/hooks/use-color-scheme";
-import {Ionicons} from "@expo/vector-icons";
+import { Colors } from "@/constants/theme";
+import { useColorScheme } from "@/hooks/use-color-scheme";
+import { Ionicons } from "@expo/vector-icons";
 import React from "react";
-import {StyleSheet, TouchableOpacity, View} from "react-native";
-import {ThemedText} from "../themed-text";
+import { StyleSheet, TouchableOpacity, View } from "react-native";
+import { ThemedText } from "../themed-text";
 
 export type DeviceItem = {name: string; mac: string};
 
@@ -28,15 +28,15 @@ const DeviceList: React.FC<Props> = ({devices, onConnect}) => {
               color={Colors[colorScheme].icon}
             />
             <View style={{marginLeft: 8}}>
-              <ThemedText style={{fontWeight: "600"}}>{d.name}</ThemedText>
-              <ThemedText style={{color: Colors[colorScheme].icon}}>
+              <ThemedText style={{fontWeight: "500"}}>{d.name}</ThemedText>
+              <ThemedText style={{color: Colors[colorScheme].icon, fontSize: 14}}>
                 {d.mac}
               </ThemedText>
             </View>
           </View>
 
           <TouchableOpacity onPress={() => onConnect(d)}>
-            <ThemedText style={{color: Colors[colorScheme].primary}}>
+            <ThemedText style={{color: Colors[colorScheme].primary, fontWeight: "500", fontSize: 14}}>
               Hubungkan
             </ThemedText>
           </TouchableOpacity>
@@ -54,7 +54,7 @@ const createStyles = (colorScheme: "light" | "dark") =>
       justifyContent: "space-between",
       paddingVertical: 12,
       borderBottomWidth: 1,
-      borderBottomColor: Colors[colorScheme].icon,
+      borderBottomColor: Colors[colorScheme].border,
     },
     itemLeft: {
       flexDirection: "row",

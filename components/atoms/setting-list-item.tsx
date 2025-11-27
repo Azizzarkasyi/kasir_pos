@@ -1,9 +1,9 @@
-import {Colors} from "@/constants/theme";
-import {useColorScheme} from "@/hooks/use-color-scheme";
-import {Ionicons} from "@expo/vector-icons";
+import { Colors } from "@/constants/theme";
+import { useColorScheme } from "@/hooks/use-color-scheme";
+import { Ionicons } from "@expo/vector-icons";
 import React from "react";
-import {StyleSheet, TouchableOpacity, View} from "react-native";
-import {ThemedText} from "../themed-text";
+import { StyleSheet, TouchableOpacity, View } from "react-native";
+import { ThemedText } from "../themed-text";
 
 type SettingListItemProps = {
   title: string;
@@ -24,8 +24,7 @@ const SettingListItem: React.FC<SettingListItemProps> = ({
   const styles = createStyles(colorScheme);
   const top =
     typeof StyleSheet.hairlineWidth === "number" ? StyleSheet.hairlineWidth : 1;
-  const bottom =
-    typeof StyleSheet.hairlineWidth === "number" ? StyleSheet.hairlineWidth : 1;
+  const bottom = 1;
 
   return (
     <TouchableOpacity
@@ -58,9 +57,9 @@ const createStyles = (colorScheme: "light" | "dark") =>
       alignItems: "center",
       paddingVertical: 14,
       minHeight: 60,
-      borderTopColor: Colors[colorScheme].icon,
-      borderBottomColor: Colors[colorScheme].icon,
-      paddingHorizontal: 4,
+      borderBottomWidth: 2,
+      borderBottomColor: Colors[colorScheme].border2,
+      paddingHorizontal: 24,
     },
     titleRow: {
       flexDirection: "row",
@@ -69,7 +68,8 @@ const createStyles = (colorScheme: "light" | "dark") =>
     },
     rowTitle: {
       fontSize: 16,
-      fontWeight: "600",
+      fontWeight: "500",
+      color: Colors[colorScheme].icon,
     },
   });
 

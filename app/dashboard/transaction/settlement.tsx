@@ -70,7 +70,7 @@ export default function TransactionSettlementPage() {
           <TouchableOpacity style={styles.secondaryButton}>
             <Text style={styles.secondaryButtonText}>Cetak Struk</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.secondaryButton}>
+          <TouchableOpacity style={styles.secondaryButton} onPress={() => { router.push("/dashboard/transaction/share-struck" as never)}}>
             <Text style={styles.secondaryButtonText}>Kirim Struk</Text>
           </TouchableOpacity>
         </View>

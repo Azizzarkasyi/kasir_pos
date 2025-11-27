@@ -1,5 +1,6 @@
 import CategoryItem from "@/components/atoms/category-item";
 import CategoryModal from "@/components/drawers/category-modal";
+import FilterProductModal from "@/components/drawers/filter-product-modal";
 import ProductCard from "@/components/product-card";
 import { ThemedInput } from "@/components/themed-input";
 import { ThemedText } from "@/components/themed-text";
@@ -21,8 +22,10 @@ export default function ProductsScreen() {
   const [activeTab, setActiveTab] = useState<"produk" | "kategori">("produk");
   const [search, setSearch] = useState("");
   const [isCategoryModalVisible, setIsCategoryModalVisible] = useState(false);
+  const [isFilterModalVisible, setIsFilterModalVisible] = useState(false);
   const [editingCategoryId, setEditingCategoryId] = useState<string | null>(null);
   const [editingCategoryName, setEditingCategoryName] = useState("");
+  const [selectedCategoryIds, setSelectedCategoryIds] = useState<string[]>([]);
 
   const [products] = useState(
     [
@@ -32,6 +35,8 @@ export default function ProductsScreen() {
         price: "2000",
         brand: "Qasir",
         category: "minuman",
+        stock: 10,
+        variants: [],
         favorite: true,
         enableCostBarcode: true,
         imageUri: null as string | null,
@@ -40,10 +45,25 @@ export default function ProductsScreen() {
       },
       {
         id: "2",
-        name: "Nasi Goreng",
+        name: "Nasi Goreng asdfasdsdfads asdfdasf",
         price: "15000",
         brand: "",
         category: "makanan",
+        stock: 10,
+        variants: [
+          {
+            id: "1",
+            name: "Large",
+            price: "15000",
+            brand: "",
+            category: "makanan",
+            favorite: false,
+            enableCostBarcode: false,
+            imageUri: null as string | null,
+            capitalPrice: 0,
+            barcode: "",
+          },
+        ],
         favorite: false,
         enableCostBarcode: false,
         imageUri: null as string | null,
@@ -58,6 +78,16 @@ export default function ProductsScreen() {
     {id: "makanan", name: "Makanan"},
     {id: "minuman", name: "Minuman"},
   ];
+
+  const filteredProducts = products.filter(product => {
+    const matchSearch = product.name
+      .toLowerCase()
+      .includes(search.toLowerCase());
+    const matchCategory =
+      selectedCategoryIds.length === 0 ||
+      selectedCategoryIds.includes(product.category);
+    return matchSearch && matchCategory;
+  });
 
   const handleEditCategory = (categoryId: string) => {
     const found = categories.find(c => c.id === categoryId);
@@ -89,6 +119,18 @@ export default function ProductsScreen() {
     imageUri: string | null;
     capitalPrice: number;
     barcode: string;
+    variants?: {
+      id: string;
+      name: string;
+      price: string;
+      brand: string;
+      category: string;
+      favorite: boolean;
+      enableCostBarcode: boolean;
+      imageUri: string | null;
+      capitalPrice: number;
+      barcode: string;
+    }[];
   }) => {
     router.push({
       pathname: "/dashboard/product/edit-product",
@@ -179,6 +221,7 @@ export default function ProductsScreen() {
                     label="Cari Produk"
                     value={search}
                     onChangeText={setSearch}
+                    size="sm"
                     leftIconName="search"
                     width="100%" // Input mengisi wrapper flex:1 tadi
                     showLabel={false}
@@ -186,7 +229,10 @@ export default function ProductsScreen() {
                   />
                 </View>
 
-                <TouchableOpacity style={styles.filterButton}>
+                <TouchableOpacity
+                  style={styles.filterButton}
+                  onPress={() => setIsFilterModalVisible(true)}
+                >
                   <Ionicons
                     name="options-outline"
                     size={20}
@@ -196,13 +242,13 @@ export default function ProductsScreen() {
               </View>
 
               <View style={{marginTop: 16}}>
-                {products.map(product => (
+                {filteredProducts.map(product => (
                   <ProductCard
                     key={product.id}
                     initials={(product.name || "PR").slice(0, 2).toUpperCase()}
                     name={product.name}
-                    subtitle={product.brand || "Tanpa merk"}
-                    rightText={product.category || "Umum"}
+                    variantCount={product.variants?.length ?? 0}
+                    stockCount={product.stock ?? 0}
                     onPress={() => handlePressProduct(product)}
                   />
                 ))}
@@ -235,6 +281,20 @@ export default function ProductsScreen() {
         onClose={() => setIsCategoryModalVisible(false)}
         onSubmit={handleSubmitCategory}
       />
+
+      <FilterProductModal
+        visible={isFilterModalVisible}
+        categories={categories}
+        initialSelectedIds={selectedCategoryIds}
+        onClose={() => setIsFilterModalVisible(false)}
+        onApply={(ids: string[]) => {
+          setSelectedCategoryIds(ids);
+          setIsFilterModalVisible(false);
+        }}
+        onReset={() => {
+          setSelectedCategoryIds([]);
+        }}
+      />
     </View>
   );
 }
@@ -249,8 +309,8 @@ const createStyles = (colorScheme: "light" | "dark") =>
       marginTop: 10,
     },
     tabItem: {
-      flex: 1, // Membagi lebar 50:50
-      paddingVertical: 16,
+      flex: 1,
+      paddingVertical: 14,
       alignItems: "center",
       justifyContent: "center",
       position: "relative",
@@ -264,7 +324,7 @@ const createStyles = (colorScheme: "light" | "dark") =>
       backgroundColor: Colors[colorScheme].primary,
     },
     tabText: {
-      fontSize: 15,
+      fontSize: 14,
       fontWeight: "600",
     },
 
@@ -275,20 +335,18 @@ const createStyles = (colorScheme: "light" | "dark") =>
 
     searchRow: {
       flexDirection: "row",
-      alignItems: "center", // Memastikan Input dan Tombol sejajar vertikal
+      alignItems: "center",
       gap: 12,
       marginTop: 16,
     },
     filterButton: {
-      width: 50, // Sesuaikan lebar tombol
-      height: 50, // Sesuaikan tinggi agar sama dengan Input Anda (biasanya input sekitar 48-50)
+      width: 50,
+      height: 50,
       borderWidth: 1,
-      borderColor: Colors[colorScheme].icon,
+      borderColor: Colors[colorScheme].border,
       borderRadius: 8,
       alignItems: "center",
       justifyContent: "center",
-      // Pastikan marginTop input tidak mengganggu alignment,
-      // jika input punya margin internal, sesuaikan disini.
     },
 
     fab: {

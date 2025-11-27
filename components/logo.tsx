@@ -1,8 +1,6 @@
-import React from 'react';
-import { View, StyleSheet } from 'react-native';
-import { ThemedText } from './themed-text';
 import { useColorScheme } from '@/hooks/use-color-scheme';
-import { Colors } from '@/constants/theme';
+import React from 'react';
+import { Image, StyleSheet, View } from 'react-native';
 
 const Logo = () => {
   const colorScheme = useColorScheme() ?? 'light';
@@ -10,7 +8,7 @@ const Logo = () => {
 
   return (
     <View style={styles.logoContainer}>
-      <ThemedText style={styles.logo}>Qasir</ThemedText>
+      <Image source={require('../assets/logos/4.png')} style={styles.logoImage} />
     </View>
   );
 };
@@ -20,11 +18,9 @@ const createStyles = (colorScheme: 'light' | 'dark') => StyleSheet.create({
     alignItems: 'center',
     marginVertical: 40,
   },
-  logo: {
-    fontSize: 60,
-    fontWeight: 'bold',
-    color: Colors[colorScheme].primary,
-    lineHeight: 72,
+  logoImage: {
+    width: 180,
+    height: 180,
   },
 });
 

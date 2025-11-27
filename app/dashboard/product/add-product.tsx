@@ -1,17 +1,18 @@
-import ComboInput from "@/components/combo-input";
+import VariantItem from "@/components/atoms/variant-item";
 import CostBarcodeFields from "@/components/cost-barcode-fields";
 import ConfirmationDialog, { ConfirmationDialogHandle } from "@/components/drawers/confirmation-dialog";
 import ImageUpload from "@/components/image-upload";
 import MenuRow from "@/components/menu-row";
-import ProductCard from "@/components/product-card";
+import CategoryPicker from "@/components/mollecules/category-picker";
+import MerkPicker from "@/components/mollecules/merk-picker";
 import { ThemedButton } from "@/components/themed-button";
 import { ThemedInput } from "@/components/themed-input";
 import { ThemedText } from "@/components/themed-text";
 import { Colors } from "@/constants/theme";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { useProductFormStore } from "@/stores/product-form-store";
-import { useLocalSearchParams, useNavigation, useRouter } from "expo-router";
-import React, { useEffect, useRef, useState } from "react";
+import { useNavigation, useRouter } from "expo-router";
+import React, { useEffect, useRef } from "react";
 import { StyleSheet, View } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -25,47 +26,65 @@ export default function AddProductScreen() {
 
   const confirmationRef = useRef<ConfirmationDialogHandle | null>(null);
 
-  const [name, setName] = useState("");
-  const [price, setPrice] = useState("");
-  const [brand, setBrand] = useState("");
-  const [category, setCategory] = useState("");
-  const [favorite, setFavorite] = useState(false);
-  const [enableCostBarcode, setEnableCostBarcode] = useState(false);
-  const [imageUri, setImageUri] = useState<string | null>(null);
-  const [capitalPrice, setCapitalPrice] = useState(0);
-  const barcode = useProductFormStore(state => state.barcode);
-  const setBarcode = useProductFormStore(state => state.setBarcode);
-  const [variants, setVariants] = useState<
-    {name: string; price: number; stockText?: string}[]
-  >([]);
-  const {variant_name, variant_price} =
-    useLocalSearchParams<{
-      variant_name?: string;
-      variant_price?: string;
-    }>();
+  const categories: Category[] = [
+    { id: "general", name: "Umum" },
+    { id: "food", name: "Makanan" },
+    { id: "drink", name: "Minuman" },
+    { id: "snack", name: "Snack" },
+  ];
 
-  React.useEffect(() => {
-    if (variant_name && variant_price) {
-      const priceNum = Number(String(variant_price).replace(/[^0-9]/g, ""));
-      setVariants(prev => [...prev, {name: String(variant_name), price: priceNum}]);
-      router.replace("/dashboard/product/add-product" as never);
+  const {
+    name,
+    price,
+    brand,
+    category,
+    favorite,
+    enableCostBarcode,
+    imageUri,
+    capitalPrice,
+    barcode,
+    variants,
+    stock,
+    setName,
+    setPrice,
+    setBrand,
+    setCategory,
+    setFavorite,
+    setEnableCostBarcode,
+    setImageUri,
+    setCapitalPrice,
+    setBarcode,
+    setVariants,
+    setStock,
+  } = useProductFormStore(state => state);
+
+  const isDirty = Object.values({
+    name,
+    price,
+    brand,
+    category,
+    favorite,
+    enableCostBarcode,
+    imageUri,
+    capitalPrice,
+    barcode,
+    variants,
+    stock,
+  }).some(value => {
+    if (typeof value === "string") {
+      return value.trim() !== "";
     }
-  }, [variant_name, variant_price, router]);
 
-  // Barcode sekarang dikelola via Zustand store dan diisi langsung dari layar scan,
-  // jadi tidak lagi diambil dari query param.
+    if (typeof value === "number") {
+      return value > 0;
+    }
 
-  const isDirty =
-    name.trim() !== "" ||
-    price.trim() !== "" ||
-    brand.trim() !== "" ||
-    category.trim() !== "" ||
-    favorite ||
-    enableCostBarcode ||
-    imageUri !== null ||
-    capitalPrice > 0 ||
-    barcode.trim() !== "" ||
-    variants.length > 0;
+    if (Array.isArray(value)) {
+      return value.length > 0;
+    }
+
+    return false;
+  });
 
   useEffect(() => {
     const sub = navigation.addListener("beforeRemove", e => {
@@ -108,12 +127,11 @@ export default function AddProductScreen() {
   };
 
   return (
-    <View style={{flex: 1, backgroundColor: Colors[colorScheme].background}}>
+    <View style={{ flex: 1, backgroundColor: Colors[colorScheme].background }}>
       <KeyboardAwareScrollView
         contentContainerStyle={{
-          paddingTop: 8,
-          paddingBottom: insets.bottom + 80,
-          paddingHorizontal: 20,
+          paddingTop: 18,
+          // paddingBottom: insets.bottom + 80,
         }}
         enableOnAndroid
         keyboardOpeningTime={0}
@@ -130,105 +148,157 @@ export default function AddProductScreen() {
           }}
         />
 
-        <View style={{height: 24}} />
+        <View style={styles.contentSection}>
+          <ThemedInput label="Nama Produk" size="md" value={name} onChangeText={setName} />
+          <ThemedInput
+            label="Harga Jual"
+            value={price}
+            size="md"
+            onChangeText={setPrice}
+            keyboardType="number-pad"
+          />
 
-        <ThemedInput label="Nama Produk" value={name} onChangeText={setName} />
-        <ThemedInput
-          label="Harga Jual"
-          value={price}
-          onChangeText={setPrice}
-          keyboardType="number-pad"
-        />
+          <MerkPicker
+            label="Pilih Merk"
+            value={brand}
+            size="md"
+            onChange={setBrand}
+          />
+          <CategoryPicker
+            label="Pilih Kategori"
+            value={category}
+            size="md"
+            onChange={(category: Category) => {
+              setCategory(category.id);
+            }}
+            onUpdate={(category: Category) => {
 
-        <ComboInput
-          label="Pilih Merk"
-          value={brand}
-          onChangeText={setBrand}
-          items={[
-            {label: "Pilih Merk", value: ""},
-            {label: "Tidak ada merk", value: "none"},
-            {label: "Qasir", value: "qasir"},
-          ]}
-        />
-        <ComboInput
-          label="Pilih Kategori"
-          value={category}
-          onChangeText={setCategory}
-          items={[
-            {label: "Pilih Kategori", value: ""},
-            {label: "Umum", value: "umum"},
-            {label: "Minuman", value: "minuman"},
-            {label: "Makanan", value: "makanan"},
-          ]}
-        />
+            }}
+            categories={categories}
+          />
+        </View>
+
 
         <View style={styles.sectionDivider} />
 
-        <MenuRow
-          title="Produk Favorit"
-          subtitle="Tampilkan produk di kategori terdepan."
-          variant="toggle"
-          value={favorite}
-          onValueChange={setFavorite}
-          badgeText="Baru"
-        />
+        <View style={styles.rowSection}>
+          <MenuRow
+            title="Produk Favorit"
+            subtitle="Tampilkan produk di kategori terdepan."
+            variant="toggle"
+            value={favorite}
+            onValueChange={setFavorite}
+            badgeText="Baru"
+          />
+        </View>
 
-        <MenuRow
-          title="Atur Harga Modal dan Barcode"
-          variant="toggle"
-          value={enableCostBarcode}
-          onValueChange={setEnableCostBarcode}
-          showBottomBorder={!enableCostBarcode}
-        />
+        <View style={styles.sectionDivider} />
 
-        {enableCostBarcode ? (
-          <CostBarcodeFields
-            capitalPrice={capitalPrice}
-            onCapitalPriceChange={setCapitalPrice}
-            barcode={barcode}
-            onBarcodeChange={setBarcode}
-            onPressScan={() =>
-              router.push("/dashboard/product/add-barcode" as never)
+        <View style={{ paddingHorizontal: 20, paddingVertical: 6 }}>
+          <MenuRow
+            title="Atur Harga Modal dan Barcode"
+            variant="toggle"
+            value={enableCostBarcode}
+            onValueChange={setEnableCostBarcode}
+            showBottomBorder={!enableCostBarcode}
+          />
+          {enableCostBarcode ? (
+            <CostBarcodeFields
+              capitalPrice={capitalPrice}
+              onCapitalPriceChange={setCapitalPrice}
+              barcode={barcode}
+              onBarcodeChange={setBarcode}
+              onPressScan={() =>
+                router.push("/dashboard/product/add-barcode" as never)
+              }
+            />
+          ) : null}
+        </View>
+
+        <View style={styles.sectionDivider} />
+
+        <View style={styles.rowSection}>
+          <MenuRow
+            title="Kelola Stok"
+            showBottomBorder={false}
+            rightText={stock ? `Stok Aktif (${stock.offlineStock} ${stock.unit})` : "Stok Tidak Aktif"}
+            variant="link"
+            onPress={() =>
+              router.push({
+                pathname: "/dashboard/product/stock",
+                params: {
+                  from: "add",
+                  ...(name ? { name } : {}),
+                  ...(price ? { price } : {}),
+                  ...(brand ? { brand } : {}),
+                  ...(category ? { category } : {}),
+                  ...(favorite ? { favorite: String(favorite) } : {}),
+                  ...(enableCostBarcode ? { enableCostBarcode: String(enableCostBarcode) } : {}),
+                  ...(imageUri ? { imageUri } : {}),
+                  ...(capitalPrice ? { capitalPrice: String(capitalPrice) } : {}),
+                  ...(barcode ? { barcode } : {}),
+                  ...(variants.length ? { variants: JSON.stringify(variants) } : {}),
+                  ...(stock
+                    ? {
+                      offlineStock: String(stock.offlineStock),
+                      unit: stock.unit,
+                      minStock: String(stock.minStock),
+                      notifyMin: stock.notifyMin ? "1" : "0",
+                    }
+                    : {}),
+                },
+              } as never)
             }
           />
-        ) : null}
-
-        <MenuRow
-          title="Kelola Stok"
-          rightText="Stok Tidak Aktif"
-          variant="link"
-          onPress={() => router.push("/dashboard/product/stock" as never)}
-        />
-
-        {variants.length > 0 ? (
-          <>
-            <View style={styles.sectionDivider} />
-            <ThemedText type="subtitle-2">Varian</ThemedText>
-            {variants.map((v, idx) => (
-              <ProductCard
-                key={idx}
-                initials={(v.name || "VR").slice(0, 2).toUpperCase()}
-                name={v.name}
-                subtitle={`Rp${formatIDR(v.price)}`}
-                rightText={v.stockText || "Stok Tidak Aktif"}
-                onPress={() => {}}
-              />
-            ))}
-          </>
-        ) : null}
+        </View>
 
         <View style={styles.sectionDivider} />
+        <View style={styles.variantsSection}>
+          {variants.length > 0 ? (
+            <>
+              <ThemedText type="subtitle-2">Varian</ThemedText>
+              {variants.map((v, idx) => (
+                <VariantItem
+                  key={idx}
+                  initials={(v.name || "VR").slice(0, 2).toUpperCase()}
+                  name={v.name}
+                  price={v.price}
+                  stock={v.stock}
+                  onPress={() => { }}
+                />
+              ))}
+            </>
+          ) : null}
 
-        <ThemedButton
-          title="Tambah Varian"
-          variant="secondary"
-          onPress={() => router.push("/dashboard/product/variant" as never)}
-        />
+          <ThemedButton
+            title="Tambah Varian"
+            variant="secondary"
+            onPress={() =>
+              router.push({
+                pathname: "/dashboard/product/variant",
+                params: {
+                  from: "add",
+                  ...(name ? { name } : {}),
+                  ...(price ? { price } : {}),
+                  ...(brand ? { brand } : {}),
+                  ...(category ? { category } : {}),
+                  ...(favorite ? { favorite: String(favorite) } : {}),
+                  ...(enableCostBarcode ? { enableCostBarcode: String(enableCostBarcode) } : {}),
+                  ...(imageUri ? { imageUri } : {}),
+                  ...(capitalPrice ? { capitalPrice: String(capitalPrice) } : {}),
+                  ...(barcode ? { barcode } : {}),
+                  ...(variants.length ? { variants: JSON.stringify(variants) } : {}),
+                },
+              } as never)
+            }
+          />
+          <View style={styles.bottomBar}>
+            <ThemedButton title="Simpan" variant="primary" onPress={handleSave} />
+          </View>
+        </View>
       </KeyboardAwareScrollView>
 
-      <View style={styles.bottomBar}>
-        <ThemedButton title="Simpan" variant="primary" onPress={handleSave} />
-      </View>
+
 
       <ConfirmationDialog ref={confirmationRef} />
     </View>
@@ -241,15 +311,27 @@ const createStyles = (colorScheme: "light" | "dark") =>
       marginTop: 8,
     },
     sectionDivider: {
-      backgroundColor: Colors[colorScheme].tint,
-      marginVertical: 16,
+      backgroundColor: Colors[colorScheme].border2,
+      height: 12,
+    },
+    contentSection: {
+      paddingHorizontal: 20,
+      paddingVertical: 24,
+    },
+    rowSection: {
+      paddingHorizontal: 20,
+      paddingVertical: 6,
+    },
+    variantsSection: {
+      paddingHorizontal: 20,
+      paddingVertical: 18,
+      gap: 12,
+      flexDirection: "column",
     },
     bottomBar: {
-      position: "absolute",
       left: 0,
       right: 0,
       bottom: 0,
-      paddingHorizontal: 20,
       paddingBottom: 16,
       paddingTop: 8,
       backgroundColor: Colors[colorScheme].background,

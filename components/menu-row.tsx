@@ -2,7 +2,7 @@ import { Colors } from "@/constants/theme";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { Ionicons } from "@expo/vector-icons";
 import React from "react";
-import { StyleSheet, Switch, TouchableOpacity, View } from "react-native";
+import { StyleProp, StyleSheet, Switch, TextStyle, TouchableOpacity, View, ViewStyle } from "react-native";
 import { ThemedText } from "./themed-text";
 
 type MenuRowProps = {
@@ -17,6 +17,8 @@ type MenuRowProps = {
   showTopBorder?: boolean;
   showBottomBorder?: boolean;
   leftIconName?: React.ComponentProps<typeof Ionicons>["name"];
+  style?: StyleProp<TextStyle>;
+  rowStyle?: StyleProp<ViewStyle>;
 };
 
 const MenuRow: React.FC<MenuRowProps> = ({
@@ -26,6 +28,8 @@ const MenuRow: React.FC<MenuRowProps> = ({
   onPress,
   rightText,
   value = false,
+  rowStyle,
+  style,
   onValueChange,
   badgeText,
   showTopBorder = true,
@@ -47,11 +51,12 @@ const MenuRow: React.FC<MenuRowProps> = ({
           {
             borderBottomWidth: showBottomBorder ? bottom : 0,
           },
+          rowStyle
         ]}
         onPress={onPress}
         activeOpacity={0.8}
       >
-        <View style={{flex: 1}}>
+        <View style={[{flex: 1}]}>
           <View style={styles.titleRow}>
             {leftIconName ? (
               <Ionicons
@@ -60,7 +65,7 @@ const MenuRow: React.FC<MenuRowProps> = ({
                 color={Colors[colorScheme].primary}
               />
             ) : null}
-            <ThemedText style={styles.rowTitle}>{title}</ThemedText>
+            <ThemedText style={[styles.rowTitle, style]}>{title}</ThemedText>
             {badgeText ? (
               <View style={styles.badge}>
                 <ThemedText style={styles.badgeText}>{badgeText}</ThemedText>
@@ -91,7 +96,7 @@ const MenuRow: React.FC<MenuRowProps> = ({
       style={styles.row}
       onPress={onPress}
       activeOpacity={0.8}>
-      <View style={{ flex: 1 }}>
+      <View style={[{ flex: 1 } ]}>
         <View style={styles.titleRow}>
           {leftIconName ? (
             <Ionicons
@@ -118,7 +123,7 @@ const MenuRow: React.FC<MenuRowProps> = ({
             value={value}
             onValueChange={onValueChange}
             trackColor={{
-              false: Colors[colorScheme].icon,
+              false: Colors[colorScheme].border,
               true: Colors[colorScheme].primary,
             }}
             thumbColor={Colors[colorScheme].background}
@@ -148,15 +153,12 @@ const createStyles = (colorScheme: "light" | "dark") =>
       justifyContent: "space-between",
       paddingVertical: 12,
       minHeight: 64,
-      borderTopColor: Colors[colorScheme].icon,
-      borderBottomWidth: StyleSheet.hairlineWidth,
-      borderBottomColor: Colors[colorScheme].icon,
       gap: 50,
     },
     titleRow: {
       flexDirection: "row",
       alignItems: "center",
-      gap: 6,
+      gap: 8,
     },
     rowTitle: {
       fontWeight: "700",
@@ -164,6 +166,7 @@ const createStyles = (colorScheme: "light" | "dark") =>
     rowSubtitle: {
       marginTop: 2,
       color: Colors[colorScheme].icon,
+      lineHeight: 18,
       fontSize: 12,
     },
     badge: {
@@ -171,10 +174,10 @@ const createStyles = (colorScheme: "light" | "dark") =>
       borderColor: Colors[colorScheme].primary,
       borderRadius: 10,
       paddingHorizontal: 8,
-      paddingVertical: 2,
     },
     badgeText: {
       fontSize: 10,
+      fontWeight: "700",
       color: Colors[colorScheme].primary,
     },
     rightRow: {
@@ -186,6 +189,7 @@ const createStyles = (colorScheme: "light" | "dark") =>
     },
     rightText: {
       color: Colors[colorScheme].icon,
+      fontSize: 14,
     },
   });
 

@@ -7,6 +7,7 @@ import { ThemedInput } from "@/components/themed-input";
 import { ThemedText } from "@/components/themed-text";
 import { Colors } from "@/constants/theme";
 import { useColorScheme } from "@/hooks/use-color-scheme";
+import { useProductFormStore } from "@/stores/product-form-store";
 import { useNavigation, useRouter } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
 import { StyleSheet, View } from "react-native";
@@ -20,12 +21,16 @@ export default function StockSettingsScreen() {
   const router = useRouter();
   const navigation = useNavigation();
 
+  const stockFromStore = useProductFormStore(state => state.stock);
+  const setStockInStore = useProductFormStore(state => state.setStock);
+
   const confirmationRef = useRef<ConfirmationDialogHandle | null>(null);
 
-  const [offlineStock, setOfflineStock] = useState(0);
-  const [unit, setUnit] = useState("pcs");
-  const [minStock, setMinStock] = useState(0);
-  const [notifyMin, setNotifyMin] = useState(false);
+  const [offlineStock, setOfflineStock] = useState(stockFromStore?.offlineStock ?? 0);
+  const [unit, setUnit] = useState(stockFromStore?.unit ?? "pcs");
+  const [minStock, setMinStock] = useState(stockFromStore?.minStock ?? 0);
+  const [notifyMin, setNotifyMin] = useState(stockFromStore?.notifyMin ?? false);
+  const [isSubmit, setIsSubmit] = useState(false);
 
   const unitItems = [
     {label: "Pcs", value: "pcs"},
@@ -35,8 +40,16 @@ export default function StockSettingsScreen() {
   ];
 
   const handleSave = () => {
+    setIsSubmit(true);
     const payload = {offlineStock, unit, minStock, notifyMin};
     console.log("Kelola stok", payload);
+    setStockInStore({
+      offlineStock,
+      unit,
+      minStock,
+      notifyMin,
+    });
+
     router.back();
   };
 
@@ -45,11 +58,10 @@ export default function StockSettingsScreen() {
 
   useEffect(() => {
     const sub = navigation.addListener("beforeRemove", e => {
-      if (!isDirty) {
+      const action = e.data.action;
+      if (!isDirty || isSubmit || action.type === "REPLACE") {
         return;
       }
-
-      const action = e.data.action;
       e.preventDefault();
 
       confirmationRef.current?.showConfirmationDialog({
@@ -65,7 +77,7 @@ export default function StockSettingsScreen() {
     });
 
     return sub;
-  }, [navigation, isDirty]);
+  }, [navigation, isDirty, isSubmit]);
 
   return (
     <View style={{flex: 1, backgroundColor: Colors[colorScheme].background}}>
@@ -109,7 +121,7 @@ export default function StockSettingsScreen() {
       </KeyboardAwareScrollView>
 
       <View style={styles.bottomBar}>
-        <ThemedButton title="Simpan" variant="primary" onPress={handleSave} />
+        <ThemedButton title="Simpan" variant="primary" onPress={handleSave} disabled={isSubmit} />
       </View>
 
       <ConfirmationDialog ref={confirmationRef} />

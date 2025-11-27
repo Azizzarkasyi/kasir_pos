@@ -1,9 +1,9 @@
-import {Colors} from "@/constants/theme";
-import {useColorScheme} from "@/hooks/use-color-scheme";
-import {Ionicons} from "@expo/vector-icons";
+import { Colors } from "@/constants/theme";
+import { useColorScheme } from "@/hooks/use-color-scheme";
+import { Ionicons } from "@expo/vector-icons";
 import React from "react";
-import {Image, StyleSheet, TouchableOpacity, View} from "react-native";
-import {ThemedText} from "./themed-text";
+import { Image, StyleSheet, TouchableOpacity, View } from "react-native";
+import { ThemedText } from "./themed-text";
 
 interface ImageUploadProps {
   uri?: string | null;
@@ -23,7 +23,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
     <View style={styles.container}>
       <View style={styles.square}>
         {uri ? (
-          <Image source={{uri}} style={styles.image} />
+          <Image source={{ uri }} style={styles.image} />
         ) : (
           <ThemedText style={styles.initials}>{initials}</ThemedText>
         )}
@@ -46,7 +46,7 @@ const createStyles = (colorScheme: "light" | "dark") =>
       width: 104,
       height: 104,
       borderRadius: 8,
-      backgroundColor: Colors[colorScheme].icon,
+      backgroundColor: Colors[colorScheme].border,
       alignItems: "center",
       justifyContent: "center",
       position: "relative",
@@ -64,7 +64,7 @@ const createStyles = (colorScheme: "light" | "dark") =>
     cameraBtn: {
       position: "absolute",
       bottom: -16,
-      alignSelf: "center",
+      right: -20,
       width: 40,
       height: 40,
       borderRadius: 20,
@@ -72,7 +72,15 @@ const createStyles = (colorScheme: "light" | "dark") =>
       alignItems: "center",
       justifyContent: "center",
       borderWidth: 1,
-      borderColor: Colors[colorScheme].icon,
+      shadowColor: Colors[colorScheme].shadow,
+      shadowOffset: {
+        width: 0,
+        height: 2,
+      },
+      shadowOpacity: 0.25,
+      shadowRadius: 3.84,
+      elevation: 5,
+      borderColor: Colors[colorScheme].border,
     },
   });
 

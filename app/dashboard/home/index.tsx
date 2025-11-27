@@ -149,10 +149,18 @@ const DashboardScreen = () => {
           </ScrollView>
         </View>
         <View style={styles.quickActionRow}>
-          <MenuItem label="Kelola Produk" icon="bag-outline" />
-          <MenuItem label="Pegawai" icon="id-card-outline" />
-          <MenuItem label="Outlet" icon="storefront-outline" />
-          <MenuItem label="Bantuan" icon="help-circle-outline" />
+          <MenuItem label="Kelola Produk" icon="bag-outline" onPress={() => {
+            router.push("/dashboard/product/manage" as never);
+          }} />
+          <MenuItem label="Pegawai" icon="id-card-outline" onPress={() => {
+            router.push("/dashboard/employee" as never);
+          }} />
+          <MenuItem label="Outlet" icon="storefront-outline" onPress={() => {
+            router.push("/dashboard/outlet" as never);
+          }} />
+          <MenuItem label="Bantuan" icon="help-circle-outline" onPress={() => {
+            router.push("/dashboard/help" as never);
+          }} />
         </View>
 
         <View style={styles.sectionCard}>
@@ -180,12 +188,12 @@ const DashboardScreen = () => {
   );
 };
 
-const MenuItem = ({label, icon}: {label: string; icon: any}) => {
+const MenuItem = ({label, icon, onPress}: {label: string; icon: any, onPress?: () => void}) => {
   const colorScheme = useColorScheme() ?? "light";
   const styles = menuItemStyles(colorScheme);
 
   return (
-    <TouchableOpacity activeOpacity={0.7} style={styles.wrapper}>
+    <TouchableOpacity activeOpacity={0.7} style={styles.wrapper} onPress={onPress}>
       <View style={styles.iconWrapper}>
         <Ionicons
           name={icon}
@@ -211,8 +219,6 @@ const createStyles = (colorScheme: "light" | "dark") =>
       paddingBottom: 96,
     },
     headerIconButton: {
-      width: 36,
-      height: 36,
       borderRadius: 18,
       alignItems: "center",
       justifyContent: "center",
@@ -278,7 +284,7 @@ const createStyles = (colorScheme: "light" | "dark") =>
     },
     quickActionRow: {
       flexDirection: "row",
-      alignItems: "center",
+      alignItems: "stretch",
       paddingHorizontal: 10,
       justifyContent: "space-around",
     },
@@ -337,6 +343,7 @@ const menuItemStyles = (colorScheme: "light" | "dark") =>
       paddingVertical: 8,
       paddingHorizontal: 10,
       borderRadius: 12,
+      width: "25%"
     },
     iconWrapper: {
       borderRadius: 20,
@@ -348,6 +355,7 @@ const menuItemStyles = (colorScheme: "light" | "dark") =>
       fontSize: 12,
       fontWeight: "semibold",
       textAlign: "center",
+      lineHeight: 16,
       color: Colors[colorScheme].text,
     },
   });

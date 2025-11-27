@@ -1,6 +1,6 @@
 import { Colors } from "@/constants/theme";
 import { useColorScheme } from "@/hooks/use-color-scheme";
-import { AntDesign, Ionicons } from "@expo/vector-icons";
+import { Ionicons } from "@expo/vector-icons";
 import React, { useEffect, useRef, useState } from "react";
 import {
   Animated,
@@ -29,6 +29,7 @@ export type ThemedInputProps = TextInputProps & {
   inputRef?: React.RefObject<TextInput | null>;
   /** When true, input will try to auto-focus reliably inside a Modal when modalVisible becomes true. */
   isAutoFocusOnModal?: boolean;
+  size?: "sm" | "base" | "md";
 };
 
 export function ThemedInput({
@@ -45,17 +46,21 @@ export function ThemedInput({
   containerStyle,
   inputRef: externalInputRef,
   isAutoFocusOnModal,
+  size = "base",
   ...rest
 }: ThemedInputProps) {
   const [isFocused, setIsFocused] = useState(false);
   const [isPinVisible, setIsPinVisible] = useState(false);
   const value = rest.value || "";
   const colorScheme = useColorScheme() ?? "light";
-  const styles = createStyles(colorScheme, !!error, isFocused);
+  const editable = rest.editable ?? true;
+  const styles = createStyles(colorScheme, !!error, isFocused, size, editable);
 
   const focusAnim = useRef(new Animated.Value(value ? 1 : 0)).current;
   const internalRef = useRef<TextInput | null>(null);
   const inputRef = externalInputRef ?? internalRef;
+
+  
 
   useEffect(() => {
     Animated.timing(focusAnim, {
@@ -75,25 +80,31 @@ export function ThemedInput({
     return () => clearTimeout(timeout);
   }, [isAutoFocusOnModal, inputRef]);
 
+  const labelTopRange: [number, number] =
+    size === "sm" ? [12, -8] : size === "md" ? [14, -8] : [16, -8];
+
+  const labelFontRange: [number, number] =
+    size === "sm" ? [14, 12] : size === "md" ? [15, 12] : [16, 12];
+
   const labelStyle = {
     top: focusAnim.interpolate({
       inputRange: [0, 1],
-      outputRange: [18, -10],
+      outputRange: labelTopRange,
     }),
     fontSize: focusAnim.interpolate({
       inputRange: [0, 1],
-      outputRange: [16, 12],
+      outputRange: labelFontRange,
     }),
     color: focusAnim.interpolate({
       inputRange: [0, 1],
-      outputRange: [Colors[colorScheme].icon, Colors[colorScheme].primary],
+      outputRange: [error ? "red" : Colors[colorScheme].text, error ? "red" : Colors[colorScheme].primary],
     }),
     backgroundColor: Colors[colorScheme].background,
     paddingHorizontal: 4,
   };
 
   return (
-    <View style={[styles.container, {width}, containerStyle as any]}> 
+    <View style={[styles.container, { width }, containerStyle as any]}>
       <View style={[styles.inputContainer, inputContainerStyle]}>
         {showLabel ? (
           <Animated.Text style={[styles.label, labelStyle]}>
@@ -104,18 +115,18 @@ export function ThemedInput({
           {leftIcon
             ? leftIcon
             : leftIconName
-            ? (
+              ? (
                 <Ionicons
                   name={leftIconName}
                   size={20}
                   color={Colors[colorScheme].icon}
                 />
               )
-            : null}
+              : null}
         </View>
         <TextInput
           ref={inputRef}
-          style={[styles.input, rest.multiline ? {textAlignVertical: 'center'} : null]}
+          style={[styles.input, rest.multiline ? { textAlignVertical: 'center' } : null]}
           {...rest}
           onFocus={() => setIsFocused(true)}
           onBlur={() => setIsFocused(false)}
@@ -126,8 +137,8 @@ export function ThemedInput({
             <Ionicons name="alert-circle" size={24} color={"red"} />
           ) : isPassword ? (
             <TouchableOpacity onPress={() => setIsPinVisible(!isPinVisible)}>
-              <AntDesign
-                name={isPinVisible ? "eye-invisible" : "eye"}
+              <Ionicons
+                name={isPinVisible ? "eye-off-outline" : "eye-outline"}
                 size={24}
                 color={Colors[colorScheme].icon}
               />
@@ -135,7 +146,7 @@ export function ThemedInput({
           ) : rightIcon ? (
             rightIcon
           ) : rightIconName ? (
-            <Ionicons name={rightIconName} size={20} color={Colors[colorScheme].icon} />
+            <Ionicons name={rightIconName as any} size={20} color={Colors[colorScheme].icon} />
           ) : null}
         </View>
       </View>
@@ -147,29 +158,35 @@ export function ThemedInput({
 const createStyles = (
   colorScheme: "light" | "dark",
   hasError: boolean,
-  isFocused: boolean
+  isFocused: boolean,
+  size: "sm" | "base" | "md",
+  editable: boolean,
 ) =>
   StyleSheet.create({
     container: {
       width: "100%",
-      marginVertical: 10,
+      borderRadius: 8,
+      marginVertical: size === "sm" ? 6 : size === "md" ? 8 : 10,
     },
     inputContainer: {
       borderWidth: 1,
       borderRadius: 8,
+      backgroundColor: editable ? Colors[colorScheme].background : Colors[colorScheme].border2,
       borderColor: hasError
         ? "red"
         : isFocused
-        ? Colors[colorScheme].primary
-        : Colors[colorScheme].icon,
-      paddingHorizontal: 12,
-      height: 56,
+          ? Colors[colorScheme].primary
+          : Colors[colorScheme].border,
+      paddingHorizontal: size === "sm" ? 10 : size === "md" ? 14 : 12,
+      height: size === "sm" ? 48 : size === "md" ? 52 : 56,
       flexDirection: "row",
       alignItems: "center",
       position: "relative",
     },
     label: {
       position: "absolute",
+      fontSize: size === "sm" ? 14 : size === "md" ? 14 : 16,
+      top: size === "sm" ? 12 : size === "md" ? 12 : 16,
       left: 12,
     },
     leftIconContainer: {
@@ -177,7 +194,7 @@ const createStyles = (
     },
     input: {
       flex: 1,
-      fontSize: 16,
+      fontSize: size === "sm" ? 14 : size === "md" ? 15 : 16,
       color: Colors[colorScheme].text,
       height: "100%",
     },

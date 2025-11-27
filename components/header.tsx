@@ -16,6 +16,7 @@ interface HeaderProps {
   right?: React.ReactNode;
   center?: React.ReactNode;
   withNotificationButton?: boolean;
+  withShadow?: boolean;
 }
 
 const Header: React.FC<HeaderProps> = ({
@@ -24,6 +25,7 @@ const Header: React.FC<HeaderProps> = ({
   title,
   showBack = true,
   showHelp = true,
+  withShadow = true,
   left,
   right,
   center,
@@ -31,7 +33,7 @@ const Header: React.FC<HeaderProps> = ({
 }) => {
   const navigation = useNavigation();
   const colorScheme = useColorScheme() ?? "light";
-  const styles = createStyles(colorScheme);
+  const styles = createStyles(colorScheme, withShadow);
   const insets = useSafeAreaInsets();
 
   const handleBack = () => {
@@ -43,8 +45,8 @@ const Header: React.FC<HeaderProps> = ({
   };
 
   return (
-    <View style={[styles.headerContainer, {paddingTop: insets.top + 16}]}>
-      <View style={styles.leftArea}>
+    <View style={[styles.headerContainer, { paddingTop: insets.top + 16 }]}>
+      <View style={styles.headerContent}>
         {showBack ? (
           <TouchableOpacity onPress={handleBack}>
             <Ionicons
@@ -55,8 +57,7 @@ const Header: React.FC<HeaderProps> = ({
           </TouchableOpacity>
         ) : null}
         {left}
-      </View>
-      <View style={styles.centerArea}>
+
         {center ? (
           center
         ) : title ? (
@@ -70,7 +71,7 @@ const Header: React.FC<HeaderProps> = ({
             <Ionicons
               name="help-circle-outline"
               size={20}
-              color={Colors[colorScheme].primary}
+              color={Colors[colorScheme].icon}
             />
           </TouchableOpacity>
         ) : null}
@@ -80,7 +81,7 @@ const Header: React.FC<HeaderProps> = ({
   );
 };
 
-const createStyles = (colorScheme: "light" | "dark") =>
+const createStyles = (colorScheme: "light" | "dark", withShadow: boolean) =>
   StyleSheet.create({
     headerContainer: {
       flexDirection: "row",
@@ -88,44 +89,51 @@ const createStyles = (colorScheme: "light" | "dark") =>
       alignItems: "center",
       width: "100%",
       paddingVertical: 16,
-      paddingHorizontal: 8,
+      paddingHorizontal: 16,
       backgroundColor: Colors[colorScheme].background,
       position: "relative",
-      shadowColor: "#000000",
-      shadowOffset: {width: 0, height: 2},
-      shadowOpacity: 0.16,
-      shadowRadius: 6,
-      elevation: 6,
+      ...(withShadow ? {
+        shadowColor: Colors[colorScheme].icon,
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.5,
+        shadowRadius: 6,
+        elevation: 6,
+      } : {}),
       zIndex: 2,
       borderBottomWidth: StyleSheet.hairlineWidth,
       borderBottomColor: "rgba(0,0,0,0.06)",
+    },
+    headerContent: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 32,
     },
     leftArea: {
       flexDirection: "row",
       alignItems: "center",
       gap: 12,
     },
-    centerArea: {
-      flex: 1,
-      alignItems: "center",
-      justifyContent: "center",
-    },
     rightArea: {
       flexDirection: "row",
+
       alignItems: "center",
       gap: 12,
     },
     helpButton: {
       flexDirection: "row",
       alignItems: "center",
-      padding: 8,
+      paddingHorizontal: 12,
+      paddingVertical: 4,
       borderRadius: 20,
       borderWidth: 1,
-      borderColor: Colors[colorScheme].icon,
+      borderColor: Colors[colorScheme].border,
+      backgroundColor: Colors[colorScheme].background,
     },
     helpButtonText: {
       marginRight: 4,
       color: Colors[colorScheme].text,
+      fontSize: 14,
+      fontWeight: "500",
     },
     titleText: {
       fontSize: 18,

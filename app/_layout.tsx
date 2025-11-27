@@ -89,11 +89,25 @@ export default function RootLayout() {
           options={{ headerShown: true, title: "Variasi Produk" }}
         />
         <Stack.Screen
+          name="dashboard/product/variant-stock"
+          options={{ headerShown: true, title: "Kelola Stok Varian" }}
+        />
+        <Stack.Screen
           name="dashboard/product/add-barcode"
           options={{ headerShown: true, title: "Tambah Barcode" }}
         />
 
-   
+
+        {/* stock management */}
+        <Stack.Screen
+          name="dashboard/stock/manage"
+          options={{ headerShown: true, title: "Kelola Stok" }}
+        />
+
+
+        {/* recipe and materials */}
+
+
         <Stack.Screen
           name="dashboard/recipe-and-materials/index"
           options={{ headerShown: true, title: "Resep & Bahan" }}
@@ -101,6 +115,10 @@ export default function RootLayout() {
         <Stack.Screen
           name="dashboard/recipe-and-materials/add-recipe"
           options={{ headerShown: true, title: "Tambah Resep" }}
+        />
+        <Stack.Screen
+          name="dashboard/recipe-and-materials/edit-recipe"
+          options={{ headerShown: true, title: "Edit Resep" }}
         />
         <Stack.Screen
           name="dashboard/recipe-and-materials/ingredients"
@@ -117,14 +135,23 @@ export default function RootLayout() {
 
         <Stack.Screen
           name="dashboard/recipe-and-materials/stock"
-          options={{ headerShown: false, title: "Kelola Stok Bahan" }}
+          options={{ headerShown: true, title: "Kelola Stok Bahan" }}
+        />
+
+        <Stack.Screen
+          name="dashboard/recipe-and-materials/variant"
+          options={{ headerShown: true, title: "Variasi Bahan" }}
+        />
+        <Stack.Screen
+          name="dashboard/recipe-and-materials/variant-stock"
+          options={{ headerShown: true, title: "Kelola Stok Varian Bahan" }}
         />
 
 
 
+        {/* setting */}
 
 
-    
         <Stack.Screen
           name="dashboard/setting/index"
           options={{ headerShown: false, title: "Pengaturan" }}
@@ -148,6 +175,10 @@ export default function RootLayout() {
         <Stack.Screen
           name="dashboard/setting/printer"
           options={{ headerShown: true, title: "Printer" }}
+        />
+        <Stack.Screen
+          name="dashboard/setting/scanner"
+          options={{ headerShown: true, title: "Scanner" }}
         />
         <Stack.Screen
           name="dashboard/setting/umum"

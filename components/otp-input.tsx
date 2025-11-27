@@ -1,7 +1,7 @@
-import React, {useEffect, useRef, useState} from 'react';
-import {StyleSheet, TextInput, View} from 'react-native';
-import {useColorScheme} from '@/hooks/use-color-scheme';
-import {Colors} from '@/constants/theme';
+import { Colors } from '@/constants/theme';
+import { useColorScheme } from '@/hooks/use-color-scheme';
+import React, { useEffect, useRef, useState } from 'react';
+import { StyleSheet, TextInput, View } from 'react-native';
 
 type OtpInputProps = {
   length?: number;
@@ -73,10 +73,11 @@ const createStyles = (colorScheme: 'light' | 'dark') =>
       height: 56,
       borderWidth: 1,
       borderRadius: 8,
-      borderColor: Colors[colorScheme].icon,
+      borderColor: Colors[colorScheme].border,
       color: Colors[colorScheme].text,
       fontSize: 20,
       backgroundColor: Colors[colorScheme].background,
+      textAlign: 'center',
     },
   });
 

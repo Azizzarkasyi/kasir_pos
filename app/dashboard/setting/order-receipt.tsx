@@ -1,11 +1,11 @@
-import {ThemedButton} from "@/components/themed-button";
-import {ThemedInput} from "@/components/themed-input";
-import {ThemedText} from "@/components/themed-text";
-import {Colors} from "@/constants/theme";
-import {useColorScheme} from "@/hooks/use-color-scheme";
+import { ThemedButton } from "@/components/themed-button";
+import { ThemedInput } from "@/components/themed-input";
+import { ThemedText } from "@/components/themed-text";
+import { Colors } from "@/constants/theme";
+import { useColorScheme } from "@/hooks/use-color-scheme";
 import React from "react";
-import {StyleSheet, Switch, View} from "react-native";
-import {ScrollView} from "react-native-gesture-handler";
+import { StyleSheet, Switch, View } from "react-native";
+import { ScrollView } from "react-native-gesture-handler";
 
 export default function OrderReceiptSettingScreen() {
   const colorScheme = useColorScheme() ?? "light";
@@ -27,6 +27,7 @@ export default function OrderReceiptSettingScreen() {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.sectionCard}>
+    
           <SettingRow
             label="Tampilkan penomoran"
             value={displayRunningNumbers}
@@ -55,6 +56,9 @@ export default function OrderReceiptSettingScreen() {
         </View>
 
         <View style={styles.sectionCard}>
+          <ThemedText type="subtitle-2" style={{ marginBottom: 8 }}>
+            Keterangan Struk
+          </ThemedText>
           <ThemedInput
             label="Keterangan Tambahan"
             value={headerDesc}
@@ -81,15 +85,25 @@ type RowProps = {
   onValueChange: (val: boolean) => void;
 };
 
-const SettingRow: React.FC<RowProps> = ({label, value, onValueChange}) => {
+const SettingRow: React.FC<RowProps> = ({ label, value, onValueChange }) => {
   const colorScheme = useColorScheme() ?? "light";
   return (
-    <View style={{flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingVertical: 12}}>
+    <View
+      style={{
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "space-between",
+        paddingVertical: 12,
+      }}
+    >
       <ThemedText>{label}</ThemedText>
       <Switch
         value={value}
         onValueChange={onValueChange}
-        trackColor={{false: Colors[colorScheme].icon, true: Colors[colorScheme].primary}}
+        trackColor={{
+          false: Colors[colorScheme].icon,
+          true: Colors[colorScheme].primary,
+        }}
         thumbColor={Colors[colorScheme].secondary}
       />
     </View>
@@ -104,7 +118,7 @@ const createStyles = (colorScheme: "light" | "dark") =>
     },
     scrollContainer: {
       paddingHorizontal: 20,
-      paddingBottom: 100,
+      paddingBottom: 80,
     },
     sectionCard: {
       marginTop: 12,

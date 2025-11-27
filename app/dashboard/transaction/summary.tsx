@@ -2,9 +2,9 @@
 
 import CheckoutItem from "@/components/atoms/checkout-item";
 import AddAdditionalCostModal from "@/components/drawers/add-addditional-cost-modal";
+import Header from "@/components/header";
 import { Colors } from "@/constants/theme";
 import { useColorScheme } from "@/hooks/use-color-scheme";
-import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import React from "react";
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
@@ -82,37 +82,7 @@ export default function TransactionSummaryPage() {
         { backgroundColor: Colors[colorScheme].background },
       ]}
     >
-      <View style={styles.headerWrapper}>
-        <View style={styles.headerRow}>
-          <TouchableOpacity
-            onPress={() => router.back()}
-            style={styles.backButton}
-            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-          >
-            <Ionicons
-              name="chevron-back"
-              size={22}
-              color={Colors[colorScheme].text}
-            />
-          </TouchableOpacity>
-
-          <View style={styles.headerCenter}>
-            <Text style={styles.totalText}>Rp {formatCurrency(totalAmount)}</Text>
-          </View>
-
-          <TouchableOpacity
-            style={styles.feeButton}
-            onPress={() => setIsCostModalVisible(true)}
-          >
-            <Ionicons
-              name="add"
-              size={16}
-              color={Colors[colorScheme].secondary}
-            />
-            <Text style={styles.feeButtonText}>Fee</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
+      <Header title="Ringkasan Transaksi" showHelp={false}/>
 
       <ScrollView
         style={styles.listWrapper}
@@ -161,36 +131,7 @@ const createStyles = (colorScheme: "light" | "dark") =>
     container: {
       flex: 1,
     },
-    headerWrapper: {
-      paddingTop: 12,
-      paddingBottom: 12,
-      paddingHorizontal: 16,
-      shadowColor: "#000000",
-      shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: 0.16,
-      shadowRadius: 6,
-      elevation: 6,
-      backgroundColor: Colors[colorScheme].background,
-      borderBottomWidth: 1,
-      borderBottomColor: Colors[colorScheme].border,
-    },
-    headerRow: {
-      flexDirection: "row",
-      alignItems: "center",
 
-      justifyContent: "space-between",
-    },
-    backButton: {
-      width: 32,
-      height: 32,
-      borderRadius: 16,
-      alignItems: "center",
-      justifyContent: "center",
-    },
-    headerCenter: {
-      flex: 1,
-      alignItems: "center",
-    },
     totalText: {
       fontSize: 20,
       fontWeight: "600",
@@ -211,15 +152,14 @@ const createStyles = (colorScheme: "light" | "dark") =>
       color: Colors[colorScheme].secondary,
     },
     listWrapper: {
+      paddingTop: 12,
       flex: 1,
     },
     listContent: {
-      paddingHorizontal: 16,
-      paddingVertical: 8,
-      rowGap: 12,
+      paddingVertical: 8, 
     },
     itemContainer: {
-      borderWidth: 1,
+      borderBottomWidth: 1,
       borderRadius: 8,
       borderColor: Colors[colorScheme].border,
       backgroundColor: Colors[colorScheme].secondary,

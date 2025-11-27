@@ -1,7 +1,7 @@
 import { ThemedText } from "@/components/themed-text";
 import { Colors } from "@/constants/theme";
 import { useColorScheme } from "@/hooks/use-color-scheme";
-import { Ionicons } from "@expo/vector-icons";
+import { AntDesign } from "@expo/vector-icons";
 import React from "react";
 import { StyleSheet, TouchableOpacity, View } from "react-native";
 
@@ -16,16 +16,14 @@ const CategoryItem: React.FC<CategoryItemProps> = ({ title, onEdit }) => {
 
     return (
         <View style={styles.container}>
-
             <ThemedText style={styles.title}>{title}</ThemedText>
-
             <TouchableOpacity
                 style={styles.editButton}
                 onPress={onEdit}
                 activeOpacity={0.8}
             >
-                <Ionicons
-                    name="pencil"
+                <AntDesign
+                    name="edit"
                     size={22}
                     color={Colors[colorScheme].primary}
                 />

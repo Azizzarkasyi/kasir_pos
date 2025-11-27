@@ -1,14 +1,15 @@
+import RecipeIngredientItem from "@/components/atoms/recipe-ingredient-item";
 import ComboInput from "@/components/combo-input";
 import ConfirmationDialog, { ConfirmationDialogHandle } from "@/components/drawers/confirmation-dialog";
 import ImageUpload from "@/components/image-upload";
-import ProductCard from "@/components/product-card";
 import { ThemedButton } from "@/components/themed-button";
 import { ThemedInput } from "@/components/themed-input";
 import { ThemedText } from "@/components/themed-text";
 import { Colors } from "@/constants/theme";
 import { useColorScheme } from "@/hooks/use-color-scheme";
-import { useLocalSearchParams, useNavigation, useRouter } from "expo-router";
-import React, { useEffect, useRef, useState } from "react";
+import { useRecipeFormStore } from "@/stores/recipe-form-store";
+import { useNavigation, useRouter } from "expo-router";
+import React, { useEffect, useRef } from "react";
 import { StyleSheet, View } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -22,62 +23,20 @@ export default function EditRecipeScreen() {
 
   const confirmationRef = useRef<ConfirmationDialogHandle | null>(null);
 
-  const [name, setName] = useState("");
-  const [price, setPrice] = useState("");
-  const [category, setCategory] = useState("");
-  const [imageUri, setImageUri] = useState<string | null>(null);
-  const [capitalPrice, setCapitalPrice] = useState(0);
-  const [variants, setVariants] = useState<
-    {name: string; price: number; stockText?: string}[]
-  >([]);
-  const params = useLocalSearchParams<{
-    id?: string;
-    name?: string;
-    price?: string;
-    category?: string;
-    imageUri?: string;
-    capitalPrice?: string;
-    variant_name?: string;
-    variant_price?: string;
-  }>();
-  const {variant_name, variant_price} = params;
-
-  React.useEffect(() => {
-    if (variant_name && variant_price) {
-      const priceNum = Number(String(variant_price).replace(/[^0-9]/g, ""));
-      setVariants(prev => [...prev, {name: String(variant_name), price: priceNum}]);
-      router.replace("/dashboard/product/add-product" as never);
-    }
-  }, [variant_name, variant_price, router]);
-
-  useEffect(() => {
-    if (params.name !== undefined) {
-      setName(String(params.name));
-    }
-    if (params.price !== undefined) {
-      setPrice(String(params.price));
-    }
-    if (params.category !== undefined) {
-      setCategory(String(params.category));
-    }
-    if (params.imageUri !== undefined && params.imageUri !== "") {
-      setImageUri(String(params.imageUri));
-    }
-    if (params.capitalPrice !== undefined) {
-      const parsed = Number(String(params.capitalPrice).replace(/[^0-9]/g, ""));
-      if (!Number.isNaN(parsed)) {
-        setCapitalPrice(parsed);
-      }
-    }
-  }, [params]);
+  const name = useRecipeFormStore(state => state.name);
+  const category = useRecipeFormStore(state => state.category);
+  const imageUri = useRecipeFormStore(state => state.imageUri);
+  const ingredients = useRecipeFormStore(state => state.ingredients);
+  const setName = useRecipeFormStore(state => state.setName);
+  const setCategory = useRecipeFormStore(state => state.setCategory);
+  const setImageUri = useRecipeFormStore(state => state.setImageUri);
+  const resetForm = useRecipeFormStore(state => state.reset);
 
   const isDirty =
     name.trim() !== "" ||
-    price.trim() !== "" ||
     category.trim() !== "" ||
     imageUri !== null ||
-    capitalPrice > 0 ||
-    variants.length > 0;
+    ingredients.length > 0;
 
   useEffect(() => {
     const sub = navigation.addListener("beforeRemove", e => {
@@ -108,13 +67,12 @@ export default function EditRecipeScreen() {
   const handleSave = () => {
     const payload = {
       name,
-      price,
       category,
       imageUri,
-      capitalPrice,
-      variants,
+      ingredients,
     };
-    console.log("Tambah produk", payload);
+    console.log("Edit resep", payload);
+    resetForm();
     router.back();
   };
 
@@ -160,16 +118,17 @@ export default function EditRecipeScreen() {
 
         <ThemedText type="subtitle-2">Bahan</ThemedText>
 
-        {variants.length > 0 ? (
+        {ingredients.length > 0 ? (
           <>
             <View style={styles.sectionDivider} />
-            {variants.map((v, idx) => (
-              <ProductCard
+            {ingredients.map((v, idx) => (
+              <RecipeIngredientItem
                 key={idx}
-                initials={(v.name || "VR").slice(0, 2).toUpperCase()}
-                name={v.name}
-                subtitle={`Jumlah: ${formatIDR(v.price)}`}
-                rightText={v.stockText || ""}
+                initials={(v.ingredient.name || "VR").slice(0, 2).toUpperCase()}
+                name={v.ingredient.name}
+                variantName={v.ingredient.name}
+                count={v.amount}
+                unitName={v.unit?.name}
                 onPress={() => {}}
               />
             ))}

@@ -32,13 +32,14 @@ const CostBarcodeFields: React.FC<Props> = ({
           onCapitalPriceChange(Number((v || "").replace(/[^0-9]/g, "")))
         }
         keyboardType="number-pad"
-        showLabel={false}
+        showLabel={true}
+        size="md"
         placeholder="Harga Modal"
         placeholderTextColor={Colors[colorScheme].icon}
         inputContainerStyle={{
           backgroundColor: colorScheme === "dark" ? "#1F1F1F" : "#FFFFFF",
         }}
-        containerStyle={{marginVertical: 0}}
+        containerStyle={{ marginVertical: 0 }}
       />
 
       <View style={styles.inputRow}>
@@ -48,6 +49,7 @@ const CostBarcodeFields: React.FC<Props> = ({
             value={barcode}
             onChangeText={onBarcodeChange}
             showLabel={false}
+            size="md"
             placeholder="Kode Produk / Barcode"
             placeholderTextColor={Colors[colorScheme].icon}
             inputContainerStyle={{
@@ -78,10 +80,11 @@ const CostBarcodeFields: React.FC<Props> = ({
 const createStyles = (colorScheme: "light" | "dark") =>
   StyleSheet.create({
     card: {
-      borderColor: Colors[colorScheme].icon,
+      borderColor: Colors[colorScheme].border,
       borderRadius: 8,
-      padding: 12,
+      paddingTop: 12,
       gap: 12,
+      paddingBottom: 32,
       backgroundColor: Colors[colorScheme].background,
     },
     inputRow: {
@@ -91,11 +94,11 @@ const createStyles = (colorScheme: "light" | "dark") =>
     },
     input: {},
     iconButton: {
-      width: 48,
-      height: 48,
+      width: 50,
+      height: 50,
       borderRadius: 8,
       borderWidth: 1,
-      borderColor: Colors[colorScheme].icon,
+      borderColor: Colors[colorScheme].border,
       alignItems: "center",
       justifyContent: "center",
     },

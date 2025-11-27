@@ -1,16 +1,16 @@
 import HelpPopup from "@/components/atoms/help-popup";
 import ImageUpload from "@/components/image-upload";
-import {ThemedButton} from "@/components/themed-button";
-import {ThemedInput} from "@/components/themed-input";
-import {ThemedText} from "@/components/themed-text";
-import {Colors} from "@/constants/theme";
-import {useColorScheme} from "@/hooks/use-color-scheme";
-import {Ionicons} from "@expo/vector-icons";
-import {useNavigation} from "@react-navigation/native";
-import {useRouter} from "expo-router";
+import { ThemedButton } from "@/components/themed-button";
+import { ThemedInput } from "@/components/themed-input";
+import { ThemedText } from "@/components/themed-text";
+import { Colors } from "@/constants/theme";
+import { useColorScheme } from "@/hooks/use-color-scheme";
+import { Ionicons } from "@expo/vector-icons";
+import { useNavigation } from "@react-navigation/native";
+import { useRouter } from "expo-router";
 import React from "react";
-import {StyleSheet, TouchableOpacity, View} from "react-native";
-import {ScrollView} from "react-native-gesture-handler";
+import { StyleSheet, TouchableOpacity, View } from "react-native";
+import { ScrollView } from "react-native-gesture-handler";
 
 export default function ReceiptSettingScreen() {
   const colorScheme = useColorScheme() ?? "light";
@@ -43,19 +43,7 @@ export default function ReceiptSettingScreen() {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.sectionCard}>
-          <View style={styles.logoRow}>
-            <ImageUpload uri={logoUri} onPress={() => setLogoUri(undefined)} />
-            <View style={{flex: 1, marginLeft: 12}}>
-              <ThemedButton
-                title="Upload Logo"
-                variant="secondary"
-                onPress={() => setLogoUri(undefined)}
-              />
-              <ThemedText style={styles.helperText}>
-                Ukuran Max 1Mb, format PNG atau JPG
-              </ThemedText>
-            </View>
-          </View>
+          <ImageUpload uri={logoUri} onPress={() => setLogoUri(undefined)} />
         </View>
 
         <View style={styles.sectionDivider} />
@@ -121,8 +109,8 @@ export default function ReceiptSettingScreen() {
           onPress={() => router.push("/dashboard/setting/order-receipt" as never)}
         >
           <View style={{flex: 1}}>
-            <ThemedText>Ingin Pengaturan Tambahan?</ThemedText>
-            <ThemedText style={{color: Colors[colorScheme].icon}}>
+            <ThemedText style={{fontWeight: "600", fontSize: 16}}>Ingin Pengaturan Tambahan?</ThemedText>
+            <ThemedText style={styles.extraDescription}>
               Kamu akan lebih leluasa mengatur struk sesuai keinginanmu.
             </ThemedText>
           </View>
@@ -209,6 +197,12 @@ const createStyles = (colorScheme: "light" | "dark") =>
       height: 24,
       alignItems: "center",
       justifyContent: "center",
+    },
+    extraDescription: {
+      color: Colors[colorScheme].icon,
+      marginTop: 4,
+      fontSize: 12,
+      lineHeight: 16
     },
     bottomButtonWrapper: {
       position: "absolute",

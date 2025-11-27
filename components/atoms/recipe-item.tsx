@@ -32,15 +32,15 @@ const RecipeItem: React.FC<RecipeItemProps> = ({
         <ThemedText style={styles.avatarText}>{initials}</ThemedText>
       </View>
       <View style={{ flex: 1 }}>
-        <ThemedText style={{ fontWeight: "700" }}>{name}</ThemedText>
+        <ThemedText style={styles.name}>{name}</ThemedText>
         {!!subtitle && (
-          <ThemedText style={{ color: Colors[colorScheme].icon }}>
+          <ThemedText style={styles.subtitle}>
             {subtitle}
           </ThemedText>
         )}
       </View>
       {!!rightText && (
-        <ThemedText style={{ color: Colors[colorScheme].icon }}>
+        <ThemedText style={styles.rightText}>
           {rightText}
         </ThemedText>
       )}
@@ -54,23 +54,35 @@ const createStyles = (colorScheme: "light" | "dark") =>
       flexDirection: "row",
       alignItems: "center",
       gap: 12,
-      borderWidth: 1,
-      borderColor: Colors[colorScheme].icon,
-      borderRadius: 8,
-      padding: 12,
+      borderBottomColor: Colors[colorScheme].border,
+      borderBottomWidth: 1,
+      borderRadius: 12,
+      paddingVertical: 10,
+
       marginTop: 12,
-      backgroundColor: Colors[colorScheme].background,
+      backgroundColor: Colors[colorScheme].secondary,
     },
     avatar: {
-      width: 56,
-      height: 56,
-      borderRadius: 8,
-      backgroundColor: Colors[colorScheme].icon,
+      width: 48,
+      height: 48,
+      borderRadius: 12,
+      backgroundColor: Colors[colorScheme].primary,
       alignItems: "center",
       justifyContent: "center",
     },
+    name: {
+      fontWeight: "700",
+      fontSize: 16,
+    },
+    subtitle: {
+      color: Colors[colorScheme].icon,
+      fontSize: 14,
+    },
+    rightText: {
+      color: Colors[colorScheme].icon,
+    },
     avatarText: {
-      color: Colors[colorScheme].background,
+      color: Colors[colorScheme].secondary,
       fontWeight: "700",
     },
   });

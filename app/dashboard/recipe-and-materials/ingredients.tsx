@@ -4,11 +4,25 @@ import { ThemedButton } from "@/components/themed-button";
 import { ThemedInput } from "@/components/themed-input";
 import { Colors } from "@/constants/theme";
 import { useColorScheme } from "@/hooks/use-color-scheme";
+import { useRecipeFormStore } from "@/stores/recipe-form-store";
 import { useNavigation, useRouter } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
-import { StyleSheet, View } from "react-native";
+import { StyleSheet, Text, View } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+
+type IngredientVariant = {
+  id: string;
+  name: string;
+  price: number;
+};
+
+type IngredientOption = {
+  label: string;
+  value: string;
+  unit: {id: string; name: string};
+  variants?: IngredientVariant[];
+};
 
 export default function IngredientsScreen() {
   const colorScheme = useColorScheme() ?? "light";
@@ -17,21 +31,81 @@ export default function IngredientsScreen() {
   const router = useRouter();
   const navigation = useNavigation();
 
+  const addIngredient = useRecipeFormStore(state => state.addIngredient);
+
   const confirmationRef = useRef<ConfirmationDialogHandle | null>(null);
 
   const [ingredient, setIngredient] = useState("");
   const [quantity, setQuantity] = useState("");
+  const [selectedUnit, setSelectedUnit] = useState<{id: string; name: string} | null>(null);
+  const [availableVariants, setAvailableVariants] = useState<IngredientVariant[]>([]);
+  const [selectedVariantId, setSelectedVariantId] = useState<string>("");
+
+  const ingredientOptions: IngredientOption[] = [
+    {label: "Pilih Bahan", value: "", unit: {id: "", name: "-"}, variants: []},
+    {
+      label: "Gula",
+      value: "gula",
+      unit: {id: "gram", name: "Gram"},
+      variants: [
+        {id: "gula_pasir", name: "Gula Pasir", price: 10000},
+        {id: "gula_merah", name: "Gula Merah", price: 12000},
+      ],
+    },
+    {
+      label: "Tepung Terigu",
+      value: "tepung_terigu",
+      unit: {id: "gram", name: "Gram"},
+      variants: [{id: "tepung_all_purpose", name: "All Purpose", price: 9000}],
+    },
+    {
+      label: "Minyak Goreng",
+      value: "minyak_goreng",
+      unit: {id: "ml", name: "Mililiter"},
+      variants: [
+        {id: "minyak_sawit", name: "Minyak Sawit", price: 15000},
+        {id: "minyak_kelapa", name: "Minyak Kelapa", price: 20000},
+      ],
+    },
+  ];
+
+  const handleChangeIngredient = (text: string) => {
+    setIngredient(text);
+    const found = ingredientOptions.find(opt => opt.label === text);
+    if (found) {
+      setSelectedUnit(found.unit);
+      const vars = found.variants ?? [];
+      setAvailableVariants(vars);
+      setSelectedVariantId(vars.length === 1 ? vars[0].id : "");
+    } else {
+      setSelectedUnit(null);
+      setAvailableVariants([]);
+      setSelectedVariantId("");
+    }
+  };
 
   const handleSave = () => {
-    router.replace({
-      pathname: "/dashboard/recipe-and-materials/add-recipe",
-      params: {
-        ingredient_name: ingredient,
-        ingredient_qty: String(
-          Number((quantity || "").replace(/[^0-9]/g, "")),
-        ),
+    const selectedVariant = availableVariants.find(v => v.id === selectedVariantId);
+
+    const qtyNum = Number(String(quantity).replace(/[^0-9]/g, ""));
+
+    if (!ingredient || Number.isNaN(qtyNum) || qtyNum <= 0) {
+      return;
+    }
+
+    addIngredient({
+      ingredient: {
+        id: ingredient,
+        name: ingredient,
+        ...(selectedVariant ? { variant_id: selectedVariant.id } : {}),
       },
-    } as never);
+      unit: selectedUnit
+        ? { id: selectedUnit.id, name: selectedUnit.name }
+        : undefined,
+      amount: qtyNum,
+    });
+
+    router.back();
   };
 
   const isDirty =
@@ -68,6 +142,7 @@ export default function IngredientsScreen() {
         contentContainerStyle={{
           paddingHorizontal: 20,
           paddingBottom: insets.bottom + 80,
+          paddingVertical: 32,
         }}
         enableOnAndroid
         keyboardOpeningTime={0}
@@ -78,20 +153,38 @@ export default function IngredientsScreen() {
         <ComboInput
           label="Pilih Bahan"
           value={ingredient}
-          onChangeText={setIngredient}
-          items={[
-            {label: "Pilih Bahan", value: ""},
-            {label: "Gula", value: "gula"},
-            {label: "Tepung Terigu", value: "tepung_terigu"},
-            {label: "Minyak Goreng", value: "minyak_goreng"},
-          ]}
+          onChangeText={handleChangeIngredient}
+          items={ingredientOptions.map(opt => ({label: opt.label, value: opt.value}))}
         />
-        <ThemedInput
-          label="Jumlah Bahan"
-          value={quantity}
-          onChangeText={setQuantity}
-          keyboardType="number-pad"
-        />
+        {availableVariants.length > 1 && (
+          <ComboInput
+            label="Pilih Varian"
+            value={
+              availableVariants.find(v => v.id === selectedVariantId)?.name ?? ""
+            }
+            onChangeText={text => {
+              const found = availableVariants.find(v => v.name === text);
+              setSelectedVariantId(found ? found.id : "");
+            }}
+            items={availableVariants.map(v => ({label: v.name, value: v.id}))}
+          />
+        )}
+        <View style={styles.quantityRow}>
+          <View style={styles.unitBox}>
+            <Text style={styles.unitText}>
+              {selectedUnit?.name ?? "-"}
+            </Text>
+          </View>
+
+          <View style={styles.quantityInputWrapper}>
+            <ThemedInput
+              label="Jumlah Bahan"
+              value={quantity}
+              onChangeText={setQuantity}
+              keyboardType="number-pad"
+            />
+          </View>
+        </View>
       </KeyboardAwareScrollView>
 
       <View style={styles.bottomBar}>
@@ -114,5 +207,27 @@ const createStyles = (colorScheme: "light" | "dark") =>
       paddingBottom: 16,
       paddingTop: 8,
       backgroundColor: Colors[colorScheme].background,
+    },
+    quantityRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 12,
+    },
+    unitBox: {
+      minWidth: 72,
+      height: 56,
+      paddingHorizontal: 12,
+      borderWidth: 1,
+      borderRadius: 8,
+      borderColor: Colors[colorScheme].border,
+      justifyContent: "center",
+      alignItems: "center",
+    },
+    unitText: {
+      fontSize: 14,
+      color: Colors[colorScheme].text,
+    },
+    quantityInputWrapper: {
+      flex: 1,
     },
   });

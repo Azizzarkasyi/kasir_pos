@@ -4,7 +4,7 @@ import { Ionicons } from "@expo/vector-icons";
 import React, { useEffect, useRef, useState } from "react";
 import {
   Animated,
-  FlatList,
+  ScrollView,
   StyleSheet,
   Text,
   TextInput,
@@ -22,6 +22,7 @@ type ComboInputProps = {
   items: ComboItem[];
   error?: string;
   disableAutoComplete?: boolean;
+  size?: "sm" | "base" | "md";
 };
 
 const ComboInput: React.FC<ComboInputProps> = ({
@@ -31,9 +32,10 @@ const ComboInput: React.FC<ComboInputProps> = ({
   items,
   error,
   disableAutoComplete,
+  size = "base",
 }) => {
   const colorScheme = useColorScheme() ?? "light";
-  const styles = createStyles(colorScheme, !!error);
+  const styles = createStyles(colorScheme, !!error, size);
   const [isFocused, setIsFocused] = useState(false);
   const [open, setOpen] = useState(false);
 
@@ -47,15 +49,24 @@ const ComboInput: React.FC<ComboInputProps> = ({
     }).start();
   }, [isFocused, value, focusAnim]);
 
+  const labelTopRange: [number, number] =
+    size === "sm" ? [12, -8] : size === "md" ? [14, -8] : [16, -8];
+
+  const labelFontRange: [number, number] =
+    size === "sm" ? [14, 12] : size === "md" ? [15, 12] : [16, 12];
+
   const labelStyle = {
-    top: focusAnim.interpolate({inputRange: [0, 1], outputRange: [18, -10]}),
+    top: focusAnim.interpolate({
+      inputRange: [0, 1],
+      outputRange: labelTopRange,
+    }),
     fontSize: focusAnim.interpolate({
       inputRange: [0, 1],
-      outputRange: [16, 12],
+      outputRange: labelFontRange,
     }),
     color: focusAnim.interpolate({
       inputRange: [0, 1],
-      outputRange: [Colors[colorScheme].icon, Colors[colorScheme].primary],
+      outputRange: [Colors[colorScheme].text, Colors[colorScheme].primary],
     }),
     backgroundColor: Colors[colorScheme].background,
     paddingHorizontal: 4,
@@ -77,7 +88,7 @@ const ComboInput: React.FC<ComboInputProps> = ({
               ? "red"
               : isFocused
               ? Colors[colorScheme].primary
-              : Colors[colorScheme].icon,
+              : Colors[colorScheme].border,
           },
         ]}
         onPress={() => {
@@ -125,11 +136,10 @@ const ComboInput: React.FC<ComboInputProps> = ({
         <TouchableWithoutFeedback onPress={() => setOpen(false)}>
           <View style={styles.dropdownOverlay}>
             <View style={styles.dropdown}>
-              <FlatList
-                data={filtered}
-                keyExtractor={item => item.value}
-                renderItem={({item}) => (
+              <ScrollView keyboardShouldPersistTaps="handled">
+                {filtered.map(item => (
                   <TouchableOpacity
+                    key={item.value}
                     style={styles.item}
                     onPress={() => {
                       onChangeText(item.label);
@@ -137,13 +147,13 @@ const ComboInput: React.FC<ComboInputProps> = ({
                     }}
                   >
                     <Text
-                      style={[styles.itemText, {color: Colors[colorScheme].text}]}
+                      style={[styles.itemText, { color: Colors[colorScheme].text }]}
                     >
                       {item.label}
                     </Text>
                   </TouchableOpacity>
-                )}
-              />
+                ))}
+              </ScrollView>
             </View>
           </View>
         </TouchableWithoutFeedback>
@@ -152,18 +162,23 @@ const ComboInput: React.FC<ComboInputProps> = ({
   );
 };
 
-const createStyles = (colorScheme: "light" | "dark", hasError: boolean) =>
+const createStyles = (
+  colorScheme: "light" | "dark",
+  hasError: boolean,
+  size: "sm" | "base" | "md",
+) =>
   StyleSheet.create({
     container: {
       width: "100%",
-      marginVertical: 10,
+      marginVertical: size === "sm" ? 6 : size === "md" ? 8 : 10,
       position: "relative",
     },
     inputContainer: {
       borderWidth: 1,
       borderRadius: 8,
-      paddingHorizontal: 12,
-      height: 56,
+      paddingHorizontal: size === "sm" ? 10 : size === "md" ? 14 : 12,
+      borderColor: Colors[colorScheme].primary,
+      height: size === "sm" ? 48 : size === "md" ? 52 : 56,
       flexDirection: "row",
       alignItems: "center",
       position: "relative",
@@ -175,8 +190,10 @@ const createStyles = (colorScheme: "light" | "dark", hasError: boolean) =>
     },
     input: {
       flex: 1,
-      fontSize: 16,
+      fontSize: size === "sm" ? 14 : size === "md" ? 15 : 16,
       color: Colors[colorScheme].text,
+
+      borderRadius: 4,
       height: "100%",
     },
     iconContainer: {
@@ -198,7 +215,7 @@ const createStyles = (colorScheme: "light" | "dark", hasError: boolean) =>
     },
     dropdown: {
       position: "absolute",
-      top: 60,
+      top: size === "sm" ? 52 : size === "md" ? 56 : 60,
       left: 0,
       right: 0,
       shadowColor: Colors[colorScheme].shadow,

@@ -2,22 +2,22 @@ import CountryCodePicker from "@/components/country-code-picker";
 import Header from "@/components/header";
 import Logo from "@/components/logo";
 import SplashScreen from "@/components/splash-screen";
-import {ThemedButton} from "@/components/themed-button";
-import {ThemedInput} from "@/components/themed-input";
-import {ThemedText} from "@/components/themed-text";
-import {Colors} from "@/constants/theme";
-import {useColorScheme} from "@/hooks/use-color-scheme";
-import {useRouter} from "expo-router";
-import React, {useState} from "react";
+import { ThemedButton } from "@/components/themed-button";
+import { ThemedInput } from "@/components/themed-input";
+import { ThemedText } from "@/components/themed-text";
+import { Colors } from "@/constants/theme";
+import { useColorScheme } from "@/hooks/use-color-scheme";
+import { useRouter } from "expo-router";
+import React, { useState } from "react";
 import {
-  Keyboard, // <--- 1. Tambahkan Import Keyboard
+  Keyboard,
   Platform,
   StyleSheet,
   TouchableOpacity,
   View,
 } from "react-native";
-import {KeyboardAwareScrollView} from "react-native-keyboard-aware-scroll-view";
-import {useSafeAreaInsets} from "react-native-safe-area-context";
+import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function LoginScreen() {
   const colorScheme = useColorScheme() ?? "light";
@@ -84,7 +84,7 @@ export default function LoginScreen() {
 
   return (
     <View style={styles.container}>
-      <Header />
+      <Header withShadow={false} />
       <KeyboardAwareScrollView
         contentContainerStyle={[
           styles.scrollContainer,
@@ -101,13 +101,13 @@ export default function LoginScreen() {
 
         <View style={styles.formContainer}>
           {isPhoneLogin ? (
-            <View style={{flexDirection: "row", alignItems: "center"}}>
+            <View style={{flexDirection: "row", alignItems: "flex-start"}}>
               <CountryCodePicker
                 value={countryCode}
                 onChange={setCountryCode}
                 items={countryItems}
               />
-              <View style={{flex: 1, marginLeft: 12}}>
+              <View style={{flex: 1, marginLeft: 8}}>
                 <ThemedInput
                   label="No. Handphone"
                   value={credential}
@@ -117,6 +117,7 @@ export default function LoginScreen() {
                   }}
                   keyboardType="phone-pad"
                   error={credentialError}
+                  containerStyle={{marginTop: 0}}
                 />
               </View>
             </View>
@@ -132,11 +133,8 @@ export default function LoginScreen() {
               error={credentialError}
             />
           )}
-
-          <View style={{height: 20}} />
-
           <ThemedInput
-            label="No PIN"
+            label="PIN"
             value={pin}
             onChangeText={text => {
               setPin(text);
@@ -194,7 +192,8 @@ const createStyles = (colorScheme: "light" | "dark") =>
     toggleLoginText: {
       color: Colors[colorScheme].icon,
       textAlign: "center",
-      marginTop: 20,
+      marginTop: 8,
+      fontSize: 14,
     },
     footer: {
       alignItems: "center",
@@ -202,6 +201,8 @@ const createStyles = (colorScheme: "light" | "dark") =>
     },
     footerText: {
       color: Colors[colorScheme].icon,
+      fontSize: 14,
+      fontWeight: "500",
     },
     overlay: {
       position: "absolute",

@@ -1,13 +1,16 @@
-import ComboInput from "@/components/combo-input";
+import VariantItem from "@/components/atoms/variant-item";
 import ConfirmationDialog, { ConfirmationDialogHandle } from "@/components/drawers/confirmation-dialog";
 import ImageUpload from "@/components/image-upload";
 import MenuRow from "@/components/menu-row";
+import MerkPicker from "@/components/mollecules/merk-picker";
 import { ThemedButton } from "@/components/themed-button";
 import { ThemedInput } from "@/components/themed-input";
+import { ThemedText } from "@/components/themed-text";
 import { Colors } from "@/constants/theme";
 import { useColorScheme } from "@/hooks/use-color-scheme";
+import { useProductFormStore } from "@/stores/product-form-store";
 import { useLocalSearchParams, useNavigation, useRouter } from "expo-router";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef } from "react";
 import { StyleSheet, View } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -21,26 +24,33 @@ export default function EditMaterialScreen() {
 
   const confirmationRef = useRef<ConfirmationDialogHandle | null>(null);
 
-  const [name, setName] = useState("");
-  const [price, setPrice] = useState("");
-  const [brand, setBrand] = useState("");
-  const [imageUri, setImageUri] = useState<string | null>(null);
-  const [capitalPrice, setCapitalPrice] = useState(0);
-  const onCapitalPriceChange = (val: number) => setCapitalPrice(val);
+  const {
+    name,
+    brand,
+    imageUri,
+    capitalPrice,
+    variants,
+    setName,
+    setBrand,
+    setImageUri,
+    setCapitalPrice,
+    setVariants,
+  } = useProductFormStore(state => state);
+
   const params = useLocalSearchParams<{
     id?: string;
     name?: string;
-    price?: string;
     brand?: string;
     imageUri?: string;
+    capitalPrice?: string;
+    variants?: string;
+    variant_name?: string;
+    variant_price?: string;
   }>();
 
   useEffect(() => {
     if (params.name !== undefined) {
       setName(String(params.name));
-    }
-    if (params.price !== undefined) {
-      setPrice(String(params.price));
     }
     if (params.brand !== undefined) {
       setBrand(String(params.brand));
@@ -48,13 +58,38 @@ export default function EditMaterialScreen() {
     if (params.imageUri !== undefined && params.imageUri !== "") {
       setImageUri(String(params.imageUri));
     }
+    if (params.capitalPrice !== undefined) {
+      const parsed = Number(String(params.capitalPrice).replace(/[^0-9]/g, ""));
+      if (!Number.isNaN(parsed)) {
+        setCapitalPrice(parsed);
+      }
+    }
+    if (params.variants) {
+      try {
+        const parsed = JSON.parse(String(params.variants));
+        if (Array.isArray(parsed)) {
+          setVariants(() => parsed);
+        }
+      } catch {}
+    }
   }, [params]);
+
+  const { variant_name, variant_price } = params;
+
+  React.useEffect(() => {
+    if (variant_name && variant_price) {
+      const priceNum = Number(String(variant_price).replace(/[^0-9]/g, ""));
+      setVariants(prev => [...prev, { name: String(variant_name), price: priceNum }]);
+      router.replace("/dashboard/recipe-and-materials/edit-material" as never);
+    }
+  }, [variant_name, variant_price, router]);
 
   const isDirty =
     name.trim() !== "" ||
-    price.trim() !== "" ||
     brand.trim() !== "" ||
-    imageUri !== null;
+    imageUri !== null ||
+    capitalPrice > 0 ||
+    variants.length > 0;
 
   useEffect(() => {
     const sub = navigation.addListener("beforeRemove", e => {
@@ -85,9 +120,10 @@ export default function EditMaterialScreen() {
   const handleSave = () => {
     const payload = {
       name,
-      price,
       brand,
       imageUri,
+      capitalPrice,
+      variants,
     };
     console.log("Tambah produk", payload);
     router.back();
@@ -99,7 +135,6 @@ export default function EditMaterialScreen() {
         contentContainerStyle={{
           paddingTop: 8,
           paddingBottom: insets.bottom + 80,
-          paddingHorizontal: 20,
         }}
         enableOnAndroid
         keyboardOpeningTime={0}
@@ -111,58 +146,84 @@ export default function EditMaterialScreen() {
           uri={imageUri || undefined}
           initials={(name || "NP").slice(0, 2).toUpperCase()}
           onPress={() => {
-            // Integrasi picker bisa ditambahkan nanti
             setImageUri(null);
           }}
         />
 
         <View style={{ height: 24 }} />
+        <View style={styles.rowSection} >
+          <ThemedInput label="Nama Produk" value={name} onChangeText={setName} />
 
-        <ThemedInput label="Nama Produk" value={name} onChangeText={setName} />
-        <ThemedInput
-          label="Harga Jual"
-          value={price}
-          onChangeText={setPrice}
-          keyboardType="number-pad"
-        />
+          <MerkPicker
+            label="Pilih Merk"
+            value={brand}
+            size="md"
+            onChange={setBrand}
+          />
 
-
-        <ComboInput
-          label="Pilih Merk"
-          value={brand}
-          onChangeText={setBrand}
-          items={[
-            { label: "Pilih Merk", value: "" },
-            { label: "Tidak ada merk", value: "none" },
-            { label: "Qasir", value: "qasir" },
-          ]}
-        />
-        <ThemedInput
-          label="Harga Modal"
-          value={String(capitalPrice)}
-          onChangeText={v =>
-            onCapitalPriceChange(
-              Number((v || "").replace(/[^0-9]/g, "")),
-            )
-          }
-          keyboardType="number-pad"
-          placeholder="Harga Modal"
-          placeholderTextColor={Colors[colorScheme].icon}
-          inputContainerStyle={{
-            backgroundColor: colorScheme === "dark" ? "#1F1F1F" : "#FFFFFF",
-          }}
-
-        />
+          <ThemedInput
+            label="Harga Modal"
+            value={String(capitalPrice)}
+            onChangeText={v =>
+              setCapitalPrice(
+                Number((v || "").replace(/[^0-9]/g, "")),
+              )
+            }
+            keyboardType="number-pad"
+            placeholder="Harga Modal"
+            placeholderTextColor={Colors[colorScheme].icon}
+            inputContainerStyle={{
+              backgroundColor: colorScheme === "dark" ? "#1F1F1F" : "#FFFFFF",
+            }}
+          />
+        </View>
 
 
-        <MenuRow
-          title="Kelola Stok"
-          rightText="Stok Tidak Aktif"
-          variant="link"
-          onPress={() =>
-            router.push("/dashboard/recipe-and-materials/stock" as never)
-          }
-        />
+
+        <View style={styles.sectionDivider} />
+
+        <View style={styles.rowContent}>
+          <MenuRow
+            title="Kelola Stok"
+            rightText="Stok Tidak Aktif"
+            showBottomBorder={false}
+            variant="link"
+            onPress={() =>
+              router.push("/dashboard/recipe-and-materials/stock" as never)
+            }
+          />
+        </View>
+
+        <View style={styles.sectionDivider} />
+
+        <View style={styles.variantsSection}>
+          {variants.length > 0 ? (
+            <>
+              <ThemedText type="subtitle-2">Varian</ThemedText>
+              {variants.map((v, idx) => (
+                <VariantItem
+                  key={idx}
+                  initials={(v.name || "VR").slice(0, 2).toUpperCase()}
+                  name={v.name}
+                  price={v.price}
+                  stock={v.stock}
+                  onPress={() => {}}
+                />
+              ))}
+            </>
+          ) : null}
+
+          <ThemedButton
+            title="Tambah Varian"
+            variant="secondary"
+            onPress={() =>
+              router.push(
+                "/dashboard/recipe-and-materials/variant" as never,
+              )
+            }
+          />
+        </View>
+
       </KeyboardAwareScrollView>
 
       <View style={styles.bottomBar}>
@@ -180,8 +241,22 @@ const createStyles = (colorScheme: "light" | "dark") =>
       marginTop: 8,
     },
     sectionDivider: {
-      backgroundColor: Colors[colorScheme].tint,
-      marginVertical: 16,
+      backgroundColor: Colors[colorScheme].border2,
+      height: 12,
+    },
+    rowSection: {
+      paddingHorizontal: 20,
+      paddingVertical: 24,
+    },
+    rowContent: {
+      paddingHorizontal: 20,
+      paddingVertical: 6,
+    },
+    variantsSection: {
+      paddingHorizontal: 20,
+      paddingVertical: 18,
+      gap: 12,
+      flexDirection: "column",
     },
     bottomBar: {
       position: "absolute",

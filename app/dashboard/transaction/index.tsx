@@ -1,6 +1,7 @@
 "use client";
 
 import ProductItem from "@/components/atoms/product-item";
+import AddCustomQuantityModal from "@/components/drawers/add-custom-quantity";
 import SelectVariantModal from "@/components/drawers/select-variant-modal";
 import Sidebar from "@/components/layouts/dashboard/sidebar";
 import CalculatorInput from "@/components/mollecules/calculator-input";
@@ -92,6 +93,10 @@ export default function PaymentPage() {
   const [selectedProductForVariant, setSelectedProductForVariant] =
     React.useState<Product | null>(null);
 
+  const [customQtyModalVisible, setCustomQtyModalVisible] = React.useState(false);
+  const [selectedProductForCustomQty, setSelectedProductForCustomQty] =
+    React.useState<Product | null>(null);
+
   const [isSidebarOpen, setIsSidebarOpen] = React.useState(false);
 
   const isEmptyState = products.length === 0;
@@ -132,6 +137,11 @@ export default function PaymentPage() {
     }
 
     handleAddProductToCheckout(product.id);
+  };
+
+  const handleProductLongPress = (product: Product) => {
+    setSelectedProductForCustomQty(product);
+    setCustomQtyModalVisible(true);
   };
 
   const handleConfirmVariant = (payload: {
@@ -177,6 +187,62 @@ export default function PaymentPage() {
     return checkoutProducts
       .filter((item) => item.productId === productId)
       .reduce((sum, item) => sum + item.quantity, 0);
+  };
+
+  const getProductNote = (productId: string) => {
+    const item = checkoutProducts.find(
+      (checkoutItem) => checkoutItem.productId === productId && !checkoutItem.variantId
+    );
+    return item?.note ?? "";
+  };
+
+  const handleConfirmCustomQuantity = (payload: { quantity: number; note: string }) => {
+    const { quantity, note } = payload;
+    if (!selectedProductForCustomQty) {
+      setCustomQtyModalVisible(false);
+      return;
+    }
+
+    const productId = selectedProductForCustomQty.id;
+
+    setCheckoutProducts((prev) => {
+      const index = prev.findIndex(
+        (item) => item.productId === productId && !item.variantId
+      );
+
+      if (index >= 0) {
+        const next = [...prev];
+
+        if (quantity <= 0) {
+          next.splice(index, 1);
+          return next;
+        }
+
+        next[index] = {
+          ...next[index],
+          quantity,
+          note,
+        };
+        return next;
+      }
+
+      if (quantity <= 0) {
+        return prev;
+      }
+
+      return [
+        ...prev,
+        {
+          productId,
+          variantId: null,
+          quantity,
+          note,
+        },
+      ];
+    });
+
+    setCustomQtyModalVisible(false);
+    setSelectedProductForCustomQty(null);
   };
 
   const getItemUnitPrice = (item: CheckoutItem) => {
@@ -408,6 +474,7 @@ export default function PaymentPage() {
                     price={product.price}
                     quantity={getProductQuantity(product.id)}
                     onPress={() => handleProductPress(product)}
+                    onLongPress={() => handleProductLongPress(product)}
                   />
                 ))}
               </View>
@@ -447,8 +514,8 @@ export default function PaymentPage() {
               {activeTab === "manual"
                 ? `Tagih = Rp ${amount === "0" ? "0" : formatAmount(amount)}`
                 : checkoutItemsCount === 0
-                ? "Pilih produk terlebih dahulu"
-                : `(${checkoutItemsCount} Produk)  Rp ${formatCurrency(checkoutTotalAmount)}`}
+                  ? "Pilih produk terlebih dahulu"
+                  : `(${checkoutItemsCount} Produk)  Rp ${formatCurrency(checkoutTotalAmount)}`}
             </Text>
           </TouchableOpacity>
         </View>
@@ -464,6 +531,27 @@ export default function PaymentPage() {
           setSelectedProductForVariant(null);
         }}
         onConfirm={handleConfirmVariant}
+      />
+
+      <AddCustomQuantityModal
+        visible={customQtyModalVisible}
+        productName={selectedProductForCustomQty?.name ?? ""}
+        initialQuantity={
+          selectedProductForCustomQty
+            ? getProductQuantity(selectedProductForCustomQty.id) || 1
+            : 1
+        }
+        initialNote={
+          selectedProductForCustomQty
+            ? getProductNote(selectedProductForCustomQty.id)
+            : ""
+        }
+        minQuantity={1}
+        onClose={() => {
+          setCustomQtyModalVisible(false);
+          setSelectedProductForCustomQty(null);
+        }}
+        onSubmit={handleConfirmCustomQuantity}
       />
 
       <Sidebar

@@ -78,8 +78,8 @@ const CategoryModal: React.FC<CategoryModalProps> = ({
                         />
 
                         <View style={styles.actionsRow}>
-                            <ThemedButton onPress={onClose} variant="cancel" title="Cancel" />
-                            <ThemedButton onPress={handleSave} title="Simpan" />
+                            <ThemedButton onPress={onClose} size="medium" variant="cancel" title="Cancel" />
+                            <ThemedButton onPress={handleSave} size="medium" title="Simpan" />
                         </View>
                     </Animated.View>
                 </KeyboardAvoidingView>

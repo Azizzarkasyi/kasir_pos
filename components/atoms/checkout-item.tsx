@@ -97,7 +97,7 @@ const createStyles = (colorScheme: "light" | "dark") =>
     container: {
       flexDirection: "row",
       alignItems: "center",
-      paddingVertical: 8,
+      paddingVertical: 12,
       paddingHorizontal: 16,
       columnGap: 12,
     },

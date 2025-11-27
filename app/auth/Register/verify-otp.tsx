@@ -1,14 +1,14 @@
 import Header from "@/components/header";
 import OtpInput from "@/components/otp-input";
 import ChangePhoneModal from "@/components/popup";
-import {ThemedButton} from "@/components/themed-button";
-import {ThemedText} from "@/components/themed-text";
-import {Colors} from "@/constants/theme";
-import {useColorScheme} from "@/hooks/use-color-scheme";
-import {Ionicons} from "@expo/vector-icons";
-import React, {useEffect, useState} from "react";
-import {StyleSheet, TouchableOpacity, View} from "react-native";
-import {KeyboardAwareScrollView} from "react-native-keyboard-aware-scroll-view";
+import { ThemedButton } from "@/components/themed-button";
+import { ThemedText } from "@/components/themed-text";
+import { Colors } from "@/constants/theme";
+import { useColorScheme } from "@/hooks/use-color-scheme";
+import { Ionicons } from "@expo/vector-icons";
+import React, { useEffect, useState } from "react";
+import { StyleSheet, TouchableOpacity, View } from "react-native";
+import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 
 const VerifyOtpScreen = () => {
   const colorScheme = useColorScheme() ?? "light";
@@ -36,15 +36,15 @@ const VerifyOtpScreen = () => {
   };
   // Modal ditampilkan melalui state isModalVisible
   return (
-    <View style={{flex: 1, backgroundColor: Colors[colorScheme].background}}>
-      <Header />
+    <View style={{ flex: 1, backgroundColor: Colors[colorScheme].background }}>
+      <Header title="Daftar" />
       <KeyboardAwareScrollView
-        contentContainerStyle={{paddingHorizontal: 20}}
+        contentContainerStyle={{ paddingHorizontal: 20 }}
         enableOnAndroid
         keyboardOpeningTime={0}
         extraScrollHeight={24}
         keyboardShouldPersistTaps="handled"
-        style={{backgroundColor: Colors[colorScheme].background}}
+        style={{ backgroundColor: Colors[colorScheme].background }}
       >
         <ChangePhoneModal
           isOpen={isModalVisible}
@@ -52,31 +52,33 @@ const VerifyOtpScreen = () => {
           onSave={handleSave}
         />
         <View style={styles.content}>
-          <ThemedText type="title" style={styles.title}>
+          <ThemedText style={styles.title}>
             Kode Verifikasi Telah Dikirim
           </ThemedText>
           <ThemedText style={styles.subtitle}>
             Cek kodenya di pesan SMS yang dikirim ke nomor dibawah ini.
           </ThemedText>
+          <View style={{  flexDirection: 'column', width: '100%' }}>
 
-          <View style={styles.phonePill}>
-            <ThemedText style={styles.phoneText}>{phone}</ThemedText>
-            <TouchableOpacity
-              onPress={() => setModalVisible(true)}
-              style={styles.editButton}
-            >
-              <Ionicons
-                name="pencil"
-                size={18}
-                color={Colors[colorScheme].background}
-              />
-            </TouchableOpacity>
+            <View style={styles.phonePill}>
+              <ThemedText style={styles.phoneText}>{phone}</ThemedText>
+              <TouchableOpacity
+                onPress={() => setModalVisible(true)}
+                style={styles.editButton}
+              >
+                <Ionicons
+                  name="pencil"
+                  size={18}
+                  color={Colors[colorScheme].background}
+                />
+              </TouchableOpacity>
+            </View>
+
+            <OtpInput length={6} onComplete={setCode} />
+            {code ? (
+              <ThemedText style={{ textAlign: "center" }}>Kode: {code}</ThemedText>
+            ) : null}
           </View>
-
-          <OtpInput length={6} onComplete={setCode} />
-          {code ? (
-            <ThemedText style={{textAlign: "center"}}>Kode: {code}</ThemedText>
-          ) : null}
 
           <ThemedText style={styles.counterText}>
             Kirim ulang kode dalam 00 : {String(countdown).padStart(2, "0")}
@@ -86,7 +88,7 @@ const VerifyOtpScreen = () => {
             title="Kirim Ulang SMS"
             onPress={handleResend}
             disabled={countdown > 0}
-            style={{marginTop: 24}}
+            style={{ marginTop: 24 }}
           />
         </View>
       </KeyboardAwareScrollView>
@@ -100,16 +102,24 @@ const createStyles = (colorScheme: "light" | "dark") =>
       flex: 1,
       backgroundColor: Colors[colorScheme].background,
       paddingHorizontal: 20,
+      paddingTop: 20,
     },
     content: {
       flex: 1,
+      paddingVertical: 20,
+      justifyContent: 'center',
     },
     title: {
       marginTop: 20,
+      fontSize: 20,
+      textAlign: 'center',
+      fontWeight: '600',
     },
     subtitle: {
       marginTop: 8,
       color: Colors[colorScheme].icon,
+      textAlign: 'center',
+      fontSize: 16,
     },
     phonePill: {
       justifyContent: "center",
@@ -122,10 +132,11 @@ const createStyles = (colorScheme: "light" | "dark") =>
       paddingHorizontal: 16,
       flexDirection: "row",
       alignItems: "center",
-      gap: 8,
+      gap: 4,
     },
     phoneText: {
       color: Colors[colorScheme].background,
+      fontSize: 16,
     },
     editButton: {
       width: 28,

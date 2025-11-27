@@ -6,14 +6,14 @@ import { Colors } from "@/constants/theme";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import React, { useEffect, useRef, useState } from "react";
 import {
-    Animated,
-    KeyboardAvoidingView,
-    Modal,
-    Platform,
-    StyleSheet,
-    TouchableOpacity,
-    TouchableWithoutFeedback,
-    View,
+  Animated,
+  KeyboardAvoidingView,
+  Modal,
+  Platform,
+  StyleSheet,
+  TouchableOpacity,
+  TouchableWithoutFeedback,
+  View,
 } from "react-native";
 
 type EditStockModalProps = {
@@ -134,8 +134,8 @@ const EditStockModal: React.FC<EditStockModalProps> = ({
             </View>
 
             <View style={styles.actionsRow}>
-              <ThemedButton onPress={onClose} variant="cancel" title="Batal" />
-              <ThemedButton onPress={handleSave} title="Simpan" />
+              <ThemedButton onPress={onClose} size="medium" variant="cancel" title="Batal" />
+              <ThemedButton onPress={handleSave} size="medium" title="Simpan" />
             </View>
           </Animated.View>
         </KeyboardAvoidingView>
@@ -211,14 +211,17 @@ const createStyles = (colorScheme: "light" | "dark") =>
       backgroundColor: Colors[colorScheme].background,
     },
     previousRow: {
-      marginTop: 16,
+      marginTop: 12,
       flexDirection: "row",
       justifyContent: "space-between",
       alignItems: "center",
     },
     previousLabel: {
       color: Colors[colorScheme].icon,
+      fontSize: 14,
+      fontWeight: "500",
     },
+
     previousValue: {
       color: Colors[colorScheme].icon,
       fontWeight: "500",

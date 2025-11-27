@@ -1,22 +1,22 @@
-import {Colors} from "@/constants/theme";
-import {useColorScheme} from "@/hooks/use-color-scheme";
+import { Colors } from "@/constants/theme";
+import { useColorScheme } from "@/hooks/use-color-scheme";
 import React from "react";
-import {StyleSheet, TouchableOpacity, View} from "react-native";
-import {ThemedText} from "./themed-text";
+import { StyleSheet, TouchableOpacity, View } from "react-native";
+import { ThemedText } from "./themed-text";
 
 type Props = {
   initials: string;
   name: string;
-  subtitle?: string;
-  rightText?: string;
+  variantCount?: number;
+  stockCount?: number;
   onPress?: () => void;
 };
 
 export default function ProductCard({
   initials,
   name,
-  subtitle,
-  rightText,
+  variantCount,
+  stockCount,
   onPress,
 }: Props) {
   const colorScheme = useColorScheme() ?? "light";
@@ -27,15 +27,14 @@ export default function ProductCard({
       <View style={styles.avatar}>
         <ThemedText style={styles.avatarText}>{initials}</ThemedText>
       </View>
-      <View style={{flex: 1}}>
-        <ThemedText style={{fontWeight: "700"}}>{name}</ThemedText>
-        {!!subtitle && (
-          <ThemedText style={{color: Colors[colorScheme].icon}}>{subtitle}</ThemedText>
-        )}
+      <View style={{ flex: 1 }}>
+        <ThemedText style={styles.nameText}>{name}</ThemedText>
+        <ThemedText style={styles.variantText}>{variantCount} Varian</ThemedText>
       </View>
-      {!!rightText && (
-        <ThemedText style={{color: Colors[colorScheme].icon}}>{rightText}</ThemedText>
-      )}
+      <View >
+        <ThemedText style={styles.stockText}>Stok</ThemedText>
+        <ThemedText style={styles.stockCountText}>{stockCount}</ThemedText>
+      </View>
     </TouchableOpacity>
   );
 }
@@ -46,18 +45,17 @@ const createStyles = (colorScheme: "light" | "dark") =>
       flexDirection: "row",
       alignItems: "center",
       gap: 12,
-      borderWidth: 1,
-      borderColor: Colors[colorScheme].icon,
+      borderBottomWidth: 1,
+      borderBottomColor: Colors[colorScheme].border,
       borderRadius: 8,
-      padding: 12,
-      marginTop: 12,
+      paddingVertical: 12,
       backgroundColor: Colors[colorScheme].background,
     },
     avatar: {
-      width: 56,
-      height: 56,
+      width: 48,
+      height: 48,
       borderRadius: 8,
-      backgroundColor: Colors[colorScheme].icon,
+      backgroundColor: Colors[colorScheme].border,
       alignItems: "center",
       justifyContent: "center",
     },
@@ -65,4 +63,24 @@ const createStyles = (colorScheme: "light" | "dark") =>
       color: Colors[colorScheme].background,
       fontWeight: "700",
     },
+    nameText: {
+      color: Colors[colorScheme].text,
+      fontSize: 16,
+      lineHeight:20,
+      fontWeight: "700",
+    },
+    variantText: {
+      color: Colors[colorScheme].icon,
+      fontSize: 14,
+    },
+    stockText: {
+      color: Colors[colorScheme].icon,
+      fontSize: 14,
+      fontWeight: "700",
+    },
+    stockCountText: {
+      color: Colors[colorScheme].icon,
+      fontSize: 14,
+    },
+
   });

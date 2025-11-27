@@ -143,7 +143,7 @@ const createStyles = (colorScheme: "light" | "dark") =>
       flex: 1,
       width: "100%",
       height: "100%",
-      backgroundColor: "rgba(0,0,0,0.75)",
+      backgroundColor: "rgba(0, 0, 0, 0.52)",
     },
     scanBox: {
       width: 300,

@@ -1,12 +1,13 @@
+import ConfirmationDialog, { ConfirmationDialogHandle } from "@/components/drawers/confirmation-dialog";
 import ImageUpload from "@/components/image-upload";
-import {ThemedButton} from "@/components/themed-button";
-import {ThemedInput} from "@/components/themed-input";
-import {ThemedText} from "@/components/themed-text";
-import {Colors} from "@/constants/theme";
-import {useColorScheme} from "@/hooks/use-color-scheme";
+import { ThemedButton } from "@/components/themed-button";
+import { ThemedInput } from "@/components/themed-input";
+import { ThemedText } from "@/components/themed-text";
+import { Colors } from "@/constants/theme";
+import { useColorScheme } from "@/hooks/use-color-scheme";
 import React from "react";
-import {StyleSheet, View} from "react-native";
-import {ScrollView} from "react-native-gesture-handler";
+import { StyleSheet, View } from "react-native";
+import { ScrollView } from "react-native-gesture-handler";
 
 export default function ProfileSettingScreen() {
   const colorScheme = useColorScheme() ?? "light";
@@ -19,6 +20,7 @@ export default function ProfileSettingScreen() {
   const [newPin, setNewPin] = React.useState("");
   const [confirmPin, setConfirmPin] = React.useState("");
   const [pinError, setPinError] = React.useState("");
+  const confirmationDialogRef = React.useRef<ConfirmationDialogHandle | null>(null);
 
   const handleChangePin = () => {
     if (newPin.length !== 6 || confirmPin.length !== 6) {
@@ -32,6 +34,17 @@ export default function ProfileSettingScreen() {
     setPinError("");
   };
 
+  const handleDeleteAccount = () => {
+    confirmationDialogRef.current?.showConfirmationDialog({
+      title: "Hapus Akun?",
+      message:
+        "Akunmu dan semua data terkait (transaksi, laporan, dan data pribadi) akan dihapus permanen dan tidak bisa dikembalikan.",
+      onConfirm: () => {
+        // TODO: implementasi logika hapus akun
+      },
+    });
+  };
+
   return (
     <View style={styles.container}>
       <ScrollView
@@ -39,19 +52,18 @@ export default function ProfileSettingScreen() {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.sectionCard1}>
-          <ThemedText type="subtitle-2">Foto Profil</ThemedText>
           <ImageUpload uri={photoUri} onPress={() => {}} />
-          <View style={{marginTop: 16}}>
+          {/* <View style={{marginTop: 16}}>
             <ThemedButton
               title="Terapkan Foto"
               variant="primary"
               onPress={() => {}}
             />
-          </View>
+          </View> */}
         </View>
 
         <View style={styles.sectionCard}>
-          <ThemedText type="subtitle-2">Data Diri</ThemedText>
+          <ThemedText type="subtitle-2" style={styles.sectionTitle}>Data Diri</ThemedText>
           <ThemedInput label="Nama" value={name} onChangeText={setName} />
           <ThemedInput label="Nomor Hp" value={phone} editable={false} />
           <ThemedInput
@@ -60,14 +72,14 @@ export default function ProfileSettingScreen() {
             onChangeText={setEmail}
             keyboardType="email-address"
           />
-          <View style={{marginTop: 12}}>
-            <ThemedButton title="Simpan" onPress={() => {}} />
+          <View style={styles.sectionButtonWrapper}>
+            <ThemedButton title="Simpan" size="medium" onPress={() => {}} />
           </View>
         </View>
 
         <View style={styles.sectionCard}>
-          <ThemedText type="subtitle-2">PIN</ThemedText>
-          <ThemedText style={{color: Colors[colorScheme].icon}}>
+          <ThemedText type="subtitle-2" style={styles.sectionTitle}>PIN</ThemedText>
+          <ThemedText style={styles.pinHintText}>
             Hanya diisi jika ingin diganti
           </ThemedText>
           <ThemedInput
@@ -95,26 +107,29 @@ export default function ProfileSettingScreen() {
             maxLength={6}
             error={pinError}
           />
-          <View style={{marginTop: 12}}>
-            <ThemedButton title="Ganti PIN" onPress={handleChangePin} />
+          <View style={styles.sectionButtonWrapper}>
+            <ThemedButton title="Ganti PIN" size="medium" onPress={handleChangePin} />
           </View>
         </View>
 
         <View style={styles.sectionCard}>
           <ThemedText type="subtitle-2">Kelola Akun</ThemedText>
-          <ThemedText style={{color: Colors[colorScheme].primary}}>
+          <ThemedText style={styles.accountWarningText}>
             Akan menghapus secara permanen akunmu. Kamu tidak bisa lagi
             mengakses semua riwayat transaksi, laporan dan data pribadi
           </ThemedText>
-          <View style={{marginTop: 12}}>
+          <View style={styles.sectionButtonWrapper}>
             <ThemedButton
               title="Hapus Akun"
               variant="secondary"
-              onPress={() => {}}
+              size="medium"
+              onPress={handleDeleteAccount}
             />
           </View>
         </View>
       </ScrollView>
+
+      <ConfirmationDialog ref={confirmationDialogRef} />
     </View>
   );
 }
@@ -145,5 +160,22 @@ const createStyles = (colorScheme: "light" | "dark") =>
       paddingHorizontal: 8,
       paddingVertical: 8,
       marginBottom: 12,
+    },
+    sectionTitle: {
+      marginBottom: 12,
+    },
+    sectionButtonWrapper: {
+      marginTop: 12,
+    },
+    pinHintText: {
+      fontSize: 14,
+      color: Colors[colorScheme].warning,
+    },
+    accountWarningText: {
+      color: Colors[colorScheme].danger,
+      lineHeight: 20,
+      fontSize: 14,
+      fontWeight: "300",
+      marginVertical: 12,
     },
   });

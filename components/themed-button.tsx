@@ -29,9 +29,9 @@ export function ThemedButton({
   let borderColor: string;
 
   if (disabled) {
-    backgroundColor = Colors[colorScheme].background;
+    backgroundColor = Colors[colorScheme].border;
     textColor = Colors[colorScheme].icon;
-    borderColor = Colors[colorScheme].icon;
+    borderColor = Colors[colorScheme].border;
   } else {
     switch (variant) {
       case "secondary": {

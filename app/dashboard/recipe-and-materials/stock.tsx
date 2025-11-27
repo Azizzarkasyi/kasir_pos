@@ -1,7 +1,6 @@
 import Checkbox from "@/components/checkbox";
 import ComboInput from "@/components/combo-input";
 import ConfirmationDialog, { ConfirmationDialogHandle } from "@/components/drawers/confirmation-dialog";
-import HeaderWithoutSidebar from "@/components/layouts/dashboard/header-without-sidebar";
 import { ThemedButton } from "@/components/themed-button";
 import { ThemedInput } from "@/components/themed-input";
 import { ThemedText } from "@/components/themed-text";
@@ -28,14 +27,14 @@ export default function StockSettingsScreen() {
   const [notifyMin, setNotifyMin] = useState(false);
 
   const unitItems = [
-    {label: "Pcs", value: "pcs"},
-    {label: "Box", value: "box"},
-    {label: "Kg", value: "kg"},
-    {label: "L", value: "l"},
+    { label: "Pcs", value: "pcs" },
+    { label: "Box", value: "box" },
+    { label: "Kg", value: "kg" },
+    { label: "L", value: "l" },
   ];
 
   const handleSave = () => {
-    const payload = {offlineStock, unit, minStock, notifyMin};
+    const payload = { offlineStock, unit, minStock, notifyMin };
     console.log("Kelola stok", payload);
     router.back();
   };
@@ -68,19 +67,16 @@ export default function StockSettingsScreen() {
   }, [navigation, isDirty]);
 
   return (
-    <View style={{flex: 1, backgroundColor: Colors[colorScheme].background}}>
-      <HeaderWithoutSidebar onPressBack={() => router.back()} title="Kelola Stok" />
+    <View style={{ flex: 1, backgroundColor: Colors[colorScheme].background }}>
 
       <KeyboardAwareScrollView
-        contentContainerStyle={{paddingHorizontal: 20, paddingBottom: insets.bottom + 80}}
+        contentContainerStyle={{ paddingHorizontal: 20, paddingVertical: 32, paddingBottom: insets.bottom + 80 }}
         enableOnAndroid
         keyboardOpeningTime={0}
         extraScrollHeight={24}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
-        
-
         <ThemedInput
           label="Stok "
           value={String(offlineStock)}
@@ -132,6 +128,8 @@ const createStyles = (colorScheme: "light" | "dark") =>
     },
     rowText: {
       flex: 1,
+      fontSize: 14,
+      lineHeight: 16,
       color: Colors[colorScheme].text,
     },
     sectionDivider: {

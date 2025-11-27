@@ -1,7 +1,7 @@
-import {Colors} from "@/constants/theme";
-import {useColorScheme} from "@/hooks/use-color-scheme";
-import React, {useEffect, useRef, useState} from "react";
-import {Animated, StatusBar, StyleSheet, Text, View} from "react-native";
+import { Colors } from "@/constants/theme";
+import { useColorScheme } from "@/hooks/use-color-scheme";
+import React, { useEffect, useRef, useState } from "react";
+import { Animated, Image, StatusBar, StyleSheet, Text, View } from "react-native";
 
 interface SplashScreenProps {
   text?: string; // text bersifat opsional
@@ -49,14 +49,11 @@ export default function SplashScreen({
 
       {/* Bagian Logo (Tengah) */}
       <View style={styles.logoContainer}>
-        <Animated.Text
-          style={[
-            styles.logoText,
-            {opacity: fadeAnim, color: Colors[colorScheme].primary},
-          ]}
-        >
-          Qasir
-        </Animated.Text>
+        <Image
+          source={require("../assets/logos/2.png")}
+          style={{ width: 200, height: 200 }}
+          resizeMode="contain"
+        />
       </View>
 
       {/* Bagian Loading Bar (Bawah) */}

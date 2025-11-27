@@ -1,14 +1,14 @@
-import ComboInput from "@/components/combo-input";
 import ConfirmPopup from "@/components/atoms/confirm-popup";
+import ComboInput from "@/components/combo-input";
 import ImageUpload from "@/components/image-upload";
-import {ThemedButton} from "@/components/themed-button";
-import {ThemedInput} from "@/components/themed-input";
-import {ThemedText} from "@/components/themed-text";
-import {Colors} from "@/constants/theme";
-import {useColorScheme} from "@/hooks/use-color-scheme";
+import { ThemedButton } from "@/components/themed-button";
+import { ThemedInput } from "@/components/themed-input";
+import { ThemedText } from "@/components/themed-text";
+import { Colors } from "@/constants/theme";
+import { useColorScheme } from "@/hooks/use-color-scheme";
 import React from "react";
-import {StyleSheet, View} from "react-native";
-import {ScrollView} from "react-native-gesture-handler";
+import { StyleSheet, View } from "react-native";
+import { ScrollView } from "react-native-gesture-handler";
 
 export default function StoreSettingScreen() {
   const colorScheme = useColorScheme() ?? "light";
@@ -40,7 +40,7 @@ export default function StoreSettingScreen() {
         </View>
 
         <View style={styles.sectionCard}>
-          <ThemedText type="subtitle-2">Store or Business Data</ThemedText>
+          <ThemedText type="subtitle-2" style={{marginBottom: 12}}>Store or Business Data</ThemedText>
           <ComboInput
             label="Business Type"
             value={businessType}
@@ -71,15 +71,11 @@ export default function StoreSettingScreen() {
             label="Mobile Number"
             value={phone}
             editable={false}
-            rightIcon={
-              <ThemedText style={{color: Colors[colorScheme].primary}}>
-                Verification
-              </ThemedText>
-            }
+           
           />
-          <ThemedText style={{color: "red"}}>
+          {/* <ThemedText style={{color: "red"}}>
             * Have not verified yet
-          </ThemedText>
+          </ThemedText> */}
         </View>
 
         <View style={styles.sectionCard}>
@@ -126,7 +122,7 @@ export default function StoreSettingScreen() {
             }}
           />
         </View>
-
+{/* 
         <View style={styles.sectionCard}>
           <ThemedText type="subtitle-2">
             Select Language and Currency
@@ -146,7 +142,7 @@ export default function StoreSettingScreen() {
             onChangeText={setCurrency}
             items={[{label: "Indonesian Rupiah", value: "idr"}]}
           />
-        </View>
+        </View> */}
 
         <View style={styles.bottomButtonWrapper}>
           <ThemedButton title="SAVE" onPress={() => setConfirmOpen(true)} />

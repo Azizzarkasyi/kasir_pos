@@ -1,14 +1,16 @@
-import ComboInput from "@/components/combo-input";
+import VariantItem from "@/components/atoms/variant-item";
 import ConfirmationDialog, { ConfirmationDialogHandle } from "@/components/drawers/confirmation-dialog";
 import ImageUpload from "@/components/image-upload";
 import MenuRow from "@/components/menu-row";
+import MerkPicker from "@/components/mollecules/merk-picker";
 import { ThemedButton } from "@/components/themed-button";
 import { ThemedInput } from "@/components/themed-input";
+import { ThemedText } from "@/components/themed-text";
 import { Colors } from "@/constants/theme";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { useProductFormStore } from "@/stores/product-form-store";
 import { useLocalSearchParams, useNavigation, useRouter } from "expo-router";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef } from "react";
 import { StyleSheet, View } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -22,18 +24,23 @@ export default function AddMaterialScreen() {
 
   const confirmationRef = useRef<ConfirmationDialogHandle | null>(null);
 
-  const [name, setName] = useState("");
-  const [price, setPrice] = useState("");
-  const [brand, setBrand] = useState("");
-  const [imageUri, setImageUri] = useState<string | null>(null);
-  const [capitalPrice, setCapitalPrice] = useState(0);
-  const onCapitalPriceChange = (val: number) => setCapitalPrice(val);
-  const barcode = useProductFormStore(state => state.barcode);
-  const setBarcode = useProductFormStore(state => state.setBarcode);
-  const [variants, setVariants] = useState<
-    {name: string; price: number; stockText?: string}[]
-  >([]);
-  const {variant_name, variant_price} =
+  const {
+    name,
+    price,
+    brand,
+    imageUri,
+    capitalPrice,
+    barcode,
+    variants,
+    setName,
+    setPrice,
+    setBrand,
+    setImageUri,
+    setCapitalPrice,
+    setBarcode,
+    setVariants,
+  } = useProductFormStore(state => state);
+  const { variant_name, variant_price } =
     useLocalSearchParams<{
       variant_name?: string;
       variant_price?: string;
@@ -42,21 +49,32 @@ export default function AddMaterialScreen() {
   React.useEffect(() => {
     if (variant_name && variant_price) {
       const priceNum = Number(String(variant_price).replace(/[^0-9]/g, ""));
-      setVariants(prev => [...prev, {name: String(variant_name), price: priceNum}]);
-      router.replace("/dashboard/product/add-product" as never);
+      setVariants(prev => [...prev, { name: String(variant_name), price: priceNum }]);
+      router.replace("/dashboard/recipe-and-materials/add-material" as never);
     }
   }, [variant_name, variant_price, router]);
 
   // Barcode sekarang dikelola via Zustand store dan diisi langsung dari layar scan,
   // jadi tidak lagi diambil dari query param.
 
-  const isDirty =
-    name.trim() !== "" ||
-    price.trim() !== "" ||
-    brand.trim() !== "" ||
-    imageUri !== null ||
-    barcode.trim() !== "" ||
-    variants.length > 0;
+  const isDirty = Object.values({
+    name,
+    price,
+    brand,
+    imageUri: imageUri || "",
+    capitalPrice,
+    barcode,
+  }).some(value => {
+    if (typeof value === "string") {
+      return value.trim() !== "";
+    }
+
+    if (typeof value === "number") {
+      return value > 0;
+    }
+
+    return false;
+  }) || variants.length > 0;
 
   useEffect(() => {
     const sub = navigation.addListener("beforeRemove", e => {
@@ -90,18 +108,20 @@ export default function AddMaterialScreen() {
       price,
       brand,
       imageUri,
+      capitalPrice,
+      barcode,
+      variants,
     };
     console.log("Tambah produk", payload);
     router.back();
   };
 
   return (
-    <View style={{flex: 1, backgroundColor: Colors[colorScheme].background}}>
+    <View style={{ flex: 1, backgroundColor: Colors[colorScheme].background }}>
       <KeyboardAwareScrollView
         contentContainerStyle={{
           paddingTop: 8,
           paddingBottom: insets.bottom + 80,
-          paddingHorizontal: 20,
         }}
         enableOnAndroid
         keyboardOpeningTime={0}
@@ -113,53 +133,84 @@ export default function AddMaterialScreen() {
           uri={imageUri || undefined}
           initials={(name || "NP").slice(0, 2).toUpperCase()}
           onPress={() => {
-            // Integrasi picker bisa ditambahkan nanti
             setImageUri(null);
           }}
         />
 
-        <View style={{height: 24}} />
+        <View style={{ height: 24 }} />
 
-        <ThemedInput label="Nama Produk" value={name} onChangeText={setName} />
-        <ThemedInput
-          label="Harga Jual"
-          value={price}
-          onChangeText={setPrice}
-          keyboardType="number-pad"
-        />
-        <ThemedInput
-          label="Harga Modal"
-          value={String(capitalPrice)}
-          onChangeText={v =>
-            onCapitalPriceChange(
-              Number((v || "").replace(/[^0-9]/g, "")),
-            )
-          }
-          keyboardType="number-pad"
-          placeholder="Harga Modal"
-          placeholderTextColor={Colors[colorScheme].icon}
-          inputContainerStyle={{
-            backgroundColor: colorScheme === "dark" ? "#1F1F1F" : "#FFFFFF",
-          }}
-        />
+        <View style={styles.rowSection}>
+          <ThemedInput label="Nama Produk" value={name} onChangeText={setName} />
+          <ThemedInput
+            label="Harga Jual"
+            value={price}
+            onChangeText={setPrice}
+            keyboardType="number-pad"
+          />
+          <MerkPicker
+            label="Pilih Merk"
+            value={brand}
+            size="md"
+            onChange={setBrand}
+          />
+          <ThemedInput
+            label="Harga Modal"
+            value={String(capitalPrice)}
+            onChangeText={v =>
+              setCapitalPrice(
+                Number((v || "").replace(/[^0-9]/g, "")),
+              )
+            }
+            keyboardType="number-pad"
+            placeholder="Harga Modal"
+            placeholderTextColor={Colors[colorScheme].icon}
+            inputContainerStyle={{
+              backgroundColor: colorScheme === "dark" ? "#1F1F1F" : "#FFFFFF",
+            }}
+          />
+        </View>
 
-        <ComboInput
-          label="Pilih Merk"
-          value={brand}
-          onChangeText={setBrand}
-          items={[
-            {label: "Pilih Merk", value: ""},
-            {label: "Tidak ada merk", value: "none"},
-            {label: "Qasir", value: "qasir"},
-          ]}
-        />
+        <View style={styles.sectionDivider} />
 
-        <MenuRow
-          title="Kelola Stok"
-          rightText="Stok Tidak Aktif"
-          variant="link"
-          onPress={() => router.push("/dashboard/recipe-and-materials/stock" as never)}
-        />
+        <View style={styles.rowContent}>
+          <MenuRow
+            title="Kelola Stok"
+            rightText="Stok Tidak Aktif"
+            showBottomBorder={false}
+            variant="link"
+            onPress={() => router.push("/dashboard/recipe-and-materials/stock" as never)}
+          />
+        </View>
+
+        <View style={styles.sectionDivider} />
+
+        <View style={styles.variantsSection}>
+          {variants.length > 0 ? (
+            <>
+              <ThemedText type="subtitle-2">Varian</ThemedText>
+              {variants.map((v, idx) => (
+                <VariantItem
+                  key={idx}
+                  initials={(v.name || "VR").slice(0, 2).toUpperCase()}
+                  name={v.name}
+                  price={v.price}
+                  stock={v.stock}
+                  onPress={() => {}}
+                />
+              ))}
+            </>
+          ) : null}
+
+          <ThemedButton
+            title="Tambah Varian"
+            variant="secondary"
+            onPress={() =>
+              router.push(
+                "/dashboard/recipe-and-materials/variant" as never,
+              )
+            }
+          />
+        </View>
       </KeyboardAwareScrollView>
 
       <View style={styles.bottomBar}>
@@ -177,8 +228,22 @@ const createStyles = (colorScheme: "light" | "dark") =>
       marginTop: 8,
     },
     sectionDivider: {
-      backgroundColor: Colors[colorScheme].tint,
-      marginVertical: 16,
+      backgroundColor: Colors[colorScheme].border2,
+      height: 12,
+    },
+    rowSection: {
+      paddingHorizontal: 20,
+      paddingVertical: 24,
+    },
+    rowContent: {
+      paddingHorizontal: 20,
+      paddingVertical: 6,
+    },
+    variantsSection: {
+      paddingHorizontal: 20,
+      paddingVertical: 18,
+      gap: 12,
+      flexDirection: "column",
     },
     bottomBar: {
       position: "absolute",

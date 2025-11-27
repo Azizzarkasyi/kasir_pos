@@ -1,7 +1,7 @@
 import { Colors } from "@/constants/theme";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { AntDesign } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
+import { usePathname, useRouter } from "expo-router";
 import React from "react";
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
@@ -51,6 +51,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeKey, isOpen, onClose, onSelect 
   const colorScheme = useColorScheme() ?? "light";
   const styles = createStyles(colorScheme);
   const router = useRouter();
+  const pathname = usePathname();
 
   const getRouteForKey = (key: string): string | null => {
     switch (key) {
@@ -73,14 +74,19 @@ const Sidebar: React.FC<SidebarProps> = ({ activeKey, isOpen, onClose, onSelect 
     onSelect?.(key);
 
     if (key === "outlet") {
-      router.push("/dashboard/select-branch" as never);
+      const outletRoute = "/dashboard/select-branch";
+      if (pathname !== outletRoute) {
+        router.push(outletRoute as never);
+      }
       onClose?.();
       return;
     }
 
     const route = getRouteForKey(key);
     if (route) {
-      router.replace(route as never);
+      if (pathname !== route) {
+        router.push(route as never);
+      }
     }
 
     onClose?.();
@@ -95,7 +101,15 @@ const Sidebar: React.FC<SidebarProps> = ({ activeKey, isOpen, onClose, onSelect 
       <View style={styles.drawer}>
         <View style={styles.container}>
           <View style={styles.topSection}>
-            <View style={styles.profileRow}>
+            <TouchableOpacity
+              onPress={() => {
+                const profileRoute = "/dashboard/setting/profile";
+                if (pathname !== profileRoute) {
+                  router.push(profileRoute as never);
+                }
+              }}
+              style={styles.profileRow}
+            >
               <View style={styles.avatarCircle}>
                 <AntDesign name="user" size={28} color={Colors[colorScheme].primary} />
                 <View style={styles.badgeFree}>
@@ -107,7 +121,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeKey, isOpen, onClose, onSelect 
                 <Text style={styles.profileRole}>Pemilik</Text>
               </View>
               <AntDesign name="right" size={16} color="#B0B0B0" />
-            </View>
+            </TouchableOpacity>
 
             <View style={styles.outletRow}>
               <View>
@@ -117,7 +131,10 @@ const Sidebar: React.FC<SidebarProps> = ({ activeKey, isOpen, onClose, onSelect 
               <TouchableOpacity
                 style={styles.outletButton}
                 onPress={() => {
-                  router.push("/dashboard/select-branch" as never);
+                  const outletRoute = "/dashboard/select-branch";
+                  if (pathname !== outletRoute) {
+                    router.push(outletRoute as never);
+                  }
                   onClose?.();
                 }}
               >
