@@ -1,12 +1,14 @@
 import type { DeviceItem } from "@/components/atoms/device-list";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { PermissionsAndroid, Platform } from "react-native";
-import BleManager, {
-  BleScanCallbackType,
-  BleScanMatchMode,
-  BleScanMode,
-  Peripheral,
-} from "react-native-ble-manager";
+import { useMemo, useState } from "react";
+
+// NOTE: BleManager is temporarily disabled to prevent crashes in Expo Go / Dev Client without native module.
+// To enable, uncomment the import and the real implementation below.
+// import BleManager, {
+//   BleScanCallbackType,
+//   BleScanMatchMode,
+//   BleScanMode,
+//   Peripheral,
+// } from "react-native-ble-manager";
 
 export type BluetoothDeviceItem = DeviceItem;
 
@@ -14,6 +16,28 @@ const SECONDS_TO_SCAN = 5;
 const SERVICE_UUIDS: string[] = [];
 const ALLOW_DUPLICATES = false;
 
+export function useBluetoothDevices() {
+  const [devices, setDevices] = useState<BluetoothDeviceItem[]>([]);
+  const [isScanning, setIsScanning] = useState(false);
+  const [error, setError] = useState<string | null>("Bluetooth module not loaded (Dev Mode)");
+  const [hasPermission, setHasPermission] = useState<boolean | null>(true);
+
+  const startScan = () => {
+    console.warn("Bluetooth scan disabled in dev mode without native module.");
+  };
+
+  const stopScan = () => {
+    console.warn("Bluetooth scan disabled.");
+  };
+
+  return useMemo(
+    () => ({ devices, isScanning, error, startScan, stopScan, hasPermission }),
+    [devices, isScanning, error, hasPermission]
+  );
+}
+
+/*
+// ORIGINAL IMPLEMENTATION
 export function useBluetoothDevices() {
   const [devices, setDevices] = useState<BluetoothDeviceItem[]>([]);
   const [isScanning, setIsScanning] = useState(false);
@@ -164,3 +188,4 @@ export function useBluetoothDevices() {
     [devices, isScanning, error, startScan, stopScan, hasPermission]
   );
 }
+*/

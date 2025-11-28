@@ -65,6 +65,8 @@ const Sidebar: React.FC<SidebarProps> = ({ activeKey, isOpen, onClose, onSelect 
         return "/dashboard/setting";
       case "history":
         return "/dashboard/transaction/history";
+      case "employees":
+        return "/dashboard/employee";
       default:
         return null;
     }

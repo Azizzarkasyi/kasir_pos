@@ -96,6 +96,14 @@ export default function RootLayout() {
           name="dashboard/product/add-barcode"
           options={{ headerShown: true, title: "Tambah Barcode" }}
         />
+        <Stack.Screen
+          name="dashboard/employee/index"
+          options={{ headerShown: true, title: "Pegawai" }}
+        />
+        <Stack.Screen
+          name="dashboard/employee/add"
+          options={{ headerShown: true, title: "Tambah Pegawai" }}
+        />
 
 
         {/* stock management */}
