@@ -60,7 +60,16 @@ export default function EmployeeScreen() {
               phone={item.phone}
               role={item.role}
               onPress={() => {
-                // Handle employee press if needed
+                router.push({
+                  pathname: "/dashboard/employee/edit",
+                  params: {
+                    id: item.id,
+                    name: item.name,
+                    phone: item.phone,
+                    // email: item.email, // Add email to mock data if needed, or fetch in edit page
+                    role: item.role,
+                  },
+                } as never);
               }}
             />
           )}

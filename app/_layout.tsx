@@ -104,6 +104,10 @@ export default function RootLayout() {
           name="dashboard/employee/add"
           options={{ headerShown: true, title: "Tambah Pegawai" }}
         />
+        <Stack.Screen
+          name="dashboard/employee/edit"
+          options={{ headerShown: true, title: "Edit Pegawai" }}
+        />
 
 
         {/* stock management */}
