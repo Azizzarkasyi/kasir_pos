@@ -14,7 +14,7 @@ type SkeletonProps = {
 
 const Skeleton: React.FC<SkeletonProps> = ({width, height, type = "rect", style}) => {
   const colorScheme = useColorScheme() ?? "light";
-  const baseStyle = styles(Colors[colorScheme].icon, type);
+  const baseStyle = styles(Colors[colorScheme].text, type);
 
   return (
     <View

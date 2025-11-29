@@ -56,7 +56,7 @@ const SelectCountryScreen = () => {
           <ThemedInput
             label="Cari Negara"
             value={searchQuery}
-            size="base"
+            size="md"
             containerStyle={{ backgroundColor: Colors[colorScheme].border2 }}
             inputContainerStyle={{ paddingInlineStart: 40 }}
             showLabel={false}
@@ -67,7 +67,7 @@ const SelectCountryScreen = () => {
             name="search"
             size={25}
             color={Colors[colorScheme].shadow}
-            style={{ position: "absolute", left: 15, top: 25 }}
+            style={{ position: "absolute", left: 15, top: 20 }}
           />
         </View>
       </View>
@@ -77,7 +77,7 @@ const SelectCountryScreen = () => {
         keyExtractor={item => item.id}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
-        style={{ backgroundColor: Colors[colorScheme].background }}
+        style={{ backgroundColor: Colors[colorScheme].background, marginTop: 10 }}
         contentContainerStyle={{
           paddingHorizontal: 20,
           paddingBottom: insets.bottom + 80,

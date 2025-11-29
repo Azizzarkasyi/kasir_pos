@@ -50,7 +50,7 @@ export default function SplashScreen({
       {/* Bagian Logo (Tengah) */}
       <View style={styles.logoContainer}>
         <Image
-          source={require("../assets/logos/2.png")}
+          source={colorScheme == "dark" ? require("../assets/logos/3.png") : require("../assets/logos/2.png")}
           style={{ width: 200, height: 200 }}
           resizeMode="contain"
         />

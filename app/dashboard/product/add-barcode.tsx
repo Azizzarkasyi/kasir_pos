@@ -1,3 +1,4 @@
+import Header from "@/components/header";
 import { Colors } from "@/constants/theme";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { useProductFormStore } from "@/stores/product-form-store";
@@ -73,6 +74,7 @@ export default function AddBarcodeScreen() {
 
   return (
     <View style={styles.container}>
+      <Header title="Tambah Barcode" showHelp={false} />
       <View style={styles.scannerContainer}>
         {hasPermission === "granted" && !scanned ? (
           <CameraView

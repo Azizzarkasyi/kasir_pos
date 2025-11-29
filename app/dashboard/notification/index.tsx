@@ -26,7 +26,7 @@ const NotificationScreen = () => {
 
       <View style={styles.emptyStateWrapper}>
         <Image
-          source={require("@/assets/ilustrations/empty.jpg")}
+          source={require("@/assets/ilustrations/empty-notif.png")}
           style={styles.emptyImage}
           resizeMode="cover"
         />
@@ -49,7 +49,7 @@ const createStyles = (colorScheme: "light" | "dark") =>
       paddingTop: 16,
       paddingBottom: 12,
       borderBottomWidth: StyleSheet.hairlineWidth,
-      borderBottomColor: "#E5E5E5",
+      borderBottomColor: Colors[colorScheme].border,
     },
     closeButton: {
       width: 32,
@@ -81,18 +81,18 @@ const createStyles = (colorScheme: "light" | "dark") =>
       paddingHorizontal: 12,
       borderRadius: 16,
       borderWidth: 1,
-      borderColor: "#E5E5E5",
+      borderColor: Colors[colorScheme].border,
       alignItems: "center",
       justifyContent: "center",
-      backgroundColor: "#FFFFFF",
+      backgroundColor: Colors[colorScheme].secondary,
     },
     tabButtonActive: {
       borderColor: Colors[colorScheme].primary,
-      backgroundColor: "#FFF8F2",
+      backgroundColor: Colors[colorScheme].background,
     },
     tabText: {
       fontSize: 13,
-      color: "#777777",
+      color: Colors[colorScheme].text,
     },
     tabTextActive: {
       fontSize: 13,
@@ -114,7 +114,7 @@ const createStyles = (colorScheme: "light" | "dark") =>
     },
     emptyText: {
       fontSize: 16,
-      color: "#777777",
+      color: Colors[colorScheme].icon,
     },
   });
 

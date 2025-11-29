@@ -55,7 +55,7 @@ export function ThemedButton({
       case "primary":
       default: {
         backgroundColor = Colors[colorScheme].primary;
-        textColor = Colors[colorScheme].secondary;
+        textColor = "#fff";
         borderColor = Colors[colorScheme].primary;
         break;
       }

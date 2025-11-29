@@ -1,6 +1,7 @@
 import RecipeIngredientItem from "@/components/atoms/recipe-ingredient-item";
 import ComboInput from "@/components/combo-input";
 import ConfirmationDialog, { ConfirmationDialogHandle } from "@/components/drawers/confirmation-dialog";
+import Header from "@/components/header";
 import ImageUpload from "@/components/image-upload";
 import { ThemedButton } from "@/components/themed-button";
 import { ThemedInput } from "@/components/themed-input";
@@ -79,6 +80,11 @@ export default function AddProductScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: Colors[colorScheme].background }}>
+      <Header
+        showHelp={false}
+        title="Tambah Resep"
+        withNotificationButton={false}
+      />
       <KeyboardAwareScrollView
         contentContainerStyle={{
           paddingTop: 8,

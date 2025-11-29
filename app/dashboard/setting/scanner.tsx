@@ -1,4 +1,5 @@
 import DeviceList from "@/components/atoms/device-list";
+import Header from "@/components/header";
 import { ThemedButton } from "@/components/themed-button";
 import { ThemedText } from "@/components/themed-text";
 import { Colors } from "@/constants/theme";
@@ -47,6 +48,7 @@ export default function ScannerScreen() {
 
   return (
     <View style={styles.container}>
+      <Header title="Scanner" showHelp={false} />
       {!connected && !showScan ? (
         <View style={styles.emptyStateWrapper}>
           <View style={{ flexDirection: "column", alignItems: "center" }}>

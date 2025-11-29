@@ -1,6 +1,7 @@
 import Checkbox from "@/components/checkbox";
 import ComboInput from "@/components/combo-input";
 import ConfirmationDialog, { ConfirmationDialogHandle } from "@/components/drawers/confirmation-dialog";
+import Header from "@/components/header";
 import { ThemedButton } from "@/components/themed-button";
 import { ThemedInput } from "@/components/themed-input";
 import { ThemedText } from "@/components/themed-text";
@@ -68,7 +69,11 @@ export default function StockSettingsScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: Colors[colorScheme].background }}>
-
+      <Header
+        showHelp={false}
+        title="Pengaturan Stok Bahan"
+        withNotificationButton={false}
+      />
       <KeyboardAwareScrollView
         contentContainerStyle={{ paddingHorizontal: 20, paddingVertical: 32, paddingBottom: insets.bottom + 80 }}
         enableOnAndroid

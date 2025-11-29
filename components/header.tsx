@@ -93,7 +93,7 @@ const createStyles = (colorScheme: "light" | "dark", withShadow: boolean) =>
       backgroundColor: Colors[colorScheme].background,
       position: "relative",
       ...(withShadow ? {
-        shadowColor: Colors[colorScheme].icon,
+        shadowColor: Colors[colorScheme].shadow,
         shadowOffset: { width: 0, height: 4 },
         shadowOpacity: 0.5,
         shadowRadius: 6,
@@ -101,7 +101,7 @@ const createStyles = (colorScheme: "light" | "dark", withShadow: boolean) =>
       } : {}),
       zIndex: 2,
       borderBottomWidth: StyleSheet.hairlineWidth,
-      borderBottomColor: "rgba(0,0,0,0.06)",
+      borderBottomColor: Colors[colorScheme].border,
     },
     headerContent: {
       flexDirection: "row",

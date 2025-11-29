@@ -126,7 +126,7 @@ const MenuRow: React.FC<MenuRowProps> = ({
               false: Colors[colorScheme].border,
               true: Colors[colorScheme].primary,
             }}
-            thumbColor={Colors[colorScheme].background}
+            thumbColor={Colors[colorScheme].text}
           />
         </View>
       ) : (

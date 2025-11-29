@@ -116,7 +116,7 @@ export default function TransactionSummaryPage() {
           onPress={() => router.push("/dashboard/transaction/payment" as never)}
         >
           <Text
-            style={[styles.payButtonText, { color: Colors[colorScheme].secondary }]}
+            style={[styles.payButtonText, { color: Colors[colorScheme].text }]}
           >
             Lanjutkan Pembayaran
           </Text>

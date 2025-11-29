@@ -12,7 +12,7 @@ const createStyles = (colorScheme: "light" | "dark") =>
     StyleSheet.create({
         sectionDivider: {
             backgroundColor: Colors[colorScheme].border2,
-            height: 8,
+            height: 6,
         },
     });
 

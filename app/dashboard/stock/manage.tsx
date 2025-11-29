@@ -1,6 +1,7 @@
 
 import StockProductItem from "@/components/atoms/stock-product-item";
 import EditStockModal from "@/components/drawers/edit-stock-modal";
+import Header from "@/components/header";
 import { ThemedInput } from "@/components/themed-input";
 import { Colors } from "@/constants/theme";
 import { useColorScheme } from "@/hooks/use-color-scheme";
@@ -31,6 +32,7 @@ export default function ManageStockScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: Colors[colorScheme].background }}>
+      <Header title="Kelola Stok" showHelp={false} />
       <KeyboardAwareScrollView
         contentContainerStyle={{
           paddingTop: 8,

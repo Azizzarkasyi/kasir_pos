@@ -1,4 +1,5 @@
 import EmployeeCard from "@/components/employee-card";
+import Header from "@/components/header";
 import { ThemedInput } from "@/components/themed-input";
 import { Colors } from "@/constants/theme";
 import { useColorScheme } from "@/hooks/use-color-scheme";
@@ -33,8 +34,9 @@ export default function EmployeeScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: Colors[colorScheme].background }}>
-      <View style={[styles.contentContainer, { paddingTop: insets.top }]}>
-        <View style={styles.searchRow}>
+      <Header title="Pegawai" showHelp={false} />
+      <View style={[styles.contentContainer]}>
+        <View style={[styles.searchRow, { paddingHorizontal: 20 }]}>
           <View style={{ flex: 1 }}>
             <ThemedInput
               label="Cari Pegawai"
@@ -99,7 +101,6 @@ const createStyles = (colorScheme: "light" | "dark") =>
   StyleSheet.create({
     contentContainer: {
       flex: 1,
-      paddingHorizontal: 20,
     },
     searchRow: {
       flexDirection: "row",

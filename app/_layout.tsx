@@ -62,23 +62,23 @@ export default function RootLayout() {
         />
         <Stack.Screen
           name="dashboard/select-branch/index"
-          options={{ headerShown: true, title: "Pilih Outlet" }}
+          options={{ headerShown: false, title: "Pilih Outlet" }}
         />
         <Stack.Screen
           name="dashboard/product/products"
-          options={{ headerShown: true, title: "Produk" }}
+          options={{ headerShown: false, title: "Produk" }}
         />
         <Stack.Screen
           name="dashboard/product/add-product"
-          options={{ headerShown: true, title: "Tambah Produk" }}
+          options={{ headerShown: false, title: "Tambah Produk" }}
         />
         <Stack.Screen
           name="dashboard/product/edit-product"
-          options={{ headerShown: true, title: "Edit Produk" }}
+          options={{ headerShown: false, title: "Edit Produk" }}
         />
         <Stack.Screen
           name="dashboard/product/manage"
-          options={{ headerShown: true, title: "Kelola Produk" }}
+          options={{ headerShown: false, title: "Kelola Produk" }}
         />
         <Stack.Screen
           name="dashboard/product/stock"
@@ -86,34 +86,34 @@ export default function RootLayout() {
         />
         <Stack.Screen
           name="dashboard/product/variant"
-          options={{ headerShown: true, title: "Variasi Produk" }}
+          options={{ headerShown: false, title: "Variasi Produk" }}
         />
         <Stack.Screen
           name="dashboard/product/variant-stock"
-          options={{ headerShown: true, title: "Kelola Stok Varian" }}
+          options={{ headerShown: false, title: "Kelola Stok Varian" }}
         />
         <Stack.Screen
           name="dashboard/product/add-barcode"
-          options={{ headerShown: true, title: "Tambah Barcode" }}
+          options={{ headerShown: false, title: "Tambah Barcode" }}
         />
         <Stack.Screen
           name="dashboard/employee/index"
-          options={{ headerShown: true, title: "Pegawai" }}
+          options={{ headerShown: false, title: "Pegawai" }}
         />
         <Stack.Screen
           name="dashboard/employee/add"
-          options={{ headerShown: true, title: "Tambah Pegawai" }}
+          options={{ headerShown: false, title: "Tambah Pegawai" }}
         />
         <Stack.Screen
           name="dashboard/employee/edit"
-          options={{ headerShown: true, title: "Edit Pegawai" }}
+          options={{ headerShown: false, title: "Edit Pegawai" }}
         />
 
 
         {/* stock management */}
         <Stack.Screen
           name="dashboard/stock/manage"
-          options={{ headerShown: true, title: "Kelola Stok" }}
+          options={{ headerShown: false, title: "Kelola Stok" }}
         />
 
 
@@ -122,41 +122,41 @@ export default function RootLayout() {
 
         <Stack.Screen
           name="dashboard/recipe-and-materials/index"
-          options={{ headerShown: true, title: "Resep & Bahan" }}
+          options={{ headerShown: false, title: "Resep & Bahan" }}
         />
         <Stack.Screen
           name="dashboard/recipe-and-materials/add-recipe"
-          options={{ headerShown: true, title: "Tambah Resep" }}
+          options={{ headerShown: false, title: "Tambah Resep" }}
         />
         <Stack.Screen
           name="dashboard/recipe-and-materials/edit-recipe"
-          options={{ headerShown: true, title: "Edit Resep" }}
+          options={{ headerShown: false, title: "Edit Resep" }}
         />
         <Stack.Screen
           name="dashboard/recipe-and-materials/ingredients"
-          options={{ headerShown: true, title: "Tambah Bahan Resep" }}
+          options={{ headerShown: false, title: "Tambah Bahan Resep" }}
         />
         <Stack.Screen
           name="dashboard/recipe-and-materials/add-material"
-          options={{ headerShown: true, title: "Tambah Bahan" }}
+          options={{ headerShown: false, title: "Tambah Bahan" }}
         />
         <Stack.Screen
           name="dashboard/recipe-and-materials/edit-material"
-          options={{ headerShown: true, title: "Edit Bahan" }}
+          options={{ headerShown: false, title: "Edit Bahan" }}
         />
 
         <Stack.Screen
           name="dashboard/recipe-and-materials/stock"
-          options={{ headerShown: true, title: "Kelola Stok Bahan" }}
+          options={{ headerShown: false, title: "Kelola Stok Bahan" }}
         />
 
         <Stack.Screen
           name="dashboard/recipe-and-materials/variant"
-          options={{ headerShown: true, title: "Variasi Bahan" }}
+          options={{ headerShown: false, title: "Variasi Bahan" }}
         />
         <Stack.Screen
           name="dashboard/recipe-and-materials/variant-stock"
-          options={{ headerShown: true, title: "Kelola Stok Varian Bahan" }}
+          options={{ headerShown: false, title: "Kelola Stok Varian Bahan" }}
         />
 
 
@@ -170,31 +170,31 @@ export default function RootLayout() {
         />
         <Stack.Screen
           name="dashboard/setting/profile"
-          options={{ headerShown: true, title: "Profil" }}
+          options={{ headerShown: false, title: "Profil" }}
         />
         <Stack.Screen
           name="dashboard/setting/store"
-          options={{ headerShown: true, title: "Store" }}
+          options={{ headerShown: false, title: "Store" }}
         />
         <Stack.Screen
           name="dashboard/setting/receipt"
-          options={{ headerShown: true, title: "Atur Struk" }}
+          options={{ headerShown: false, title: "Atur Struk" }}
         />
         <Stack.Screen
           name="dashboard/setting/order-receipt"
-          options={{ headerShown: true, title: "Struk Order" }}
+          options={{ headerShown: false, title: "Struk Order" }}
         />
         <Stack.Screen
           name="dashboard/setting/printer"
-          options={{ headerShown: true, title: "Printer" }}
+          options={{ headerShown: false, title: "Printer" }}
         />
         <Stack.Screen
           name="dashboard/setting/scanner"
-          options={{ headerShown: true, title: "Scanner" }}
+          options={{ headerShown: false, title: "Scanner" }}
         />
         <Stack.Screen
           name="dashboard/setting/umum"
-          options={{ headerShown: true, title: "Umum" }}
+          options={{ headerShown: false, title: "Umum" }}
         />
         {/* <Stack.Screen
           name="dashboard/stock/manage"

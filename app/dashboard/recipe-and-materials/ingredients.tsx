@@ -1,5 +1,6 @@
 import ComboInput from "@/components/combo-input";
 import ConfirmationDialog, { ConfirmationDialogHandle } from "@/components/drawers/confirmation-dialog";
+import Header from "@/components/header";
 import { ThemedButton } from "@/components/themed-button";
 import { ThemedInput } from "@/components/themed-input";
 import { Colors } from "@/constants/theme";
@@ -138,6 +139,11 @@ export default function IngredientsScreen() {
 
   return (
     <View style={{flex: 1, backgroundColor: Colors[colorScheme].background}}>
+      <Header
+        showHelp={false}
+        title="Tambah Bahan Resep"
+        withNotificationButton={false}
+      />
       <KeyboardAwareScrollView
         contentContainerStyle={{
           paddingHorizontal: 20,

@@ -1,6 +1,7 @@
 import Checkbox from "@/components/checkbox";
 import ComboInput from "@/components/combo-input";
 import ConfirmationDialog, { ConfirmationDialogHandle } from "@/components/drawers/confirmation-dialog";
+import Header from "@/components/header";
 import { ThemedButton } from "@/components/themed-button";
 import { ThemedInput } from "@/components/themed-input";
 import { ThemedText } from "@/components/themed-text";
@@ -122,6 +123,11 @@ export default function MaterialVariantStockScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: Colors[colorScheme].background }}>
+      <Header
+        showHelp={false}
+        title="Stok Varian Bahan"
+        withNotificationButton={false}
+      />
       <KeyboardAwareScrollView
         contentContainerStyle={{
           paddingHorizontal: 20,

@@ -2,6 +2,7 @@ import VariantItem from "@/components/atoms/variant-item";
 import ComboInput from "@/components/combo-input";
 import CostBarcodeFields from "@/components/cost-barcode-fields";
 import ConfirmationDialog, { ConfirmationDialogHandle } from "@/components/drawers/confirmation-dialog";
+import Header from "@/components/header";
 import ImageUpload from "@/components/image-upload";
 import MenuRow from "@/components/menu-row";
 import { ThemedButton } from "@/components/themed-button";
@@ -30,6 +31,7 @@ export default function EditProductScreen() {
     price,
     brand,
     category,
+    recipe,
     favorite,
     enableCostBarcode,
     imageUri,
@@ -41,6 +43,7 @@ export default function EditProductScreen() {
     setPrice,
     setBrand,
     setCategory,
+    setRecipe,
     setFavorite,
     setEnableCostBarcode,
     setImageUri,
@@ -140,6 +143,7 @@ export default function EditProductScreen() {
     price.trim() !== "" ||
     brand.trim() !== "" ||
     category.trim() !== "" ||
+    recipe.trim() !== "" ||
     favorite ||
     enableCostBarcode ||
     imageUri !== null ||
@@ -180,6 +184,7 @@ export default function EditProductScreen() {
       price,
       brand,
       category,
+      recipe,
       favorite,
       enableCostBarcode,
       imageUri,
@@ -190,6 +195,7 @@ export default function EditProductScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: Colors[colorScheme].background }}>
+      <Header title="Edit Produk" showHelp={false} />
       <KeyboardAwareScrollView
         contentContainerStyle={{
           paddingTop: 18,
@@ -240,6 +246,17 @@ export default function EditProductScreen() {
               {label: "Umum", value: "umum"},
               {label: "Minuman", value: "minuman"},
               {label: "Makanan", value: "makanan"},
+            ]}
+          />
+          <ComboInput
+            label="Resep Produk"
+            value={recipe}
+            size="md"
+            onChangeText={setRecipe}
+            items={[
+              {label: "Pilih Resep", value: ""},
+              {label: "Tanpa Resep", value: "none"},
+              {label: "Resep Default", value: "default"},
             ]}
           />
         </View>
