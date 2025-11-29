@@ -77,14 +77,12 @@ export default function EditEmployeeScreen() {
           value={phone}
           onChangeText={setPhone}
           keyboardType="phone-pad"
-          
         />
         <ThemedInput
           label="Email"
           value={email}
           onChangeText={setEmail}
           keyboardType="email-address"
-          
         />
         
         <View style={styles.divider} />
@@ -95,8 +93,7 @@ export default function EditEmployeeScreen() {
           value={pin}
           onChangeText={setPin}
           isPassword
-          keyboardType="numeric"
-          
+          keyboardType="numeric"          
           maxLength={6}
         />
         <ThemedInput
@@ -104,8 +101,7 @@ export default function EditEmployeeScreen() {
           value={confirmPin}
           onChangeText={setConfirmPin}
           isPassword
-          keyboardType="numeric"
-          
+          keyboardType="numeric"          
           maxLength={6}
         />
 

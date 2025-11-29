@@ -1,33 +1,110 @@
 import ConfirmPopup from "@/components/atoms/confirm-popup";
 import ComboInput from "@/components/combo-input";
 import ImageUpload from "@/components/image-upload";
-import { ThemedButton } from "@/components/themed-button";
-import { ThemedInput } from "@/components/themed-input";
-import { ThemedText } from "@/components/themed-text";
-import { Colors } from "@/constants/theme";
-import { useColorScheme } from "@/hooks/use-color-scheme";
-import React from "react";
-import { StyleSheet, View } from "react-native";
-import { ScrollView } from "react-native-gesture-handler";
+import {ThemedButton} from "@/components/themed-button";
+import {ThemedInput} from "@/components/themed-input";
+import {ThemedText} from "@/components/themed-text";
+import {Colors} from "@/constants/theme";
+import {useColorScheme} from "@/hooks/use-color-scheme";
+import React, {useEffect, useState} from "react";
+import {StyleSheet, View, Alert, ActivityIndicator} from "react-native";
+import {ScrollView} from "react-native-gesture-handler";
+import {settingsApi, StoreInfo} from "@/services";
 
 export default function StoreSettingScreen() {
   const colorScheme = useColorScheme() ?? "light";
   const styles = createStyles(colorScheme);
-  const [businessType, setBusinessType] = React.useState("services_other");
-  const [storeName, setStoreName] = React.useState("Toko klontong aas");
-  const [defaultTax, setDefaultTax] = React.useState("0.0");
-  const [ownerName, setOwnerName] = React.useState("Basofi");
-  const phone = "+6288277069611";
-  const [language, setLanguage] = React.useState("en");
-  const [currency, setCurrency] = React.useState("idr");
-  const [address, setAddress] = React.useState(
-    "RCC-CC1_3, Bengkok, Beriman, Arjowinangun, Kec. Kedungkandang, Kota Malang"
-  );
-  const photoUri: string | undefined = undefined;
-  const [country, setCountry] = React.useState("id");
-  const [province, setProvince] = React.useState("JAWA TIMUR");
-  const [cityRegion, setCityRegion] = React.useState("");
-  const [confirmOpen, setConfirmOpen] = React.useState(false);
+  const [store, setStore] = useState<StoreInfo | null>(null);
+  const [businessType, setBusinessType] = useState("");
+  const [storeName, setStoreName] = useState("");
+  const [defaultTax, setDefaultTax] = useState("0");
+  const [ownerName, setOwnerName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [language, setLanguage] = useState("id");
+  const [currency, setCurrency] = useState("IDR");
+  const [address, setAddress] = useState("");
+  const [photoUri, setPhotoUri] = useState<string | undefined>(undefined);
+  const [country, setCountry] = useState("Indonesia");
+  const [province, setProvince] = useState("");
+  const [cityRegion, setCityRegion] = useState("");
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+
+  useEffect(() => {
+    loadStoreData();
+  }, []);
+
+  const loadStoreData = async () => {
+    try {
+      const response = await settingsApi.getStoreInfo();
+      if (response.data) {
+        const storeData = response.data;
+        setStore(storeData);
+        setBusinessType(storeData.bussiness_type || "");
+        setStoreName(storeData.owner_name || "");
+        setDefaultTax(storeData.tax?.toString() || "0");
+        setOwnerName(storeData.owner_name || "");
+        setPhone(storeData.owner_phone || "");
+        setLanguage(storeData.language || "id");
+        setCurrency(storeData.curency || "IDR");
+        setAddress(storeData.address || "");
+        setCountry(storeData.country || "Indonesia");
+        setProvince(storeData.province?.name || "");
+        setPhotoUri(storeData.photo);
+      }
+    } catch (error: any) {
+      console.error("❌ Failed to load store:", error);
+      Alert.alert("Error", "Gagal memuat data toko");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleSaveStore = async () => {
+    if (!storeName.trim()) {
+      Alert.alert("Validasi", "Nama toko tidak boleh kosong");
+      return;
+    }
+
+    if (!ownerName.trim()) {
+      Alert.alert("Validasi", "Nama pemilik tidak boleh kosong");
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      await settingsApi.updateStore({
+        owner_name: ownerName.trim(),
+        bussiness_type: businessType,
+        tax: parseFloat(defaultTax) || 0,
+        language: language,
+        country: country,
+        address: address.trim(),
+      });
+      Alert.alert("Berhasil", "Data toko berhasil diperbarui");
+      setConfirmOpen(false);
+      loadStoreData();
+    } catch (error: any) {
+      console.error("❌ Failed to update store:", error);
+      Alert.alert("Gagal", error.message || "Gagal memperbarui data toko");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <View
+        style={[
+          styles.container,
+          {justifyContent: "center", alignItems: "center"},
+        ]}
+      >
+        <ActivityIndicator size="large" color={Colors[colorScheme].primary} />
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
@@ -40,7 +117,9 @@ export default function StoreSettingScreen() {
         </View>
 
         <View style={styles.sectionCard}>
-          <ThemedText type="subtitle-2" style={{marginBottom: 12}}>Store or Business Data</ThemedText>
+          <ThemedText type="subtitle-2" style={{marginBottom: 12}}>
+            Store or Business Data
+          </ThemedText>
           <ComboInput
             label="Business Type"
             value={businessType}
@@ -67,12 +146,7 @@ export default function StoreSettingScreen() {
             value={ownerName}
             onChangeText={setOwnerName}
           />
-          <ThemedInput
-            label="Mobile Number"
-            value={phone}
-            editable={false}
-           
-          />
+          <ThemedInput label="Mobile Number" value={phone} editable={false} />
           {/* <ThemedText style={{color: "red"}}>
             * Have not verified yet
           </ThemedText> */}
@@ -122,7 +196,7 @@ export default function StoreSettingScreen() {
             }}
           />
         </View>
-{/* 
+        {/* 
         <View style={styles.sectionCard}>
           <ThemedText type="subtitle-2">
             Select Language and Currency
@@ -145,17 +219,19 @@ export default function StoreSettingScreen() {
         </View> */}
 
         <View style={styles.bottomButtonWrapper}>
-          <ThemedButton title="SAVE" onPress={() => setConfirmOpen(true)} />
+          <ThemedButton
+            title={isSaving ? "SAVING..." : "SAVE"}
+            onPress={handleSaveStore}
+            disabled={isSaving}
+          />
         </View>
 
         <ConfirmPopup
           visible={confirmOpen}
-          title="WARNING"
-          message="Data has not been saved. Are you sure you want to return?"
+          title="Konfirmasi"
+          message="Apakah Anda yakin ingin menyimpan perubahan?"
           onCancel={() => setConfirmOpen(false)}
-          onConfirm={() => {
-            setConfirmOpen(false);
-          }}
+          onConfirm={handleSaveStore}
         />
       </ScrollView>
     </View>

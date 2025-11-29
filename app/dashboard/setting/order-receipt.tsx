@@ -3,22 +3,106 @@ import { ThemedInput } from "@/components/themed-input";
 import { ThemedText } from "@/components/themed-text";
 import { Colors } from "@/constants/theme";
 import { useColorScheme } from "@/hooks/use-color-scheme";
-import React from "react";
-import { StyleSheet, Switch, View } from "react-native";
+import React, { useEffect, useState } from "react";
+import { StyleSheet, Switch, View, Alert, ActivityIndicator } from "react-native";
 import { ScrollView } from "react-native-gesture-handler";
+import { settingsApi, StruckConfig } from "@/services";
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function OrderReceiptSettingScreen() {
   const colorScheme = useColorScheme() ?? "light";
   const styles = createStyles(colorScheme);
 
-  const [displayRunningNumbers, setDisplayRunningNumbers] = React.useState(true);
-  const [displayUnitNextToQty, setDisplayUnitNextToQty] = React.useState(true);
-  const [showTransactionNote, setShowTransactionNote] = React.useState(true);
-  const [displayQuantityTotal, setDisplayQuantityTotal] = React.useState(true);
-  const [hideTaxPercentage, setHideTaxPercentage] = React.useState(false);
+  const [struckConfig, setStruckConfig] = useState<StruckConfig | null>(null);
+  const [displayRunningNumbers, setDisplayRunningNumbers] = useState(true);
+  const [displayUnitNextToQty, setDisplayUnitNextToQty] = useState(true);
+  const [showTransactionNote, setShowTransactionNote] = useState(true);
+  const [displayQuantityTotal, setDisplayQuantityTotal] = useState(true);
+  const [hideTaxPercentage, setHideTaxPercentage] = useState(false);
 
-  const [headerDesc, setHeaderDesc] = React.useState("");
-  const [footerDesc, setFooterDesc] = React.useState("");
+  const [headerDesc, setHeaderDesc] = useState("");
+  const [footerDesc, setFooterDesc] = useState("");
+  
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+  const [branchId, setBranchId] = useState<string>("");
+
+  useEffect(() => {
+    loadBranchAndConfig();
+  }, []);
+
+  const loadBranchAndConfig = async () => {
+    try {
+      const branchIdFromStorage = await AsyncStorage.getItem('current_branch_id');
+      if (branchIdFromStorage) {
+        setBranchId(branchIdFromStorage);
+        await loadStruckConfig(branchIdFromStorage);
+      } else {
+        Alert.alert("Error", "Branch tidak ditemukan. Silakan pilih branch terlebih dahulu.");
+      }
+    } catch (error) {
+      console.error("❌ Failed to load branch:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const loadStruckConfig = async (branchId: string) => {
+    try {
+      const response = await settingsApi.getStruckConfig(branchId);
+      if (response.data) {
+        const config = response.data;
+        setStruckConfig(config);
+        setDisplayRunningNumbers(config.display_running_numbers ?? true);
+        setDisplayUnitNextToQty(config.display_unit_next_to_qty ?? true);
+        setShowTransactionNote(config.display_transaction_note ?? true);
+        setDisplayQuantityTotal(config.display_quantity_total ?? true);
+        setHideTaxPercentage(config.hide_tax_percentage ?? false);
+        setHeaderDesc(config.header_description || "");
+        setFooterDesc(config.footer_description || "");
+      }
+    } catch (error: any) {
+      console.error("❌ Failed to load struck config:", error);
+      if (error.code !== 404) {
+        Alert.alert("Error", "Gagal memuat konfigurasi struk");
+      }
+    }
+  };
+
+  const handleSave = async () => {
+    if (!branchId) {
+      Alert.alert("Error", "Branch tidak ditemukan");
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      await settingsApi.updateStruckConfig(branchId, {
+        display_running_numbers: displayRunningNumbers,
+        display_unit_next_to_qty: displayUnitNextToQty,
+        display_transaction_note: showTransactionNote,
+        display_quantity_total: displayQuantityTotal,
+        hide_tax_percentage: hideTaxPercentage,
+        header_description: headerDesc.trim(),
+        footer_description: footerDesc.trim(),
+      });
+      Alert.alert("Berhasil", "Konfigurasi struk berhasil disimpan");
+      loadStruckConfig(branchId);
+    } catch (error: any) {
+      console.error("❌ Failed to save struck config:", error);
+      Alert.alert("Gagal", error.message || "Gagal menyimpan konfigurasi struk");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <View style={[styles.container, { justifyContent: "center", alignItems: "center" }]}>
+        <ActivityIndicator size="large" color={Colors[colorScheme].primary} />
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
@@ -72,7 +156,11 @@ export default function OrderReceiptSettingScreen() {
         </View>
 
         <View style={styles.bottomButtonWrapper}>
-          <ThemedButton title="Simpan" onPress={() => {}} />
+          <ThemedButton 
+            title={isSaving ? "Menyimpan..." : "Simpan"} 
+            onPress={handleSave}
+            disabled={isSaving}
+          />
         </View>
       </ScrollView>
     </View>

@@ -41,7 +41,7 @@ export default function LoginScreen() {
   ];
   const [countryCode, setCountryCode] = useState(countryItems[0].value);
 
-  const handleLogin = () => {
+  const handleLogin = async () => {
     // Reset error state dulu
     setCredentialError("");
     setPinError("");
@@ -71,14 +71,54 @@ export default function LoginScreen() {
       // B. Tampilkan Loading Screen
       setIsLoggingIn(true);
 
-      // C. Proses Login (Simulasi)
-      const finalCredential = credential;
-      console.log("Login diproses", finalCredential);
-
-      setTimeout(() => {
+      try {
+        // C. Proses Login dengan API
+        console.log("🔄 Attempting login with:", credential, "isPhone:", isPhoneLogin);
+        
+        // Import authApi di bagian atas file
+        const { authApi } = await import("@/services");
+        
+        const result = await authApi.login(credential, pin, isPhoneLogin);
+        
+        console.log("✅ Login success:", result);
+        
+        // Save branch ID to AsyncStorage for struk config
+        if (result.branch?.id) {
+          const AsyncStorage = await import('@react-native-async-storage/async-storage');
+          await AsyncStorage.default.setItem('current_branch_id', result.branch.id);
+        }
+        
+        // D. Navigate ke dashboard jika berhasil
         setIsLoggingIn(false);
         router.replace("/dashboard/home" as never);
-      }, 3000);
+        
+      } catch (error: any) {
+        console.error("❌ Login failed:", error);
+        
+        setIsLoggingIn(false);
+        
+        // Tampilkan error ke user
+        if (error.code === 401) {
+          setPinError("No. Handphone atau PIN salah");
+        } else if (error.code === 404) {
+          setCredentialError("Akun tidak ditemukan");
+        } else if (error.code === 400 && error.errors) {
+          // Validation errors
+          if (error.errors.pin) {
+            setPinError(error.errors.pin[0]);
+          } else if (error.errors.phone) {
+            setCredentialError(error.errors.phone[0]);
+          } else if (error.errors.email) {
+            setCredentialError(error.errors.email[0]);
+          } else {
+            setPinError("Data tidak valid. Periksa kembali input Anda.");
+          }
+        } else if (error.message) {
+          setPinError(error.message);
+        } else {
+          setPinError("Gagal login. Periksa koneksi internet Anda.");
+        }
+      }
     }
   };
 

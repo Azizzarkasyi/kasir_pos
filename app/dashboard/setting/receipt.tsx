@@ -8,20 +8,88 @@ import { useColorScheme } from "@/hooks/use-color-scheme";
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import { useRouter } from "expo-router";
-import React from "react";
-import { StyleSheet, TouchableOpacity, View } from "react-native";
+import React, { useEffect, useState } from "react";
+import { StyleSheet, TouchableOpacity, View, Alert, ActivityIndicator } from "react-native";
 import { ScrollView } from "react-native-gesture-handler";
+import { settingsApi, StruckConfig } from "@/services";
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function ReceiptSettingScreen() {
   const colorScheme = useColorScheme() ?? "light";
   const styles = createStyles(colorScheme);
   const navigation = useNavigation();
   const router = useRouter();
-  const [logoUri, setLogoUri] = React.useState<string | undefined>(undefined);
-  const [extraNotes, setExtraNotes] = React.useState("");
-  const [message, setMessage] = React.useState("");
-  const [showHelpExtra, setShowHelpExtra] = React.useState(false);
-  const [showHelpMessage, setShowHelpMessage] = React.useState(false);
+  const [struckConfig, setStruckConfig] = useState<StruckConfig | null>(null);
+  const [logoUri, setLogoUri] = useState<string | undefined>(undefined);
+  const [extraNotes, setExtraNotes] = useState("");
+  const [message, setMessage] = useState("");
+  const [showHelpExtra, setShowHelpExtra] = useState(false);
+  const [showHelpMessage, setShowHelpMessage] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+  const [branchId, setBranchId] = useState<string>("");
+
+  useEffect(() => {
+    loadBranchAndConfig();
+  }, []);
+
+  const loadBranchAndConfig = async () => {
+    try {
+      // Get current branch ID from storage or login data
+      const branchIdFromStorage = await AsyncStorage.getItem('current_branch_id');
+      if (branchIdFromStorage) {
+        setBranchId(branchIdFromStorage);
+        await loadStruckConfig(branchIdFromStorage);
+      } else {
+        // TODO: Jika tidak ada branch, tampilkan error atau redirect
+        Alert.alert("Error", "Branch tidak ditemukan. Silakan pilih branch terlebih dahulu.");
+      }
+    } catch (error) {
+      console.error("❌ Failed to load branch:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const loadStruckConfig = async (branchId: string) => {
+    try {
+      const response = await settingsApi.getStruckConfig(branchId);
+      if (response.data) {
+        setStruckConfig(response.data);
+        setLogoUri(response.data.logo_url);
+        setExtraNotes(response.data.header_description || "");
+        setMessage(response.data.footer_description || "");
+      }
+    } catch (error: any) {
+      console.error("❌ Failed to load struck config:", error);
+      if (error.code !== 404) {
+        Alert.alert("Error", "Gagal memuat konfigurasi struk");
+      }
+    }
+  };
+
+  const handleSave = async () => {
+    if (!branchId) {
+      Alert.alert("Error", "Branch tidak ditemukan");
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      await settingsApi.updateStruckConfig(branchId, {
+        logo_url: logoUri,
+        header_description: extraNotes.trim(),
+        footer_description: message.trim(),
+      });
+      Alert.alert("Berhasil", "Konfigurasi struk berhasil disimpan");
+      loadStruckConfig(branchId);
+    } catch (error: any) {
+      console.error("❌ Failed to save struck config:", error);
+      Alert.alert("Gagal", error.message || "Gagal menyimpan konfigurasi struk");
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   React.useEffect(() => {
     navigation.setOptions({
@@ -35,6 +103,14 @@ export default function ReceiptSettingScreen() {
       title: "Atur Struk",
     });
   }, [navigation, colorScheme]);
+
+  if (isLoading) {
+    return (
+      <View style={[styles.container, { justifyContent: "center", alignItems: "center" }]}>
+        <ActivityIndicator size="large" color={Colors[colorScheme].primary} />
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
@@ -124,7 +200,11 @@ export default function ReceiptSettingScreen() {
         </TouchableOpacity>
 
         <View style={styles.bottomButtonWrapper}>
-          <ThemedButton title="Simpan" onPress={() => {}} />
+          <ThemedButton 
+            title={isSaving ? "Menyimpan..." : "Simpan"} 
+            onPress={handleSave}
+            disabled={isSaving}
+          />
         </View>
         <HelpPopup
           visible={showHelpExtra}
