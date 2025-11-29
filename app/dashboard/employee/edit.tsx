@@ -79,7 +79,10 @@ export default function EditEmployeeScreen() {
           size="md"
           onChangeText={setPhone}
           keyboardType="phone-pad"
+<<<<<<< HEAD
+=======
 
+>>>>>>> ef82adcc8c2efa6d1f9c70076fa07d497c8369dd
         />
         <ThemedInput
           label="Email"
@@ -87,7 +90,10 @@ export default function EditEmployeeScreen() {
           size="md"
           onChangeText={setEmail}
           keyboardType="email-address"
+<<<<<<< HEAD
+=======
 
+>>>>>>> ef82adcc8c2efa6d1f9c70076fa07d497c8369dd
         />
 
         <View style={styles.divider} />
@@ -99,8 +105,12 @@ export default function EditEmployeeScreen() {
           size="md"
           onChangeText={setPin}
           isPassword
+<<<<<<< HEAD
+          keyboardType="numeric"          
+=======
           keyboardType="numeric"
 
+>>>>>>> ef82adcc8c2efa6d1f9c70076fa07d497c8369dd
           maxLength={6}
         />
         <ThemedInput
@@ -109,8 +119,12 @@ export default function EditEmployeeScreen() {
           size="md"
           onChangeText={setConfirmPin}
           isPassword
+<<<<<<< HEAD
+          keyboardType="numeric"          
+=======
           keyboardType="numeric"
 
+>>>>>>> ef82adcc8c2efa6d1f9c70076fa07d497c8369dd
           maxLength={6}
         />
 

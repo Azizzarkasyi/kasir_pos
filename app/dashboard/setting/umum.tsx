@@ -1,22 +1,96 @@
 import SectionDivider from "@/components/atoms/section-divider";
-import SelectLanguageModal, { LanguageValue } from "@/components/drawers/select-language-modal";
+import SelectLanguageModal, {
+  LanguageValue,
+} from "@/components/drawers/select-language-modal";
 import Header from "@/components/header";
 import MenuRow from "@/components/menu-row";
-import { ThemedButton } from "@/components/themed-button";
-import { ThemedText } from "@/components/themed-text";
-import { Colors } from "@/constants/theme";
-import { useColorScheme } from "@/hooks/use-color-scheme";
-import { useRouter } from "expo-router";
-import React from "react";
-import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
-import { ScrollView } from "react-native-gesture-handler";
+import {ThemedButton} from "@/components/themed-button";
+import {ThemedText} from "@/components/themed-text";
+import {Colors} from "@/constants/theme";
+import {useColorScheme} from "@/hooks/use-color-scheme";
+import {useRouter} from "expo-router";
+import React, {useEffect, useState} from "react";
+import {StyleSheet, Text, TouchableOpacity, View, Alert} from "react-native";
+import {ScrollView} from "react-native-gesture-handler";
+import {settingsApi} from "@/services";
 
 export default function GeneralSettingScreen() {
   const colorScheme = useColorScheme() ?? "light";
   const styles = createStyles(colorScheme);
   const router = useRouter();
-  const [language, setLanguage] = React.useState<LanguageValue>("id");
-  const [showLanguageModal, setShowLanguageModal] = React.useState(false);
+  const [language, setLanguage] = useState<LanguageValue>("id");
+  const [showLanguageModal, setShowLanguageModal] = useState(false);
+  const [lastSync, setLastSync] = useState<string>("Belum pernah");
+  const [isSyncing, setIsSyncing] = useState(false);
+
+  useEffect(() => {
+    loadLastSync();
+  }, []);
+
+  const loadLastSync = async () => {
+    try {
+      // Coba load dari AsyncStorage dulu
+      const AsyncStorage = await import(
+        "@react-native-async-storage/async-storage"
+      );
+      const lastSyncStr = await AsyncStorage.default.getItem("last_sync_time");
+      if (lastSyncStr) {
+        const date = new Date(lastSyncStr);
+        setLastSync(formatDate(date));
+      }
+    } catch (error) {
+      console.error("❌ Failed to load last sync:", error);
+    }
+  };
+
+  const formatDate = (date: Date): string => {
+    const months = [
+      "Jan",
+      "Feb",
+      "Mar",
+      "Apr",
+      "Mei",
+      "Jun",
+      "Jul",
+      "Agu",
+      "Sep",
+      "Okt",
+      "Nov",
+      "Des",
+    ];
+    const day = date.getDate();
+    const month = months[date.getMonth()];
+    const year = date.getFullYear();
+    const hours = String(date.getHours()).padStart(2, "0");
+    const minutes = String(date.getMinutes()).padStart(2, "0");
+    return `${day} ${month} ${year} ${hours}:${minutes}`;
+  };
+
+  const handleSync = async () => {
+    setIsSyncing(true);
+    try {
+      // Simulasi sync - bisa diganti dengan actual API call nanti
+      // TODO: Implementasi sync sebenarnya ketika backend sudah siap
+
+      // Simulasi delay
+      await new Promise(resolve => setTimeout(resolve, 1500));
+
+      // Update last sync time
+      const now = new Date();
+      const AsyncStorage = await import(
+        "@react-native-async-storage/async-storage"
+      );
+      await AsyncStorage.default.setItem("last_sync_time", now.toISOString());
+
+      setLastSync(formatDate(now));
+      Alert.alert("Berhasil", "Data berhasil disinkronkan");
+    } catch (error: any) {
+      console.error("❌ Sync failed:", error);
+      Alert.alert("Gagal", error.message || "Gagal melakukan sinkronisasi");
+    } finally {
+      setIsSyncing(false);
+    }
+  };
 
   return (
     <View style={styles.container}>
@@ -25,9 +99,10 @@ export default function GeneralSettingScreen() {
         contentContainerStyle={styles.scrollContainer}
         showsVerticalScrollIndicator={false}
       >
-
         <View style={styles.sectionCardHighlight}>
-          <ThemedText type="subtitle-2" style={styles.syncTitle}>Sinkronisasi Data </ThemedText>
+          <ThemedText type="subtitle-2" style={styles.syncTitle}>
+            Sinkronisasi Data{" "}
+          </ThemedText>
           <ThemedText style={styles.syncSubtitle}>
             Lakukan sinkronisasi untuk perbarui data Qasir
           </ThemedText>
@@ -36,15 +111,22 @@ export default function GeneralSettingScreen() {
               <ThemedText style={styles.syncLastLabel}>
                 Terakhir Disinkronkan
               </ThemedText>
-              <ThemedText style={styles.syncLastTime}>20 Nov 2025 07:24</ThemedText>
+              <ThemedText style={styles.syncLastTime}>{lastSync}</ThemedText>
             </View>
-            <ThemedButton title="Sinkronisasi" size="sm" onPress={() => { }} />
+            <ThemedButton
+              title={isSyncing ? "Syncing..." : "Sinkronisasi"}
+              size="sm"
+              onPress={handleSync}
+              disabled={isSyncing}
+            />
           </View>
         </View>
-        <SectionDivider/>
+        <SectionDivider />
 
         <View style={styles.sectionCard}>
-          <ThemedText type="subtitle-2" style={styles.sectionTitle}>Umum</ThemedText>
+          <ThemedText type="subtitle-2" style={styles.sectionTitle}>
+            Umum
+          </ThemedText>
           <MenuRow
             title="Bahasa"
             rightText={language === "en" ? "English" : "Indonesia"}
@@ -55,11 +137,13 @@ export default function GeneralSettingScreen() {
             onPress={() => setShowLanguageModal(true)}
           />
         </View>
-        <SectionDivider/>
+        <SectionDivider />
 
         <View style={styles.sectionCard}>
           <View style={styles.sectionHeaderRow}>
-            <ThemedText type="subtitle-2" style={styles.sectionTitle}>Perangkat Tambahan</ThemedText>
+            <ThemedText type="subtitle-2" style={styles.sectionTitle}>
+              Perangkat Tambahan
+            </ThemedText>
             <TouchableOpacity>
               <Text style={styles.buyNowText}>Beli Sekarang</Text>
             </TouchableOpacity>
@@ -99,7 +183,7 @@ export default function GeneralSettingScreen() {
       <SelectLanguageModal
         visible={showLanguageModal}
         value={language}
-        onChange={(next) => {
+        onChange={next => {
           setLanguage(next);
           setShowLanguageModal(false);
         }}

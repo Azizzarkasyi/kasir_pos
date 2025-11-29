@@ -1,7 +1,7 @@
-import { Colors } from "@/constants/theme";
-import { useColorScheme } from "@/hooks/use-color-scheme";
-import { Ionicons } from "@expo/vector-icons";
-import React, { useEffect, useRef, useState } from "react";
+import {Colors} from "@/constants/theme";
+import {useColorScheme} from "@/hooks/use-color-scheme";
+import {Ionicons} from "@expo/vector-icons";
+import React, {useEffect, useRef, useState} from "react";
 import {
   Animated,
   StyleSheet,
@@ -60,8 +60,6 @@ export function ThemedInput({
   const internalRef = useRef<TextInput | null>(null);
   const inputRef = externalInputRef ?? internalRef;
 
-  
-
   useEffect(() => {
     Animated.timing(focusAnim, {
       toValue: isFocused || value ? 1 : 0,
@@ -97,14 +95,17 @@ export function ThemedInput({
     }),
     color: focusAnim.interpolate({
       inputRange: [0, 1],
-      outputRange: [error ? "red" : Colors[colorScheme].text, error ? "red" : Colors[colorScheme].primary],
+      outputRange: [
+        error ? "red" : Colors[colorScheme].text,
+        error ? "red" : Colors[colorScheme].primary,
+      ],
     }),
     backgroundColor: Colors[colorScheme].background,
     paddingHorizontal: 4,
   };
 
   return (
-    <View style={[styles.container, { width }, containerStyle as any]}>
+    <View style={[styles.container, {width}, containerStyle as any]}>
       <View style={[styles.inputContainer, inputContainerStyle]}>
         {showLabel ? (
           <Animated.Text style={[styles.label, labelStyle]}>
@@ -112,21 +113,22 @@ export function ThemedInput({
           </Animated.Text>
         ) : null}
         <View style={styles.leftIconContainer}>
-          {leftIcon
-            ? leftIcon
-            : leftIconName
-              ? (
-                <Ionicons
-                  name={leftIconName}
-                  size={20}
-                  color={Colors[colorScheme].icon}
-                />
-              )
-              : null}
+          {leftIcon ? (
+            leftIcon
+          ) : leftIconName ? (
+            <Ionicons
+              name={leftIconName}
+              size={20}
+              color={Colors[colorScheme].icon}
+            />
+          ) : null}
         </View>
         <TextInput
           ref={inputRef}
-          style={[styles.input, rest.multiline ? { textAlignVertical: 'center' } : null]}
+          style={[
+            styles.input,
+            rest.multiline ? {textAlignVertical: "center"} : null,
+          ]}
           {...rest}
           onFocus={() => setIsFocused(true)}
           onBlur={() => setIsFocused(false)}
@@ -146,7 +148,11 @@ export function ThemedInput({
           ) : rightIcon ? (
             rightIcon
           ) : rightIconName ? (
-            <Ionicons name={rightIconName as any} size={20} color={Colors[colorScheme].icon} />
+            <Ionicons
+              name={rightIconName as any}
+              size={20}
+              color={Colors[colorScheme].icon}
+            />
           ) : null}
         </View>
       </View>
@@ -160,7 +166,7 @@ const createStyles = (
   hasError: boolean,
   isFocused: boolean,
   size: "sm" | "base" | "md",
-  editable: boolean,
+  editable: boolean
 ) =>
   StyleSheet.create({
     container: {
@@ -171,14 +177,16 @@ const createStyles = (
     inputContainer: {
       borderWidth: 1,
       borderRadius: 8,
-      backgroundColor: editable ? Colors[colorScheme].background : Colors[colorScheme].border2,
+      backgroundColor: editable
+        ? Colors[colorScheme].background
+        : Colors[colorScheme].border2,
       borderColor: hasError
         ? "red"
         : isFocused
-          ? Colors[colorScheme].primary
-          : Colors[colorScheme].border,
+        ? Colors[colorScheme].primary
+        : Colors[colorScheme].border,
       paddingHorizontal: size === "sm" ? 10 : size === "md" ? 14 : 12,
-      height: size === "sm" ? 48 : size === "md" ? 52 : 56,
+      minHeight: size === "sm" ? 48 : size === "md" ? 52 : 56,
       flexDirection: "row",
       alignItems: "center",
       position: "relative",

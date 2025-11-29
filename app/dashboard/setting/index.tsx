@@ -1,31 +1,74 @@
 import SmallLogo from "@/components/atoms/logo-sm";
 import SettingListItem from "@/components/atoms/setting-list-item";
 import Header from "@/components/header";
-import { ThemedButton } from "@/components/themed-button";
-import { ThemedText } from "@/components/themed-text";
-import { Colors } from "@/constants/theme";
-import { useColorScheme } from "@/hooks/use-color-scheme";
-import { useRouter } from "expo-router";
-import React from "react";
-import {
-  StyleSheet,
-  View
-} from "react-native";
-import { ScrollView } from "react-native-gesture-handler";
+import {ThemedButton} from "@/components/themed-button";
+import {ThemedText} from "@/components/themed-text";
+import {Colors} from "@/constants/theme";
+import {useColorScheme} from "@/hooks/use-color-scheme";
+import {useRouter} from "expo-router";
+import React, {useEffect, useState} from "react";
+import {StyleSheet, View, Alert, ActivityIndicator} from "react-native";
+import {ScrollView} from "react-native-gesture-handler";
+import {settingsApi, authApi, UserProfile} from "@/services";
 
 export default function SettingScreen() {
   const colorScheme = useColorScheme() ?? "light";
   const styles = createStyles(colorScheme);
   const router = useRouter();
   const VERSION = "1.0.0";
+  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+
+  useEffect(() => {
+    loadProfile();
+  }, []);
+
+  const loadProfile = async () => {
+    try {
+      const response = await settingsApi.getProfile();
+      if (response.data) {
+        setProfile(response.data);
+      }
+    } catch (error: any) {
+      console.error("❌ Failed to load profile:", error);
+      // Jika error 401, token expired, redirect ke login
+      if (error.code === 401) {
+        Alert.alert("Session Expired", "Please login again", [
+          {text: "OK", onPress: () => router.replace("/auth/Login/login")},
+        ]);
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleLogout = async () => {
+    Alert.alert("Keluar", "Apakah Anda yakin ingin keluar?", [
+      {text: "Batal", style: "cancel"},
+      {
+        text: "Keluar",
+        style: "destructive",
+        onPress: async () => {
+          setIsLoggingOut(true);
+          try {
+            await authApi.logout();
+            router.replace("/auth/Login/login");
+          } catch (error) {
+            console.error("❌ Logout error:", error);
+            // Tetap logout meskipun API gagal
+            router.replace("/auth/Login/login");
+          } finally {
+            setIsLoggingOut(false);
+          }
+        },
+      },
+    ]);
+  };
 
   return (
     <View style={styles.container}>
-      <Header
-        showBack={true}
-        showHelp={false}
-        title="Setting"
-      />
+      <Header showBack={true} showHelp={false} title="Setting" />
 
       <View style={styles.infoCard}>
         <View style={styles.infoCardRow}>
@@ -35,19 +78,26 @@ export default function SettingScreen() {
               <ThemedText style={styles.badgeProText}>PRO</ThemedText>
             </View>
           </View>
-          <View style={{ flex: 1 }}>
-            <ThemedText style={styles.infoEmail}>
-              basofi.cucokmeong12@gmail.com asdfasdf
-            </ThemedText>
-            <ThemedText style={styles.infoVersion}>
-              Version {VERSION}(656) • db version 58
-            </ThemedText>
+          <View style={{flex: 1}}>
+            {isLoading ? (
+              <ActivityIndicator
+                size="small"
+                color={Colors[colorScheme].primary}
+              />
+            ) : (
+              <>
+                <ThemedText style={styles.infoEmail} numberOfLines={1}>
+                  {profile?.email || profile?.phone || "User"}
+                </ThemedText>
+                <ThemedText style={styles.infoVersion}>
+                  Version {VERSION} • {profile?.role || "User"}
+                </ThemedText>
+              </>
+            )}
           </View>
         </View>
       </View>
       {/* <SectionDivider/>  */}
-
-
 
       <ScrollView
         contentContainerStyle={styles.scrollContainer}
@@ -75,13 +125,17 @@ export default function SettingScreen() {
             showTopBorder={false}
             showBottomBorder={true}
           />
-
         </View>
-        <View style={{ height: 80 }} />
+        <View style={{height: 80}} />
       </ScrollView>
 
       <View style={styles.bottomButtonWrapper}>
-        <ThemedButton title="Keluar" variant="secondary" onPress={() => { }} />
+        <ThemedButton
+          title={isLoggingOut ? "Keluar..." : "Keluar"}
+          variant="secondary"
+          onPress={handleLogout}
+          disabled={isLoggingOut}
+        />
       </View>
     </View>
   );
@@ -103,7 +157,7 @@ const createStyles = (colorScheme: "light" | "dark") =>
     },
     infoCard: {
       marginTop: 12,
- 
+
       borderRadius: 8,
       backgroundColor: Colors[colorScheme].background,
       paddingHorizontal: 18,
@@ -175,7 +229,5 @@ const createStyles = (colorScheme: "light" | "dark") =>
       right: 16,
       bottom: 16,
     },
-    headerIconButton: {
-
-    },
+    headerIconButton: {},
   });
