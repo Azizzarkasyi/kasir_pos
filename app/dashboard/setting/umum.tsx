@@ -2,6 +2,7 @@ import SectionDivider from "@/components/atoms/section-divider";
 import SelectLanguageModal, {
   LanguageValue,
 } from "@/components/drawers/select-language-modal";
+import Header from "@/components/header";
 import MenuRow from "@/components/menu-row";
 import {ThemedButton} from "@/components/themed-button";
 import {ThemedText} from "@/components/themed-text";
@@ -93,6 +94,7 @@ export default function GeneralSettingScreen() {
 
   return (
     <View style={styles.container}>
+      <Header title="Umum" showHelp={false} />
       <ScrollView
         contentContainerStyle={styles.scrollContainer}
         showsVerticalScrollIndicator={false}

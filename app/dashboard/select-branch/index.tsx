@@ -1,4 +1,5 @@
 
+import Header from "@/components/header";
 import { ThemedText } from "@/components/themed-text";
 import { Colors } from "@/constants/theme";
 import { useColorScheme } from "@/hooks/use-color-scheme";
@@ -42,6 +43,11 @@ const SelectBranchScreen = () => {
 
   return (
     <View style={styles.container}>
+      <Header
+        showHelp={false}
+        title="Pilih Outlet"
+        withNotificationButton={false}
+      />
       <View
         style={[styles.searchWrapper, isSearchFocused && styles.searchWrapperFocused]}
       >
@@ -74,7 +80,6 @@ const createStyles = (colorScheme: "light" | "dark") =>
     container: {
       flex: 1,
       paddingHorizontal: 16,
-      paddingTop: 16,
       backgroundColor: Colors[colorScheme].background,
     },
     searchWrapper: {
@@ -82,11 +87,12 @@ const createStyles = (colorScheme: "light" | "dark") =>
       alignItems: "center",
       borderRadius: 12,
       borderWidth: 1,
-      borderColor: "#E5E5E5",
+      marginTop: 24,
+      borderColor: Colors[colorScheme].border,
       paddingHorizontal: 12,
       paddingVertical: 12,
       marginBottom: 16,
-      backgroundColor: "#FFFFFF",
+      backgroundColor: Colors[colorScheme].secondary,
     },
     searchWrapperFocused: {
       borderColor: Colors[colorScheme].primary,
@@ -106,9 +112,9 @@ const createStyles = (colorScheme: "light" | "dark") =>
       paddingHorizontal: 12,
       paddingVertical: 12,
       borderRadius: 12,
-      backgroundColor: "#FFFFFF",
+      backgroundColor: Colors[colorScheme].secondary,
       borderWidth: 1,
-      borderColor: "#E5E5E5",
+      borderColor: Colors[colorScheme].border,
     },
     outletIconWrapper: {
       width: 40,
@@ -116,7 +122,7 @@ const createStyles = (colorScheme: "light" | "dark") =>
       borderRadius: 8,
       alignItems: "center",
       justifyContent: "center",
-      backgroundColor: "#F5F5F5",
+      backgroundColor: Colors[colorScheme].border2,
       marginRight: 12,
     },
     outletIcon: {
@@ -134,21 +140,20 @@ const createStyles = (colorScheme: "light" | "dark") =>
     outletName: {
       fontSize: 14,
       fontWeight: "600",
-      color: "#333333",
+      color: Colors[colorScheme].text,
     },
     outletBadge: {
       paddingHorizontal: 8,
-      paddingVertical: 1,
       borderRadius: 999,
-      backgroundColor: "#F1F2F6",
+      backgroundColor: Colors[colorScheme].primary,
     },
     outletBadgeText: {
       fontSize: 10,
-      color: "#8B8B8B",
+      color: Colors[colorScheme].text,
     },
     outletAddress: {
       fontSize: 12,
-      color: "#777777",
+      color: Colors[colorScheme].icon,
     },
   });
 

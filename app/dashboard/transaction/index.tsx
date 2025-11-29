@@ -3,6 +3,7 @@
 import ProductItem from "@/components/atoms/product-item";
 import AddCustomQuantityModal from "@/components/drawers/add-custom-quantity";
 import SelectVariantModal from "@/components/drawers/select-variant-modal";
+import Header from "@/components/header";
 import Sidebar from "@/components/layouts/dashboard/sidebar";
 import CalculatorInput from "@/components/mollecules/calculator-input";
 import { Colors } from "@/constants/theme";
@@ -279,6 +280,11 @@ export default function PaymentPage() {
         { backgroundColor: Colors[colorScheme].background },
       ]}
     >
+      <Header
+        showHelp={false}
+        title="Transaksi"
+        withNotificationButton={false}
+      />
       {/* Top search and actions (simplified) */}
       <View
         style={[
@@ -341,7 +347,7 @@ export default function PaymentPage() {
             { backgroundColor: Colors[colorScheme].tabBackground },
           ]}
         >
-          <TouchableOpacity
+           <TouchableOpacity
             style={[
               styles.tab,
               activeTab === "manual" && styles.tabActive,
@@ -508,7 +514,7 @@ export default function PaymentPage() {
             <Text
               style={[
                 styles.chargeButtonText,
-                { color: Colors[colorScheme].secondary },
+                { color: Colors[colorScheme].text },
               ]}
             >
               {activeTab === "manual"
@@ -662,7 +668,7 @@ const createStyles = (colorScheme: "light" | "dark") =>
     },
     tabText: {
       fontSize: 14,
-      color: Colors[colorScheme].icon,
+      color: Colors[colorScheme].text,
     },
     tabActiveText: {
       fontSize: 14,

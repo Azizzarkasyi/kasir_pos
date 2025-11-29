@@ -1,6 +1,7 @@
 import Checkbox from "@/components/checkbox";
 import ComboInput from "@/components/combo-input";
 import ConfirmationDialog, { ConfirmationDialogHandle } from "@/components/drawers/confirmation-dialog";
+import Header from "@/components/header";
 import { ThemedButton } from "@/components/themed-button";
 import { ThemedInput } from "@/components/themed-input";
 import { ThemedText } from "@/components/themed-text";
@@ -49,10 +50,10 @@ export default function StockSettingsScreen() {
   const [isSubmit, setIsSubmit] = useState(false);
 
   const unitItems = [
-    {label: "Pcs", value: "pcs"},
-    {label: "Box", value: "box"},
-    {label: "Kg", value: "kg"},
-    {label: "L", value: "l"},
+    { label: "Pcs", value: "pcs" },
+    { label: "Box", value: "box" },
+    { label: "Kg", value: "kg" },
+    { label: "L", value: "l" },
   ];
 
   const handleSave = () => {
@@ -119,22 +120,22 @@ export default function StockSettingsScreen() {
       });
     });
 
-    return sub; 
+    return sub;
   }, [navigation, isDirty, isSubmit]);
 
   return (
-    <View style={{flex: 1, backgroundColor: Colors[colorScheme].background}}>
-      {/* <HeaderWithoutSidebar onPressBack={() => router.back()} title="Kelola Stok" /> */}
+    <View style={{ flex: 1, backgroundColor: Colors[colorScheme].background }}>
+      <Header title="Kelola Stok Varian" showHelp={false} />
 
       <KeyboardAwareScrollView
-        contentContainerStyle={{paddingHorizontal: 20, paddingVertical: 40, paddingBottom: insets.bottom + 80}}
+        contentContainerStyle={{ paddingHorizontal: 20, paddingVertical: 40, paddingBottom: insets.bottom + 80 }}
         enableOnAndroid
         keyboardOpeningTime={0}
         extraScrollHeight={24}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
-      
+
 
         <ThemedInput
           label="Stok Toko Offline"
@@ -164,7 +165,7 @@ export default function StockSettingsScreen() {
       </KeyboardAwareScrollView>
 
       <View style={styles.bottomBar}>
-        <ThemedButton title="Simpan" variant="primary" onPress={handleSave} disabled={isSubmit}/>
+        <ThemedButton title="Simpan" variant="primary" onPress={handleSave} disabled={isSubmit} />
       </View>
 
       <ConfirmationDialog ref={confirmationRef} />

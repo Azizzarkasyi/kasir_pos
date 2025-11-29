@@ -1,5 +1,6 @@
 import VariantItem from "@/components/atoms/variant-item";
 import ConfirmationDialog, { ConfirmationDialogHandle } from "@/components/drawers/confirmation-dialog";
+import Header from "@/components/header";
 import ImageUpload from "@/components/image-upload";
 import MenuRow from "@/components/menu-row";
 import MerkPicker from "@/components/mollecules/merk-picker";
@@ -118,6 +119,11 @@ export default function AddMaterialScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: Colors[colorScheme].background }}>
+      <Header
+        showHelp={false}
+        title="Tambah Bahan"
+        withNotificationButton={false}
+      />
       <KeyboardAwareScrollView
         contentContainerStyle={{
           paddingTop: 8,

@@ -1,5 +1,6 @@
 "use client";
 
+import Header from "@/components/header";
 import { Colors } from "@/constants/theme";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { Ionicons } from "@expo/vector-icons";
@@ -31,6 +32,12 @@ export default function TransactionSettlementPage() {
         { backgroundColor: Colors[colorScheme].background },
       ]}
     >
+      <Header
+        showBack
+        showHelp={false}
+        title="Pembayaran Berhasil"
+        withNotificationButton={false}
+      />
       <View style={styles.contentWrapper}>
         <View style={styles.statusWrapper}>
           <View style={styles.statusIconWrapper}>
@@ -82,7 +89,7 @@ export default function TransactionSettlementPage() {
           <Text
             style={[
               styles.primaryButtonText,
-              { color: Colors[colorScheme].secondary },
+              { color: Colors[colorScheme].text },
             ]}
           >
             Transaksi Baru

@@ -51,7 +51,7 @@ const useReportCardStyles = (colorScheme: "light" | "dark") => {
           minHeight: 90,
           backgroundColor: Colors[colorScheme].background,
           borderRadius: 10,
-          borderColor: "#E5E5E5",
+          borderColor: Colors[colorScheme].border,
           borderWidth: 1,
           padding: 10,
         },

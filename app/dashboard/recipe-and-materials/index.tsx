@@ -1,5 +1,6 @@
 import RecipeItem from "@/components/atoms/recipe-item";
 import CategoryModal from "@/components/drawers/category-modal";
+import Header from "@/components/header";
 import ProductCard from "@/components/product-card";
 import { ThemedInput } from "@/components/themed-input";
 import { ThemedText } from "@/components/themed-text";
@@ -152,6 +153,11 @@ export default function ProductsScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: Colors[colorScheme].background }}>
+      <Header
+        showHelp={false}
+        title="Resep & Bahan"
+        withNotificationButton={false}
+      />
       <KeyboardAwareScrollView
         contentContainerStyle={{
           paddingBottom: insets.bottom + 100,

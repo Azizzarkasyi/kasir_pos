@@ -30,8 +30,8 @@ export default function EmployeeCard({
       <View style={{ flex: 1 }}>
         <ThemedText style={styles.nameText}>{name}</ThemedText>
         {phone && <ThemedText style={styles.subText}>{phone}</ThemedText>}
-        {role && <ThemedText style={styles.subText}>{role}</ThemedText>}
       </View>
+      <ThemedText style={styles.subText}>{role}</ThemedText>
     </TouchableOpacity>
   );
 }
@@ -42,10 +42,11 @@ const createStyles = (colorScheme: "light" | "dark") =>
       flexDirection: "row",
       alignItems: "center",
       gap: 12,
+      paddingHorizontal: 20,
       borderBottomWidth: 1,
       borderBottomColor: Colors[colorScheme].border,
       borderRadius: 8,
-      paddingVertical: 12,
+      paddingVertical: 14,
       backgroundColor: Colors[colorScheme].background,
     },
     avatar: {

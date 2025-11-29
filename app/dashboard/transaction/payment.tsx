@@ -1,9 +1,9 @@
 "use client";
 
+import Header from "@/components/header";
 import PaymentCalculator from "@/components/mollecules/payment-calculator";
 import { Colors } from "@/constants/theme";
 import { useColorScheme } from "@/hooks/use-color-scheme";
-import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import React from "react";
 import { StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
@@ -35,28 +35,16 @@ export default function PaymentPage() {
                 { backgroundColor: Colors[colorScheme].background },
             ]}
         >
-            {/* Header */}
-            <View style={styles.headerWrapper}>
-                <View style={styles.headerRow}>
-                    <TouchableOpacity
-                        onPress={() => router.back()}
-                        style={styles.backButton}
-                        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                    >
-                        <Ionicons
-                            name="chevron-back"
-                            size={22}
-                            color={Colors[colorScheme].text}
-                        />
-                    </TouchableOpacity>
-
-                    <View style={styles.headerCenter}>
-                        <Text style={styles.totalText}>Rp {formatCurrency(totalAmount)}</Text>
-                    </View>
-
-                    <View style={styles.headerRightPlaceholder} />
-                </View>
-            </View>
+            <Header
+                showHelp={false}
+                withNotificationButton={false}
+                title={undefined}
+                center={
+                    <Text style={styles.totalText}>
+                        Rp {formatCurrency(totalAmount)}
+                    </Text>
+                }
+            />
 
             {/* Content */}
             <View style={styles.mainWrapper}>
@@ -102,7 +90,7 @@ export default function PaymentPage() {
                         }}
                     >
                         <Text
-                            style={[styles.continueButtonText, { color: Colors[colorScheme].secondary }]}
+                            style={[styles.continueButtonText, { color: Colors[colorScheme].text }]}
                         >
                             Lanjutkan Pembayaran
                         </Text>
@@ -187,10 +175,12 @@ const createStyles = (colorScheme: "light" | "dark") =>
         },
         noteInput: {
             borderRadius: 999,
-            backgroundColor: "#E5E7EB",
+            backgroundColor: Colors[colorScheme].background,
             paddingHorizontal: 16,
             paddingVertical: 10,
             fontSize: 14,
+            borderColor: Colors[colorScheme].border,
+            borderWidth: 1,
             color: Colors[colorScheme].text,
         },
         methodRow: {

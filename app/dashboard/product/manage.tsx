@@ -1,23 +1,28 @@
+import Header from "@/components/header";
 import MenuRow from "@/components/menu-row";
 import { Colors } from "@/constants/theme";
 import { useColorScheme } from "@/hooks/use-color-scheme";
-import { useRouter } from "expo-router";
+import { useNavigation, useRouter } from "expo-router";
 import React from "react";
 import { ScrollView, StyleSheet, View } from "react-native";
 
 export default function ManageProductsScreen() {
   const colorScheme = useColorScheme() ?? "light";
   const router = useRouter();
+  const navigation = useNavigation();
+
+
 
   return (
     <View style={[styles.container, { backgroundColor: Colors[colorScheme].background }]}>
+      <Header title="Kelola Produk" showHelp={false}/>
       <ScrollView
         contentContainerStyle={styles.contentContainer}
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.spacer} />
 
-        <View style={[styles.menuWrapper, { borderBottomColor: Colors[colorScheme].border }]}>
+        <View style={[styles.menuWrapper, { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: Colors[colorScheme].border }]}>
           <MenuRow
             title="Produk"
             subtitle="Kelola semua produk untuk katalog toko kamu di sini."
@@ -27,7 +32,7 @@ export default function ManageProductsScreen() {
           />
         </View>
 
-        <View style={[styles.menuWrapper, { borderBottomColor: Colors[colorScheme].border }]}>
+        <View style={[styles.menuWrapper, { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: Colors[colorScheme].border }]}>
           <MenuRow
             title="Atur Stok"
             subtitle="Ubah, tambah, atau kurangi stok produk dengan cepat."
@@ -37,7 +42,7 @@ export default function ManageProductsScreen() {
           />
         </View>
 
-        <View style={[styles.menuWrapper, { borderBottomColor: Colors[colorScheme].border }]}>
+        <View style={[styles.menuWrapper, { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: Colors[colorScheme].border }]}>
           <MenuRow
             title="Bahan Baku & Resep"
             subtitle="Buat resep produk dari bahan baku."

@@ -1,5 +1,6 @@
 import ConfirmPopup from "@/components/atoms/confirm-popup";
 import ComboInput from "@/components/combo-input";
+import Header from "@/components/header";
 import ImageUpload from "@/components/image-upload";
 import {ThemedButton} from "@/components/themed-button";
 import {ThemedInput} from "@/components/themed-input";
@@ -108,6 +109,7 @@ export default function StoreSettingScreen() {
 
   return (
     <View style={styles.container}>
+      <Header title="Store" showHelp={false} />
       <ScrollView
         contentContainerStyle={styles.scrollContainer}
         showsVerticalScrollIndicator={false}

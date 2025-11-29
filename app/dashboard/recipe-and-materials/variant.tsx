@@ -1,4 +1,5 @@
 import ConfirmationDialog, { ConfirmationDialogHandle } from "@/components/drawers/confirmation-dialog";
+import Header from "@/components/header";
 import MenuRow from "@/components/menu-row";
 import { ThemedButton } from "@/components/themed-button";
 import { ThemedInput } from "@/components/themed-input";
@@ -72,6 +73,11 @@ export default function MaterialVariantScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: Colors[colorScheme].background }}>
+      <Header
+        showHelp={false}
+        title="Tambah Varian Bahan"
+        withNotificationButton={false}
+      />
       <KeyboardAwareScrollView
         contentContainerStyle={{
           paddingBottom: insets.bottom + 80,

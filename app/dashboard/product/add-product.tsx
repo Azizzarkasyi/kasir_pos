@@ -1,6 +1,8 @@
 import VariantItem from "@/components/atoms/variant-item";
+import ComboInput from "@/components/combo-input";
 import CostBarcodeFields from "@/components/cost-barcode-fields";
 import ConfirmationDialog, { ConfirmationDialogHandle } from "@/components/drawers/confirmation-dialog";
+import Header from "@/components/header";
 import ImageUpload from "@/components/image-upload";
 import MenuRow from "@/components/menu-row";
 import CategoryPicker from "@/components/mollecules/category-picker";
@@ -26,7 +28,7 @@ export default function AddProductScreen() {
 
   const confirmationRef = useRef<ConfirmationDialogHandle | null>(null);
 
-  const categories: Category[] = [
+  const categories: any[] = [
     { id: "general", name: "Umum" },
     { id: "food", name: "Makanan" },
     { id: "drink", name: "Minuman" },
@@ -38,6 +40,7 @@ export default function AddProductScreen() {
     price,
     brand,
     category,
+    recipe,
     favorite,
     enableCostBarcode,
     imageUri,
@@ -49,6 +52,7 @@ export default function AddProductScreen() {
     setPrice,
     setBrand,
     setCategory,
+    setRecipe,
     setFavorite,
     setEnableCostBarcode,
     setImageUri,
@@ -63,6 +67,7 @@ export default function AddProductScreen() {
     price,
     brand,
     category,
+    recipe,
     favorite,
     enableCostBarcode,
     imageUri,
@@ -118,6 +123,7 @@ export default function AddProductScreen() {
       price,
       brand,
       category,
+      recipe,
       favorite,
       enableCostBarcode,
       imageUri,
@@ -128,6 +134,7 @@ export default function AddProductScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: Colors[colorScheme].background }}>
+      <Header title="Tambah Produk" showHelp={false} />
       <KeyboardAwareScrollView
         contentContainerStyle={{
           paddingTop: 18,
@@ -168,13 +175,24 @@ export default function AddProductScreen() {
             label="Pilih Kategori"
             value={category}
             size="md"
-            onChange={(category: Category) => {
+            onChange={(category: any) => {
               setCategory(category.id);
             }}
-            onUpdate={(category: Category) => {
+            onUpdate={(category: any) => {
 
             }}
             categories={categories}
+          />
+          <ComboInput
+            label="Resep Produk"
+            value={recipe}
+            size="md"
+            onChangeText={setRecipe}
+            items={[
+              { label: "Pilih Resep", value: "" },
+              { label: "Tanpa Resep", value: "none" },
+              { label: "Resep Default", value: "default" },
+            ]}
           />
         </View>
 
@@ -312,7 +330,7 @@ const createStyles = (colorScheme: "light" | "dark") =>
     },
     sectionDivider: {
       backgroundColor: Colors[colorScheme].border2,
-      height: 12,
+      height: 6,
     },
     contentSection: {
       paddingHorizontal: 20,

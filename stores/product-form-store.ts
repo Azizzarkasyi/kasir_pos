@@ -23,6 +23,7 @@ interface ProductFormState {
   price: string;
   brand: string;
   category: string;
+  recipe: string;
   favorite: boolean;
   enableCostBarcode: boolean;
   imageUri: string | null;
@@ -35,6 +36,7 @@ interface ProductFormState {
   setPrice: (value: string) => void;
   setBrand: (value: string) => void;
   setCategory: (value: string) => void;
+  setRecipe: (value: string) => void;
   setFavorite: (value: boolean) => void;
   setEnableCostBarcode: (value: boolean) => void;
   setImageUri: (value: string | null) => void;
@@ -50,6 +52,7 @@ const initialState: Omit<ProductFormState,
   | "setPrice"
   | "setBrand"
   | "setCategory"
+  | "setRecipe"
   | "setFavorite"
   | "setEnableCostBarcode"
   | "setImageUri"
@@ -63,6 +66,7 @@ const initialState: Omit<ProductFormState,
   price: "",
   brand: "",
   category: "",
+  recipe: "",
   favorite: false,
   enableCostBarcode: false,
   imageUri: null,
@@ -78,6 +82,7 @@ export const useProductFormStore = create<ProductFormState>(set => ({
   setPrice: value => set({ price: value }),
   setBrand: value => set({ brand: value }),
   setCategory: value => set({ category: value }),
+  setRecipe: value => set({ recipe: value }),
   setFavorite: value => set({ favorite: value }),
   setEnableCostBarcode: value => set({ enableCostBarcode: value }),
   setImageUri: value => set({ imageUri: value }),

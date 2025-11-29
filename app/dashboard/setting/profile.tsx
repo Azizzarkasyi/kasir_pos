@@ -1,6 +1,7 @@
 import ConfirmationDialog, {
   ConfirmationDialogHandle,
 } from "@/components/drawers/confirmation-dialog";
+import Header from "@/components/header";
 import ImageUpload from "@/components/image-upload";
 import {ThemedButton} from "@/components/themed-button";
 import {ThemedInput} from "@/components/themed-input";
@@ -154,6 +155,7 @@ export default function ProfileSettingScreen() {
 
   return (
     <View style={styles.container}>
+      <Header title="Profile" showHelp={false} />
       <ScrollView
         contentContainerStyle={styles.scrollContainer}
         showsVerticalScrollIndicator={false}

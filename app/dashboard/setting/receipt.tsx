@@ -1,4 +1,5 @@
 import HelpPopup from "@/components/atoms/help-popup";
+import Header from "@/components/header";
 import ImageUpload from "@/components/image-upload";
 import { ThemedButton } from "@/components/themed-button";
 import { ThemedInput } from "@/components/themed-input";
@@ -114,6 +115,7 @@ export default function ReceiptSettingScreen() {
 
   return (
     <View style={styles.container}>
+      <Header title="Atur Struk" showHelp={false} />
       <ScrollView
         contentContainerStyle={styles.scrollContainer}
         showsVerticalScrollIndicator={false}

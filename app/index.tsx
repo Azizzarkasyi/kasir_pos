@@ -21,6 +21,9 @@ export default function Index() {
       description:
         "Daftarin usahamu untuk catat transaksi dan pantau laporan penjualan.",
       image: require("../assets/ilustrations/registration.webp"),
+
+      width: 250,
+      height: 250,
     },
     {
       id: 1,
@@ -28,13 +31,17 @@ export default function Index() {
       description:
         "Kelola beberapa cabang usaha dalam satu aplikasi. Pantau performa tiap toko tanpa harus datang ke lokasi.",
       image: require("../assets/ilustrations/multi-branch.png"),
+      width: 300,
+      height: 300,
     },
     {
       id: 2,
       title: "Produk rapi, transaksi otomatis tercatat",
       description:
         "Atur katalog produk, harga, dan stok dengan mudah. Setiap transaksi langsung tercatat rapi di laporan.",
-      image: require("../assets/ilustrations/inventory-transaction.webp"),
+      image: require("../assets/ilustrations/inventory-transaction.png"),
+      width: 200,
+      height: 200,
     },
   ];
 
@@ -80,11 +87,11 @@ export default function Index() {
 
         >
           {slides.map(slide => (
-            <View key={slide.id} style={[styles.slide, {width: screenWidth} ]}>
+            <View key={slide.id} style={[styles.slide, { width: screenWidth }]}>
               <View style={styles.imageContainer}>
                 <Image
                   source={slide.image}
-                  style={[styles.ilustration]}
+                  style={[styles.ilustration, { width: slide.width, height: slide.height }]}
                 />
               </View>
               <View style={styles.textContainer}>
@@ -136,7 +143,7 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: "center",
     justifyContent: "space-between",
-    paddingVertical:20
+    paddingVertical: 20
   },
   carouselContainer: {
     width: "100%",

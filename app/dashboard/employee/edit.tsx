@@ -1,3 +1,4 @@
+import Header from "@/components/header";
 import { ThemedButton } from "@/components/themed-button";
 import { ThemedInput } from "@/components/themed-input";
 import { ThemedText } from "@/components/themed-text";
@@ -20,7 +21,7 @@ export default function EditEmployeeScreen() {
   const [phone, setPhone] = useState((params.phone as string) || "");
   const [email, setEmail] = useState((params.email as string) || "");
   // PIN is usually not pre-filled for security, user sets a new one if needed
-  const [pin, setPin] = useState(""); 
+  const [pin, setPin] = useState("");
   const [confirmPin, setConfirmPin] = useState("");
 
   const handleSave = () => {
@@ -60,8 +61,7 @@ export default function EditEmployeeScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: Colors[colorScheme].background }}>
-     
-
+      <Header title="Edit Pegawai" showHelp={false} />
       <KeyboardAwareScrollView
         contentContainerStyle={{ padding: 20, paddingBottom: 100 }}
         enableOnAndroid
@@ -69,48 +69,72 @@ export default function EditEmployeeScreen() {
         <ThemedInput
           label="Nama Pegawai"
           value={name}
+          size="md"
           onChangeText={setName}
-       
+
         />
         <ThemedInput
           label="No. Telepon"
           value={phone}
+          size="md"
           onChangeText={setPhone}
           keyboardType="phone-pad"
+<<<<<<< HEAD
+=======
+
+>>>>>>> ef82adcc8c2efa6d1f9c70076fa07d497c8369dd
         />
         <ThemedInput
           label="Email"
           value={email}
+          size="md"
           onChangeText={setEmail}
           keyboardType="email-address"
+<<<<<<< HEAD
+=======
+
+>>>>>>> ef82adcc8c2efa6d1f9c70076fa07d497c8369dd
         />
-        
+
         <View style={styles.divider} />
         <ThemedText style={styles.sectionTitle}>Ubah PIN (Opsional)</ThemedText>
-        
+
         <ThemedInput
           label="PIN Baru"
           value={pin}
+          size="md"
           onChangeText={setPin}
           isPassword
+<<<<<<< HEAD
           keyboardType="numeric"          
+=======
+          keyboardType="numeric"
+
+>>>>>>> ef82adcc8c2efa6d1f9c70076fa07d497c8369dd
           maxLength={6}
         />
         <ThemedInput
           label="Konfirmasi PIN Baru"
           value={confirmPin}
+          size="md"
           onChangeText={setConfirmPin}
           isPassword
+<<<<<<< HEAD
           keyboardType="numeric"          
+=======
+          keyboardType="numeric"
+
+>>>>>>> ef82adcc8c2efa6d1f9c70076fa07d497c8369dd
           maxLength={6}
         />
 
         <View style={{ marginTop: 24, gap: 12 }}>
-          <ThemedButton title="Simpan Perubahan" onPress={handleSave} />
-          <ThemedButton 
-            title="Hapus Pegawai" 
-            variant="danger" 
-            onPress={handleDelete} 
+          <ThemedButton title="Simpan Perubahan" onPress={handleSave} size="medium" />
+          <ThemedButton
+            title="Hapus Pegawai"
+            variant="danger"
+            size="medium"
+            onPress={handleDelete}
           />
         </View>
       </KeyboardAwareScrollView>

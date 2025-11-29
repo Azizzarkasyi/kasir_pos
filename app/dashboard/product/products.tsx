@@ -1,6 +1,7 @@
 import CategoryItem from "@/components/atoms/category-item";
 import CategoryModal from "@/components/drawers/category-modal";
 import FilterProductModal from "@/components/drawers/filter-product-modal";
+import Header from "@/components/header";
 import ProductCard from "@/components/product-card";
 import { ThemedInput } from "@/components/themed-input";
 import { ThemedText } from "@/components/themed-text";
@@ -74,9 +75,9 @@ export default function ProductsScreen() {
   );
 
   const categories = [
-    {id: "umum", name: "Umum"},
-    {id: "makanan", name: "Makanan"},
-    {id: "minuman", name: "Minuman"},
+    { id: "umum", name: "Umum" },
+    { id: "makanan", name: "Makanan" },
+    { id: "minuman", name: "Minuman" },
   ];
 
   const filteredProducts = products.filter(product => {
@@ -104,7 +105,7 @@ export default function ProductsScreen() {
 
   const handleSubmitCategory = (name: string) => {
     // TODO: Integrasikan dengan API / state nyata
-    console.log("Simpan kategori", {id: editingCategoryId, name});
+    console.log("Simpan kategori", { id: editingCategoryId, name });
     setIsCategoryModalVisible(false);
   };
 
@@ -159,7 +160,8 @@ export default function ProductsScreen() {
   };
 
   return (
-    <View style={{flex: 1, backgroundColor: Colors[colorScheme].background}}>
+    <View style={{ flex: 1, backgroundColor: Colors[colorScheme].background }}>
+      <Header title="Kelola Produk" showHelp={false} />
       <KeyboardAwareScrollView
         contentContainerStyle={{
           paddingBottom: insets.bottom + 100,
@@ -181,8 +183,8 @@ export default function ProductsScreen() {
               style={[
                 styles.tabText,
                 activeTab === "produk"
-                  ? {color: Colors[colorScheme].primary}
-                  : {color: Colors[colorScheme].icon},
+                  ? { color: Colors[colorScheme].primary }
+                  : { color: Colors[colorScheme].icon },
               ]}
             >
               Produk
@@ -198,8 +200,8 @@ export default function ProductsScreen() {
               style={[
                 styles.tabText,
                 activeTab === "kategori"
-                  ? {color: Colors[colorScheme].primary}
-                  : {color: Colors[colorScheme].icon},
+                  ? { color: Colors[colorScheme].primary }
+                  : { color: Colors[colorScheme].icon },
               ]}
             >
               Kategori
@@ -216,7 +218,7 @@ export default function ProductsScreen() {
                 {/* PENTING: Gunakan View Wrapper dengan flex: 1 untuk Input 
                    Ini akan memaksa input mengisi sisa ruang kosong secara otomatis
                 */}
-                <View style={{flex: 1}}>
+                <View style={{ flex: 1 }}>
                   <ThemedInput
                     label="Cari Produk"
                     value={search}
@@ -241,7 +243,7 @@ export default function ProductsScreen() {
                 </TouchableOpacity>
               </View>
 
-              <View style={{marginTop: 16}}>
+              <View style={{ marginTop: 16 }}>
                 {filteredProducts.map(product => (
                   <ProductCard
                     key={product.id}
@@ -255,7 +257,7 @@ export default function ProductsScreen() {
               </View>
             </View>
           ) : (
-            <View style={{marginTop: 20}}>
+            <View style={{ marginTop: 20 }}>
               {categories.map(category => (
                 <CategoryItem
                   key={category.id}
@@ -269,7 +271,7 @@ export default function ProductsScreen() {
       </KeyboardAwareScrollView>
 
       <TouchableOpacity
-        style={[styles.fab, {bottom: insets.bottom + 24}]}
+        style={[styles.fab, { bottom: insets.bottom + 24 }]}
         onPress={goAdd}
       >
         <Ionicons name="add" size={28} color={Colors[colorScheme].background} />

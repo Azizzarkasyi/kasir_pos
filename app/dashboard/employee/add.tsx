@@ -1,3 +1,4 @@
+import Header from "@/components/header";
 import { ThemedButton } from "@/components/themed-button";
 import { ThemedInput } from "@/components/themed-input";
 import { Colors } from "@/constants/theme";
@@ -38,30 +39,34 @@ export default function AddEmployeeScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: Colors[colorScheme].background }}>
-
+      <Header title="Tambah Pegawai" showHelp={false} />
       <KeyboardAwareScrollView
-        contentContainerStyle={{ padding: 20, paddingBottom: 100 }}
+        contentContainerStyle={{ padding: 20, gap: 8, paddingBottom: 100 }}
         enableOnAndroid
       >
         <ThemedInput
           label="Nama Pegawai"
+          size="md"
           value={name}
           onChangeText={setName}
         />
         <ThemedInput
           label="No. Telepon"
+          size="md"
           value={phone}
           onChangeText={setPhone}
           keyboardType="phone-pad"
         />
         <ThemedInput
           label="Email"
+          size="md"
           value={email}
           onChangeText={setEmail}
           keyboardType="email-address"
         />
         <ThemedInput
           label="PIN"
+          size="md"
           value={pin}
           onChangeText={setPin}
           isPassword
@@ -70,6 +75,7 @@ export default function AddEmployeeScreen() {
         />
         <ThemedInput
           label="Konfirmasi PIN"
+          size="md"
           value={confirmPin}
           onChangeText={setConfirmPin}
           isPassword
@@ -78,7 +84,7 @@ export default function AddEmployeeScreen() {
         />
 
         <View style={{ marginTop: 24 }}>
-          <ThemedButton title="Simpan" onPress={handleSave} />
+          <ThemedButton title="Simpan" onPress={handleSave} size="medium" />
         </View>
       </KeyboardAwareScrollView>
     </View>

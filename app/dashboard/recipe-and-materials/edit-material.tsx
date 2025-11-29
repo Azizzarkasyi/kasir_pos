@@ -1,5 +1,6 @@
 import VariantItem from "@/components/atoms/variant-item";
 import ConfirmationDialog, { ConfirmationDialogHandle } from "@/components/drawers/confirmation-dialog";
+import Header from "@/components/header";
 import ImageUpload from "@/components/image-upload";
 import MenuRow from "@/components/menu-row";
 import MerkPicker from "@/components/mollecules/merk-picker";
@@ -37,7 +38,16 @@ export default function EditMaterialScreen() {
     setVariants,
   } = useProductFormStore(state => state);
 
-  const params = useLocalSearchParams<{
+  const {
+    id,
+    name: paramName,
+    brand: paramBrand,
+    imageUri: paramImageUri,
+    capitalPrice: paramCapitalPrice,
+    variants: paramVariants,
+    variant_name,
+    variant_price,
+  } = useLocalSearchParams<{
     id?: string;
     name?: string;
     brand?: string;
@@ -49,32 +59,30 @@ export default function EditMaterialScreen() {
   }>();
 
   useEffect(() => {
-    if (params.name !== undefined) {
-      setName(String(params.name));
+    if (paramName !== undefined) {
+      setName(String(paramName));
     }
-    if (params.brand !== undefined) {
-      setBrand(String(params.brand));
+    if (paramBrand !== undefined) {
+      setBrand(String(paramBrand));
     }
-    if (params.imageUri !== undefined && params.imageUri !== "") {
-      setImageUri(String(params.imageUri));
+    if (paramImageUri !== undefined && paramImageUri !== "") {
+      setImageUri(String(paramImageUri));
     }
-    if (params.capitalPrice !== undefined) {
-      const parsed = Number(String(params.capitalPrice).replace(/[^0-9]/g, ""));
+    if (paramCapitalPrice !== undefined) {
+      const parsed = Number(String(paramCapitalPrice).replace(/[^0-9]/g, ""));
       if (!Number.isNaN(parsed)) {
         setCapitalPrice(parsed);
       }
     }
-    if (params.variants) {
+    if (paramVariants) {
       try {
-        const parsed = JSON.parse(String(params.variants));
+        const parsed = JSON.parse(String(paramVariants));
         if (Array.isArray(parsed)) {
           setVariants(() => parsed);
         }
       } catch {}
     }
-  }, [params]);
-
-  const { variant_name, variant_price } = params;
+  }, [paramName, paramBrand, paramImageUri, paramCapitalPrice, paramVariants, setName, setBrand, setImageUri, setCapitalPrice, setVariants]);
 
   React.useEffect(() => {
     if (variant_name && variant_price) {
@@ -131,6 +139,11 @@ export default function EditMaterialScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: Colors[colorScheme].background }}>
+      <Header
+        showHelp={false}
+        title="Edit Bahan"
+        withNotificationButton={false}
+      />
       <KeyboardAwareScrollView
         contentContainerStyle={{
           paddingTop: 8,

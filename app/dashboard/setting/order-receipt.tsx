@@ -1,3 +1,4 @@
+import Header from "@/components/header";
 import { ThemedButton } from "@/components/themed-button";
 import { ThemedInput } from "@/components/themed-input";
 import { ThemedText } from "@/components/themed-text";
@@ -106,6 +107,7 @@ export default function OrderReceiptSettingScreen() {
 
   return (
     <View style={styles.container}>
+      <Header title="Pengaturan Struk" showHelp={false} />
       <ScrollView
         contentContainerStyle={styles.scrollContainer}
         showsVerticalScrollIndicator={false}

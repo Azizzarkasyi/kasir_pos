@@ -1,5 +1,6 @@
 import CostBarcodeFields from "@/components/cost-barcode-fields";
 import ConfirmationDialog, { ConfirmationDialogHandle } from "@/components/drawers/confirmation-dialog";
+import Header from "@/components/header";
 import MenuRow from "@/components/menu-row";
 import { ThemedButton } from "@/components/themed-button";
 import { ThemedInput } from "@/components/themed-input";
@@ -171,6 +172,7 @@ export default function VariantScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: Colors[colorScheme].background }}>
+      <Header title="Variasi Produk" showHelp={false} />
       <KeyboardAwareScrollView
         contentContainerStyle={{
           paddingBottom: insets.bottom + 80,

@@ -88,6 +88,9 @@ const DashboardScreen = () => {
       <ScrollView
         contentContainerStyle={styles.scrollContainer}
         showsVerticalScrollIndicator={false}
+        style={{
+          paddingVertical: 10
+        }}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
@@ -98,7 +101,7 @@ const DashboardScreen = () => {
         }
       >
         <View style={styles.sectionCard}>
-          <ThemedText type="subtitle-2">Paket Berlangganan</ThemedText>
+          <ThemedText type="subtitle-2" style={{ marginBottom: 10 }}>Paket Berlangganan</ThemedText>
           <Image
             source={require("@/assets/banners/subscription.jpg")}
             style={styles.bannerImage}
@@ -173,7 +176,7 @@ const DashboardScreen = () => {
       </ScrollView>
 
       <View style={styles.bottomButtonWrapper}>
-        <ThemedButton title="Transaksi" onPress={() => {
+        <ThemedButton  title="Transaksi"  onPress={() => {
           router.push("/dashboard/transaction" as never);
         }} />
       </View>
@@ -188,7 +191,7 @@ const DashboardScreen = () => {
   );
 };
 
-const MenuItem = ({label, icon, onPress}: {label: string; icon: any, onPress?: () => void}) => {
+const MenuItem = ({ label, icon, onPress }: { label: string; icon: any, onPress?: () => void }) => {
   const colorScheme = useColorScheme() ?? "light";
   const styles = menuItemStyles(colorScheme);
 
@@ -255,7 +258,8 @@ const createStyles = (colorScheme: "light" | "dark") =>
       marginBottom: 16,
     },
     sectionCard: {
-      backgroundColor: Colors[colorScheme].secondary,
+      backgroundColor:
+        colorScheme === "dark" ? "#1f2122" : Colors[colorScheme].secondary,
       borderRadius: 12,
       padding: 12,
       marginBottom: 8,
@@ -291,9 +295,11 @@ const createStyles = (colorScheme: "light" | "dark") =>
     reportCard: {
       width: "38%", // kira-kira 2 item per layar
       minHeight: 90,
-      backgroundColor: Colors[colorScheme].background,
+      backgroundColor:
+        colorScheme === "dark" ? "#202325" : Colors[colorScheme].background,
       borderRadius: 10,
-      borderColor: "#E5E5E5",
+      borderColor:
+        colorScheme === "dark" ? "#262a2d" : Colors[colorScheme].border,
       borderWidth: 1,
       padding: 10,
     },
@@ -331,7 +337,7 @@ const createStyles = (colorScheme: "light" | "dark") =>
     },
     drawer: {
       width: 260,
-      backgroundColor: "#FFFFFF",
+      backgroundColor: Colors[colorScheme].background,
     },
   });
 
@@ -347,7 +353,8 @@ const menuItemStyles = (colorScheme: "light" | "dark") =>
     },
     iconWrapper: {
       borderRadius: 20,
-      backgroundColor: Colors[colorScheme].secondary,
+      backgroundColor:
+        colorScheme === "dark" ? "#1f2122" : Colors[colorScheme].secondary,
       marginBottom: 4,
       padding: 6,
     },
