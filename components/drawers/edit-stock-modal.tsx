@@ -1,19 +1,20 @@
 
 import ComboInput from "@/components/combo-input";
 import { ThemedButton } from "@/components/themed-button";
+import { ThemedInput } from "@/components/themed-input";
 import { ThemedText } from "@/components/themed-text";
 import { Colors } from "@/constants/theme";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import React, { useEffect, useRef, useState } from "react";
 import {
-  Animated,
-  KeyboardAvoidingView,
-  Modal,
-  Platform,
-  StyleSheet,
-  TouchableOpacity,
-  TouchableWithoutFeedback,
-  View,
+    Animated,
+    KeyboardAvoidingView,
+    Modal,
+    Platform,
+    StyleSheet,
+    TouchableOpacity,
+    TouchableWithoutFeedback,
+    View,
 } from "react-native";
 
 type EditStockModalProps = {
@@ -45,6 +46,7 @@ const EditStockModal: React.FC<EditStockModalProps> = ({
   const [internalVisible, setInternalVisible] = useState(visible);
   const [quantity, setQuantity] = useState(initialQuantity);
   const [mode, setMode] = useState(STOCK_MODES[0].label);
+  const [note, setNote] = useState("");
 
   const opacity = useRef(new Animated.Value(1)).current;
   const scale = useRef(new Animated.Value(1)).current;
@@ -131,6 +133,21 @@ const EditStockModal: React.FC<EditStockModalProps> = ({
               <ThemedText style={styles.previousValue}>
                 {previousQuantity ?? initialQuantity}
               </ThemedText>
+            </View>
+
+            <View style={{ marginTop: 12 }}>
+              <ThemedInput
+                label="Catatan (Opsional)"
+                value={note}
+                onChangeText={setNote}
+                multiline
+                maxLength={100}
+                inputContainerStyle={{
+                  height: 100,
+                  alignItems: "center",
+                  paddingVertical: 12,
+                }}
+              />
             </View>
 
             <View style={styles.actionsRow}>

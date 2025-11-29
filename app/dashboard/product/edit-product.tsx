@@ -1,6 +1,5 @@
 import VariantItem from "@/components/atoms/variant-item";
 import ComboInput from "@/components/combo-input";
-import CostBarcodeFields from "@/components/cost-barcode-fields";
 import ConfirmationDialog, { ConfirmationDialogHandle } from "@/components/drawers/confirmation-dialog";
 import Header from "@/components/header";
 import ImageUpload from "@/components/image-upload";
@@ -43,7 +42,6 @@ export default function EditProductScreen() {
     setPrice,
     setBrand,
     setCategory,
-    setRecipe,
     setFavorite,
     setEnableCostBarcode,
     setImageUri,
@@ -248,17 +246,7 @@ export default function EditProductScreen() {
               {label: "Makanan", value: "makanan"},
             ]}
           />
-          <ComboInput
-            label="Resep Produk"
-            value={recipe}
-            size="md"
-            onChangeText={setRecipe}
-            items={[
-              {label: "Pilih Resep", value: ""},
-              {label: "Tanpa Resep", value: "none"},
-              {label: "Resep Default", value: "default"},
-            ]}
-          />
+
         </View>
 
         <View style={styles.sectionDivider} />
@@ -275,7 +263,7 @@ export default function EditProductScreen() {
         </View>
 
         <View style={styles.sectionDivider} />
-
+{/* 
         <View style={styles.rowSection}>
           <MenuRow
             title="Atur Harga Modal dan Barcode"
@@ -293,7 +281,7 @@ export default function EditProductScreen() {
               onBarcodeChange={setBarcode}
             />
           ) : null}
-        </View>
+        </View> */}
 
         <View style={styles.sectionDivider} />
 

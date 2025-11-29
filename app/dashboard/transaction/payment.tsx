@@ -38,12 +38,7 @@ export default function PaymentPage() {
             <Header
                 showHelp={false}
                 withNotificationButton={false}
-                title={undefined}
-                center={
-                    <Text style={styles.totalText}>
-                        Rp {formatCurrency(totalAmount)}
-                    </Text>
-                }
+                title="Pembayaran"
             />
 
             {/* Content */}
@@ -63,6 +58,15 @@ export default function PaymentPage() {
                             style={styles.noteInput}
                         />
                     </View>
+                    <View style={styles.noteWrapper}>
+                        <TextInput
+                            value={note}
+                            onChangeText={setNote}
+                            placeholder="Nama Customer (opsional)"
+                            placeholderTextColor={Colors[colorScheme].icon}
+                            style={styles.noteInput}
+                        />
+                    </View>
 
                     {/* Badge untuk Diskon, Pajak, dan Metode (Tunai) */}
                     <View style={styles.methodRow}>
@@ -77,6 +81,7 @@ export default function PaymentPage() {
                         </View>
                     </View>
 
+
                     {/* Calculator */}
                     <PaymentCalculator value={amount} onChangeValue={setAmount} />
                 </View>
@@ -90,7 +95,7 @@ export default function PaymentPage() {
                         }}
                     >
                         <Text
-                            style={[styles.continueButtonText, { color: Colors[colorScheme].text }]}
+                            style={[styles.continueButtonText, { color: "white" }]}
                         >
                             Lanjutkan Pembayaran
                         </Text>
@@ -149,7 +154,7 @@ const createStyles = (colorScheme: "light" | "dark") =>
         },
         contentWrapper: {
             flex: 1,
-            paddingHorizontal: 16,
+            paddingHorizontal: 4,
             paddingTop: 16,
             flexDirection: "column",
         },
@@ -185,8 +190,8 @@ const createStyles = (colorScheme: "light" | "dark") =>
         },
         methodRow: {
             flexDirection: "row",
-            justifyContent: "center",
             marginBottom: 16,
+            justifyContent: "space-evenly"
         },
         methodBadge: {
             paddingHorizontal: 14,

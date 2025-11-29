@@ -514,7 +514,7 @@ export default function PaymentPage() {
             <Text
               style={[
                 styles.chargeButtonText,
-                { color: Colors[colorScheme].text },
+                { color: "white" },
               ]}
             >
               {activeTab === "manual"

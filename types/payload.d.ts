@@ -65,7 +65,7 @@ interface CreateBranchPayload {
   status: string;
 }
 
-interface UpdateBranchPayload extends Partial<CreateBranchPayload> {}
+interface UpdateBranchPayload extends Partial<CreateBranchPayload> { }
 
 // =============================================
 // CATEGORY PAYLOADS
@@ -75,7 +75,7 @@ interface CreateCategoryPayload {
   name: string;
 }
 
-interface UpdateCategoryPayload extends Partial<CreateCategoryPayload> {}
+interface UpdateCategoryPayload extends Partial<CreateCategoryPayload> { }
 
 // =============================================
 // MERK PAYLOADS
@@ -85,7 +85,7 @@ interface CreateMerkPayload {
   name: string;
 }
 
-interface UpdateMerkPayload extends Partial<CreateMerkPayload> {}
+interface UpdateMerkPayload extends Partial<CreateMerkPayload> { }
 
 // =============================================
 // UNIT PAYLOADS
@@ -95,7 +95,7 @@ interface CreateUnitPayload {
   name: string;
 }
 
-interface UpdateUnitPayload extends Partial<CreateUnitPayload> {}
+interface UpdateUnitPayload extends Partial<CreateUnitPayload> { }
 
 // =============================================
 // PRODUCT PAYLOADS
@@ -171,6 +171,7 @@ interface FilterProductQuery extends PaginationQuery {
 interface UpdateStockPayload {
   action_type: 'adjust_stock' | 'add_stock' | 'remove_stock';
   amount: number;
+  note?: string;
 }
 
 // =============================================
