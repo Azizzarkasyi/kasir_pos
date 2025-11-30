@@ -1,23 +1,29 @@
 import VariantItem from "@/components/atoms/variant-item";
 import ComboInput from "@/components/combo-input";
 import CostBarcodeFields from "@/components/cost-barcode-fields";
-import ConfirmationDialog, { ConfirmationDialogHandle } from "@/components/drawers/confirmation-dialog";
+import ConfirmationDialog, {
+  ConfirmationDialogHandle,
+} from "@/components/drawers/confirmation-dialog";
 import Header from "@/components/header";
 import ImageUpload from "@/components/image-upload";
 import MenuRow from "@/components/menu-row";
 import CategoryPicker from "@/components/mollecules/category-picker";
 import MerkPicker from "@/components/mollecules/merk-picker";
-import { ThemedButton } from "@/components/themed-button";
-import { ThemedInput } from "@/components/themed-input";
-import { ThemedText } from "@/components/themed-text";
-import { Colors } from "@/constants/theme";
-import { useColorScheme } from "@/hooks/use-color-scheme";
-import { useProductFormStore } from "@/stores/product-form-store";
-import { useNavigation, useRouter } from "expo-router";
-import React, { useEffect, useRef } from "react";
-import { StyleSheet, View } from "react-native";
-import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+import {ThemedButton} from "@/components/themed-button";
+import {ThemedInput} from "@/components/themed-input";
+import {ThemedText} from "@/components/themed-text";
+import {Colors} from "@/constants/theme";
+import {useColorScheme} from "@/hooks/use-color-scheme";
+import {useProductFormStore} from "@/stores/product-form-store";
+import {useNavigation, useRouter} from "expo-router";
+import React, {useEffect, useRef, useState} from "react";
+import {StyleSheet, View, Alert, ActivityIndicator} from "react-native";
+import {KeyboardAwareScrollView} from "react-native-keyboard-aware-scroll-view";
+import {useSafeAreaInsets} from "react-native-safe-area-context";
+import productApi from "@/services/endpoints/products";
+import categoryApi from "@/services/endpoints/categories";
+import merkApi from "@/services/endpoints/merks";
+import {Category, Merk} from "@/types/api";
 
 export default function AddProductScreen() {
   const colorScheme = useColorScheme() ?? "light";
@@ -28,12 +34,37 @@ export default function AddProductScreen() {
 
   const confirmationRef = useRef<ConfirmationDialogHandle | null>(null);
 
-  const categories: any[] = [
-    { id: "general", name: "Umum" },
-    { id: "food", name: "Makanan" },
-    { id: "drink", name: "Minuman" },
-    { id: "snack", name: "Snack" },
-  ];
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [merks, setMerks] = useState<Merk[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+
+  useEffect(() => {
+    loadCategories();
+    loadMerks();
+  }, []);
+
+  const loadCategories = async () => {
+    try {
+      const response = await categoryApi.getCategories();
+      if (response.data) {
+        setCategories(response.data);
+      }
+    } catch (error) {
+      console.error("Failed to load categories:", error);
+    }
+  };
+
+  const loadMerks = async () => {
+    try {
+      const response = await merkApi.getMerks();
+      if (response.data) {
+        setMerks(response.data);
+      }
+    } catch (error) {
+      console.error("Failed to load merks:", error);
+    }
+  };
 
   const {
     name,
@@ -117,23 +148,153 @@ export default function AddProductScreen() {
 
   const formatIDR = (n: number) => new Intl.NumberFormat("id-ID").format(n);
 
-  const handleSave = () => {
-    const payload = {
-      name,
-      price,
-      brand,
-      category,
-      recipe,
-      favorite,
-      enableCostBarcode,
-      imageUri,
-    };
-    console.log("Tambah produk", payload);
-    router.back();
+  const handleSave = async () => {
+    // Validation
+    if (!name.trim()) {
+      Alert.alert("Error", "Nama produk harus diisi");
+      return;
+    }
+
+    // Clean and parse price
+    const cleanPrice = String(price).replace(/[^0-9]/g, "");
+    const numericPrice = Number(cleanPrice);
+
+    if (!cleanPrice || numericPrice <= 0) {
+      Alert.alert("Error", "Harga jual harus lebih dari 0");
+      return;
+    }
+
+    try {
+      setIsSaving(true);
+
+      // Build payload sesuai CreateProductDto
+      const payload: any = {
+        name: name.trim(),
+        price: numericPrice,
+      };
+
+      // Optional fields - tambahkan hanya jika ada nilai
+      if (brand && brand.length > 10 && brand.startsWith("cm")) {
+        payload.merk_id = brand;
+      }
+
+      if (category && category.length > 10 && category.startsWith("cm")) {
+        payload.category_id = category;
+      }
+
+      if (recipe && recipe.length > 10 && recipe.startsWith("cm")) {
+        payload.recipe_id = recipe;
+      }
+
+      if (imageUri) {
+        payload.photo_url = imageUri;
+      }
+
+      if (favorite !== undefined) {
+        payload.is_favorite = favorite;
+      }
+
+      // Cost & Barcode fields
+      if (enableCostBarcode) {
+        if (barcode) {
+          payload.barcode = barcode;
+        }
+        if (capitalPrice !== undefined && capitalPrice > 0) {
+          payload.capital_price = capitalPrice;
+        }
+      }
+
+      // Stock fields
+      if (stock) {
+        payload.is_stock_active = true;
+        payload.stock = stock.offlineStock;
+        payload.min_stock = stock.minStock;
+        payload.notify_on_stock_ronouts = stock.notifyMin;
+
+        if (
+          stock.unit &&
+          stock.unit.length > 10 &&
+          stock.unit.startsWith("cm")
+        ) {
+          payload.unit_id = stock.unit;
+        }
+      }
+
+      // Variants
+      if (variants && variants.length > 0) {
+        payload.variants = variants.map(v => {
+          const variantData: any = {
+            name: v.name,
+            price: Number(v.price),
+          };
+
+          if (v.stock) {
+            variantData.stock = v.stock.count || 0;
+            variantData.is_stock_active = true;
+            variantData.min_stock = v.stock.minStock || 0;
+            variantData.notify_on_stock_ronouts = v.stock.notifyMin || false;
+
+            if (
+              v.stock.unit &&
+              v.stock.unit.length > 10 &&
+              v.stock.unit.startsWith("cm")
+            ) {
+              variantData.unit_id = v.stock.unit;
+            }
+          }
+
+          return variantData;
+        });
+      }
+
+      console.log("=== CREATE PRODUCT PAYLOAD ===");
+      console.log("Name:", payload.name);
+      console.log("Price:", payload.price);
+      console.log("Merk ID:", payload.merk_id || "null");
+      console.log("Category ID:", payload.category_id || "null");
+      console.log("Recipe ID:", payload.recipe_id || "null");
+      console.log("Is Favorite:", payload.is_favorite);
+      console.log("Photo URL:", payload.photo_url || "null");
+      console.log("Barcode:", payload.barcode || "null");
+      console.log("Capital Price:", payload.capital_price || "null");
+      console.log("Is Stock Active:", payload.is_stock_active || false);
+      console.log("Stock:", payload.stock || "null");
+      console.log("Min Stock:", payload.min_stock || "null");
+      console.log(
+        "Notify on Stock Runouts:",
+        payload.notify_on_stock_ronouts || false
+      );
+      console.log("Unit ID:", payload.unit_id || "null");
+      console.log("Variants Count:", payload.variants?.length || 0);
+      if (payload.variants && payload.variants.length > 0) {
+        console.log("Variants:", JSON.stringify(payload.variants, null, 2));
+      }
+      console.log("Full Payload:", JSON.stringify(payload, null, 2));
+      console.log("==============================");
+
+      const response = await productApi.createProduct(payload);
+
+      if (response.data) {
+        Alert.alert("Sukses", "Produk berhasil ditambahkan", [
+          {
+            text: "OK",
+            onPress: () => {
+              useProductFormStore.getState().reset();
+              router.back();
+            },
+          },
+        ]);
+      }
+    } catch (error: any) {
+      console.error("Failed to create product:", error);
+      Alert.alert("Error", error.message || "Gagal menambahkan produk");
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
-    <View style={{ flex: 1, backgroundColor: Colors[colorScheme].background }}>
+    <View style={{flex: 1, backgroundColor: Colors[colorScheme].background}}>
       <Header title="Tambah Produk" showHelp={false} />
       <KeyboardAwareScrollView
         contentContainerStyle={{
@@ -156,13 +317,18 @@ export default function AddProductScreen() {
         />
 
         <View style={styles.contentSection}>
-          <ThemedInput label="Nama Produk" size="md" value={name} onChangeText={setName} />
+          <ThemedInput
+            label="Nama Produk"
+            size="md"
+            value={name}
+            onChangeText={setName}
+          />
           <ThemedInput
             label="Harga Jual"
             value={price}
             size="md"
             onChangeText={setPrice}
-            keyboardType="number-pad"
+            numericOnly
           />
 
           <MerkPicker
@@ -178,9 +344,7 @@ export default function AddProductScreen() {
             onChange={(category: any) => {
               setCategory(category.id);
             }}
-            onUpdate={(category: any) => {
-
-            }}
+            onUpdate={(category: any) => {}}
             categories={categories}
           />
           <ComboInput
@@ -189,13 +353,12 @@ export default function AddProductScreen() {
             size="md"
             onChangeText={setRecipe}
             items={[
-              { label: "Pilih Resep", value: "" },
-              { label: "Tanpa Resep", value: "none" },
-              { label: "Resep Default", value: "default" },
+              {label: "Pilih Resep", value: ""},
+              {label: "Tanpa Resep", value: "none"},
+              {label: "Resep Default", value: "default"},
             ]}
           />
         </View>
-
 
         <View style={styles.sectionDivider} />
 
@@ -212,7 +375,7 @@ export default function AddProductScreen() {
 
         <View style={styles.sectionDivider} />
 
-        <View style={{ paddingHorizontal: 20, paddingVertical: 6 }}>
+        <View style={{paddingHorizontal: 20, paddingVertical: 6}}>
           <MenuRow
             title="Atur Harga Modal dan Barcode"
             variant="toggle"
@@ -239,30 +402,38 @@ export default function AddProductScreen() {
           <MenuRow
             title="Kelola Stok"
             showBottomBorder={false}
-            rightText={stock ? `Stok Aktif (${stock.offlineStock} ${stock.unit})` : "Stok Tidak Aktif"}
+            rightText={
+              stock
+                ? `Stok Aktif (${stock.offlineStock} ${stock.unit})`
+                : "Stok Tidak Aktif"
+            }
             variant="link"
             onPress={() =>
               router.push({
                 pathname: "/dashboard/product/stock",
                 params: {
                   from: "add",
-                  ...(name ? { name } : {}),
-                  ...(price ? { price } : {}),
-                  ...(brand ? { brand } : {}),
-                  ...(category ? { category } : {}),
-                  ...(favorite ? { favorite: String(favorite) } : {}),
-                  ...(enableCostBarcode ? { enableCostBarcode: String(enableCostBarcode) } : {}),
-                  ...(imageUri ? { imageUri } : {}),
-                  ...(capitalPrice ? { capitalPrice: String(capitalPrice) } : {}),
-                  ...(barcode ? { barcode } : {}),
-                  ...(variants.length ? { variants: JSON.stringify(variants) } : {}),
+                  ...(name ? {name} : {}),
+                  ...(price ? {price} : {}),
+                  ...(brand ? {brand} : {}),
+                  ...(category ? {category} : {}),
+                  ...(favorite ? {favorite: String(favorite)} : {}),
+                  ...(enableCostBarcode
+                    ? {enableCostBarcode: String(enableCostBarcode)}
+                    : {}),
+                  ...(imageUri ? {imageUri} : {}),
+                  ...(capitalPrice ? {capitalPrice: String(capitalPrice)} : {}),
+                  ...(barcode ? {barcode} : {}),
+                  ...(variants.length
+                    ? {variants: JSON.stringify(variants)}
+                    : {}),
                   ...(stock
                     ? {
-                      offlineStock: String(stock.offlineStock),
-                      unit: stock.unit,
-                      minStock: String(stock.minStock),
-                      notifyMin: stock.notifyMin ? "1" : "0",
-                    }
+                        offlineStock: String(stock.offlineStock),
+                        unit: stock.unit,
+                        minStock: String(stock.minStock),
+                        notifyMin: stock.notifyMin ? "1" : "0",
+                      }
                     : {}),
                 },
               } as never)
@@ -282,7 +453,7 @@ export default function AddProductScreen() {
                   name={v.name}
                   price={v.price}
                   stock={v.stock}
-                  onPress={() => { }}
+                  onPress={() => {}}
                 />
               ))}
             </>
@@ -296,27 +467,34 @@ export default function AddProductScreen() {
                 pathname: "/dashboard/product/variant",
                 params: {
                   from: "add",
-                  ...(name ? { name } : {}),
-                  ...(price ? { price } : {}),
-                  ...(brand ? { brand } : {}),
-                  ...(category ? { category } : {}),
-                  ...(favorite ? { favorite: String(favorite) } : {}),
-                  ...(enableCostBarcode ? { enableCostBarcode: String(enableCostBarcode) } : {}),
-                  ...(imageUri ? { imageUri } : {}),
-                  ...(capitalPrice ? { capitalPrice: String(capitalPrice) } : {}),
-                  ...(barcode ? { barcode } : {}),
-                  ...(variants.length ? { variants: JSON.stringify(variants) } : {}),
+                  ...(name ? {name} : {}),
+                  ...(price ? {price} : {}),
+                  ...(brand ? {brand} : {}),
+                  ...(category ? {category} : {}),
+                  ...(favorite ? {favorite: String(favorite)} : {}),
+                  ...(enableCostBarcode
+                    ? {enableCostBarcode: String(enableCostBarcode)}
+                    : {}),
+                  ...(imageUri ? {imageUri} : {}),
+                  ...(capitalPrice ? {capitalPrice: String(capitalPrice)} : {}),
+                  ...(barcode ? {barcode} : {}),
+                  ...(variants.length
+                    ? {variants: JSON.stringify(variants)}
+                    : {}),
                 },
               } as never)
             }
           />
           <View style={styles.bottomBar}>
-            <ThemedButton title="Simpan" variant="primary" onPress={handleSave} />
+            <ThemedButton
+              title={isSaving ? "Menyimpan..." : "Simpan"}
+              variant="primary"
+              onPress={handleSave}
+              disabled={isSaving}
+            />
           </View>
         </View>
       </KeyboardAwareScrollView>
-
-
 
       <ConfirmationDialog ref={confirmationRef} />
     </View>

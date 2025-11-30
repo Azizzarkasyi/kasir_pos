@@ -250,7 +250,7 @@ const RegisterScreen = () => {
                 setErrors({...errors, pin: ""});
               }
             }}
-            keyboardType="number-pad"
+            numericOnly
             isPassword
             maxLength={6}
             error={errors.pin}

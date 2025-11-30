@@ -205,7 +205,7 @@ export default function ProfileSettingScreen() {
             value={oldPin}
             onChangeText={setOldPin}
             isPassword
-            keyboardType="number-pad"
+            numericOnly
             maxLength={6}
           />
           <ThemedInput
@@ -213,7 +213,7 @@ export default function ProfileSettingScreen() {
             value={newPin}
             onChangeText={setNewPin}
             isPassword
-            keyboardType="number-pad"
+            numericOnly
             maxLength={6}
           />
           <ThemedInput
@@ -221,7 +221,7 @@ export default function ProfileSettingScreen() {
             value={confirmPin}
             onChangeText={setConfirmPin}
             isPassword
-            keyboardType="number-pad"
+            numericOnly
             maxLength={6}
             error={pinError}
           />

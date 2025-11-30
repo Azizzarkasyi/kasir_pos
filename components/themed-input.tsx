@@ -30,6 +30,8 @@ export type ThemedInputProps = TextInputProps & {
   /** When true, input will try to auto-focus reliably inside a Modal when modalVisible becomes true. */
   isAutoFocusOnModal?: boolean;
   size?: "sm" | "base" | "md";
+  /** When true, only numeric characters (0-9) are allowed */
+  numericOnly?: boolean;
 };
 
 export function ThemedInput({
@@ -47,6 +49,7 @@ export function ThemedInput({
   inputRef: externalInputRef,
   isAutoFocusOnModal,
   size = "base",
+  numericOnly = false,
   ...rest
 }: ThemedInputProps) {
   const [isFocused, setIsFocused] = useState(false);
@@ -55,6 +58,16 @@ export function ThemedInput({
   const colorScheme = useColorScheme() ?? "light";
   const editable = rest.editable ?? true;
   const styles = createStyles(colorScheme, !!error, isFocused, size, editable);
+
+  // Handle numeric-only input
+  const handleTextChange = (text: string) => {
+    if (numericOnly) {
+      const numericValue = text.replace(/[^0-9]/g, "");
+      rest.onChangeText?.(numericValue);
+    } else {
+      rest.onChangeText?.(text);
+    }
+  };
 
   const focusAnim = useRef(new Animated.Value(value ? 1 : 0)).current;
   const internalRef = useRef<TextInput | null>(null);
@@ -130,9 +143,11 @@ export function ThemedInput({
             rest.multiline ? {textAlignVertical: "center"} : null,
           ]}
           {...rest}
+          onChangeText={handleTextChange}
           onFocus={() => setIsFocused(true)}
           onBlur={() => setIsFocused(false)}
           secureTextEntry={isPassword && !isPinVisible}
+          keyboardType={numericOnly ? "number-pad" : rest.keyboardType}
         />
         <View style={styles.iconContainer}>
           {error ? (

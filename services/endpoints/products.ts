@@ -1,42 +1,51 @@
-import apiService from '../api';
+import apiService from "../api";
 import {
   Product,
   CreateProductRequest,
   UpdateProductRequest,
   ApiResponse,
-  PaginatedResponse,
-} from '../../types/api';
+} from "../../types/api";
 
 /**
  * Product API Endpoints
  */
 export const productApi = {
   /**
-   * Get all products
+   * Get all products with filters
    */
   async getProducts(params?: {
-    page?: number;
-    limit?: number;
     search?: string;
-    category?: string;
+    category_id?: string;
+    merk_id?: string;
+    is_favorite?: boolean;
   }): Promise<ApiResponse<Product[]>> {
-    const response = await apiService.get<Product[]>('/products', params);
+    const response = await apiService.get<Product[]>("/products", params);
+    return response;
+  },
+
+  /**
+   * Get all stocks
+   */
+  async getStocks(): Promise<ApiResponse<any[]>> {
+    const response = await apiService.get<any[]>("/products/stocks");
     return response;
   },
 
   /**
    * Get product by ID
    */
-  async getProduct(id: number): Promise<ApiResponse<Product>> {
+  async getProduct(id: string): Promise<ApiResponse<Product>> {
     const response = await apiService.get<Product>(`/products/${id}`);
     return response;
   },
 
   /**
-   * Create new product
+   * Create new product with variants
    */
-  async createProduct(data: CreateProductRequest): Promise<ApiResponse<Product>> {
-    const response = await apiService.post<Product>('/products', data);
+  async createProduct(
+    data: CreateProductRequest
+  ): Promise<ApiResponse<Product>> {
+    const response = await apiService.post<Product>("/products", data);
     return response;
   },
 
@@ -44,7 +53,7 @@ export const productApi = {
    * Update product
    */
   async updateProduct(
-    id: number,
+    id: string,
     data: UpdateProductRequest
   ): Promise<ApiResponse<Product>> {
     const response = await apiService.put<Product>(`/products/${id}`, data);
@@ -54,33 +63,32 @@ export const productApi = {
   /**
    * Delete product
    */
-  async deleteProduct(id: number): Promise<ApiResponse<void>> {
+  async deleteProduct(id: string): Promise<ApiResponse<void>> {
     const response = await apiService.delete<void>(`/products/${id}`);
     return response;
   },
 
   /**
-   * Update product stock
+   * Update product variant stock
    */
   async updateStock(
-    id: number,
-    quantity: number,
-    type: 'add' | 'subtract'
-  ): Promise<ApiResponse<Product>> {
-    const response = await apiService.patch<Product>(`/products/${id}/stock`, {
-      quantity,
-      type,
-    });
+    variantId: string,
+    data: {stock: number; min_stock?: number}
+  ): Promise<ApiResponse<any>> {
+    const response = await apiService.put<any>(
+      `/products/${variantId}/stock`,
+      data
+    );
     return response;
   },
 
   /**
-   * Search products by barcode
+   * Copy product from another branch
    */
-  async searchByBarcode(barcode: string): Promise<ApiResponse<Product>> {
-    const response = await apiService.get<Product>('/products/barcode', {
-      barcode,
-    });
+  async addFromBranch(productId: string): Promise<ApiResponse<Product>> {
+    const response = await apiService.post<Product>(
+      `/products/add-from-branch/${productId}`
+    );
     return response;
   },
 };

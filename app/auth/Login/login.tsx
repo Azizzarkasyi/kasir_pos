@@ -103,7 +103,7 @@ export default function LoginScreen() {
 
         console.log("✅ Login success:", result);
 
-        // Save branch ID to AsyncStorage for struk config
+        // Save branch ID and name to AsyncStorage
         if (result.branch?.id) {
           const AsyncStorage = await import(
             "@react-native-async-storage/async-storage"
@@ -112,6 +112,12 @@ export default function LoginScreen() {
             "current_branch_id",
             result.branch.id
           );
+          if (result.branch?.name) {
+            await AsyncStorage.default.setItem(
+              "current_branch_name",
+              result.branch.name
+            );
+          }
         }
 
         // D. Navigate ke dashboard jika berhasil
@@ -205,7 +211,7 @@ export default function LoginScreen() {
               setPin(text);
               if (pinError) setPinError("");
             }}
-            keyboardType="number-pad"
+            numericOnly
             error={pinError}
             isPassword={true}
           />

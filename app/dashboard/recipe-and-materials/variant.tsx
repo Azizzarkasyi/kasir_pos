@@ -1,16 +1,18 @@
-import ConfirmationDialog, { ConfirmationDialogHandle } from "@/components/drawers/confirmation-dialog";
+import ConfirmationDialog, {
+  ConfirmationDialogHandle,
+} from "@/components/drawers/confirmation-dialog";
 import Header from "@/components/header";
 import MenuRow from "@/components/menu-row";
-import { ThemedButton } from "@/components/themed-button";
-import { ThemedInput } from "@/components/themed-input";
-import { Colors } from "@/constants/theme";
-import { useColorScheme } from "@/hooks/use-color-scheme";
-import { useProductFormStore } from "@/stores/product-form-store";
-import { useNavigation, useRouter } from "expo-router";
-import React, { useEffect, useRef, useState } from "react";
-import { StyleSheet, View } from "react-native";
-import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+import {ThemedButton} from "@/components/themed-button";
+import {ThemedInput} from "@/components/themed-input";
+import {Colors} from "@/constants/theme";
+import {useColorScheme} from "@/hooks/use-color-scheme";
+import {useProductFormStore} from "@/stores/product-form-store";
+import {useNavigation, useRouter} from "expo-router";
+import React, {useEffect, useRef, useState} from "react";
+import {StyleSheet, View} from "react-native";
+import {KeyboardAwareScrollView} from "react-native-keyboard-aware-scroll-view";
+import {useSafeAreaInsets} from "react-native-safe-area-context";
 
 export default function MaterialVariantScreen() {
   const colorScheme = useColorScheme() ?? "light";
@@ -43,9 +45,7 @@ export default function MaterialVariantScreen() {
   };
 
   const isDirty =
-    name.trim() !== "" ||
-    price.trim() !== "" ||
-    capitalPrice.trim() !== "";
+    name.trim() !== "" || price.trim() !== "" || capitalPrice.trim() !== "";
 
   useEffect(() => {
     const sub = navigation.addListener("beforeRemove", e => {
@@ -72,7 +72,7 @@ export default function MaterialVariantScreen() {
   }, [navigation, isDirty, isSubmit]);
 
   return (
-    <View style={{ flex: 1, backgroundColor: Colors[colorScheme].background }}>
+    <View style={{flex: 1, backgroundColor: Colors[colorScheme].background}}>
       <Header
         showHelp={false}
         title="Tambah Varian Bahan"
@@ -89,21 +89,26 @@ export default function MaterialVariantScreen() {
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
-        <View style={[styles.contentSection, { paddingVertical: 12 }]}> 
-          <ThemedInput label="Nama Varian" size="md" value={name} onChangeText={setName} />
+        <View style={[styles.contentSection, {paddingVertical: 12}]}>
+          <ThemedInput
+            label="Nama Varian"
+            size="md"
+            value={name}
+            onChangeText={setName}
+          />
           <ThemedInput
             label="Harga Jual"
             value={price}
             size="md"
             onChangeText={setPrice}
-            keyboardType="number-pad"
+            numericOnly
           />
           <ThemedInput
             label="Harga Modal"
             value={capitalPrice}
             size="md"
             onChangeText={setCapitalPrice}
-            keyboardType="number-pad"
+            numericOnly
           />
         </View>
 
@@ -120,9 +125,9 @@ export default function MaterialVariantScreen() {
               router.push({
                 pathname: "/dashboard/recipe-and-materials/variant-stock",
                 params: {
-                  ...(name ? { name } : {}),
-                  ...(price ? { price } : {}),
-                  ...(capitalPrice ? { capitalPrice } : {}),
+                  ...(name ? {name} : {}),
+                  ...(price ? {price} : {}),
+                  ...(capitalPrice ? {capitalPrice} : {}),
                 },
               } as never);
             }}

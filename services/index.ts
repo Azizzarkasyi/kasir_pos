@@ -7,6 +7,8 @@
 
 export {default as authApi} from "./endpoints/auth";
 export {default as productApi} from "./endpoints/products";
+export {default as categoryApi} from "./endpoints/categories";
+export {default as merkApi} from "./endpoints/merks";
 export {default as employeeApi} from "./endpoints/employees";
 export {default as transactionApi} from "./endpoints/transactions";
 export {default as settingsApi} from "./endpoints/settings";

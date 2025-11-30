@@ -1,97 +1,149 @@
-import { Colors } from "@/constants/theme";
-import { useColorScheme } from "@/hooks/use-color-scheme";
-import { AntDesign, Ionicons } from "@expo/vector-icons";
+import {Colors} from "@/constants/theme";
+import {useColorScheme} from "@/hooks/use-color-scheme";
+import {AntDesign, Ionicons} from "@expo/vector-icons";
 import React from "react";
-import { Modal, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import {
+  ActivityIndicator,
+  Modal,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import AddMerkModal from "../drawers/add-merk-modal";
-import { ThemedButton } from "../themed-button";
+import {ThemedButton} from "../themed-button";
+import {merkApi} from "@/services";
+import {Merk} from "@/types/api";
 
 type MerkPickerProps = {
   label?: string;
-  value: string;
-  onChange: (merk: string) => void;
+  value: string; // merk ID
+  onChange: (merkId: string) => void;
   size?: "sm" | "md" | "base";
-  brands?: string[];
 };
-
-const defaultBrands: string[] = ["Tidak ada merk", "Qasir"];
 
 const MerkPicker: React.FC<MerkPickerProps> = ({
   label = "Pilih Merk",
   value,
   onChange,
   size = "md",
-  brands,
 }) => {
   const colorScheme = useColorScheme() ?? "light";
   const styles = createStyles(colorScheme, size);
   const [visible, setVisible] = React.useState(false);
+  const [loading, setLoading] = React.useState(false);
 
   const [isAdd, setIsAdd] = React.useState(false);
-  const [editingValue, setEditingValue] = React.useState<string | undefined>(undefined);
-  const [merkList, setMerkList] = React.useState<string[]>(brands && brands.length ? brands : defaultBrands);
+  const [editingMerk, setEditingMerk] = React.useState<Merk | undefined>(
+    undefined
+  );
+  const [merkList, setMerkList] = React.useState<Merk[]>([]);
+
+  // Load merks from API
+  const loadMerks = React.useCallback(async () => {
+    try {
+      setLoading(true);
+      const response = await merkApi.getMerks();
+      if (response.data) {
+        setMerkList(response.data);
+      }
+    } catch (error) {
+      console.error("Failed to load merks:", error);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  // Load merks on mount
+  React.useEffect(() => {
+    loadMerks();
+  }, [loadMerks]);
 
   const openModal = () => {
     setIsAdd(false);
-    setEditingValue(undefined);
+    setEditingMerk(undefined);
     setVisible(true);
+    loadMerks(); // Refresh merks when opening
   };
 
   const closeModal = () => {
     setVisible(false);
     setIsAdd(false);
-    setEditingValue(undefined);
+    setEditingMerk(undefined);
   };
 
-  const handleSubmit = (merkName: string) => {
-    setMerkList(prev => {
-      const existsIndex = prev.findIndex(b => b === editingValue);
+  const handleSubmit = async (merkName: string) => {
+    try {
+      setLoading(true);
 
-      // Edit existing merk
-      if (editingValue && existsIndex !== -1) {
-        const next = [...prev];
-        next[existsIndex] = merkName;
-        return next;
+      if (editingMerk) {
+        // Update existing merk
+        const response = await merkApi.updateMerk(editingMerk.id, {
+          name: merkName,
+        });
+        if (response.data) {
+          await loadMerks();
+          onChange(response.data.id);
+        }
+      } else {
+        // Create new merk
+        const response = await merkApi.createMerk({name: merkName});
+        if (response.data) {
+          await loadMerks();
+          onChange(response.data.id);
+        }
       }
 
-      // Add new merk if not exists
-      if (!prev.includes(merkName)) {
-        return [...prev, merkName];
-      }
-
-      return prev;
-    });
-
-    onChange(merkName);
-    setIsAdd(false);
-    setEditingValue(undefined);
-    setVisible(false);
+      setIsAdd(false);
+      setEditingMerk(undefined);
+      setVisible(false);
+    } catch (error) {
+      console.error("Failed to save merk:", error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleAddMerk = () => {
-    setEditingValue(undefined);
+    setEditingMerk(undefined);
     setIsAdd(true);
   };
 
-  const handleEditMerk = (item: string) => {
-    setEditingValue(item);
+  const handleEditMerk = (item: Merk) => {
+    setEditingMerk(item);
     setIsAdd(true);
   };
 
-  const selectedMerk = value || "";
+  const selectedMerk = React.useMemo(() => {
+    const merk = merkList.find(m => m.id === value);
+    return merk ? merk.name : "";
+  }, [value, merkList]);
 
   return (
     <View style={styles.container}>
-      <TouchableOpacity style={styles.inputLike} activeOpacity={0.7} onPress={openModal}>
+      <TouchableOpacity
+        style={styles.inputLike}
+        activeOpacity={0.7}
+        onPress={openModal}
+      >
         <Text
           style={[
             styles.inputText,
-            { color: value ? Colors[colorScheme].text : Colors[colorScheme].icon },
+            {
+              color: value
+                ? Colors[colorScheme].text
+                : Colors[colorScheme].icon,
+            },
           ]}
         >
           {selectedMerk || label}
         </Text>
-        <Ionicons name="chevron-down" size={18} color={Colors[colorScheme].icon} />
+        <Ionicons
+          name="chevron-down"
+          size={18}
+          color={Colors[colorScheme].icon}
+        />
       </TouchableOpacity>
 
       <AddMerkModal
@@ -100,13 +152,22 @@ const MerkPicker: React.FC<MerkPickerProps> = ({
           setIsAdd(false);
         }}
         onSubmit={handleSubmit}
-        initialValue={editingValue}
+        initialValue={editingMerk?.name}
         label="Nama Merk"
       />
 
-      <Modal visible={visible && !isAdd} transparent animationType="fade" onRequestClose={closeModal}>
+      <Modal
+        visible={visible && !isAdd}
+        transparent
+        animationType="fade"
+        onRequestClose={closeModal}
+      >
         <View style={styles.modalRoot}>
-          <TouchableOpacity style={styles.backdrop} activeOpacity={1} onPress={closeModal} />
+          <TouchableOpacity
+            style={styles.backdrop}
+            activeOpacity={1}
+            onPress={closeModal}
+          />
 
           <View style={styles.modalCard}>
             <View style={styles.modalHeader}>
@@ -114,38 +175,60 @@ const MerkPicker: React.FC<MerkPickerProps> = ({
             </View>
 
             <ScrollView style={styles.listContainer}>
-              {merkList.map(item => (
-                <View key={item} style={styles.listItemRow}>
-                  <TouchableOpacity
-                    style={styles.listItem}
-                    activeOpacity={0.7}
-                    onPress={() => {
-                      onChange(item);
-                      closeModal();
-                    }}
-                  >
-                    <Text
-                      style={[
-                        styles.listItemText,
-                        item === value && {
-                          color: Colors[colorScheme].primary,
-                          fontWeight: "600",
-                        },
-                      ]}
-                    >
-                      {item}
-                    </Text>
-                  </TouchableOpacity>
-
-                  <TouchableOpacity
-                    style={styles.editButton}
-                    activeOpacity={0.7}
-                    onPress={() => handleEditMerk(item)}
-                  >
-                    <AntDesign name="edit" size={20} color={Colors[colorScheme].primary} />
-                  </TouchableOpacity>
+              {loading ? (
+                <View style={styles.loadingContainer}>
+                  <ActivityIndicator
+                    size="small"
+                    color={Colors[colorScheme].primary}
+                  />
                 </View>
-              ))}
+              ) : merkList.length === 0 ? (
+                <Text
+                  style={[
+                    styles.listItemText,
+                    {textAlign: "center", paddingVertical: 20},
+                  ]}
+                >
+                  Belum ada merk
+                </Text>
+              ) : (
+                merkList.map(item => (
+                  <View key={item.id} style={styles.listItemRow}>
+                    <TouchableOpacity
+                      style={styles.listItem}
+                      activeOpacity={0.7}
+                      onPress={() => {
+                        onChange(item.id);
+                        closeModal();
+                      }}
+                    >
+                      <Text
+                        style={[
+                          styles.listItemText,
+                          item.id === value && {
+                            color: Colors[colorScheme].primary,
+                            fontWeight: "600",
+                          },
+                        ]}
+                      >
+                        {item.name}
+                      </Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                      style={styles.editButton}
+                      activeOpacity={0.7}
+                      onPress={() => handleEditMerk(item)}
+                    >
+                      <AntDesign
+                        name="edit"
+                        size={20}
+                        color={Colors[colorScheme].primary}
+                      />
+                    </TouchableOpacity>
+                  </View>
+                ))
+              )}
             </ScrollView>
 
             <ThemedButton
@@ -171,7 +254,10 @@ const MerkPicker: React.FC<MerkPickerProps> = ({
   );
 };
 
-const createStyles = (colorScheme: "light" | "dark", size: "sm" | "md" | "base") =>
+const createStyles = (
+  colorScheme: "light" | "dark",
+  size: "sm" | "md" | "base"
+) =>
   StyleSheet.create({
     container: {
       width: "100%",
@@ -244,6 +330,11 @@ const createStyles = (colorScheme: "light" | "dark", size: "sm" | "md" | "base")
       marginTop: 4,
       marginBottom: 8,
     },
+    loadingContainer: {
+      paddingVertical: 20,
+      alignItems: "center",
+      justifyContent: "center",
+    },
     listItemRow: {
       flexDirection: "row",
       alignItems: "center",
@@ -281,4 +372,3 @@ const createStyles = (colorScheme: "light" | "dark", size: "sm" | "md" | "base")
   });
 
 export default MerkPicker;
-

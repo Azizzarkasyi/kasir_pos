@@ -1,29 +1,49 @@
-import { Colors } from "@/constants/theme";
-import { useColorScheme } from "@/hooks/use-color-scheme";
-import { AntDesign } from "@expo/vector-icons";
-import { usePathname, useRouter } from "expo-router";
-import React from "react";
-import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import {Colors} from "@/constants/theme";
+import {useColorScheme} from "@/hooks/use-color-scheme";
+import {AntDesign} from "@expo/vector-icons";
+import {usePathname, useRouter} from "expo-router";
+import React, {useEffect, useState} from "react";
+import {
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+  ActivityIndicator,
+} from "react-native";
+import {settingsApi, authApi, UserProfile} from "@/services";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 type SidebarItemProps = {
   label: string;
   icon: React.ComponentProps<typeof AntDesign>["name"];
   active?: boolean;
-  
+
   onPress?: () => void;
   styles: ReturnType<typeof createStyles>;
 };
 
-const SidebarItem: React.FC<SidebarItemProps> = ({ label, icon, active, onPress, styles }) => {
+const SidebarItem: React.FC<SidebarItemProps> = ({
+  label,
+  icon,
+  active,
+  onPress,
+  styles,
+}) => {
   return (
-    <TouchableOpacity onPress={onPress} style={[styles.itemContainer, active && styles.itemActive]}>
+    <TouchableOpacity
+      onPress={onPress}
+      style={[styles.itemContainer, active && styles.itemActive]}
+    >
       <View style={styles.itemContent}>
         <AntDesign
           name={icon}
           size={20}
           color={active ? styles.itemActiveIcon.color : styles.itemIcon.color}
         />
-        <Text style={[styles.itemLabel, active && styles.itemLabelActive]}>{label}</Text>
+        <Text style={[styles.itemLabel, active && styles.itemLabelActive]}>
+          {label}
+        </Text>
       </View>
     </TouchableOpacity>
   );
@@ -36,22 +56,86 @@ type SidebarProps = {
   onSelect?: (key: string) => void;
 };
 
-const MENU_ITEMS: { key: string; label: string; icon: React.ComponentProps<typeof AntDesign>["name"] }[] = [
-  { key: "home", label: "Beranda", icon: "home" },
-  { key: "products", label: "Kelola Produk", icon: "appstore" },
-  { key: "transactions", label: "Transaksi", icon: "swap" },
-  { key: "history", label: "Riwayat Transaksi", icon: "profile" },
-  { key: "outlet", label: "Outlet", icon: "shop" },
-  { key: "employees", label: "Pegawai", icon: "team" },
-  { key: "settings", label: "Pengaturan", icon: "setting" },
-  { key: "help", label: "Bantuan", icon: "question-circle" },
+const MENU_ITEMS: {
+  key: string;
+  label: string;
+  icon: React.ComponentProps<typeof AntDesign>["name"];
+}[] = [
+  {key: "home", label: "Beranda", icon: "home"},
+  {key: "products", label: "Kelola Produk", icon: "appstore"},
+  {key: "transactions", label: "Transaksi", icon: "swap"},
+  {key: "history", label: "Riwayat Transaksi", icon: "profile"},
+  {key: "outlet", label: "Outlet", icon: "shop"},
+  {key: "employees", label: "Pegawai", icon: "team"},
+  {key: "settings", label: "Pengaturan", icon: "setting"},
+  {key: "help", label: "Bantuan", icon: "question-circle"},
 ];
 
-const Sidebar: React.FC<SidebarProps> = ({ activeKey, isOpen, onClose, onSelect }) => {
+const Sidebar: React.FC<SidebarProps> = ({
+  activeKey,
+  isOpen,
+  onClose,
+  onSelect,
+}) => {
   const colorScheme = useColorScheme() ?? "light";
   const styles = createStyles(colorScheme);
   const router = useRouter();
   const pathname = usePathname();
+  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [currentBranch, setCurrentBranch] = useState<{
+    id: string;
+    name: string;
+  } | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    if (isOpen) {
+      loadUserData();
+    }
+  }, [isOpen]);
+
+  const loadUserData = async () => {
+    try {
+      // Load user profile
+      const profileResponse = await settingsApi.getProfile();
+      if (profileResponse.data) {
+        setProfile(profileResponse.data);
+      }
+
+      // Load current branch from login data
+      const branchId = await AsyncStorage.getItem("current_branch_id");
+      const branchName = await AsyncStorage.getItem("current_branch_name");
+      if (branchId && branchName) {
+        setCurrentBranch({id: branchId, name: branchName});
+      }
+
+      // Get branches to get current branch name if not in storage
+      if (branchId && !branchName) {
+        try {
+          const branchesResponse = await authApi.getUserBranches?.();
+          if (branchesResponse?.data) {
+            const branches = branchesResponse.data as any[];
+            const currentBranchData = branches.find(
+              (b: any) => b.id === branchId
+            );
+            if (currentBranchData) {
+              setCurrentBranch({id: branchId, name: currentBranchData.name});
+              await AsyncStorage.setItem(
+                "current_branch_name",
+                currentBranchData.name
+              );
+            }
+          }
+        } catch (error) {
+          console.error("❌ Failed to load branches:", error);
+        }
+      }
+    } catch (error: any) {
+      console.error("❌ Failed to load user data:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const getRouteForKey = (key: string): string | null => {
     switch (key) {
@@ -109,26 +193,67 @@ const Sidebar: React.FC<SidebarProps> = ({ activeKey, isOpen, onClose, onSelect 
                 if (pathname !== profileRoute) {
                   router.push(profileRoute as never);
                 }
+                onClose?.();
               }}
               style={styles.profileRow}
             >
               <View style={styles.avatarCircle}>
-                <AntDesign name="user" size={28} color={Colors[colorScheme].primary} />
+                {profile?.photo ? (
+                  <Text>Photo</Text>
+                ) : (
+                  <AntDesign
+                    name="user"
+                    size={28}
+                    color={Colors[colorScheme].primary}
+                  />
+                )}
                 <View style={styles.badgeFree}>
                   <Text style={styles.badgeFreeText}>FREE</Text>
                 </View>
               </View>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.profileName}>Basofi Rswt</Text>
-                <Text style={styles.profileRole}>Pemilik</Text>
+              <View style={{flex: 1}}>
+                {isLoading ? (
+                  <ActivityIndicator
+                    size="small"
+                    color={Colors[colorScheme].primary}
+                  />
+                ) : (
+                  <>
+                    <Text style={styles.profileName} numberOfLines={1}>
+                      {profile?.name || "User"}
+                    </Text>
+                    <Text style={styles.profileRole}>
+                      {profile?.role === "user"
+                        ? "Pemilik"
+                        : profile?.role || "User"}
+                    </Text>
+                  </>
+                )}
               </View>
-              <AntDesign name="right" size={16} color={Colors[colorScheme].icon} />
+              <AntDesign
+                name="right"
+                size={16}
+                color={Colors[colorScheme].icon}
+              />
             </TouchableOpacity>
 
             <View style={styles.outletRow}>
-              <View>
-                <Text style={styles.outletName}>Basofi Rswt</Text>
-                <Text style={styles.outletLocation}>Pusat</Text>
+              <View style={{flex: 1}}>
+                {isLoading ? (
+                  <ActivityIndicator
+                    size="small"
+                    color={Colors[colorScheme].primary}
+                  />
+                ) : (
+                  <>
+                    <Text style={styles.outletName} numberOfLines={1}>
+                      {currentBranch?.name || "Outlet"}
+                    </Text>
+                    <Text style={styles.outletLocation}>
+                      {currentBranch ? "Outlet Aktif" : "Pilih Outlet"}
+                    </Text>
+                  </>
+                )}
               </View>
               <TouchableOpacity
                 style={styles.outletButton}
@@ -146,7 +271,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeKey, isOpen, onClose, onSelect 
           </View>
 
           <ScrollView contentContainerStyle={styles.scrollContent}>
-            {MENU_ITEMS.map((item) => (
+            {MENU_ITEMS.map(item => (
               <SidebarItem
                 key={item.key}
                 label={item.label}
@@ -160,11 +285,17 @@ const Sidebar: React.FC<SidebarProps> = ({ activeKey, isOpen, onClose, onSelect 
 
           <View style={styles.bottomSection}>
             <View style={styles.feedbackCard}>
-              <Text style={styles.feedbackTitle}>Bantu kami jadi lebih baik</Text>
+              <Text style={styles.feedbackTitle}>
+                Bantu kami jadi lebih baik
+              </Text>
               <View style={styles.feedbackRow}>
                 <Text style={styles.feedbackSubtitle}>Beri masukan untuk </Text>
                 <Text style={styles.feedbackLink}>ELBIC</Text>
-                <AntDesign name="right" size={14} color={Colors[colorScheme].primary} />
+                <AntDesign
+                  name="right"
+                  size={14}
+                  color={Colors[colorScheme].primary}
+                />
               </View>
             </View>
 
@@ -183,7 +314,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeKey, isOpen, onClose, onSelect 
       />
     </View>
   );
-}
+};
 
 export default Sidebar;
 
@@ -196,7 +327,8 @@ const createStyles = (colorScheme: "light" | "dark") =>
       right: 0,
       bottom: 0,
       flexDirection: "row",
-      backgroundColor: colorScheme === "dark" ? "rgba(0,0,0,0.7)" : "rgba(0,0,0,0.3)",
+      backgroundColor:
+        colorScheme === "dark" ? "rgba(0,0,0,0.7)" : "rgba(0,0,0,0.3)",
       zIndex: 30,
     },
     drawer: {
@@ -206,7 +338,7 @@ const createStyles = (colorScheme: "light" | "dark") =>
     },
     container: {
       flex: 1,
-      paddingTop: 60,
+      paddingTop: 40,
       paddingHorizontal: 16,
       backgroundColor: Colors[colorScheme].background,
     },
@@ -223,8 +355,7 @@ const createStyles = (colorScheme: "light" | "dark") =>
       paddingTop: 12,
       paddingBottom: 16,
     },
-    itemContainer: {
-    },
+    itemContainer: {},
     itemContent: {
       flexDirection: "row",
       alignItems: "center",

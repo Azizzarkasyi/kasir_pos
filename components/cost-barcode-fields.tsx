@@ -1,9 +1,9 @@
-import { Colors } from "@/constants/theme";
-import { useColorScheme } from "@/hooks/use-color-scheme";
-import { Ionicons } from "@expo/vector-icons";
+import {Colors} from "@/constants/theme";
+import {useColorScheme} from "@/hooks/use-color-scheme";
+import {Ionicons} from "@expo/vector-icons";
 import React from "react";
-import { StyleSheet, TouchableOpacity, View } from "react-native";
-import { ThemedInput } from "./themed-input";
+import {StyleSheet, TouchableOpacity, View} from "react-native";
+import {ThemedInput} from "./themed-input";
 
 type Props = {
   capitalPrice: number;
@@ -27,11 +27,9 @@ const CostBarcodeFields: React.FC<Props> = ({
     <View style={styles.card}>
       <ThemedInput
         label="Harga Modal"
-        value={String(capitalPrice)}
-        onChangeText={v =>
-          onCapitalPriceChange(Number((v || "").replace(/[^0-9]/g, "")))
-        }
-        keyboardType="number-pad"
+        value={capitalPrice ? String(capitalPrice) : ""}
+        onChangeText={v => onCapitalPriceChange(v ? Number(v) : 0)}
+        numericOnly
         showLabel={true}
         size="md"
         placeholder="Harga Modal"
@@ -39,11 +37,11 @@ const CostBarcodeFields: React.FC<Props> = ({
         inputContainerStyle={{
           backgroundColor: colorScheme === "dark" ? "#1F1F1F" : "#FFFFFF",
         }}
-        containerStyle={{ marginVertical: 0 }}
+        containerStyle={{marginVertical: 0}}
       />
 
       <View style={styles.inputRow}>
-        <View style={{ flex: 1 }}>
+        <View style={{flex: 1}}>
           <ThemedInput
             label="Kode Produk / Barcode"
             value={barcode}
@@ -55,7 +53,7 @@ const CostBarcodeFields: React.FC<Props> = ({
             inputContainerStyle={{
               backgroundColor: colorScheme === "dark" ? "#1F1F1F" : "#ffffffff",
             }}
-            containerStyle={{ marginVertical: 0 }}
+            containerStyle={{marginVertical: 0}}
           />
         </View>
 

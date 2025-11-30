@@ -1,11 +1,15 @@
-import axios, { AxiosInstance, AxiosError, InternalAxiosRequestConfig } from 'axios';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { ApiError, ApiResponse } from '../types/api';
+import axios, {
+  AxiosInstance,
+  AxiosError,
+  InternalAxiosRequestConfig,
+} from "axios";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import {ApiError, ApiResponse} from "../types/api";
 
 // Baca dari environment variable, fallback ke localhost jika tidak ada
-const API_URL = process.env.API_URL || 'http://10.0.2.2:3001';
+const API_URL = process.env.API_URL || "http://localhost:3001";
 
-console.log('🔧 API Configuration:', { API_URL });
+console.log("🔧 API Configuration:", {API_URL});
 
 class ApiService {
   private api: AxiosInstance;
@@ -16,7 +20,7 @@ class ApiService {
       baseURL: `${API_URL}/api/v1`,
       timeout: 15000,
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
       },
     });
 
@@ -41,23 +45,25 @@ class ApiService {
           config.headers.Authorization = `Bearer ${this.token}`;
         }
 
-        console.log(`📤 API Request: ${config.method?.toUpperCase()} ${config.url}`);
+        console.log(
+          `📤 API Request: ${config.method?.toUpperCase()} ${config.url}`
+        );
         return config;
       },
-      (error) => {
-        console.error('❌ Request Error:', error);
+      error => {
+        console.error("❌ Request Error:", error);
         return Promise.reject(error);
       }
     );
 
     // Response interceptor - handle errors
     this.api.interceptors.response.use(
-      (response) => {
+      response => {
         console.log(`✅ API Response: ${response.config.url}`, response.status);
         return response;
       },
       async (error: AxiosError<ApiError>) => {
-        console.error('❌ API Error:', error.response?.status, error.message);
+        console.error("❌ API Error:", error.response?.status, error.message);
 
         // Handle 401 Unauthorized - clear token and redirect to login
         if (error.response?.status === 401) {
@@ -69,7 +75,10 @@ class ApiService {
         // Format error response
         const apiError: ApiError = {
           code: error.response?.status || 500,
-          message: error.response?.data?.message || error.message || 'Terjadi kesalahan',
+          message:
+            error.response?.data?.message ||
+            error.message ||
+            "Terjadi kesalahan",
           errors: error.response?.data?.errors,
         };
 
@@ -83,13 +92,13 @@ class ApiService {
    */
   private async loadToken() {
     try {
-      const token = await AsyncStorage.getItem('auth_token');
+      const token = await AsyncStorage.getItem("auth_token");
       if (token) {
         this.token = token;
-        console.log('🔑 Token loaded from storage');
+        console.log("🔑 Token loaded from storage");
       }
     } catch (error) {
-      console.error('Failed to load token:', error);
+      console.error("Failed to load token:", error);
     }
   }
 
@@ -99,10 +108,10 @@ class ApiService {
   async setToken(token: string) {
     this.token = token;
     try {
-      await AsyncStorage.setItem('auth_token', token);
-      console.log('🔑 Token saved to storage');
+      await AsyncStorage.setItem("auth_token", token);
+      console.log("🔑 Token saved to storage");
     } catch (error) {
-      console.error('Failed to save token:', error);
+      console.error("Failed to save token:", error);
     }
   }
 
@@ -112,10 +121,10 @@ class ApiService {
   async clearToken() {
     this.token = null;
     try {
-      await AsyncStorage.removeItem('auth_token');
-      console.log('🔑 Token cleared from storage');
+      await AsyncStorage.removeItem("auth_token");
+      console.log("🔑 Token cleared from storage");
     } catch (error) {
-      console.error('Failed to clear token:', error);
+      console.error("Failed to clear token:", error);
     }
   }
 
@@ -144,7 +153,7 @@ class ApiService {
    * Generic GET request
    */
   async get<T>(url: string, params?: any): Promise<ApiResponse<T>> {
-    const response = await this.api.get<ApiResponse<T>>(url, { params });
+    const response = await this.api.get<ApiResponse<T>>(url, {params});
     return response.data;
   }
 

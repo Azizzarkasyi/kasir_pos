@@ -56,35 +56,108 @@ export interface User {
 }
 
 // Product Types
-export interface Product {
-  id: number;
+export interface ProductVariant {
+  id: string;
   name: string;
-  sku?: string;
-  barcode?: string;
   price: number;
-  capitalPrice?: number;
-  stock: number;
-  unit?: string;
-  category?: string;
-  description?: string;
-  image?: string;
+  stock?: number;
+  unit_id?: string;
+  notify_on_stock_ronouts?: boolean;
+  is_stock_active?: boolean;
+  min_stock?: number;
+  recipe_id?: string;
+  barcode?: string;
+  capital_price?: number;
+}
+
+export interface Product {
+  id: string;
+  name: string;
+  price: number;
+  merk_id?: string;
+  category_id?: string;
+  recipe_id?: string;
+  is_favorite?: boolean;
+  barcode?: string;
+  is_ingredient?: boolean;
+  is_stock_active?: boolean;
+  notify_on_stock_ronouts?: boolean;
+  unit_id?: string;
+  capital_price?: number;
+  stock?: number;
+  min_stock?: number;
+  photo_url?: string;
+  variants?: ProductVariant[];
+  merk?: {id: string; name: string};
+  category?: {id: string; name: string};
+  unit?: {id: string; name: string};
   createdAt?: string;
   updatedAt?: string;
 }
 
 export interface CreateProductRequest {
   name: string;
-  sku?: string;
-  barcode?: string;
   price: number;
-  capitalPrice?: number;
-  stock: number;
-  unit?: string;
-  category?: string;
-  description?: string;
+  merk_id?: string;
+  category_id?: string;
+  recipe_id?: string;
+  is_favorite?: boolean;
+  barcode?: string;
+  is_ingredient?: boolean;
+  is_stock_active?: boolean;
+  notify_on_stock_ronouts?: boolean;
+  unit_id?: string;
+  capital_price?: number;
+  stock?: number;
+  min_stock?: number;
+  photo_url?: string;
+  variants?: {
+    name: string;
+    price: number;
+    stock?: number;
+    unit_id?: string;
+    notify_on_stock_ronouts?: boolean;
+    is_stock_active?: boolean;
+    min_stock?: number;
+    recipe_id?: string;
+    barcode?: string;
+    capital_price?: number;
+  }[];
 }
 
 export interface UpdateProductRequest extends Partial<CreateProductRequest> {}
+
+// Category Types
+export interface Category {
+  id: string;
+  name: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface CreateCategoryRequest {
+  name: string;
+}
+
+export interface UpdateCategoryRequest {
+  name: string;
+}
+
+// Merk/Brand Types
+export interface Merk {
+  id: string;
+  name: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+// Unit Types
+export interface Unit {
+  id: string;
+  name: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
 
 // Employee Types
 export interface Employee {

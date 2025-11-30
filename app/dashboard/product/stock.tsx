@@ -1,18 +1,20 @@
 import Checkbox from "@/components/checkbox";
 import ComboInput from "@/components/combo-input";
-import ConfirmationDialog, { ConfirmationDialogHandle } from "@/components/drawers/confirmation-dialog";
+import ConfirmationDialog, {
+  ConfirmationDialogHandle,
+} from "@/components/drawers/confirmation-dialog";
 import Header from "@/components/header";
-import { ThemedButton } from "@/components/themed-button";
-import { ThemedInput } from "@/components/themed-input";
-import { ThemedText } from "@/components/themed-text";
-import { Colors } from "@/constants/theme";
-import { useColorScheme } from "@/hooks/use-color-scheme";
-import { useProductFormStore } from "@/stores/product-form-store";
-import { useNavigation, useRouter } from "expo-router";
-import React, { useEffect, useRef, useState } from "react";
-import { StyleSheet, View } from "react-native";
-import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+import {ThemedButton} from "@/components/themed-button";
+import {ThemedInput} from "@/components/themed-input";
+import {ThemedText} from "@/components/themed-text";
+import {Colors} from "@/constants/theme";
+import {useColorScheme} from "@/hooks/use-color-scheme";
+import {useProductFormStore} from "@/stores/product-form-store";
+import {useNavigation, useRouter} from "expo-router";
+import React, {useEffect, useRef, useState} from "react";
+import {StyleSheet, View} from "react-native";
+import {KeyboardAwareScrollView} from "react-native-keyboard-aware-scroll-view";
+import {useSafeAreaInsets} from "react-native-safe-area-context";
 
 export default function StockSettingsScreen() {
   const colorScheme = useColorScheme() ?? "light";
@@ -26,10 +28,14 @@ export default function StockSettingsScreen() {
 
   const confirmationRef = useRef<ConfirmationDialogHandle | null>(null);
 
-  const [offlineStock, setOfflineStock] = useState(stockFromStore?.offlineStock ?? 0);
+  const [offlineStock, setOfflineStock] = useState(
+    stockFromStore?.offlineStock ?? 0
+  );
   const [unit, setUnit] = useState(stockFromStore?.unit ?? "pcs");
   const [minStock, setMinStock] = useState(stockFromStore?.minStock ?? 0);
-  const [notifyMin, setNotifyMin] = useState(stockFromStore?.notifyMin ?? false);
+  const [notifyMin, setNotifyMin] = useState(
+    stockFromStore?.notifyMin ?? false
+  );
   const [isSubmit, setIsSubmit] = useState(false);
 
   const unitItems = [
@@ -84,20 +90,22 @@ export default function StockSettingsScreen() {
       <Header title="Kelola Stok" showHelp={false} />
 
       <KeyboardAwareScrollView
-        contentContainerStyle={{paddingHorizontal: 20, paddingVertical: 40, paddingBottom: insets.bottom + 80}}
+        contentContainerStyle={{
+          paddingHorizontal: 20,
+          paddingVertical: 40,
+          paddingBottom: insets.bottom + 80,
+        }}
         enableOnAndroid
         keyboardOpeningTime={0}
         extraScrollHeight={24}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
-      
-
         <ThemedInput
           label="Stok Toko Offline"
           value={String(offlineStock)}
-          onChangeText={v => setOfflineStock(Number(v.replace(/[^0-9]/g, "")))}
-          keyboardType="number-pad"
+          onChangeText={v => setOfflineStock(Number(v))}
+          numericOnly
         />
 
         <ComboInput
@@ -110,18 +118,25 @@ export default function StockSettingsScreen() {
         <ThemedInput
           label="Minimum Stok"
           value={String(minStock)}
-          onChangeText={v => setMinStock(Number(v.replace(/[^0-9]/g, "")))}
-          keyboardType="number-pad"
+          onChangeText={v => setMinStock(Number(v))}
+          numericOnly
         />
 
         <View style={styles.row}>
           <Checkbox checked={notifyMin} onChange={setNotifyMin} />
-          <ThemedText style={styles.rowText}>Kirimkan notifikasi saat stok mencapai batas minimum</ThemedText>
+          <ThemedText style={styles.rowText}>
+            Kirimkan notifikasi saat stok mencapai batas minimum
+          </ThemedText>
         </View>
       </KeyboardAwareScrollView>
 
       <View style={styles.bottomBar}>
-        <ThemedButton title="Simpan" variant="primary" onPress={handleSave} disabled={isSubmit} />
+        <ThemedButton
+          title="Simpan"
+          variant="primary"
+          onPress={handleSave}
+          disabled={isSubmit}
+        />
       </View>
 
       <ConfirmationDialog ref={confirmationRef} />

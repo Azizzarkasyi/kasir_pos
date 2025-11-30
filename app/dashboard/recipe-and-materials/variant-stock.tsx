@@ -1,17 +1,19 @@
 import Checkbox from "@/components/checkbox";
 import ComboInput from "@/components/combo-input";
-import ConfirmationDialog, { ConfirmationDialogHandle } from "@/components/drawers/confirmation-dialog";
+import ConfirmationDialog, {
+  ConfirmationDialogHandle,
+} from "@/components/drawers/confirmation-dialog";
 import Header from "@/components/header";
-import { ThemedButton } from "@/components/themed-button";
-import { ThemedInput } from "@/components/themed-input";
-import { ThemedText } from "@/components/themed-text";
-import { Colors } from "@/constants/theme";
-import { useColorScheme } from "@/hooks/use-color-scheme";
-import { useLocalSearchParams, useNavigation, useRouter } from "expo-router";
-import React, { useEffect, useRef, useState } from "react";
-import { StyleSheet, View } from "react-native";
-import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+import {ThemedButton} from "@/components/themed-button";
+import {ThemedInput} from "@/components/themed-input";
+import {ThemedText} from "@/components/themed-text";
+import {Colors} from "@/constants/theme";
+import {useColorScheme} from "@/hooks/use-color-scheme";
+import {useLocalSearchParams, useNavigation, useRouter} from "expo-router";
+import React, {useEffect, useRef, useState} from "react";
+import {StyleSheet, View} from "react-native";
+import {KeyboardAwareScrollView} from "react-native-keyboard-aware-scroll-view";
+import {useSafeAreaInsets} from "react-native-safe-area-context";
 
 export default function MaterialVariantStockScreen() {
   const colorScheme = useColorScheme() ?? "light";
@@ -48,15 +50,15 @@ export default function MaterialVariantStockScreen() {
   const [isSubmit, setIsSubmit] = useState(false);
 
   const unitItems = [
-    { label: "Pcs", value: "pcs" },
-    { label: "Box", value: "box" },
-    { label: "Kg", value: "kg" },
-    { label: "L", value: "l" },
+    {label: "Pcs", value: "pcs"},
+    {label: "Box", value: "box"},
+    {label: "Kg", value: "kg"},
+    {label: "L", value: "l"},
   ];
 
   const handleSave = () => {
     setIsSubmit(true);
-    const payload = { offlineStock, unit, minStock, notifyMin };
+    const payload = {offlineStock, unit, minStock, notifyMin};
     console.log("Kelola stok varian bahan", payload);
     router.replace({
       pathname: "/dashboard/recipe-and-materials/variant",
@@ -65,10 +67,10 @@ export default function MaterialVariantStockScreen() {
         unit,
         minStock: String(minStock),
         notifyMin: notifyMin ? "1" : "0",
-        ...(name ? { name: String(name) } : {}),
-        ...(price ? { price: String(price) } : {}),
-        ...(capitalPrice ? { capitalPrice: String(capitalPrice) } : {}),
-        ...(barcode ? { barcode: String(barcode) } : {}),
+        ...(name ? {name: String(name)} : {}),
+        ...(price ? {price: String(price)} : {}),
+        ...(capitalPrice ? {capitalPrice: String(capitalPrice)} : {}),
+        ...(barcode ? {barcode: String(barcode)} : {}),
       },
     } as never);
   };
@@ -77,16 +79,14 @@ export default function MaterialVariantStockScreen() {
     if (qsOfflineStock || qsUnit || qsMinStock || qsNotifyMin) {
       if (qsOfflineStock) {
         setOfflineStock(
-          Number(String(qsOfflineStock).replace(/[^0-9]/g, "")) || 0,
+          Number(String(qsOfflineStock).replace(/[^0-9]/g, "")) || 0
         );
       }
       if (qsUnit) {
         setUnit(String(qsUnit));
       }
       if (qsMinStock) {
-        setMinStock(
-          Number(String(qsMinStock).replace(/[^0-9]/g, "")) || 0,
-        );
+        setMinStock(Number(String(qsMinStock).replace(/[^0-9]/g, "")) || 0);
       }
       if (qsNotifyMin) {
         setNotifyMin(qsNotifyMin === "1" || qsNotifyMin === "true");
@@ -122,7 +122,7 @@ export default function MaterialVariantStockScreen() {
   }, [navigation, isDirty, isSubmit]);
 
   return (
-    <View style={{ flex: 1, backgroundColor: Colors[colorScheme].background }}>
+    <View style={{flex: 1, backgroundColor: Colors[colorScheme].background}}>
       <Header
         showHelp={false}
         title="Stok Varian Bahan"
@@ -143,10 +143,8 @@ export default function MaterialVariantStockScreen() {
         <ThemedInput
           label="Stok Toko Offline"
           value={String(offlineStock)}
-          onChangeText={v =>
-            setOfflineStock(Number(v.replace(/[^0-9]/g, "")))
-          }
-          keyboardType="number-pad"
+          onChangeText={v => setOfflineStock(Number(v))}
+          numericOnly
         />
 
         <ComboInput
@@ -159,10 +157,8 @@ export default function MaterialVariantStockScreen() {
         <ThemedInput
           label="Minimum Stok"
           value={String(minStock)}
-          onChangeText={v =>
-            setMinStock(Number(v.replace(/[^0-9]/g, "")))
-          }
-          keyboardType="number-pad"
+          onChangeText={v => setMinStock(Number(v))}
+          numericOnly
         />
 
         <View style={styles.row}>

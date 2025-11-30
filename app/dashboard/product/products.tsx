@@ -3,16 +3,25 @@ import CategoryModal from "@/components/drawers/category-modal";
 import FilterProductModal from "@/components/drawers/filter-product-modal";
 import Header from "@/components/header";
 import ProductCard from "@/components/product-card";
-import { ThemedInput } from "@/components/themed-input";
-import { ThemedText } from "@/components/themed-text";
-import { Colors } from "@/constants/theme";
-import { useColorScheme } from "@/hooks/use-color-scheme";
-import { Ionicons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
-import React, { useState } from "react";
-import { StyleSheet, TouchableOpacity, View } from "react-native";
-import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+import {ThemedInput} from "@/components/themed-input";
+import {ThemedText} from "@/components/themed-text";
+import {Colors} from "@/constants/theme";
+import {useColorScheme} from "@/hooks/use-color-scheme";
+import {Ionicons} from "@expo/vector-icons";
+import {useRouter, useFocusEffect} from "expo-router";
+import React, {useState, useEffect, useCallback} from "react";
+import {
+  StyleSheet,
+  TouchableOpacity,
+  View,
+  ActivityIndicator,
+  Alert,
+} from "react-native";
+import {KeyboardAwareScrollView} from "react-native-keyboard-aware-scroll-view";
+import {useSafeAreaInsets} from "react-native-safe-area-context";
+import productApi from "@/services/endpoints/products";
+import categoryApi from "@/services/endpoints/categories";
+import {Product, Category} from "@/types/api";
 
 export default function ProductsScreen() {
   const colorScheme = useColorScheme() ?? "light";
@@ -24,71 +33,73 @@ export default function ProductsScreen() {
   const [search, setSearch] = useState("");
   const [isCategoryModalVisible, setIsCategoryModalVisible] = useState(false);
   const [isFilterModalVisible, setIsFilterModalVisible] = useState(false);
-  const [editingCategoryId, setEditingCategoryId] = useState<string | null>(null);
+  const [editingCategoryId, setEditingCategoryId] = useState<string | null>(
+    null
+  );
   const [editingCategoryName, setEditingCategoryName] = useState("");
   const [selectedCategoryIds, setSelectedCategoryIds] = useState<string[]>([]);
 
-  const [products] = useState(
-    [
-      {
-        id: "1",
-        name: "Aqua gelas",
-        price: "2000",
-        brand: "Qasir",
-        category: "minuman",
-        stock: 10,
-        variants: [],
-        favorite: true,
-        enableCostBarcode: true,
-        imageUri: null as string | null,
-        capitalPrice: 1000,
-        barcode: "1234567890",
-      },
-      {
-        id: "2",
-        name: "Nasi Goreng asdfasdsdfads asdfdasf",
-        price: "15000",
-        brand: "",
-        category: "makanan",
-        stock: 10,
-        variants: [
-          {
-            id: "1",
-            name: "Large",
-            price: "15000",
-            brand: "",
-            category: "makanan",
-            favorite: false,
-            enableCostBarcode: false,
-            imageUri: null as string | null,
-            capitalPrice: 0,
-            barcode: "",
-          },
-        ],
-        favorite: false,
-        enableCostBarcode: false,
-        imageUri: null as string | null,
-        capitalPrice: 0,
-        barcode: "",
-      },
-    ],
+  const [products, setProducts] = useState<Product[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [isLoadingProducts, setIsLoadingProducts] = useState(false);
+  const [isLoadingCategories, setIsLoadingCategories] = useState(false);
+
+  useEffect(() => {
+    loadCategories();
+  }, []);
+
+  // Reload products when screen gains focus (after add/edit)
+  useFocusEffect(
+    useCallback(() => {
+      loadProducts();
+    }, [search, selectedCategoryIds])
   );
 
-  const categories = [
-    { id: "umum", name: "Umum" },
-    { id: "makanan", name: "Makanan" },
-    { id: "minuman", name: "Minuman" },
-  ];
+  useEffect(() => {
+    // Re-fetch products when search or filter changes
+    const timer = setTimeout(() => {
+      loadProducts();
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [search, selectedCategoryIds]);
 
-  const filteredProducts = products.filter(product => {
-    const matchSearch = product.name
-      .toLowerCase()
-      .includes(search.toLowerCase());
-    const matchCategory =
-      selectedCategoryIds.length === 0 ||
-      selectedCategoryIds.includes(product.category);
-    return matchSearch && matchCategory;
-  });
+  const loadProducts = async () => {
+    try {
+      setIsLoadingProducts(true);
+      const params: any = {};
+      if (search) params.search = search;
+      if (selectedCategoryIds.length > 0) {
+        params.category_id = selectedCategoryIds[0]; // API mungkin hanya terima 1 kategori
+      }
+
+      const response = await productApi.getProducts(params);
+      if (response.data) {
+        setProducts(response.data);
+      }
+    } catch (error: any) {
+      console.error("Failed to load products:", error);
+      Alert.alert("Error", error.message || "Gagal memuat produk");
+    } finally {
+      setIsLoadingProducts(false);
+    }
+  };
+
+  const loadCategories = async () => {
+    try {
+      setIsLoadingCategories(true);
+      const response = await categoryApi.getCategories();
+      if (response.data) {
+        setCategories(response.data);
+      }
+    } catch (error: any) {
+      console.error("Failed to load categories:", error);
+      // Tidak perlu alert, karena kategori bukan fitur kritis
+    } finally {
+      setIsLoadingCategories(false);
+    }
+  };
+
+  const filteredProducts = products;
 
   const handleEditCategory = (categoryId: string) => {
     const found = categories.find(c => c.id === categoryId);
@@ -103,49 +114,30 @@ export default function ProductsScreen() {
     setIsCategoryModalVisible(true);
   };
 
-  const handleSubmitCategory = (name: string) => {
-    // TODO: Integrasikan dengan API / state nyata
-    console.log("Simpan kategori", { id: editingCategoryId, name });
-    setIsCategoryModalVisible(false);
+  const handleSubmitCategory = async (name: string) => {
+    try {
+      if (editingCategoryId) {
+        // Update existing category
+        await categoryApi.updateCategory(editingCategoryId, {name});
+        Alert.alert("Sukses", "Kategori berhasil diperbarui");
+      } else {
+        // Create new category
+        await categoryApi.createCategory({name});
+        Alert.alert("Sukses", "Kategori berhasil ditambahkan");
+      }
+      await loadCategories();
+      setIsCategoryModalVisible(false);
+    } catch (error: any) {
+      console.error("Failed to save category:", error);
+      Alert.alert("Error", error.message || "Gagal menyimpan kategori");
+    }
   };
 
-  const handlePressProduct = (product: {
-    id: string;
-    name: string;
-    price: string;
-    brand: string;
-    category: string;
-    favorite: boolean;
-    enableCostBarcode: boolean;
-    imageUri: string | null;
-    capitalPrice: number;
-    barcode: string;
-    variants?: {
-      id: string;
-      name: string;
-      price: string;
-      brand: string;
-      category: string;
-      favorite: boolean;
-      enableCostBarcode: boolean;
-      imageUri: string | null;
-      capitalPrice: number;
-      barcode: string;
-    }[];
-  }) => {
+  const handlePressProduct = (product: Product) => {
     router.push({
       pathname: "/dashboard/product/edit-product",
       params: {
         id: product.id,
-        name: product.name,
-        price: product.price,
-        brand: product.brand,
-        category: product.category,
-        favorite: String(product.favorite),
-        enableCostBarcode: String(product.enableCostBarcode),
-        imageUri: product.imageUri ?? "",
-        capitalPrice: String(product.capitalPrice),
-        barcode: product.barcode,
       },
     } as never);
   };
@@ -160,7 +152,7 @@ export default function ProductsScreen() {
   };
 
   return (
-    <View style={{ flex: 1, backgroundColor: Colors[colorScheme].background }}>
+    <View style={{flex: 1, backgroundColor: Colors[colorScheme].background}}>
       <Header title="Kelola Produk" showHelp={false} />
       <KeyboardAwareScrollView
         contentContainerStyle={{
@@ -183,8 +175,8 @@ export default function ProductsScreen() {
               style={[
                 styles.tabText,
                 activeTab === "produk"
-                  ? { color: Colors[colorScheme].primary }
-                  : { color: Colors[colorScheme].icon },
+                  ? {color: Colors[colorScheme].primary}
+                  : {color: Colors[colorScheme].icon},
               ]}
             >
               Produk
@@ -200,8 +192,8 @@ export default function ProductsScreen() {
               style={[
                 styles.tabText,
                 activeTab === "kategori"
-                  ? { color: Colors[colorScheme].primary }
-                  : { color: Colors[colorScheme].icon },
+                  ? {color: Colors[colorScheme].primary}
+                  : {color: Colors[colorScheme].icon},
               ]}
             >
               Kategori
@@ -218,7 +210,7 @@ export default function ProductsScreen() {
                 {/* PENTING: Gunakan View Wrapper dengan flex: 1 untuk Input 
                    Ini akan memaksa input mengisi sisa ruang kosong secara otomatis
                 */}
-                <View style={{ flex: 1 }}>
+                <View style={{flex: 1}}>
                   <ThemedInput
                     label="Cari Produk"
                     value={search}
@@ -243,35 +235,77 @@ export default function ProductsScreen() {
                 </TouchableOpacity>
               </View>
 
-              <View style={{ marginTop: 16 }}>
-                {filteredProducts.map(product => (
-                  <ProductCard
-                    key={product.id}
-                    initials={(product.name || "PR").slice(0, 2).toUpperCase()}
-                    name={product.name}
-                    variantCount={product.variants?.length ?? 0}
-                    stockCount={product.stock ?? 0}
-                    onPress={() => handlePressProduct(product)}
-                  />
-                ))}
+              <View style={{marginTop: 16}}>
+                {isLoadingProducts ? (
+                  <View style={{paddingVertical: 40, alignItems: "center"}}>
+                    <ActivityIndicator
+                      size="large"
+                      color={Colors[colorScheme].primary}
+                    />
+                  </View>
+                ) : filteredProducts.length === 0 ? (
+                  <View style={{paddingVertical: 40, alignItems: "center"}}>
+                    <ThemedText style={{color: Colors[colorScheme].icon}}>
+                      {search
+                        ? "Tidak ada produk ditemukan"
+                        : "Belum ada produk"}
+                    </ThemedText>
+                  </View>
+                ) : (
+                  filteredProducts.map(product => {
+                    // Ambil stock dari variant default
+                    const defaultVariant = product.variants?.find(
+                      (v: any) => v.is_default === true
+                    );
+                    const stockCount = defaultVariant?.stock ?? 0;
+
+                    return (
+                      <ProductCard
+                        key={product.id}
+                        initials={(product.name || "PR")
+                          .slice(0, 2)
+                          .toUpperCase()}
+                        name={product.name}
+                        variantCount={product.variants?.length ?? 0}
+                        stockCount={stockCount}
+                        onPress={() => handlePressProduct(product)}
+                      />
+                    );
+                  })
+                )}
               </View>
             </View>
           ) : (
-            <View style={{ marginTop: 20 }}>
-              {categories.map(category => (
-                <CategoryItem
-                  key={category.id}
-                  title={category.name}
-                  onEdit={() => handleEditCategory(category.id)}
-                />
-              ))}
+            <View style={{marginTop: 20}}>
+              {isLoadingCategories ? (
+                <View style={{paddingVertical: 40, alignItems: "center"}}>
+                  <ActivityIndicator
+                    size="large"
+                    color={Colors[colorScheme].primary}
+                  />
+                </View>
+              ) : categories.length === 0 ? (
+                <View style={{paddingVertical: 40, alignItems: "center"}}>
+                  <ThemedText style={{color: Colors[colorScheme].icon}}>
+                    Belum ada kategori
+                  </ThemedText>
+                </View>
+              ) : (
+                categories.map(category => (
+                  <CategoryItem
+                    key={category.id}
+                    title={category.name}
+                    onEdit={() => handleEditCategory(category.id)}
+                  />
+                ))
+              )}
             </View>
           )}
         </View>
       </KeyboardAwareScrollView>
 
       <TouchableOpacity
-        style={[styles.fab, { bottom: insets.bottom + 24 }]}
+        style={[styles.fab, {bottom: insets.bottom + 24}]}
         onPress={goAdd}
       >
         <Ionicons name="add" size={28} color={Colors[colorScheme].background} />

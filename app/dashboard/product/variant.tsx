@@ -1,18 +1,20 @@
 import ComboInput from "@/components/combo-input";
 import CostBarcodeFields from "@/components/cost-barcode-fields";
-import ConfirmationDialog, { ConfirmationDialogHandle } from "@/components/drawers/confirmation-dialog";
+import ConfirmationDialog, {
+  ConfirmationDialogHandle,
+} from "@/components/drawers/confirmation-dialog";
 import Header from "@/components/header";
 import MenuRow from "@/components/menu-row";
-import { ThemedButton } from "@/components/themed-button";
-import { ThemedInput } from "@/components/themed-input";
-import { Colors } from "@/constants/theme";
-import { useColorScheme } from "@/hooks/use-color-scheme";
-import { useProductFormStore } from "@/stores/product-form-store";
-import { useLocalSearchParams, useNavigation, useRouter } from "expo-router";
-import React, { useEffect, useRef, useState } from "react";
-import { StyleSheet, View } from "react-native";
-import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+import {ThemedButton} from "@/components/themed-button";
+import {ThemedInput} from "@/components/themed-input";
+import {Colors} from "@/constants/theme";
+import {useColorScheme} from "@/hooks/use-color-scheme";
+import {useProductFormStore} from "@/stores/product-form-store";
+import {useLocalSearchParams, useNavigation, useRouter} from "expo-router";
+import React, {useEffect, useRef, useState} from "react";
+import {StyleSheet, View} from "react-native";
+import {KeyboardAwareScrollView} from "react-native-keyboard-aware-scroll-view";
+import {useSafeAreaInsets} from "react-native-safe-area-context";
 
 export default function VariantScreen() {
   const colorScheme = useColorScheme() ?? "light";
@@ -61,7 +63,7 @@ export default function VariantScreen() {
   const [enableCostBarcode, setEnableCostBarcode] = useState(false);
   const [capitalPrice, setCapitalPrice] = useState(0);
   const [barcode, setBarcode] = useState("");
-  const [recipe, setRecipe] = useState("")
+  const [recipe, setRecipe] = useState("");
   const [stock, setStock] = useState<{
     offlineStock: number;
     unit: string;
@@ -73,9 +75,13 @@ export default function VariantScreen() {
   useEffect(() => {
     if (qsOfflineStock || qsUnit || qsMinStock || qsNotifyMin) {
       const parsed = {
-        offlineStock: qsOfflineStock ? Number(String(qsOfflineStock).replace(/[^0-9]/g, "")) : 0,
+        offlineStock: qsOfflineStock
+          ? Number(String(qsOfflineStock).replace(/[^0-9]/g, ""))
+          : 0,
         unit: qsUnit ? String(qsUnit) : "pcs",
-        minStock: qsMinStock ? Number(String(qsMinStock).replace(/[^0-9]/g, "")) : 0,
+        minStock: qsMinStock
+          ? Number(String(qsMinStock).replace(/[^0-9]/g, ""))
+          : 0,
         notifyMin: qsNotifyMin === "1" || qsNotifyMin === "true",
       };
       setStock(parsed);
@@ -89,7 +95,9 @@ export default function VariantScreen() {
         setEnableCostBarcode(String(qsEnableCostBarcode) === "true");
       }
       if (qsCapitalPrice) {
-        const parsedCapital = Number(String(qsCapitalPrice).replace(/[^0-9]/g, ""));
+        const parsedCapital = Number(
+          String(qsCapitalPrice).replace(/[^0-9]/g, "")
+        );
         if (!Number.isNaN(parsedCapital)) {
           setCapitalPrice(parsedCapital);
         }
@@ -127,13 +135,13 @@ export default function VariantScreen() {
         price: priceNum,
         ...(stock
           ? {
-            stock: {
-              count: stock.offlineStock,
-              unit: stock.unit,
-              minStock: stock.minStock,
-              notifyMin: stock.notifyMin,
-            },
-          }
+              stock: {
+                count: stock.offlineStock,
+                unit: stock.unit,
+                minStock: stock.minStock,
+                notifyMin: stock.notifyMin,
+              },
+            }
           : {}),
       },
     ]);
@@ -173,7 +181,7 @@ export default function VariantScreen() {
   }, [navigation, isDirty, isSubmit]);
 
   return (
-    <View style={{ flex: 1, backgroundColor: Colors[colorScheme].background }}>
+    <View style={{flex: 1, backgroundColor: Colors[colorScheme].background}}>
       <Header title="Variasi Produk" showHelp={false} />
       <KeyboardAwareScrollView
         contentContainerStyle={{
@@ -186,14 +194,19 @@ export default function VariantScreen() {
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
-        <View style={[styles.contentSection, { paddingVertical: 12 }]}>
-          <ThemedInput label="Nama Variasi" size="md" value={name} onChangeText={setName} />
+        <View style={[styles.contentSection, {paddingVertical: 12}]}>
+          <ThemedInput
+            label="Nama Variasi"
+            size="md"
+            value={name}
+            onChangeText={setName}
+          />
           <ThemedInput
             label="Harga Jual"
             value={price}
             size="md"
             onChangeText={setPrice}
-            keyboardType="number-pad"
+            numericOnly
           />
           <ComboInput
             label="Resep Produk"
@@ -201,9 +214,9 @@ export default function VariantScreen() {
             size="md"
             onChangeText={setRecipe}
             items={[
-              { label: "Pilih Resep", value: "" },
-              { label: "Tanpa Resep", value: "none" },
-              { label: "Resep Default", value: "default" },
+              {label: "Pilih Resep", value: ""},
+              {label: "Tanpa Resep", value: "none"},
+              {label: "Resep Default", value: "default"},
             ]}
           />
         </View>
@@ -227,8 +240,6 @@ export default function VariantScreen() {
               onBarcodeChange={setBarcode}
             />
           ) : null}
-
-
         </View>
 
         <View style={styles.sectionDivider} />
@@ -236,25 +247,29 @@ export default function VariantScreen() {
         <View style={styles.contentSection}>
           <MenuRow
             title="Kelola Stok"
-            rightText={stock ? `Stok Aktif (${stock.offlineStock} ${stock.unit})` : "Stok Tidak Aktif"}
+            rightText={
+              stock
+                ? `Stok Aktif (${stock.offlineStock} ${stock.unit})`
+                : "Stok Tidak Aktif"
+            }
             showBottomBorder={false}
             variant="link"
             onPress={() => {
               router.push({
                 pathname: "/dashboard/product/variant-stock",
                 params: {
-                  ...(qsFrom ? { from: String(qsFrom) } : {}),
-                  ...(name ? { name } : {}),
-                  ...(price ? { price } : {}),
-                  ...(capitalPrice ? { capitalPrice: String(capitalPrice) } : {}),
-                  ...(barcode ? { barcode } : {}),
+                  ...(qsFrom ? {from: String(qsFrom)} : {}),
+                  ...(name ? {name} : {}),
+                  ...(price ? {price} : {}),
+                  ...(capitalPrice ? {capitalPrice: String(capitalPrice)} : {}),
+                  ...(barcode ? {barcode} : {}),
                   ...(stock
                     ? {
-                      offlineStock: String(stock.offlineStock),
-                      unit: stock.unit,
-                      minStock: String(stock.minStock),
-                      notifyMin: stock.notifyMin ? "1" : "0",
-                    }
+                        offlineStock: String(stock.offlineStock),
+                        unit: stock.unit,
+                        minStock: String(stock.minStock),
+                        notifyMin: stock.notifyMin ? "1" : "0",
+                      }
                     : {}),
                 },
               } as never);
@@ -282,7 +297,6 @@ const createStyles = (colorScheme: "light" | "dark") =>
     },
     contentSection: {
       paddingHorizontal: 20,
-
     },
     bottomBar: {
       position: "absolute",

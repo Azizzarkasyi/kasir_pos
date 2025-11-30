@@ -100,6 +100,14 @@ export const authApi = {
   async setToken(token: string): Promise<void> {
     await apiService.setToken(token);
   },
+
+  /**
+   * Get user branches
+   */
+  async getUserBranches(): Promise<ApiResponse<any[]>> {
+    const response = await apiService.get<any[]>("/auth/branches");
+    return response;
+  },
 };
 
 export default authApi;

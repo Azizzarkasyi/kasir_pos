@@ -1,14 +1,14 @@
 import Header from "@/components/header";
-import { ThemedButton } from "@/components/themed-button";
-import { ThemedInput } from "@/components/themed-input";
-import { ThemedText } from "@/components/themed-text";
-import { Colors } from "@/constants/theme";
-import { useColorScheme } from "@/hooks/use-color-scheme";
-import { useLocalSearchParams, useRouter } from "expo-router";
-import React, { useState } from "react";
-import { Alert, StyleSheet, View } from "react-native";
-import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+import {ThemedButton} from "@/components/themed-button";
+import {ThemedInput} from "@/components/themed-input";
+import {ThemedText} from "@/components/themed-text";
+import {Colors} from "@/constants/theme";
+import {useColorScheme} from "@/hooks/use-color-scheme";
+import {useLocalSearchParams, useRouter} from "expo-router";
+import React, {useState} from "react";
+import {Alert, StyleSheet, View} from "react-native";
+import {KeyboardAwareScrollView} from "react-native-keyboard-aware-scroll-view";
+import {useSafeAreaInsets} from "react-native-safe-area-context";
 
 export default function EditEmployeeScreen() {
   const colorScheme = useColorScheme() ?? "light";
@@ -36,7 +36,7 @@ export default function EditEmployeeScreen() {
     }
 
     // TODO: Implement API call to update employee
-    console.log("Updating employee", { id: params.id, name, phone, email, pin });
+    console.log("Updating employee", {id: params.id, name, phone, email, pin});
     router.back();
   };
 
@@ -45,7 +45,7 @@ export default function EditEmployeeScreen() {
       "Hapus Pegawai",
       "Apakah Anda yakin ingin menghapus pegawai ini?",
       [
-        { text: "Batal", style: "cancel" },
+        {text: "Batal", style: "cancel"},
         {
           text: "Hapus",
           style: "destructive",
@@ -60,10 +60,10 @@ export default function EditEmployeeScreen() {
   };
 
   return (
-    <View style={{ flex: 1, backgroundColor: Colors[colorScheme].background }}>
+    <View style={{flex: 1, backgroundColor: Colors[colorScheme].background}}>
       <Header title="Edit Pegawai" showHelp={false} />
       <KeyboardAwareScrollView
-        contentContainerStyle={{ padding: 20, paddingBottom: 100 }}
+        contentContainerStyle={{padding: 20, paddingBottom: 100}}
         enableOnAndroid
       >
         <ThemedInput
@@ -71,7 +71,6 @@ export default function EditEmployeeScreen() {
           value={name}
           size="md"
           onChangeText={setName}
-
         />
         <ThemedInput
           label="No. Telepon"
@@ -79,10 +78,6 @@ export default function EditEmployeeScreen() {
           size="md"
           onChangeText={setPhone}
           keyboardType="phone-pad"
-<<<<<<< HEAD
-=======
-
->>>>>>> ef82adcc8c2efa6d1f9c70076fa07d497c8369dd
         />
         <ThemedInput
           label="Email"
@@ -90,10 +85,6 @@ export default function EditEmployeeScreen() {
           size="md"
           onChangeText={setEmail}
           keyboardType="email-address"
-<<<<<<< HEAD
-=======
-
->>>>>>> ef82adcc8c2efa6d1f9c70076fa07d497c8369dd
         />
 
         <View style={styles.divider} />
@@ -105,12 +96,7 @@ export default function EditEmployeeScreen() {
           size="md"
           onChangeText={setPin}
           isPassword
-<<<<<<< HEAD
-          keyboardType="numeric"          
-=======
           keyboardType="numeric"
-
->>>>>>> ef82adcc8c2efa6d1f9c70076fa07d497c8369dd
           maxLength={6}
         />
         <ThemedInput
@@ -119,17 +105,16 @@ export default function EditEmployeeScreen() {
           size="md"
           onChangeText={setConfirmPin}
           isPassword
-<<<<<<< HEAD
-          keyboardType="numeric"          
-=======
           keyboardType="numeric"
-
->>>>>>> ef82adcc8c2efa6d1f9c70076fa07d497c8369dd
           maxLength={6}
         />
 
-        <View style={{ marginTop: 24, gap: 12 }}>
-          <ThemedButton title="Simpan Perubahan" onPress={handleSave} size="medium" />
+        <View style={{marginTop: 24, gap: 12}}>
+          <ThemedButton
+            title="Simpan Perubahan"
+            onPress={handleSave}
+            size="medium"
+          />
           <ThemedButton
             title="Hapus Pegawai"
             variant="danger"

@@ -1,16 +1,18 @@
 import ComboInput from "@/components/combo-input";
-import ConfirmationDialog, { ConfirmationDialogHandle } from "@/components/drawers/confirmation-dialog";
+import ConfirmationDialog, {
+  ConfirmationDialogHandle,
+} from "@/components/drawers/confirmation-dialog";
 import Header from "@/components/header";
-import { ThemedButton } from "@/components/themed-button";
-import { ThemedInput } from "@/components/themed-input";
-import { Colors } from "@/constants/theme";
-import { useColorScheme } from "@/hooks/use-color-scheme";
-import { useRecipeFormStore } from "@/stores/recipe-form-store";
-import { useNavigation, useRouter } from "expo-router";
-import React, { useEffect, useRef, useState } from "react";
-import { StyleSheet, Text, View } from "react-native";
-import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+import {ThemedButton} from "@/components/themed-button";
+import {ThemedInput} from "@/components/themed-input";
+import {Colors} from "@/constants/theme";
+import {useColorScheme} from "@/hooks/use-color-scheme";
+import {useRecipeFormStore} from "@/stores/recipe-form-store";
+import {useNavigation, useRouter} from "expo-router";
+import React, {useEffect, useRef, useState} from "react";
+import {StyleSheet, Text, View} from "react-native";
+import {KeyboardAwareScrollView} from "react-native-keyboard-aware-scroll-view";
+import {useSafeAreaInsets} from "react-native-safe-area-context";
 
 type IngredientVariant = {
   id: string;
@@ -38,8 +40,13 @@ export default function IngredientsScreen() {
 
   const [ingredient, setIngredient] = useState("");
   const [quantity, setQuantity] = useState("");
-  const [selectedUnit, setSelectedUnit] = useState<{id: string; name: string} | null>(null);
-  const [availableVariants, setAvailableVariants] = useState<IngredientVariant[]>([]);
+  const [selectedUnit, setSelectedUnit] = useState<{
+    id: string;
+    name: string;
+  } | null>(null);
+  const [availableVariants, setAvailableVariants] = useState<
+    IngredientVariant[]
+  >([]);
   const [selectedVariantId, setSelectedVariantId] = useState<string>("");
 
   const ingredientOptions: IngredientOption[] = [
@@ -86,7 +93,9 @@ export default function IngredientsScreen() {
   };
 
   const handleSave = () => {
-    const selectedVariant = availableVariants.find(v => v.id === selectedVariantId);
+    const selectedVariant = availableVariants.find(
+      v => v.id === selectedVariantId
+    );
 
     const qtyNum = Number(String(quantity).replace(/[^0-9]/g, ""));
 
@@ -98,10 +107,10 @@ export default function IngredientsScreen() {
       ingredient: {
         id: ingredient,
         name: ingredient,
-        ...(selectedVariant ? { variant_id: selectedVariant.id } : {}),
+        ...(selectedVariant ? {variant_id: selectedVariant.id} : {}),
       },
       unit: selectedUnit
-        ? { id: selectedUnit.id, name: selectedUnit.name }
+        ? {id: selectedUnit.id, name: selectedUnit.name}
         : undefined,
       amount: qtyNum,
     });
@@ -109,9 +118,7 @@ export default function IngredientsScreen() {
     router.back();
   };
 
-  const isDirty =
-    ingredient.trim() !== "" ||
-    quantity.trim() !== "";
+  const isDirty = ingredient.trim() !== "" || quantity.trim() !== "";
 
   useEffect(() => {
     const sub = navigation.addListener("beforeRemove", e => {
@@ -160,13 +167,17 @@ export default function IngredientsScreen() {
           label="Pilih Bahan"
           value={ingredient}
           onChangeText={handleChangeIngredient}
-          items={ingredientOptions.map(opt => ({label: opt.label, value: opt.value}))}
+          items={ingredientOptions.map(opt => ({
+            label: opt.label,
+            value: opt.value,
+          }))}
         />
         {availableVariants.length > 1 && (
           <ComboInput
             label="Pilih Varian"
             value={
-              availableVariants.find(v => v.id === selectedVariantId)?.name ?? ""
+              availableVariants.find(v => v.id === selectedVariantId)?.name ??
+              ""
             }
             onChangeText={text => {
               const found = availableVariants.find(v => v.name === text);
@@ -177,9 +188,7 @@ export default function IngredientsScreen() {
         )}
         <View style={styles.quantityRow}>
           <View style={styles.unitBox}>
-            <Text style={styles.unitText}>
-              {selectedUnit?.name ?? "-"}
-            </Text>
+            <Text style={styles.unitText}>{selectedUnit?.name ?? "-"}</Text>
           </View>
 
           <View style={styles.quantityInputWrapper}>
@@ -187,7 +196,7 @@ export default function IngredientsScreen() {
               label="Jumlah Bahan"
               value={quantity}
               onChangeText={setQuantity}
-              keyboardType="number-pad"
+              numericOnly
             />
           </View>
         </View>

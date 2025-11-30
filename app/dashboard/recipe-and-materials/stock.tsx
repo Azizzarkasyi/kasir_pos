@@ -1,17 +1,19 @@
 import Checkbox from "@/components/checkbox";
 import ComboInput from "@/components/combo-input";
-import ConfirmationDialog, { ConfirmationDialogHandle } from "@/components/drawers/confirmation-dialog";
+import ConfirmationDialog, {
+  ConfirmationDialogHandle,
+} from "@/components/drawers/confirmation-dialog";
 import Header from "@/components/header";
-import { ThemedButton } from "@/components/themed-button";
-import { ThemedInput } from "@/components/themed-input";
-import { ThemedText } from "@/components/themed-text";
-import { Colors } from "@/constants/theme";
-import { useColorScheme } from "@/hooks/use-color-scheme";
-import { useNavigation, useRouter } from "expo-router";
-import React, { useEffect, useRef, useState } from "react";
-import { StyleSheet, View } from "react-native";
-import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+import {ThemedButton} from "@/components/themed-button";
+import {ThemedInput} from "@/components/themed-input";
+import {ThemedText} from "@/components/themed-text";
+import {Colors} from "@/constants/theme";
+import {useColorScheme} from "@/hooks/use-color-scheme";
+import {useNavigation, useRouter} from "expo-router";
+import React, {useEffect, useRef, useState} from "react";
+import {StyleSheet, View} from "react-native";
+import {KeyboardAwareScrollView} from "react-native-keyboard-aware-scroll-view";
+import {useSafeAreaInsets} from "react-native-safe-area-context";
 
 export default function StockSettingsScreen() {
   const colorScheme = useColorScheme() ?? "light";
@@ -28,14 +30,14 @@ export default function StockSettingsScreen() {
   const [notifyMin, setNotifyMin] = useState(false);
 
   const unitItems = [
-    { label: "Pcs", value: "pcs" },
-    { label: "Box", value: "box" },
-    { label: "Kg", value: "kg" },
-    { label: "L", value: "l" },
+    {label: "Pcs", value: "pcs"},
+    {label: "Box", value: "box"},
+    {label: "Kg", value: "kg"},
+    {label: "L", value: "l"},
   ];
 
   const handleSave = () => {
-    const payload = { offlineStock, unit, minStock, notifyMin };
+    const payload = {offlineStock, unit, minStock, notifyMin};
     console.log("Kelola stok", payload);
     router.back();
   };
@@ -68,14 +70,18 @@ export default function StockSettingsScreen() {
   }, [navigation, isDirty]);
 
   return (
-    <View style={{ flex: 1, backgroundColor: Colors[colorScheme].background }}>
+    <View style={{flex: 1, backgroundColor: Colors[colorScheme].background}}>
       <Header
         showHelp={false}
         title="Pengaturan Stok Bahan"
         withNotificationButton={false}
       />
       <KeyboardAwareScrollView
-        contentContainerStyle={{ paddingHorizontal: 20, paddingVertical: 32, paddingBottom: insets.bottom + 80 }}
+        contentContainerStyle={{
+          paddingHorizontal: 20,
+          paddingVertical: 32,
+          paddingBottom: insets.bottom + 80,
+        }}
         enableOnAndroid
         keyboardOpeningTime={0}
         extraScrollHeight={24}
@@ -85,8 +91,8 @@ export default function StockSettingsScreen() {
         <ThemedInput
           label="Stok "
           value={String(offlineStock)}
-          onChangeText={v => setOfflineStock(Number(v.replace(/[^0-9]/g, "")))}
-          keyboardType="number-pad"
+          onChangeText={v => setOfflineStock(Number(v))}
+          numericOnly
         />
 
         <ComboInput
@@ -99,15 +105,16 @@ export default function StockSettingsScreen() {
         <ThemedInput
           label="Minimum Stok"
           value={String(minStock)}
-          onChangeText={v => setMinStock(Number(v.replace(/[^0-9]/g, "")))}
-          keyboardType="number-pad"
+          onChangeText={v => setMinStock(Number(v))}
+          numericOnly
         />
 
         <View style={styles.row}>
           <Checkbox checked={notifyMin} onChange={setNotifyMin} />
-          <ThemedText style={styles.rowText}>Kirimkan notifikasi saat stok mencapai batas minimum</ThemedText>
+          <ThemedText style={styles.rowText}>
+            Kirimkan notifikasi saat stok mencapai batas minimum
+          </ThemedText>
         </View>
-
       </KeyboardAwareScrollView>
 
       <View style={styles.bottomBar}>

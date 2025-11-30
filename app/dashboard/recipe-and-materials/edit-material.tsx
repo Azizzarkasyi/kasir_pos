@@ -1,20 +1,22 @@
 import VariantItem from "@/components/atoms/variant-item";
-import ConfirmationDialog, { ConfirmationDialogHandle } from "@/components/drawers/confirmation-dialog";
+import ConfirmationDialog, {
+  ConfirmationDialogHandle,
+} from "@/components/drawers/confirmation-dialog";
 import Header from "@/components/header";
 import ImageUpload from "@/components/image-upload";
 import MenuRow from "@/components/menu-row";
 import MerkPicker from "@/components/mollecules/merk-picker";
-import { ThemedButton } from "@/components/themed-button";
-import { ThemedInput } from "@/components/themed-input";
-import { ThemedText } from "@/components/themed-text";
-import { Colors } from "@/constants/theme";
-import { useColorScheme } from "@/hooks/use-color-scheme";
-import { useProductFormStore } from "@/stores/product-form-store";
-import { useLocalSearchParams, useNavigation, useRouter } from "expo-router";
-import React, { useEffect, useRef } from "react";
-import { StyleSheet, View } from "react-native";
-import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+import {ThemedButton} from "@/components/themed-button";
+import {ThemedInput} from "@/components/themed-input";
+import {ThemedText} from "@/components/themed-text";
+import {Colors} from "@/constants/theme";
+import {useColorScheme} from "@/hooks/use-color-scheme";
+import {useProductFormStore} from "@/stores/product-form-store";
+import {useLocalSearchParams, useNavigation, useRouter} from "expo-router";
+import React, {useEffect, useRef} from "react";
+import {StyleSheet, View} from "react-native";
+import {KeyboardAwareScrollView} from "react-native-keyboard-aware-scroll-view";
+import {useSafeAreaInsets} from "react-native-safe-area-context";
 
 export default function EditMaterialScreen() {
   const colorScheme = useColorScheme() ?? "light";
@@ -82,12 +84,26 @@ export default function EditMaterialScreen() {
         }
       } catch {}
     }
-  }, [paramName, paramBrand, paramImageUri, paramCapitalPrice, paramVariants, setName, setBrand, setImageUri, setCapitalPrice, setVariants]);
+  }, [
+    paramName,
+    paramBrand,
+    paramImageUri,
+    paramCapitalPrice,
+    paramVariants,
+    setName,
+    setBrand,
+    setImageUri,
+    setCapitalPrice,
+    setVariants,
+  ]);
 
   React.useEffect(() => {
     if (variant_name && variant_price) {
       const priceNum = Number(String(variant_price).replace(/[^0-9]/g, ""));
-      setVariants(prev => [...prev, { name: String(variant_name), price: priceNum }]);
+      setVariants(prev => [
+        ...prev,
+        {name: String(variant_name), price: priceNum},
+      ]);
       router.replace("/dashboard/recipe-and-materials/edit-material" as never);
     }
   }, [variant_name, variant_price, router]);
@@ -138,7 +154,7 @@ export default function EditMaterialScreen() {
   };
 
   return (
-    <View style={{ flex: 1, backgroundColor: Colors[colorScheme].background }}>
+    <View style={{flex: 1, backgroundColor: Colors[colorScheme].background}}>
       <Header
         showHelp={false}
         title="Edit Bahan"
@@ -163,9 +179,13 @@ export default function EditMaterialScreen() {
           }}
         />
 
-        <View style={{ height: 24 }} />
-        <View style={styles.rowSection} >
-          <ThemedInput label="Nama Produk" value={name} onChangeText={setName} />
+        <View style={{height: 24}} />
+        <View style={styles.rowSection}>
+          <ThemedInput
+            label="Nama Produk"
+            value={name}
+            onChangeText={setName}
+          />
 
           <MerkPicker
             label="Pilih Merk"
@@ -177,12 +197,8 @@ export default function EditMaterialScreen() {
           <ThemedInput
             label="Harga Modal"
             value={String(capitalPrice)}
-            onChangeText={v =>
-              setCapitalPrice(
-                Number((v || "").replace(/[^0-9]/g, "")),
-              )
-            }
-            keyboardType="number-pad"
+            onChangeText={v => setCapitalPrice(Number(v))}
+            numericOnly
             placeholder="Harga Modal"
             placeholderTextColor={Colors[colorScheme].icon}
             inputContainerStyle={{
@@ -190,8 +206,6 @@ export default function EditMaterialScreen() {
             }}
           />
         </View>
-
-
 
         <View style={styles.sectionDivider} />
 
@@ -230,13 +244,10 @@ export default function EditMaterialScreen() {
             title="Tambah Varian"
             variant="secondary"
             onPress={() =>
-              router.push(
-                "/dashboard/recipe-and-materials/variant" as never,
-              )
+              router.push("/dashboard/recipe-and-materials/variant" as never)
             }
           />
         </View>
-
       </KeyboardAwareScrollView>
 
       <View style={styles.bottomBar}>
