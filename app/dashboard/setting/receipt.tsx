@@ -1,19 +1,25 @@
 import HelpPopup from "@/components/atoms/help-popup";
 import Header from "@/components/header";
 import ImageUpload from "@/components/image-upload";
-import { ThemedButton } from "@/components/themed-button";
-import { ThemedInput } from "@/components/themed-input";
-import { ThemedText } from "@/components/themed-text";
-import { Colors } from "@/constants/theme";
-import { useColorScheme } from "@/hooks/use-color-scheme";
-import { Ionicons } from "@expo/vector-icons";
-import { useNavigation } from "@react-navigation/native";
-import { useRouter } from "expo-router";
-import React, { useEffect, useState } from "react";
-import { StyleSheet, TouchableOpacity, View, Alert, ActivityIndicator } from "react-native";
-import { ScrollView } from "react-native-gesture-handler";
-import { settingsApi, StruckConfig } from "@/services";
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import {ThemedButton} from "@/components/themed-button";
+import {ThemedInput} from "@/components/themed-input";
+import {ThemedText} from "@/components/themed-text";
+import {Colors} from "@/constants/theme";
+import {useColorScheme} from "@/hooks/use-color-scheme";
+import {Ionicons} from "@expo/vector-icons";
+import {useNavigation} from "@react-navigation/native";
+import {useRouter} from "expo-router";
+import React, {useEffect, useState} from "react";
+import {
+  StyleSheet,
+  TouchableOpacity,
+  View,
+  Alert,
+  ActivityIndicator,
+} from "react-native";
+import {ScrollView} from "react-native-gesture-handler";
+import {settingsApi, StruckConfig} from "@/services";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export default function ReceiptSettingScreen() {
   const colorScheme = useColorScheme() ?? "light";
@@ -37,13 +43,18 @@ export default function ReceiptSettingScreen() {
   const loadBranchAndConfig = async () => {
     try {
       // Get current branch ID from storage or login data
-      const branchIdFromStorage = await AsyncStorage.getItem('current_branch_id');
+      const branchIdFromStorage = await AsyncStorage.getItem(
+        "current_branch_id"
+      );
       if (branchIdFromStorage) {
         setBranchId(branchIdFromStorage);
         await loadStruckConfig(branchIdFromStorage);
       } else {
         // TODO: Jika tidak ada branch, tampilkan error atau redirect
-        Alert.alert("Error", "Branch tidak ditemukan. Silakan pilih branch terlebih dahulu.");
+        Alert.alert(
+          "Error",
+          "Branch tidak ditemukan. Silakan pilih branch terlebih dahulu."
+        );
       }
     } catch (error) {
       console.error("❌ Failed to load branch:", error);
@@ -86,7 +97,10 @@ export default function ReceiptSettingScreen() {
       loadStruckConfig(branchId);
     } catch (error: any) {
       console.error("❌ Failed to save struck config:", error);
-      Alert.alert("Gagal", error.message || "Gagal menyimpan konfigurasi struk");
+      Alert.alert(
+        "Gagal",
+        error.message || "Gagal menyimpan konfigurasi struk"
+      );
     } finally {
       setIsSaving(false);
     }
@@ -107,7 +121,12 @@ export default function ReceiptSettingScreen() {
 
   if (isLoading) {
     return (
-      <View style={[styles.container, { justifyContent: "center", alignItems: "center" }]}>
+      <View
+        style={[
+          styles.container,
+          {justifyContent: "center", alignItems: "center"},
+        ]}
+      >
         <ActivityIndicator size="large" color={Colors[colorScheme].primary} />
       </View>
     );
@@ -184,10 +203,14 @@ export default function ReceiptSettingScreen() {
 
         <TouchableOpacity
           style={styles.sectionCardHighlight}
-          onPress={() => router.push("/dashboard/setting/order-receipt" as never)}
+          onPress={() =>
+            router.push("/dashboard/setting/order-receipt" as never)
+          }
         >
           <View style={{flex: 1}}>
-            <ThemedText style={{fontWeight: "600", fontSize: 16}}>Ingin Pengaturan Tambahan?</ThemedText>
+            <ThemedText style={{fontWeight: "600", fontSize: 16}}>
+              Ingin Pengaturan Tambahan?
+            </ThemedText>
             <ThemedText style={styles.extraDescription}>
               Kamu akan lebih leluasa mengatur struk sesuai keinginanmu.
             </ThemedText>
@@ -202,8 +225,8 @@ export default function ReceiptSettingScreen() {
         </TouchableOpacity>
 
         <View style={styles.bottomButtonWrapper}>
-          <ThemedButton 
-            title={isSaving ? "Menyimpan..." : "Simpan"} 
+          <ThemedButton
+            title={isSaving ? "Menyimpan..." : "Simpan"}
             onPress={handleSave}
             disabled={isSaving}
           />
@@ -284,7 +307,7 @@ const createStyles = (colorScheme: "light" | "dark") =>
       color: Colors[colorScheme].icon,
       marginTop: 4,
       fontSize: 12,
-      lineHeight: 16
+      lineHeight: 16,
     },
     bottomButtonWrapper: {
       position: "absolute",

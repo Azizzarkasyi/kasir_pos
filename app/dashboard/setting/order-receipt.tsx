@@ -1,14 +1,14 @@
 import Header from "@/components/header";
-import { ThemedButton } from "@/components/themed-button";
-import { ThemedInput } from "@/components/themed-input";
-import { ThemedText } from "@/components/themed-text";
-import { Colors } from "@/constants/theme";
-import { useColorScheme } from "@/hooks/use-color-scheme";
-import React, { useEffect, useState } from "react";
-import { StyleSheet, Switch, View, Alert, ActivityIndicator } from "react-native";
-import { ScrollView } from "react-native-gesture-handler";
-import { settingsApi, StruckConfig } from "@/services";
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import {ThemedButton} from "@/components/themed-button";
+import {ThemedInput} from "@/components/themed-input";
+import {ThemedText} from "@/components/themed-text";
+import {Colors} from "@/constants/theme";
+import {useColorScheme} from "@/hooks/use-color-scheme";
+import React, {useEffect, useState} from "react";
+import {StyleSheet, Switch, View, Alert, ActivityIndicator} from "react-native";
+import {ScrollView} from "react-native-gesture-handler";
+import {settingsApi, StruckConfig} from "@/services";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export default function OrderReceiptSettingScreen() {
   const colorScheme = useColorScheme() ?? "light";
@@ -23,7 +23,7 @@ export default function OrderReceiptSettingScreen() {
 
   const [headerDesc, setHeaderDesc] = useState("");
   const [footerDesc, setFooterDesc] = useState("");
-  
+
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [branchId, setBranchId] = useState<string>("");
@@ -34,12 +34,17 @@ export default function OrderReceiptSettingScreen() {
 
   const loadBranchAndConfig = async () => {
     try {
-      const branchIdFromStorage = await AsyncStorage.getItem('current_branch_id');
+      const branchIdFromStorage = await AsyncStorage.getItem(
+        "current_branch_id"
+      );
       if (branchIdFromStorage) {
         setBranchId(branchIdFromStorage);
         await loadStruckConfig(branchIdFromStorage);
       } else {
-        Alert.alert("Error", "Branch tidak ditemukan. Silakan pilih branch terlebih dahulu.");
+        Alert.alert(
+          "Error",
+          "Branch tidak ditemukan. Silakan pilih branch terlebih dahulu."
+        );
       }
     } catch (error) {
       console.error("❌ Failed to load branch:", error);
@@ -91,7 +96,10 @@ export default function OrderReceiptSettingScreen() {
       loadStruckConfig(branchId);
     } catch (error: any) {
       console.error("❌ Failed to save struck config:", error);
-      Alert.alert("Gagal", error.message || "Gagal menyimpan konfigurasi struk");
+      Alert.alert(
+        "Gagal",
+        error.message || "Gagal menyimpan konfigurasi struk"
+      );
     } finally {
       setIsSaving(false);
     }
@@ -99,7 +107,12 @@ export default function OrderReceiptSettingScreen() {
 
   if (isLoading) {
     return (
-      <View style={[styles.container, { justifyContent: "center", alignItems: "center" }]}>
+      <View
+        style={[
+          styles.container,
+          {justifyContent: "center", alignItems: "center"},
+        ]}
+      >
         <ActivityIndicator size="large" color={Colors[colorScheme].primary} />
       </View>
     );
@@ -113,7 +126,6 @@ export default function OrderReceiptSettingScreen() {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.sectionCard}>
-    
           <SettingRow
             label="Tampilkan penomoran"
             value={displayRunningNumbers}
@@ -142,7 +154,7 @@ export default function OrderReceiptSettingScreen() {
         </View>
 
         <View style={styles.sectionCard}>
-          <ThemedText type="subtitle-2" style={{ marginBottom: 8 }}>
+          <ThemedText type="subtitle-2" style={{marginBottom: 8}}>
             Keterangan Struk
           </ThemedText>
           <ThemedInput
@@ -158,8 +170,8 @@ export default function OrderReceiptSettingScreen() {
         </View>
 
         <View style={styles.bottomButtonWrapper}>
-          <ThemedButton 
-            title={isSaving ? "Menyimpan..." : "Simpan"} 
+          <ThemedButton
+            title={isSaving ? "Menyimpan..." : "Simpan"}
             onPress={handleSave}
             disabled={isSaving}
           />
@@ -175,7 +187,7 @@ type RowProps = {
   onValueChange: (val: boolean) => void;
 };
 
-const SettingRow: React.FC<RowProps> = ({ label, value, onValueChange }) => {
+const SettingRow: React.FC<RowProps> = ({label, value, onValueChange}) => {
   const colorScheme = useColorScheme() ?? "light";
   return (
     <View

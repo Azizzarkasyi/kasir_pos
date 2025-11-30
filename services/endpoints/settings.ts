@@ -184,8 +184,8 @@ export const settingsApi = {
   /**
    * Get last sync time
    */
-  async getLastSyncTime(): Promise<ApiResponse<{ last_sync: string }>> {
-    const response = await apiService.get<{ last_sync: string }>('/sync/last');
+  async getLastSyncTime(): Promise<ApiResponse<{last_sync: string}>> {
+    const response = await apiService.get<{last_sync: string}>("/sync/last");
     return response;
   },
 
@@ -193,15 +193,23 @@ export const settingsApi = {
    * Get struck config for branch
    */
   async getStruckConfig(branchId: string): Promise<ApiResponse<StruckConfig>> {
-    const response = await apiService.get<StruckConfig>(`/setting/struck/${branchId}`);
+    const response = await apiService.get<StruckConfig>(
+      `/setting/struck/${branchId}`
+    );
     return response;
   },
 
   /**
    * Update struck config for branch
    */
-  async updateStruckConfig(branchId: string, data: UpdateStruckConfigRequest): Promise<ApiResponse<StruckConfig>> {
-    const response = await apiService.put<StruckConfig>(`/setting/struck/${branchId}`, data);
+  async updateStruckConfig(
+    branchId: string,
+    data: UpdateStruckConfigRequest
+  ): Promise<ApiResponse<StruckConfig>> {
+    const response = await apiService.put<StruckConfig>(
+      `/setting/struck/${branchId}`,
+      data
+    );
     return response;
   },
 };

@@ -2,13 +2,13 @@ import CountryCodePicker from "@/components/country-code-picker";
 import Header from "@/components/header";
 import Logo from "@/components/logo";
 import SplashScreen from "@/components/splash-screen";
-import { ThemedButton } from "@/components/themed-button";
-import { ThemedInput } from "@/components/themed-input";
-import { ThemedText } from "@/components/themed-text";
-import { Colors } from "@/constants/theme";
-import { useColorScheme } from "@/hooks/use-color-scheme";
-import { useRouter } from "expo-router";
-import React, { useState } from "react";
+import {ThemedButton} from "@/components/themed-button";
+import {ThemedInput} from "@/components/themed-input";
+import {ThemedText} from "@/components/themed-text";
+import {Colors} from "@/constants/theme";
+import {useColorScheme} from "@/hooks/use-color-scheme";
+import {useRouter} from "expo-router";
+import React, {useState} from "react";
 import {
   Keyboard,
   Platform,
@@ -16,8 +16,8 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+import {KeyboardAwareScrollView} from "react-native-keyboard-aware-scroll-view";
+import {useSafeAreaInsets} from "react-native-safe-area-context";
 
 export default function LoginScreen() {
   const colorScheme = useColorScheme() ?? "light";
@@ -73,30 +73,39 @@ export default function LoginScreen() {
 
       try {
         // C. Proses Login dengan API
-        console.log("🔄 Attempting login with:", credential, "isPhone:", isPhoneLogin);
-        
+        console.log(
+          "🔄 Attempting login with:",
+          credential,
+          "isPhone:",
+          isPhoneLogin
+        );
+
         // Import authApi di bagian atas file
-        const { authApi } = await import("@/services");
-        
+        const {authApi} = await import("@/services");
+
         const result = await authApi.login(credential, pin, isPhoneLogin);
-        
+
         console.log("✅ Login success:", result);
-        
+
         // Save branch ID to AsyncStorage for struk config
         if (result.branch?.id) {
-          const AsyncStorage = await import('@react-native-async-storage/async-storage');
-          await AsyncStorage.default.setItem('current_branch_id', result.branch.id);
+          const AsyncStorage = await import(
+            "@react-native-async-storage/async-storage"
+          );
+          await AsyncStorage.default.setItem(
+            "current_branch_id",
+            result.branch.id
+          );
         }
-        
+
         // D. Navigate ke dashboard jika berhasil
         setIsLoggingIn(false);
         router.replace("/dashboard/home" as never);
-        
       } catch (error: any) {
         console.error("❌ Login failed:", error);
-        
+
         setIsLoggingIn(false);
-        
+
         // Tampilkan error ke user
         if (error.code === 401) {
           setPinError("No. Handphone atau PIN salah");
