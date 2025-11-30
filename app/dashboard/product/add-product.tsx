@@ -220,7 +220,8 @@ export default function AddProductScreen() {
         }
       }
 
-      // Variants
+      // Variants - hanya kirim jika ada variant tambahan
+      // Backend akan otomatis membuat variant "Regular" sebagai default dari data product level
       if (variants && variants.length > 0) {
         payload.variants = variants.map(v => {
           const variantData: any = {
@@ -246,6 +247,8 @@ export default function AddProductScreen() {
           return variantData;
         });
       }
+      // Jika tidak ada variant tambahan, jangan kirim field variants
+      // Backend akan otomatis membuat variant default "Regular"
 
       console.log("=== CREATE PRODUCT PAYLOAD ===");
       console.log("Name:", payload.name);
