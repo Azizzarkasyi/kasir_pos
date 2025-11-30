@@ -56,10 +56,26 @@ export default function LoginScreen() {
           : "Email tidak boleh kosong"
       );
       valid = false;
+    } else if (!isPhoneLogin) {
+      // Validasi format email jika login dengan email
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(credential)) {
+        setCredentialError("Format email tidak valid");
+        valid = false;
+      }
+    } else if (isPhoneLogin) {
+      // Validasi format phone minimal 10 digit
+      if (credential.length < 10) {
+        setCredentialError("No. Handphone minimal 10 digit");
+        valid = false;
+      }
     }
 
     if (pin.trim() === "") {
       setPinError("PIN tidak boleh kosong");
+      valid = false;
+    } else if (pin.length < 6) {
+      setPinError("PIN minimal 6 digit");
       valid = false;
     }
 
