@@ -65,6 +65,18 @@ export default function RootLayout() {
           options={{ headerShown: false, title: "Pilih Outlet" }}
         />
         <Stack.Screen
+          name="dashboard/outlet/index"
+          options={{ headerShown: false, title: "Pilih Outlet" }}
+        />
+        <Stack.Screen
+          name="dashboard/outlet/add"
+          options={{ headerShown: false, title: "Tambah Outlet" }}
+        />
+        <Stack.Screen
+          name="dashboard/outlet/edit"
+          options={{ headerShown: false, title: "Ubah Outlet" }}
+        />
+        <Stack.Screen
           name="dashboard/product/products"
           options={{ headerShown: false, title: "Produk" }}
         />

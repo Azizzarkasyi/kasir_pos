@@ -4,6 +4,7 @@ import { ThemedText } from "@/components/themed-text";
 import { Colors } from "@/constants/theme";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { AntDesign, Ionicons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
 import React from "react";
 import { StyleSheet, TextInput, TouchableOpacity, View } from "react-native";
 
@@ -12,11 +13,12 @@ type OutletItemProps = {
   isPrimary?: boolean;
   address: string;
   styles: ReturnType<typeof createStyles>;
+  onPress?: () => void;
 };
 
-const OutletItem: React.FC<OutletItemProps> = ({ name, isPrimary, address, styles }) => {
+const OutletItem: React.FC<OutletItemProps> = ({ name, isPrimary, address, styles, onPress }) => {
   return (
-    <TouchableOpacity activeOpacity={0.7} style={styles.outletCard}>
+    <TouchableOpacity activeOpacity={0.7} style={styles.outletCard} onPress={onPress}>
       <View style={styles.outletIconWrapper}>
         <AntDesign name="shop" size={24} style={styles.outletIcon} />
       </View>
@@ -40,6 +42,7 @@ const SelectBranchScreen = () => {
   const colorScheme = useColorScheme() ?? "light";
   const styles = createStyles(colorScheme);
   const [isSearchFocused, setIsSearchFocused] = React.useState(false);
+  const router = useRouter();
 
   return (
     <View style={styles.container}>
@@ -70,7 +73,16 @@ const SelectBranchScreen = () => {
         isPrimary
         address="Arjowinangun, Kalipare, Kab. Malang"
         styles={styles}
+        onPress={() => router.push("/dashboard/outlet/edit" as never)}
       />
+
+      <TouchableOpacity
+        activeOpacity={0.8}
+        style={styles.fab}
+        onPress={() => router.push("/dashboard/outlet/add" as never)}
+      >
+        <AntDesign name="plus" size={24} style={styles.fabIcon} />
+      </TouchableOpacity>
     </View>
   );
 };
@@ -154,6 +166,25 @@ const createStyles = (colorScheme: "light" | "dark") =>
     outletAddress: {
       fontSize: 12,
       color: Colors[colorScheme].icon,
+    },
+    fab: {
+      position: "absolute",
+      right: 24,
+      bottom: 24,
+      width: 56,
+      height: 56,
+      borderRadius: 28,
+      alignItems: "center",
+      justifyContent: "center",
+      backgroundColor: Colors[colorScheme].primary,
+      shadowColor: Colors[colorScheme].shadow,
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.5,
+      shadowRadius: 6,
+      elevation: 6,
+    },
+    fabIcon: {
+      color: "white",
     },
   });
 

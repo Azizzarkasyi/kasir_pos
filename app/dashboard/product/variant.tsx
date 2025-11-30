@@ -1,3 +1,4 @@
+import ComboInput from "@/components/combo-input";
 import CostBarcodeFields from "@/components/cost-barcode-fields";
 import ConfirmationDialog, { ConfirmationDialogHandle } from "@/components/drawers/confirmation-dialog";
 import Header from "@/components/header";
@@ -60,6 +61,7 @@ export default function VariantScreen() {
   const [enableCostBarcode, setEnableCostBarcode] = useState(false);
   const [capitalPrice, setCapitalPrice] = useState(0);
   const [barcode, setBarcode] = useState("");
+  const [recipe, setRecipe] = useState("")
   const [stock, setStock] = useState<{
     offlineStock: number;
     unit: string;
@@ -125,13 +127,13 @@ export default function VariantScreen() {
         price: priceNum,
         ...(stock
           ? {
-              stock: {
-                count: stock.offlineStock,
-                unit: stock.unit,
-                minStock: stock.minStock,
-                notifyMin: stock.notifyMin,
-              },
-            }
+            stock: {
+              count: stock.offlineStock,
+              unit: stock.unit,
+              minStock: stock.minStock,
+              notifyMin: stock.notifyMin,
+            },
+          }
           : {}),
       },
     ]);
@@ -193,6 +195,17 @@ export default function VariantScreen() {
             onChangeText={setPrice}
             keyboardType="number-pad"
           />
+          <ComboInput
+            label="Resep Produk"
+            value={recipe}
+            size="md"
+            onChangeText={setRecipe}
+            items={[
+              { label: "Pilih Resep", value: "" },
+              { label: "Tanpa Resep", value: "none" },
+              { label: "Resep Default", value: "default" },
+            ]}
+          />
         </View>
 
         <View style={styles.sectionDivider} />
@@ -237,11 +250,11 @@ export default function VariantScreen() {
                   ...(barcode ? { barcode } : {}),
                   ...(stock
                     ? {
-                        offlineStock: String(stock.offlineStock),
-                        unit: stock.unit,
-                        minStock: String(stock.minStock),
-                        notifyMin: stock.notifyMin ? "1" : "0",
-                      }
+                      offlineStock: String(stock.offlineStock),
+                      unit: stock.unit,
+                      minStock: String(stock.minStock),
+                      notifyMin: stock.notifyMin ? "1" : "0",
+                    }
                     : {}),
                 },
               } as never);
