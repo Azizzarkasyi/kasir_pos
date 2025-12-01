@@ -11,10 +11,12 @@ import {ThemedInput} from "@/components/themed-input";
 import {ThemedText} from "@/components/themed-text";
 import {Colors} from "@/constants/theme";
 import {useColorScheme} from "@/hooks/use-color-scheme";
+import productApi from "@/services/endpoints/products";
+import {Product} from "@/types/api";
 import {useProductFormStore} from "@/stores/product-form-store";
 import {useLocalSearchParams, useNavigation, useRouter} from "expo-router";
-import React, {useEffect, useRef} from "react";
-import {StyleSheet, View} from "react-native";
+import React, {useEffect, useRef, useState} from "react";
+import {ActivityIndicator, Alert, StyleSheet, View} from "react-native";
 import {KeyboardAwareScrollView} from "react-native-keyboard-aware-scroll-view";
 import {useSafeAreaInsets} from "react-native-safe-area-context";
 
@@ -26,18 +28,23 @@ export default function EditMaterialScreen() {
   const navigation = useNavigation();
 
   const confirmationRef = useRef<ConfirmationDialogHandle | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
 
   const {
     name,
+    price,
     brand,
     imageUri,
     capitalPrice,
     variants,
     setName,
+    setPrice,
     setBrand,
     setImageUri,
     setCapitalPrice,
     setVariants,
+    reset,
   } = useProductFormStore(state => state);
 
   const {
@@ -60,42 +67,38 @@ export default function EditMaterialScreen() {
     variant_price?: string;
   }>();
 
+  // Load material data from API
   useEffect(() => {
-    if (paramName !== undefined) {
-      setName(String(paramName));
-    }
-    if (paramBrand !== undefined) {
-      setBrand(String(paramBrand));
-    }
-    if (paramImageUri !== undefined && paramImageUri !== "") {
-      setImageUri(String(paramImageUri));
-    }
-    if (paramCapitalPrice !== undefined) {
-      const parsed = Number(String(paramCapitalPrice).replace(/[^0-9]/g, ""));
-      if (!Number.isNaN(parsed)) {
-        setCapitalPrice(parsed);
+    const loadMaterial = async () => {
+      if (!id) {
+        setIsLoading(false);
+        return;
       }
-    }
-    if (paramVariants) {
+
       try {
-        const parsed = JSON.parse(String(paramVariants));
-        if (Array.isArray(parsed)) {
-          setVariants(() => parsed);
+        setIsLoading(true);
+        const response = await productApi.getProduct(id);
+
+        if (response.data) {
+          const product = response.data;
+          setName(product.name);
+          setPrice(String(product.price));
+          if (product.merk_id) setBrand(product.merk_id);
+          if (product.photo_url) setImageUri(product.photo_url);
+          if (product.capital_price) setCapitalPrice(product.capital_price);
+
+          console.log("✅ Material loaded:", product);
         }
-      } catch {}
-    }
-  }, [
-    paramName,
-    paramBrand,
-    paramImageUri,
-    paramCapitalPrice,
-    paramVariants,
-    setName,
-    setBrand,
-    setImageUri,
-    setCapitalPrice,
-    setVariants,
-  ]);
+      } catch (error: any) {
+        console.error("❌ Failed to load material:", error);
+        Alert.alert("Error", "Gagal memuat data bahan");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadMaterial();
+  }, [id]);
 
   React.useEffect(() => {
     if (variant_name && variant_price) {
@@ -141,17 +144,84 @@ export default function EditMaterialScreen() {
 
   const formatIDR = (n: number) => new Intl.NumberFormat("id-ID").format(n);
 
-  const handleSave = () => {
-    const payload = {
-      name,
-      brand,
-      imageUri,
-      capitalPrice,
-      variants,
-    };
-    console.log("Tambah produk", payload);
-    router.back();
+  const handleSave = async () => {
+    if (!id) {
+      Alert.alert("Error", "ID bahan tidak ditemukan");
+      return;
+    }
+
+    if (!name.trim()) {
+      Alert.alert("Error", "Nama bahan harus diisi");
+      return;
+    }
+
+    const cleanPrice = String(price).replace(/[^0-9]/g, "");
+    const numericPrice = Number(cleanPrice);
+
+    if (!cleanPrice || numericPrice <= 0) {
+      Alert.alert("Error", "Harga jual harus lebih dari 0");
+      return;
+    }
+
+    if (!brand || brand.length < 10 || !brand.startsWith("cm")) {
+      Alert.alert("Error", "Merk harus dipilih");
+      return;
+    }
+
+    try {
+      setIsSaving(true);
+
+      const payload: any = {
+        name: name.trim(),
+        price: numericPrice,
+        merk_id: brand,
+        is_ingredient: true,
+      };
+
+      if (imageUri) payload.photo_url = imageUri;
+      if (capitalPrice > 0) payload.capital_price = capitalPrice;
+
+      console.log("📦 Updating material:", payload);
+
+      const response = await productApi.updateProduct(id, payload);
+
+      if (response.data) {
+        console.log("✅ Material updated successfully:", response.data);
+        Alert.alert("Sukses", "Bahan berhasil diperbarui", [
+          {
+            text: "OK",
+            onPress: () => {
+              reset();
+              router.back();
+            },
+          },
+        ]);
+      }
+    } catch (error: any) {
+      console.error("❌ Failed to update material:", error);
+      Alert.alert("Error", error.message || "Gagal memperbarui bahan");
+    } finally {
+      setIsSaving(false);
+    }
   };
+
+  if (isLoading) {
+    return (
+      <View style={{flex: 1, backgroundColor: Colors[colorScheme].background}}>
+        <Header
+          showHelp={false}
+          title="Edit Bahan"
+          withNotificationButton={false}
+        />
+        <View style={{flex: 1, justifyContent: "center", alignItems: "center"}}>
+          <ActivityIndicator size="large" color={Colors[colorScheme].primary} />
+          <ThemedText style={{marginTop: 16, color: Colors[colorScheme].icon}}>
+            Memuat data bahan...
+          </ThemedText>
+        </View>
+      </View>
+    );
+  }
 
   return (
     <View style={{flex: 1, backgroundColor: Colors[colorScheme].background}}>
@@ -186,7 +256,12 @@ export default function EditMaterialScreen() {
             value={name}
             onChangeText={setName}
           />
-
+          <ThemedInput
+            label="Harga Jual"
+            value={price}
+            onChangeText={setPrice}
+            numericOnly
+          />
           <MerkPicker
             label="Pilih Merk"
             value={brand}

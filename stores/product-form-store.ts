@@ -1,4 +1,4 @@
-import { create } from "zustand";
+import {create} from "zustand";
 
 interface StockInfo {
   offlineStock: number;
@@ -42,12 +42,15 @@ interface ProductFormState {
   setImageUri: (value: string | null) => void;
   setCapitalPrice: (value: number) => void;
   setBarcode: (value: string) => void;
-  setVariants: (updater: (prev: VariantItem[]) => VariantItem[]) => void;
+  setVariants: (
+    variants: VariantItem[] | ((prev: VariantItem[]) => VariantItem[])
+  ) => void;
   setStock: (value: StockInfo | null) => void;
   reset: () => void;
 }
 
-const initialState: Omit<ProductFormState,
+const initialState: Omit<
+  ProductFormState,
   | "setName"
   | "setPrice"
   | "setBrand"
@@ -78,17 +81,21 @@ const initialState: Omit<ProductFormState,
 
 export const useProductFormStore = create<ProductFormState>(set => ({
   ...initialState,
-  setName: value => set({ name: value }),
-  setPrice: value => set({ price: value }),
-  setBrand: value => set({ brand: value }),
-  setCategory: value => set({ category: value }),
-  setRecipe: value => set({ recipe: value }),
-  setFavorite: value => set({ favorite: value }),
-  setEnableCostBarcode: value => set({ enableCostBarcode: value }),
-  setImageUri: value => set({ imageUri: value }),
-  setCapitalPrice: value => set({ capitalPrice: value }),
-  setBarcode: value => set({ barcode: value }),
-  setVariants: updater => set(state => ({ variants: updater(state.variants) })),
-  setStock: value => set({ stock: value }),
+  setName: value => set({name: value}),
+  setPrice: value => set({price: value}),
+  setBrand: value => set({brand: value}),
+  setCategory: value => set({category: value}),
+  setRecipe: value => set({recipe: value}),
+  setFavorite: value => set({favorite: value}),
+  setEnableCostBarcode: value => set({enableCostBarcode: value}),
+  setImageUri: value => set({imageUri: value}),
+  setCapitalPrice: value => set({capitalPrice: value}),
+  setBarcode: value => set({barcode: value}),
+  setVariants: variants =>
+    set(state => ({
+      variants:
+        typeof variants === "function" ? variants(state.variants) : variants,
+    })),
+  setStock: value => set({stock: value}),
   reset: () => set(initialState),
 }));

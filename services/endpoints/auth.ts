@@ -43,7 +43,11 @@ export const authApi = {
 
     // Save token if login successful
     if (response.data?.access_token) {
+      console.log("🔑 Saving token to storage...");
       await apiService.setToken(response.data.access_token);
+      console.log("✅ Token saved successfully");
+    } else {
+      console.warn("⚠️ No access token in login response");
     }
 
     return response.data!;
@@ -67,9 +71,26 @@ export const authApi = {
    * Logout user
    */
   async logout(): Promise<void> {
+    try {
+      // Call backend logout endpoint
+      await apiService.post("/auth/logout");
+    } catch (error) {
+      console.error("Backend logout error:", error);
+      // Continue with local logout even if backend fails
+    }
+
+    // Clear token
     await apiService.clearToken();
-    // Optional: call backend logout endpoint if exists
-    // await apiService.post('/auth/logout');
+
+    // Clear other stored data
+    const AsyncStorage = await import(
+      "@react-native-async-storage/async-storage"
+    );
+    await AsyncStorage.default.multiRemove([
+      "auth_token",
+      "current_branch_id",
+      "current_branch_name",
+    ]);
   },
 
   /**

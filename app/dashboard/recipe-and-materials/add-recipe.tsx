@@ -1,19 +1,22 @@
 import RecipeIngredientItem from "@/components/atoms/recipe-ingredient-item";
 import ComboInput from "@/components/combo-input";
-import ConfirmationDialog, { ConfirmationDialogHandle } from "@/components/drawers/confirmation-dialog";
+import ConfirmationDialog, {
+  ConfirmationDialogHandle,
+} from "@/components/drawers/confirmation-dialog";
 import Header from "@/components/header";
 import ImageUpload from "@/components/image-upload";
-import { ThemedButton } from "@/components/themed-button";
-import { ThemedInput } from "@/components/themed-input";
-import { ThemedText } from "@/components/themed-text";
-import { Colors } from "@/constants/theme";
-import { useColorScheme } from "@/hooks/use-color-scheme";
-import { useRecipeFormStore } from "@/stores/recipe-form-store";
-import { useNavigation, useRouter } from "expo-router";
-import React, { useEffect, useRef } from "react";
-import { StyleSheet, View } from "react-native";
-import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+import {ThemedButton} from "@/components/themed-button";
+import {ThemedInput} from "@/components/themed-input";
+import {ThemedText} from "@/components/themed-text";
+import {Colors} from "@/constants/theme";
+import {useColorScheme} from "@/hooks/use-color-scheme";
+import recipeApi from "@/services/endpoints/recipes";
+import {useRecipeFormStore} from "@/stores/recipe-form-store";
+import {useNavigation, useRouter} from "expo-router";
+import React, {useEffect, useRef, useState} from "react";
+import {Alert, StyleSheet, View} from "react-native";
+import {KeyboardAwareScrollView} from "react-native-keyboard-aware-scroll-view";
+import {useSafeAreaInsets} from "react-native-safe-area-context";
 
 export default function AddProductScreen() {
   const colorScheme = useColorScheme() ?? "light";
@@ -23,6 +26,7 @@ export default function AddProductScreen() {
   const navigation = useNavigation();
 
   const confirmationRef = useRef<ConfirmationDialogHandle | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
 
   const name = useRecipeFormStore(state => state.name);
   const category = useRecipeFormStore(state => state.category);
@@ -32,7 +36,6 @@ export default function AddProductScreen() {
   const setCategory = useRecipeFormStore(state => state.setCategory);
   const setImageUri = useRecipeFormStore(state => state.setImageUri);
   const resetForm = useRecipeFormStore(state => state.reset);
-
 
   const isDirty =
     name.trim() !== "" ||
@@ -66,20 +69,56 @@ export default function AddProductScreen() {
 
   const formatIDR = (n: number) => new Intl.NumberFormat("id-ID").format(n);
 
-  const handleSave = () => {
-    const payload = {
-      name,
-      category,
-      imageUri,
-      ingredients,
-    };
-    console.log("Tambah resep", payload);
-    resetForm();
-    router.back();
+  const handleSave = async () => {
+    if (!name.trim()) {
+      Alert.alert("Error", "Nama resep harus diisi");
+      return;
+    }
+
+    if (ingredients.length === 0) {
+      Alert.alert("Error", "Resep harus memiliki minimal 1 bahan");
+      return;
+    }
+
+    try {
+      setIsSaving(true);
+
+      const payload = {
+        name: name.trim(),
+        is_active: true,
+        items: ingredients.map(ing => ({
+          product_id: ing.ingredient.id,
+          variant_id: ing.ingredient.variant_id,
+          quantity: ing.amount,
+        })),
+      };
+
+      console.log("📦 Creating recipe:", payload);
+
+      const response = await recipeApi.createRecipe(payload);
+
+      if (response.data) {
+        console.log("✅ Recipe created successfully:", response.data);
+        Alert.alert("Sukses", "Resep berhasil ditambahkan", [
+          {
+            text: "OK",
+            onPress: () => {
+              resetForm();
+              router.back();
+            },
+          },
+        ]);
+      }
+    } catch (error: any) {
+      console.error("❌ Failed to create recipe:", error);
+      Alert.alert("Error", error.message || "Gagal menambahkan resep");
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
-    <View style={{ flex: 1, backgroundColor: Colors[colorScheme].background }}>
+    <View style={{flex: 1, backgroundColor: Colors[colorScheme].background}}>
       <Header
         showHelp={false}
         title="Tambah Resep"
@@ -106,20 +145,19 @@ export default function AddProductScreen() {
           }}
         />
 
-        <View style={{ height: 24 }} />
+        <View style={{height: 24}} />
 
         <ThemedInput label="Nama Resep" value={name} onChangeText={setName} />
-
 
         <ComboInput
           label="Pilih Kategori"
           value={category}
           onChangeText={setCategory}
           items={[
-            { label: "Pilih Kategori", value: "" },
-            { label: "Umum", value: "umum" },
-            { label: "Minuman", value: "minuman" },
-            { label: "Makanan", value: "makanan" },
+            {label: "Pilih Kategori", value: ""},
+            {label: "Umum", value: "umum"},
+            {label: "Minuman", value: "minuman"},
+            {label: "Makanan", value: "makanan"},
           ]}
         />
 
@@ -138,7 +176,7 @@ export default function AddProductScreen() {
                 variantName={v.ingredient.name}
                 count={v.amount}
                 unitName={v.unit?.name}
-                onPress={() => { }}
+                onPress={() => {}}
               />
             ))}
           </>
@@ -156,9 +194,7 @@ export default function AddProductScreen() {
           title="Tambah Bahan"
           variant="secondary"
           onPress={() =>
-            router.push(
-              "/dashboard/recipe-and-materials/ingredients" as never,
-            )
+            router.push("/dashboard/recipe-and-materials/ingredients" as never)
           }
         />
       </KeyboardAwareScrollView>

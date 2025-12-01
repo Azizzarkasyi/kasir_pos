@@ -1,18 +1,31 @@
-import { ThemedButton } from "@/components/themed-button";
-import { ThemedText } from "@/components/themed-text";
-import { Colors } from "@/constants/theme";
-import { useColorScheme } from "@/hooks/use-color-scheme";
-import { useNavigation } from "@react-navigation/native";
-import React, { useEffect, useRef, useState } from "react";
-import { Dimensions, Image, NativeScrollEvent, NativeSyntheticEvent, ScrollView, StyleSheet, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import {ThemedButton} from "@/components/themed-button";
+import {ThemedText} from "@/components/themed-text";
+import {Colors} from "@/constants/theme";
+import {useColorScheme} from "@/hooks/use-color-scheme";
+import {useNavigation} from "@react-navigation/native";
+import React, {useEffect, useRef, useState} from "react";
+import {
+  Dimensions,
+  Image,
+  NativeScrollEvent,
+  NativeSyntheticEvent,
+  ScrollView,
+  StyleSheet,
+  View,
+  ActivityIndicator,
+} from "react-native";
+import {SafeAreaView} from "react-native-safe-area-context";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import {useRouter} from "expo-router";
 
 export default function Index() {
   const colorScheme = useColorScheme() ?? "light";
   const navigation = useNavigation();
+  const router = useRouter();
   const [activeSlide, setActiveSlide] = useState(0);
   const scrollRef = useRef<ScrollView | null>(null);
   const screenWidth = Dimensions.get("window").width;
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
 
   const slides = [
     {
@@ -46,14 +59,39 @@ export default function Index() {
   ];
 
   const handleMomentumScrollEnd = (
-    event: NativeSyntheticEvent<NativeScrollEvent>,
+    event: NativeSyntheticEvent<NativeScrollEvent>
   ) => {
-    const { contentOffset, layoutMeasurement } = event.nativeEvent;
+    const {contentOffset, layoutMeasurement} = event.nativeEvent;
     const index = Math.round(contentOffset.x / layoutMeasurement.width);
     setActiveSlide(index);
   };
 
+  // Check authentication status on mount
   useEffect(() => {
+    checkAuth();
+  }, []);
+
+  const checkAuth = async () => {
+    try {
+      const token = await AsyncStorage.getItem("auth_token");
+      console.log("🔑 Checking auth token:", token ? "Found" : "Not found");
+
+      if (token) {
+        console.log("✅ User is authenticated, redirecting to dashboard...");
+        router.replace("/dashboard/home");
+      } else {
+        console.log("❌ User is not authenticated, showing onboarding...");
+        setIsCheckingAuth(false);
+      }
+    } catch (error) {
+      console.error("❌ Error checking auth:", error);
+      setIsCheckingAuth(false);
+    }
+  };
+
+  useEffect(() => {
+    if (isCheckingAuth) return; // Don't start carousel while checking auth
+
     const interval = setInterval(() => {
       setActiveSlide(prev => {
         const nextIndex = (prev + 1) % slides.length;
@@ -68,13 +106,30 @@ export default function Index() {
     }, 4000);
 
     return () => clearInterval(interval);
-  }, [screenWidth, slides.length]);
+  }, [screenWidth, slides.length, isCheckingAuth]);
+
+  // Show loading while checking authentication
+  if (isCheckingAuth) {
+    return (
+      <SafeAreaView
+        style={[
+          styles.container,
+          {backgroundColor: Colors[colorScheme].background},
+        ]}
+      >
+        <View style={{flex: 1, justifyContent: "center", alignItems: "center"}}>
+          <ActivityIndicator size="large" color={Colors[colorScheme].primary} />
+          <ThemedText style={{marginTop: 16}}>Loading...</ThemedText>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView
       style={[
         styles.container,
-        { backgroundColor: Colors[colorScheme].background },
+        {backgroundColor: Colors[colorScheme].background},
       ]}
     >
       <View style={styles.carouselContainer}>
@@ -84,14 +139,16 @@ export default function Index() {
           pagingEnabled
           showsHorizontalScrollIndicator={false}
           onMomentumScrollEnd={handleMomentumScrollEnd}
-
         >
           {slides.map(slide => (
-            <View key={slide.id} style={[styles.slide, { width: screenWidth }]}>
+            <View key={slide.id} style={[styles.slide, {width: screenWidth}]}>
               <View style={styles.imageContainer}>
                 <Image
                   source={slide.image}
-                  style={[styles.ilustration, { width: slide.width, height: slide.height }]}
+                  style={[
+                    styles.ilustration,
+                    {width: slide.width, height: slide.height},
+                  ]}
                 />
               </View>
               <View style={styles.textContainer}>
@@ -99,7 +156,7 @@ export default function Index() {
                   {slide.title}
                 </ThemedText>
                 <ThemedText
-                  style={[styles.subtitle, { color: Colors[colorScheme].icon }]}
+                  style={[styles.subtitle, {color: Colors[colorScheme].icon}]}
                 >
                   {slide.description}
                 </ThemedText>
@@ -111,10 +168,7 @@ export default function Index() {
           {slides.map((slide, index) => (
             <View
               key={slide.id}
-              style={[
-                styles.dot,
-                index === activeSlide && styles.dotActive,
-              ]}
+              style={[styles.dot, index === activeSlide && styles.dotActive]}
             />
           ))}
         </View>
@@ -130,7 +184,7 @@ export default function Index() {
         <ThemedButton
           title="Masuk"
           variant="secondary"
-          style={{ marginTop: 16 }}
+          style={{marginTop: 16}}
           onPress={() => navigation.navigate("auth/Login/login" as never)}
         />
       </View>
@@ -143,7 +197,7 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: "center",
     justifyContent: "space-between",
-    paddingVertical: 20
+    paddingVertical: 20,
   },
   carouselContainer: {
     width: "100%",

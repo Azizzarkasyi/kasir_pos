@@ -45,18 +45,24 @@ export default function StockSettingsScreen() {
     {label: "L", value: "l"},
   ];
 
-  const handleSave = () => {
-    setIsSubmit(true);
-    const payload = {offlineStock, unit, minStock, notifyMin};
-    console.log("Kelola stok", payload);
-    setStockInStore({
-      offlineStock,
-      unit,
-      minStock,
-      notifyMin,
-    });
+  const handleSave = async () => {
+    try {
+      setIsSubmit(true);
 
-    router.back();
+      // Save to store first for UI state
+      setStockInStore({
+        offlineStock,
+        unit,
+        minStock,
+        notifyMin,
+      });
+
+      console.log("✅ Stock saved to store");
+      router.back();
+    } catch (error: any) {
+      console.error("❌ Failed to save stock:", error);
+      setIsSubmit(false);
+    }
   };
 
   const isDirty =

@@ -5,12 +5,15 @@ import ConfirmationDialog, {
 import Header from "@/components/header";
 import {ThemedButton} from "@/components/themed-button";
 import {ThemedInput} from "@/components/themed-input";
+import {ThemedText} from "@/components/themed-text";
 import {Colors} from "@/constants/theme";
 import {useColorScheme} from "@/hooks/use-color-scheme";
+import productApi from "@/services/endpoints/products";
+import {Product, ProductVariant} from "@/types/api";
 import {useRecipeFormStore} from "@/stores/recipe-form-store";
 import {useNavigation, useRouter} from "expo-router";
 import React, {useEffect, useRef, useState} from "react";
-import {StyleSheet, Text, View} from "react-native";
+import {ActivityIndicator, StyleSheet, Text, View} from "react-native";
 import {KeyboardAwareScrollView} from "react-native-keyboard-aware-scroll-view";
 import {useSafeAreaInsets} from "react-native-safe-area-context";
 
@@ -38,54 +41,68 @@ export default function IngredientsScreen() {
 
   const confirmationRef = useRef<ConfirmationDialogHandle | null>(null);
 
-  const [ingredient, setIngredient] = useState("");
+  const [isLoading, setIsLoading] = useState(true);
+  const [ingredients, setIngredients] = useState<Product[]>([]);
+  const [selectedProductId, setSelectedProductId] = useState("");
   const [quantity, setQuantity] = useState("");
   const [selectedUnit, setSelectedUnit] = useState<{
     id: string;
     name: string;
   } | null>(null);
-  const [availableVariants, setAvailableVariants] = useState<
-    IngredientVariant[]
-  >([]);
+  const [availableVariants, setAvailableVariants] = useState<ProductVariant[]>(
+    []
+  );
   const [selectedVariantId, setSelectedVariantId] = useState<string>("");
 
-  const ingredientOptions: IngredientOption[] = [
-    {label: "Pilih Bahan", value: "", unit: {id: "", name: "-"}, variants: []},
-    {
-      label: "Gula",
-      value: "gula",
-      unit: {id: "gram", name: "Gram"},
-      variants: [
-        {id: "gula_pasir", name: "Gula Pasir", price: 10000},
-        {id: "gula_merah", name: "Gula Merah", price: 12000},
-      ],
-    },
-    {
-      label: "Tepung Terigu",
-      value: "tepung_terigu",
-      unit: {id: "gram", name: "Gram"},
-      variants: [{id: "tepung_all_purpose", name: "All Purpose", price: 9000}],
-    },
-    {
-      label: "Minyak Goreng",
-      value: "minyak_goreng",
-      unit: {id: "ml", name: "Mililiter"},
-      variants: [
-        {id: "minyak_sawit", name: "Minyak Sawit", price: 15000},
-        {id: "minyak_kelapa", name: "Minyak Kelapa", price: 20000},
-      ],
-    },
-  ];
+  // Load ingredients from API
+  useEffect(() => {
+    const loadIngredients = async () => {
+      try {
+        setIsLoading(true);
+        const response = await productApi.getProducts();
 
-  const handleChangeIngredient = (text: string) => {
-    setIngredient(text);
-    const found = ingredientOptions.find(opt => opt.label === text);
+        if (response.data) {
+          // Filter hanya produk dengan is_ingredient = true
+          const ingredientProducts = response.data.filter(
+            (p: Product) => p.is_ingredient === true
+          );
+          setIngredients(ingredientProducts);
+          console.log(
+            "✅ Loaded",
+            ingredientProducts.length,
+            "ingredients for recipe"
+          );
+        }
+      } catch (error: any) {
+        console.error("❌ Failed to load ingredients:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadIngredients();
+  }, []);
+
+  const handleChangeIngredient = (productId: string) => {
+    console.log("🔍 Selecting product:", productId);
+    setSelectedProductId(productId);
+    const found = ingredients.find(p => p.id === productId);
+
     if (found) {
-      setSelectedUnit(found.unit);
-      const vars = found.variants ?? [];
+      console.log("✅ Product found:", {
+        id: found.id,
+        name: found.name,
+        variants: found.variants?.length,
+      });
+      // Set unit (default to pcs if not available)
+      setSelectedUnit({id: "pcs", name: "Pcs"});
+
+      // Set available variants
+      const vars = found.variants || [];
       setAvailableVariants(vars);
       setSelectedVariantId(vars.length === 1 ? vars[0].id : "");
     } else {
+      console.log("❌ Product not found in list");
       setSelectedUnit(null);
       setAvailableVariants([]);
       setSelectedVariantId("");
@@ -93,21 +110,35 @@ export default function IngredientsScreen() {
   };
 
   const handleSave = () => {
+    const selectedProduct = ingredients.find(p => p.id === selectedProductId);
     const selectedVariant = availableVariants.find(
       v => v.id === selectedVariantId
     );
 
     const qtyNum = Number(String(quantity).replace(/[^0-9]/g, ""));
 
-    if (!ingredient || Number.isNaN(qtyNum) || qtyNum <= 0) {
+    console.log("🔍 Debug handleSave:", {
+      selectedProductId,
+      selectedProduct: selectedProduct
+        ? {id: selectedProduct.id, name: selectedProduct.name}
+        : null,
+      selectedVariantId,
+      selectedVariant: selectedVariant
+        ? {id: selectedVariant.id, name: selectedVariant.name}
+        : null,
+      quantity: qtyNum,
+    });
+
+    if (!selectedProduct || Number.isNaN(qtyNum) || qtyNum <= 0) {
+      console.log("❌ Validation failed");
       return;
     }
 
     addIngredient({
       ingredient: {
-        id: ingredient,
-        name: ingredient,
-        ...(selectedVariant ? {variant_id: selectedVariant.id} : {}),
+        id: selectedProduct.id,
+        name: selectedProduct.name,
+        variant_id: selectedVariant?.id,
       },
       unit: selectedUnit
         ? {id: selectedUnit.id, name: selectedUnit.name}
@@ -115,10 +146,18 @@ export default function IngredientsScreen() {
       amount: qtyNum,
     });
 
+    console.log("✅ Ingredient added:", {
+      productId: selectedProduct.id,
+      product: selectedProduct.name,
+      variantId: selectedVariant?.id,
+      variant: selectedVariant?.name,
+      quantity: qtyNum,
+    });
+
     router.back();
   };
 
-  const isDirty = ingredient.trim() !== "" || quantity.trim() !== "";
+  const isDirty = selectedProductId !== "" || quantity.trim() !== "";
 
   useEffect(() => {
     const sub = navigation.addListener("beforeRemove", e => {
@@ -163,28 +202,57 @@ export default function IngredientsScreen() {
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
-        <ComboInput
-          label="Pilih Bahan"
-          value={ingredient}
-          onChangeText={handleChangeIngredient}
-          items={ingredientOptions.map(opt => ({
-            label: opt.label,
-            value: opt.value,
-          }))}
-        />
-        {availableVariants.length > 1 && (
-          <ComboInput
-            label="Pilih Varian"
-            value={
-              availableVariants.find(v => v.id === selectedVariantId)?.name ??
-              ""
-            }
-            onChangeText={text => {
-              const found = availableVariants.find(v => v.name === text);
-              setSelectedVariantId(found ? found.id : "");
-            }}
-            items={availableVariants.map(v => ({label: v.name, value: v.id}))}
-          />
+        {isLoading ? (
+          <View style={{paddingTop: 40, alignItems: "center"}}>
+            <ActivityIndicator
+              size="large"
+              color={Colors[colorScheme].primary}
+            />
+            <ThemedText
+              style={{marginTop: 16, color: Colors[colorScheme].icon}}
+            >
+              Memuat daftar bahan...
+            </ThemedText>
+          </View>
+        ) : (
+          <>
+            <ComboInput
+              label="Pilih Bahan"
+              value={
+                ingredients.find(p => p.id === selectedProductId)?.name ?? ""
+              }
+              onChangeText={text => {
+                const found = ingredients.find(p => p.name === text);
+                if (found) {
+                  handleChangeIngredient(found.id);
+                }
+              }}
+              items={[
+                {label: "Pilih Bahan", value: ""},
+                ...ingredients.map(ing => ({
+                  label: ing.name,
+                  value: ing.id,
+                })),
+              ]}
+            />
+            {availableVariants.length > 1 && (
+              <ComboInput
+                label="Pilih Varian"
+                value={
+                  availableVariants.find(v => v.id === selectedVariantId)
+                    ?.name ?? ""
+                }
+                onChangeText={text => {
+                  const found = availableVariants.find(v => v.name === text);
+                  setSelectedVariantId(found ? found.id : "");
+                }}
+                items={availableVariants.map(v => ({
+                  label: v.name,
+                  value: v.id,
+                }))}
+              />
+            )}
+          </>
         )}
         <View style={styles.quantityRow}>
           <View style={styles.unitBox}>

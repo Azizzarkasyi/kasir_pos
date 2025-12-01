@@ -102,6 +102,7 @@ export default function LoginScreen() {
         const result = await authApi.login(credential, pin, isPhoneLogin);
 
         console.log("✅ Login success:", result);
+        console.log("🔑 Token saved:", result.access_token ? "Yes" : "No");
 
         // Save branch ID and name to AsyncStorage
         if (result.branch?.id) {

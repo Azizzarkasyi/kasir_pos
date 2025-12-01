@@ -2,16 +2,25 @@ import RecipeItem from "@/components/atoms/recipe-item";
 import CategoryModal from "@/components/drawers/category-modal";
 import Header from "@/components/header";
 import ProductCard from "@/components/product-card";
-import { ThemedInput } from "@/components/themed-input";
-import { ThemedText } from "@/components/themed-text";
-import { Colors } from "@/constants/theme";
-import { useColorScheme } from "@/hooks/use-color-scheme";
-import { Ionicons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
-import React, { useState } from "react";
-import { StyleSheet, TouchableOpacity, View } from "react-native";
-import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+import {ThemedInput} from "@/components/themed-input";
+import {ThemedText} from "@/components/themed-text";
+import {Colors} from "@/constants/theme";
+import {useColorScheme} from "@/hooks/use-color-scheme";
+import productApi from "@/services/endpoints/products";
+import recipeApi, {Recipe} from "@/services/endpoints/recipes";
+import {Product} from "@/types/api";
+import {Ionicons} from "@expo/vector-icons";
+import {useFocusEffect, useRouter} from "expo-router";
+import React, {useCallback, useState} from "react";
+import {
+  ActivityIndicator,
+  Alert,
+  StyleSheet,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import {KeyboardAwareScrollView} from "react-native-keyboard-aware-scroll-view";
+import {useSafeAreaInsets} from "react-native-safe-area-context";
 
 export default function ProductsScreen() {
   const colorScheme = useColorScheme() ?? "light";
@@ -22,76 +31,66 @@ export default function ProductsScreen() {
   const [activeTab, setActiveTab] = useState<"bahan" | "resep">("bahan");
   const [search, setSearch] = useState("");
   const [isCategoryModalVisible, setIsCategoryModalVisible] = useState(false);
-  const [editingCategoryId, setEditingCategoryId] = useState<string | null>(null);
-  const [editingCategoryName, setEditingCategoryName] = useState("");
-  const [ingredients] = useState(
-    [
-      {
-        id: "1",
-        name: "Daging Sapi",
-        price: "80000",           // harga per kg misalnya
-        brand: "",
-        category: "Bahan Protein",
-        favorite: true,
-        enableCostBarcode: false,
-        imageUri: null as string | null,
-        stock: 10,
-        capitalPrice: 0,
-        variants: [],
-        barcode: "",
-      },
-      {
-        id: "2",
-        name: "Tepung Terigu",
-        price: "12000",           // harga per kg
-        brand: "",  
-        category: "Bahan Kering",
-        favorite: false,
-        enableCostBarcode: false,
-        imageUri: null as string | null,
-        stock: 10,
-        capitalPrice: 0,
-        variants: [],
-        barcode: "",
-      },
-      {
-        id: "3",
-        name: "Gula Pasir",
-        price: "15000",           // harga per kg
-        brand: "",
-        category: "Bahan Manis",
-        favorite: false,
-        enableCostBarcode: false,
-        imageUri: null as string | null,
-        stock: 10,
-        capitalPrice: 0,
-        variants: [],
-        barcode: "",
-      },
-    ],
+  const [editingCategoryId, setEditingCategoryId] = useState<string | null>(
+    null
   );
+  const [editingCategoryName, setEditingCategoryName] = useState("");
+  const [ingredients, setIngredients] = useState<Product[]>([]);
+  const [recipes, setRecipes] = useState<Recipe[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const [recipes] = useState(
-    [
-      {
-        id: "r1",
-        name: "Nasi Goreng Spesial",
-        ingredientCount: 3,
-        cost: 10000,
-      },
-      {
-        id: "r2",
-        name: "Es Teh Manis",
-        ingredientCount: 2,
-        cost: 3000,
-      },
-    ],
+  // Load ingredients (products with is_ingredient=true)
+  const loadIngredients = async () => {
+    try {
+      const response = await productApi.getProducts();
+      if (response.data) {
+        // Filter hanya produk yang is_ingredient = true
+        const ingredientProducts = response.data.filter(
+          (p: Product) => p.is_ingredient === true
+        );
+        setIngredients(ingredientProducts);
+        console.log("✅ Loaded", ingredientProducts.length, "ingredients");
+      }
+    } catch (error: any) {
+      console.error("❌ Failed to load ingredients:", error);
+      Alert.alert("Error", "Gagal memuat data bahan");
+    }
+  };
+
+  // Load recipes
+  const loadRecipes = async () => {
+    try {
+      const response = await recipeApi.getRecipes();
+      if (response.data) {
+        setRecipes(response.data);
+        console.log("✅ Loaded", response.data.length, "recipes");
+      }
+    } catch (error: any) {
+      console.error("❌ Failed to load recipes:", error);
+      Alert.alert("Error", "Gagal memuat data resep");
+    }
+  };
+
+  // Load data on mount and on focus
+  const loadData = async () => {
+    try {
+      setIsLoading(true);
+      await Promise.all([loadIngredients(), loadRecipes()]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useFocusEffect(
+    useCallback(() => {
+      loadData();
+    }, [])
   );
 
   const categories = [
-    { id: "umum", name: "Umum" },
-    { id: "makanan", name: "Makanan" },
-    { id: "minuman", name: "Minuman" },
+    {id: "umum", name: "Umum"},
+    {id: "makanan", name: "Makanan"},
+    {id: "minuman", name: "Minuman"},
   ];
 
   const handleEditCategory = (categoryId: string) => {
@@ -109,37 +108,8 @@ export default function ProductsScreen() {
 
   const handleSubmitCategory = (name: string) => {
     // TODO: Integrasikan dengan API / state nyata
-    console.log("Simpan kategori", { id: editingCategoryId, name });
+    console.log("Simpan kategori", {id: editingCategoryId, name});
     setIsCategoryModalVisible(false);
-  };
-
-  const handlePressProduct = (product: {
-    id: string;
-    name: string;
-    price: string;
-    brand: string;
-    category: string;
-    favorite: boolean;
-    enableCostBarcode: boolean;
-    imageUri: string | null;
-    capitalPrice: number;
-    barcode: string;
-  }) => {
-    router.push({
-      pathname: "/dashboard/recipe-and-materials/edit-material",
-      params: {
-        id: product.id,
-        name: product.name,
-        price: product.price,
-        brand: product.brand,
-        category: product.category,
-        favorite: String(product.favorite),
-        enableCostBarcode: String(product.enableCostBarcode),
-        imageUri: product.imageUri ?? "",
-        capitalPrice: String(product.capitalPrice),
-        barcode: product.barcode,
-      },
-    } as never);
   };
 
   const goAdd = () => {
@@ -152,7 +122,7 @@ export default function ProductsScreen() {
   };
 
   return (
-    <View style={{ flex: 1, backgroundColor: Colors[colorScheme].background }}>
+    <View style={{flex: 1, backgroundColor: Colors[colorScheme].background}}>
       <Header
         showHelp={false}
         title="Resep & Bahan"
@@ -179,8 +149,8 @@ export default function ProductsScreen() {
               style={[
                 styles.tabText,
                 activeTab === "bahan"
-                  ? { color: Colors[colorScheme].primary }
-                  : { color: Colors[colorScheme].icon },
+                  ? {color: Colors[colorScheme].primary}
+                  : {color: Colors[colorScheme].icon},
               ]}
             >
               Bahan
@@ -196,8 +166,8 @@ export default function ProductsScreen() {
               style={[
                 styles.tabText,
                 activeTab === "resep"
-                  ? { color: Colors[colorScheme].primary }
-                  : { color: Colors[colorScheme].icon },
+                  ? {color: Colors[colorScheme].primary}
+                  : {color: Colors[colorScheme].icon},
               ]}
             >
               Resep
@@ -214,7 +184,7 @@ export default function ProductsScreen() {
                 {/* PENTING: Gunakan View Wrapper dengan flex: 1 untuk Input 
                    Ini akan memaksa input mengisi sisa ruang kosong secara otomatis
                 */}
-                <View style={{ flex: 1 }}>
+                <View style={{flex: 1}}>
                   <ThemedInput
                     label="Cari Bahan"
                     value={search}
@@ -236,18 +206,59 @@ export default function ProductsScreen() {
                 </TouchableOpacity>
               </View>
 
-              <View style={{ marginTop: 16 }}>
-                {ingredients.map(product => (
-                  <ProductCard
-                    key={product.id}
-                    initials={(product.name || "PR").slice(0, 2).toUpperCase()}
-                    name={product.name}
-                    stockCount={product.stock}
-                    variantCount={product.variants?.length ?? 0}
-                    onPress={() => handlePressProduct(product)}
+              {isLoading ? (
+                <View style={styles.loadingContainer}>
+                  <ActivityIndicator
+                    size="large"
+                    color={Colors[colorScheme].primary}
                   />
-                ))}
-              </View>
+                  <ThemedText style={styles.loadingText}>
+                    Memuat data bahan...
+                  </ThemedText>
+                </View>
+              ) : (
+                <View style={{marginTop: 16}}>
+                  {ingredients.filter(p =>
+                    p.name.toLowerCase().includes(search.toLowerCase())
+                  ).length === 0 ? (
+                    <View style={styles.emptyContainer}>
+                      <ThemedText style={styles.emptyText}>
+                        {search ? "Bahan tidak ditemukan" : "Belum ada bahan"}
+                      </ThemedText>
+                    </View>
+                  ) : (
+                    ingredients
+                      .filter(p =>
+                        p.name.toLowerCase().includes(search.toLowerCase())
+                      )
+                      .map(product => {
+                        const totalStock =
+                          product.variants?.reduce(
+                            (sum, v) => sum + (v.stock || 0),
+                            0
+                          ) || 0;
+                        return (
+                          <ProductCard
+                            key={product.id}
+                            initials={(product.name || "PR")
+                              .slice(0, 2)
+                              .toUpperCase()}
+                            name={product.name}
+                            stockCount={totalStock}
+                            variantCount={product.variants?.length ?? 0}
+                            onPress={() => {
+                              router.push({
+                                pathname:
+                                  "/dashboard/recipe-and-materials/edit-material",
+                                params: {id: product.id},
+                              } as never);
+                            }}
+                          />
+                        );
+                      })
+                  )}
+                </View>
+              )}
             </View>
           ) : (
             <View>
@@ -256,7 +267,7 @@ export default function ProductsScreen() {
                   {/* PENTING: Gunakan View Wrapper dengan flex: 1 untuk Input 
                    Ini akan memaksa input mengisi sisa ruang kosong secara otomatis
                 */}
-                  <View style={{ flex: 1 }}>
+                  <View style={{flex: 1}}>
                     <ThemedInput
                       label="Cari Resep"
                       value={search}
@@ -268,31 +279,60 @@ export default function ProductsScreen() {
                       placeholder="Cari Resep"
                     />
                   </View>
-
                 </View>
               </View>
-              <View style={{ marginTop: 16 }}>
-                {recipes.map(recipe => (
-                  <RecipeItem
-                    key={recipe.id}
-                    initials={(recipe.name || "RC").slice(0, 2).toUpperCase()}
-                    name={recipe.name}
-                    subtitle={`${recipe.ingredientCount} bahan `}
-                    onPress={() =>
-                      router.push(
-                        "/dashboard/recipe-and-materials/edit-recipe" as never,
-                      )
-                    }
+              {isLoading ? (
+                <View style={styles.loadingContainer}>
+                  <ActivityIndicator
+                    size="large"
+                    color={Colors[colorScheme].primary}
                   />
-                ))}
-              </View>
+                  <ThemedText style={styles.loadingText}>
+                    Memuat data resep...
+                  </ThemedText>
+                </View>
+              ) : (
+                <View style={{marginTop: 16}}>
+                  {recipes.filter(r =>
+                    r.name.toLowerCase().includes(search.toLowerCase())
+                  ).length === 0 ? (
+                    <View style={styles.emptyContainer}>
+                      <ThemedText style={styles.emptyText}>
+                        {search ? "Resep tidak ditemukan" : "Belum ada resep"}
+                      </ThemedText>
+                    </View>
+                  ) : (
+                    recipes
+                      .filter(r =>
+                        r.name.toLowerCase().includes(search.toLowerCase())
+                      )
+                      .map(recipe => (
+                        <RecipeItem
+                          key={recipe.id}
+                          initials={(recipe.name || "RC")
+                            .slice(0, 2)
+                            .toUpperCase()}
+                          name={recipe.name}
+                          subtitle={`${recipe.items?.length || 0} bahan`}
+                          onPress={() =>
+                            router.push({
+                              pathname:
+                                "/dashboard/recipe-and-materials/edit-recipe",
+                              params: {id: recipe.id},
+                            } as never)
+                          }
+                        />
+                      ))
+                  )}
+                </View>
+              )}
             </View>
           )}
         </View>
-      </KeyboardAwareScrollView >
+      </KeyboardAwareScrollView>
 
       <TouchableOpacity
-        style={[styles.fab, { bottom: insets.bottom + 24 }]}
+        style={[styles.fab, {bottom: insets.bottom + 24}]}
         onPress={goAdd}
       >
         <Ionicons name="add" size={28} color={Colors[colorScheme].background} />
@@ -304,7 +344,7 @@ export default function ProductsScreen() {
         onClose={() => setIsCategoryModalVisible(false)}
         onSubmit={handleSubmitCategory}
       />
-    </View >
+    </View>
   );
 }
 
@@ -356,7 +396,6 @@ const createStyles = (colorScheme: "light" | "dark") =>
       borderRadius: 8,
       alignItems: "center",
       justifyContent: "center",
-
     },
 
     fab: {
@@ -369,5 +408,22 @@ const createStyles = (colorScheme: "light" | "dark") =>
       justifyContent: "center",
       backgroundColor: Colors[colorScheme].primary,
       elevation: 6,
+    },
+    loadingContainer: {
+      paddingTop: 60,
+      alignItems: "center",
+    },
+    loadingText: {
+      marginTop: 16,
+      color: Colors[colorScheme].icon,
+    },
+    emptyContainer: {
+      paddingTop: 60,
+      paddingHorizontal: 40,
+      alignItems: "center",
+    },
+    emptyText: {
+      color: Colors[colorScheme].icon,
+      textAlign: "center",
     },
   });

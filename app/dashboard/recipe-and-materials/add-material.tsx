@@ -11,10 +11,11 @@ import {ThemedInput} from "@/components/themed-input";
 import {ThemedText} from "@/components/themed-text";
 import {Colors} from "@/constants/theme";
 import {useColorScheme} from "@/hooks/use-color-scheme";
+import productApi from "@/services/endpoints/products";
 import {useProductFormStore} from "@/stores/product-form-store";
 import {useLocalSearchParams, useNavigation, useRouter} from "expo-router";
-import React, {useEffect, useRef} from "react";
-import {StyleSheet, View} from "react-native";
+import React, {useEffect, useRef, useState} from "react";
+import {Alert, StyleSheet, View} from "react-native";
 import {KeyboardAwareScrollView} from "react-native-keyboard-aware-scroll-view";
 import {useSafeAreaInsets} from "react-native-safe-area-context";
 
@@ -26,6 +27,7 @@ export default function AddMaterialScreen() {
   const navigation = useNavigation();
 
   const confirmationRef = useRef<ConfirmationDialogHandle | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
 
   const {
     name,
@@ -108,18 +110,70 @@ export default function AddMaterialScreen() {
 
   const formatIDR = (n: number) => new Intl.NumberFormat("id-ID").format(n);
 
-  const handleSave = () => {
-    const payload = {
-      name,
-      price,
-      brand,
-      imageUri,
-      capitalPrice,
-      barcode,
-      variants,
-    };
-    console.log("Tambah produk", payload);
-    router.back();
+  const handleSave = async () => {
+    // Validation
+    if (!name.trim()) {
+      Alert.alert("Error", "Nama bahan harus diisi");
+      return;
+    }
+
+    const cleanPrice = String(price).replace(/[^0-9]/g, "");
+    const numericPrice = Number(cleanPrice);
+
+    if (!cleanPrice || numericPrice <= 0) {
+      Alert.alert("Error", "Harga jual harus lebih dari 0");
+      return;
+    }
+
+    // Validate merk_id
+    if (!brand || brand.length < 10 || !brand.startsWith("cm")) {
+      Alert.alert("Error", "Merk harus dipilih");
+      return;
+    }
+
+    try {
+      setIsSaving(true);
+
+      const payload: any = {
+        name: name.trim(),
+        price: numericPrice,
+        merk_id: brand,
+        is_ingredient: true, // Flag untuk bahan baku
+      };
+
+      if (imageUri) payload.photo_url = imageUri;
+      if (capitalPrice > 0) payload.capital_price = capitalPrice;
+      if (barcode) payload.barcode = barcode;
+
+      console.log("📦 Creating material:", payload);
+
+      const response = await productApi.createProduct(payload);
+
+      if (response.data) {
+        console.log("✅ Material created successfully:", response.data);
+        Alert.alert("Sukses", "Bahan berhasil ditambahkan", [
+          {
+            text: "OK",
+            onPress: () => {
+              // Reset form
+              setName("");
+              setPrice("");
+              setBrand("");
+              setImageUri(null);
+              setCapitalPrice(0);
+              setBarcode("");
+              setVariants([]);
+              router.back();
+            },
+          },
+        ]);
+      }
+    } catch (error: any) {
+      console.error("❌ Failed to create material:", error);
+      Alert.alert("Error", error.message || "Gagal menambahkan bahan");
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (

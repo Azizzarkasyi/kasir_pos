@@ -58,24 +58,31 @@ export default function StockSettingsScreen() {
     {label: "L", value: "l"},
   ];
 
-  const handleSave = () => {
-    setIsSubmit(true);
-    const payload = {offlineStock, unit, minStock, notifyMin};
-    console.log("Kelola stok", payload);
-    router.replace({
-      pathname: "/dashboard/product/variant",
-      params: {
-        offlineStock: String(offlineStock),
-        unit,
-        minStock: String(minStock),
-        notifyMin: notifyMin ? "1" : "0",
-        ...(from ? {from: String(from)} : {}),
-        ...(name ? {name: String(name)} : {}),
-        ...(price ? {price: String(price)} : {}),
-        ...(capitalPrice ? {capitalPrice: String(capitalPrice)} : {}),
-        ...(barcode ? {barcode: String(barcode)} : {}),
-      },
-    } as never);
+  const handleSave = async () => {
+    try {
+      setIsSubmit(true);
+
+      // Return data to variant screen via navigation
+      console.log("✅ Variant stock data prepared");
+
+      router.replace({
+        pathname: "/dashboard/product/variant",
+        params: {
+          offlineStock: String(offlineStock),
+          unit,
+          minStock: String(minStock),
+          notifyMin: notifyMin ? "1" : "0",
+          ...(from ? {from: String(from)} : {}),
+          ...(name ? {name: String(name)} : {}),
+          ...(price ? {price: String(price)} : {}),
+          ...(capitalPrice ? {capitalPrice: String(capitalPrice)} : {}),
+          ...(barcode ? {barcode: String(barcode)} : {}),
+        },
+      } as never);
+    } catch (error: any) {
+      console.error("❌ Failed to save variant stock:", error);
+      setIsSubmit(false);
+    }
   };
 
   useEffect(() => {

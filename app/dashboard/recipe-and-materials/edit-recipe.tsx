@@ -1,19 +1,22 @@
 import RecipeIngredientItem from "@/components/atoms/recipe-ingredient-item";
 import ComboInput from "@/components/combo-input";
-import ConfirmationDialog, { ConfirmationDialogHandle } from "@/components/drawers/confirmation-dialog";
+import ConfirmationDialog, {
+  ConfirmationDialogHandle,
+} from "@/components/drawers/confirmation-dialog";
 import Header from "@/components/header";
 import ImageUpload from "@/components/image-upload";
-import { ThemedButton } from "@/components/themed-button";
-import { ThemedInput } from "@/components/themed-input";
-import { ThemedText } from "@/components/themed-text";
-import { Colors } from "@/constants/theme";
-import { useColorScheme } from "@/hooks/use-color-scheme";
-import { useRecipeFormStore } from "@/stores/recipe-form-store";
-import { useNavigation, useRouter } from "expo-router";
-import React, { useEffect, useRef } from "react";
-import { StyleSheet, View } from "react-native";
-import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+import {ThemedButton} from "@/components/themed-button";
+import {ThemedInput} from "@/components/themed-input";
+import {ThemedText} from "@/components/themed-text";
+import {Colors} from "@/constants/theme";
+import {useColorScheme} from "@/hooks/use-color-scheme";
+import recipeApi from "@/services/endpoints/recipes";
+import {useRecipeFormStore} from "@/stores/recipe-form-store";
+import {useLocalSearchParams, useNavigation, useRouter} from "expo-router";
+import React, {useEffect, useRef, useState} from "react";
+import {ActivityIndicator, Alert, StyleSheet, View} from "react-native";
+import {KeyboardAwareScrollView} from "react-native-keyboard-aware-scroll-view";
+import {useSafeAreaInsets} from "react-native-safe-area-context";
 
 export default function EditRecipeScreen() {
   const colorScheme = useColorScheme() ?? "light";
@@ -23,6 +26,10 @@ export default function EditRecipeScreen() {
   const navigation = useNavigation();
 
   const confirmationRef = useRef<ConfirmationDialogHandle | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+
+  const {id} = useLocalSearchParams<{id?: string}>();
 
   const name = useRecipeFormStore(state => state.name);
   const category = useRecipeFormStore(state => state.category);
@@ -31,7 +38,49 @@ export default function EditRecipeScreen() {
   const setName = useRecipeFormStore(state => state.setName);
   const setCategory = useRecipeFormStore(state => state.setCategory);
   const setImageUri = useRecipeFormStore(state => state.setImageUri);
+  const setIngredients = useRecipeFormStore(state => state.setIngredients);
   const resetForm = useRecipeFormStore(state => state.reset);
+
+  // Load recipe data
+  useEffect(() => {
+    const loadRecipe = async () => {
+      if (!id) {
+        setIsLoading(false);
+        return;
+      }
+
+      try {
+        setIsLoading(true);
+        const response = await recipeApi.getRecipeById(id);
+
+        if (response.data) {
+          const recipe = response.data;
+          setName(recipe.name);
+
+          // Map items to ingredients format
+          const mappedIngredients = recipe.items.map(item => ({
+            ingredient: {
+              id: item.product_id,
+              name: item.product?.name || "",
+              variant_id: item.variant_id,
+            },
+            amount: item.quantity,
+            unit: undefined,
+          }));
+
+          setIngredients(mappedIngredients);
+          console.log("✅ Recipe loaded:", recipe);
+        }
+      } catch (error: any) {
+        console.error("❌ Failed to load recipe:", error);
+        Alert.alert("Error", "Gagal memuat data resep");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadRecipe();
+  }, [id]);
 
   const isDirty =
     name.trim() !== "" ||
@@ -65,17 +114,75 @@ export default function EditRecipeScreen() {
 
   const formatIDR = (n: number) => new Intl.NumberFormat("id-ID").format(n);
 
-  const handleSave = () => {
-    const payload = {
-      name,
-      category,
-      imageUri,
-      ingredients,
-    };
-    console.log("Edit resep", payload);
-    resetForm();
-    router.back();
+  const handleSave = async () => {
+    if (!id) {
+      Alert.alert("Error", "ID resep tidak ditemukan");
+      return;
+    }
+
+    if (!name.trim()) {
+      Alert.alert("Error", "Nama resep harus diisi");
+      return;
+    }
+
+    if (ingredients.length === 0) {
+      Alert.alert("Error", "Resep harus memiliki minimal 1 bahan");
+      return;
+    }
+
+    try {
+      setIsSaving(true);
+
+      const payload = {
+        name: name.trim(),
+        items: ingredients.map(ing => ({
+          product_id: ing.ingredient.id,
+          variant_id: ing.ingredient.variant_id,
+          quantity: ing.amount,
+        })),
+      };
+
+      console.log("📦 Updating recipe:", payload);
+
+      const response = await recipeApi.updateRecipe(id, payload);
+
+      if (response.data) {
+        console.log("✅ Recipe updated successfully:", response.data);
+        Alert.alert("Sukses", "Resep berhasil diperbarui", [
+          {
+            text: "OK",
+            onPress: () => {
+              resetForm();
+              router.back();
+            },
+          },
+        ]);
+      }
+    } catch (error: any) {
+      console.error("❌ Failed to update recipe:", error);
+      Alert.alert("Error", error.message || "Gagal memperbarui resep");
+    } finally {
+      setIsSaving(false);
+    }
   };
+
+  if (isLoading) {
+    return (
+      <View style={{flex: 1, backgroundColor: Colors[colorScheme].background}}>
+        <Header
+          showHelp={false}
+          title="Edit Resep"
+          withNotificationButton={false}
+        />
+        <View style={{flex: 1, justifyContent: "center", alignItems: "center"}}>
+          <ActivityIndicator size="large" color={Colors[colorScheme].primary} />
+          <ThemedText style={{marginTop: 16, color: Colors[colorScheme].icon}}>
+            Memuat data resep...
+          </ThemedText>
+        </View>
+      </View>
+    );
+  }
 
   return (
     <View style={{flex: 1, backgroundColor: Colors[colorScheme].background}}>
@@ -153,9 +260,7 @@ export default function EditRecipeScreen() {
           title="Tambah Bahan"
           variant="secondary"
           onPress={() =>
-            router.push(
-              "/dashboard/recipe-and-materials/ingredients" as never,
-            )
+            router.push("/dashboard/recipe-and-materials/ingredients" as never)
           }
         />
       </KeyboardAwareScrollView>
@@ -185,7 +290,6 @@ const createStyles = (colorScheme: "light" | "dark") =>
       marginTop: 12,
       paddingHorizontal: 8,
       backgroundColor: Colors[colorScheme].background,
-
     },
     bottomBar: {
       position: "absolute",

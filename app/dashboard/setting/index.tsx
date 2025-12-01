@@ -52,12 +52,14 @@ export default function SettingScreen() {
         onPress: async () => {
           setIsLoggingOut(true);
           try {
+            console.log("🚪 Logging out...");
             await authApi.logout();
-            router.replace("/auth/Login/login");
+            console.log("✅ Logout successful");
+            router.replace("/");
           } catch (error) {
             console.error("❌ Logout error:", error);
-            // Tetap logout meskipun API gagal
-            router.replace("/auth/Login/login");
+            // Tetap logout dan redirect meskipun API gagal
+            router.replace("/");
           } finally {
             setIsLoggingOut(false);
           }

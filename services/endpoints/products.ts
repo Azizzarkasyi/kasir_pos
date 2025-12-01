@@ -70,10 +70,16 @@ export const productApi = {
 
   /**
    * Update product variant stock
+   * @param variantId - Variant ID
+   * @param action_type - adjust_stock | add_stock | remove_stock
+   * @param amount - Stock amount
    */
   async updateStock(
     variantId: string,
-    data: {stock: number; min_stock?: number}
+    data: {
+      action_type: "adjust_stock" | "add_stock" | "remove_stock";
+      amount: number;
+    }
   ): Promise<ApiResponse<any>> {
     const response = await apiService.put<any>(
       `/products/${variantId}/stock`,
@@ -89,6 +95,14 @@ export const productApi = {
     const response = await apiService.post<Product>(
       `/products/add-from-branch/${productId}`
     );
+    return response;
+  },
+
+  /**
+   * Delete product
+   */
+  async deleteProduct(productId: string): Promise<ApiResponse<any>> {
+    const response = await apiService.delete<any>(`/products/${productId}`);
     return response;
   },
 };

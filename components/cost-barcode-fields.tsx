@@ -32,7 +32,6 @@ const CostBarcodeFields: React.FC<Props> = ({
         numericOnly
         showLabel={true}
         size="md"
-        placeholder="Harga Modal"
         placeholderTextColor={Colors[colorScheme].icon}
         inputContainerStyle={{
           backgroundColor: colorScheme === "dark" ? "#1F1F1F" : "#FFFFFF",
