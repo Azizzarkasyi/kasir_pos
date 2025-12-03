@@ -1,18 +1,18 @@
 import Header from "@/components/header";
-import { ThemedText } from "@/components/themed-text";
-import { Colors } from "@/constants/theme";
-import { useColorScheme } from "@/hooks/use-color-scheme";
-import { useRouter } from "expo-router";
-import React, { useState } from "react";
-import { 
-  Image, 
-  StyleSheet, 
-  View, 
-  FlatList, 
-  TouchableOpacity, 
-  RefreshControl 
+import {ThemedText} from "@/components/themed-text";
+import {Colors} from "@/constants/theme";
+import {useColorScheme} from "@/hooks/use-color-scheme";
+import {useRouter} from "expo-router";
+import React, {useState} from "react";
+import {
+  Image,
+  StyleSheet,
+  View,
+  FlatList,
+  TouchableOpacity,
+  RefreshControl,
 } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
+import {Ionicons} from "@expo/vector-icons";
 
 type NotificationType = "info" | "promo";
 
@@ -59,11 +59,12 @@ const NotificationScreen = () => {
   const router = useRouter();
 
   const [activeTab, setActiveTab] = useState<NotificationType>("info");
-  const [notifications, setNotifications] = useState<Notification[]>(mockNotifications);
+  const [notifications, setNotifications] =
+    useState<Notification[]>(mockNotifications);
   const [refreshing, setRefreshing] = useState(false);
 
   // Filter notifikasi berdasarkan tab aktif
-  const filteredNotifications = notifications.filter((n) => n.type === activeTab);
+  const filteredNotifications = notifications.filter(n => n.type === activeTab);
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -76,8 +77,8 @@ const NotificationScreen = () => {
   };
 
   const markAsRead = (id: string) => {
-    setNotifications((prev) =>
-      prev.map((n) => (n.id === id ? { ...n, isRead: true } : n))
+    setNotifications(prev =>
+      prev.map(n => (n.id === id ? {...n, isRead: true} : n))
     );
   };
 
@@ -101,7 +102,7 @@ const NotificationScreen = () => {
     }
   };
 
-  const renderNotificationItem = ({ item }: { item: Notification }) => (
+  const renderNotificationItem = ({item}: {item: Notification}) => (
     <TouchableOpacity
       style={[
         styles.notificationCard,
@@ -121,8 +122,12 @@ const NotificationScreen = () => {
           <ThemedText style={styles.notificationTitle}>{item.title}</ThemedText>
           {!item.isRead && <View style={styles.unreadDot} />}
         </View>
-        <ThemedText style={styles.notificationMessage}>{item.message}</ThemedText>
-        <ThemedText style={styles.notificationTime}>{formatTime(item.createdAt)}</ThemedText>
+        <ThemedText style={styles.notificationMessage}>
+          {item.message}
+        </ThemedText>
+        <ThemedText style={styles.notificationTime}>
+          {formatTime(item.createdAt)}
+        </ThemedText>
       </View>
     </TouchableOpacity>
   );
@@ -170,7 +175,7 @@ const NotificationScreen = () => {
         <FlatList
           data={filteredNotifications}
           renderItem={renderNotificationItem}
-          keyExtractor={(item) => item.id}
+          keyExtractor={item => item.id}
           contentContainerStyle={styles.listContainer}
           refreshControl={
             <RefreshControl
