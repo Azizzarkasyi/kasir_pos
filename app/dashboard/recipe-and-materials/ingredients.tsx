@@ -70,7 +70,8 @@ export default function IngredientsScreen() {
           console.log(
             "✅ Loaded",
             ingredientProducts.length,
-            "ingredients for recipe"
+            "ingredients for recipe:",
+            ingredientProducts.map(p => ({id: p.id, name: p.name}))
           );
         }
       } catch (error: any) {

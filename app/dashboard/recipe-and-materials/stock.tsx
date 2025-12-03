@@ -9,6 +9,7 @@ import {ThemedInput} from "@/components/themed-input";
 import {ThemedText} from "@/components/themed-text";
 import {Colors} from "@/constants/theme";
 import {useColorScheme} from "@/hooks/use-color-scheme";
+import {useProductFormStore} from "@/stores/product-form-store";
 import {useNavigation, useRouter} from "expo-router";
 import React, {useEffect, useRef, useState} from "react";
 import {StyleSheet, View} from "react-native";
@@ -36,9 +37,19 @@ export default function StockSettingsScreen() {
     {label: "L", value: "l"},
   ];
 
+  const setStockInStore = useProductFormStore(state => state.setStock);
+
   const handleSave = () => {
     const payload = {offlineStock, unit, minStock, notifyMin};
-    console.log("Kelola stok", payload);
+    console.log("✅ Stock saved to store:", payload);
+
+    setStockInStore({
+      offlineStock,
+      unit,
+      minStock,
+      notifyMin,
+    });
+
     router.back();
   };
 

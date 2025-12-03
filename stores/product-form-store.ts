@@ -8,6 +8,7 @@ interface StockInfo {
 }
 
 interface VariantItem {
+  id?: string;
   name: string;
   price: number;
   stock?: {

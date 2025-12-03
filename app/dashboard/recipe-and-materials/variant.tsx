@@ -27,20 +27,68 @@ export default function MaterialVariantScreen() {
   const [name, setName] = useState("");
   const [price, setPrice] = useState("");
   const [capitalPrice, setCapitalPrice] = useState("");
+  const [stock, setStock] = useState<{
+    offlineStock: number;
+    unit: string;
+    minStock: number;
+    notifyMin: boolean;
+  } | null>(null);
   const [isSubmit, setIsSubmit] = useState(false);
+
+  // Import useLocalSearchParams
+  const {useLocalSearchParams} = require("expo-router");
+  const {
+    offlineStock: qsOfflineStock,
+    unit: qsUnit,
+    minStock: qsMinStock,
+    notifyMin: qsNotifyMin,
+  } = useLocalSearchParams<{
+    offlineStock?: string;
+    unit?: string;
+    minStock?: string;
+    notifyMin?: string;
+  }>();
+
+  useEffect(() => {
+    if (qsOfflineStock || qsUnit || qsMinStock || qsNotifyMin) {
+      const parsed = {
+        offlineStock: qsOfflineStock
+          ? Number(String(qsOfflineStock).replace(/[^0-9]/g, ""))
+          : 0,
+        unit: qsUnit ? String(qsUnit) : "pcs",
+        minStock: qsMinStock
+          ? Number(String(qsMinStock).replace(/[^0-9]/g, ""))
+          : 0,
+        notifyMin: qsNotifyMin === "1" || qsNotifyMin === "true",
+      };
+      setStock(parsed);
+    }
+  }, [qsOfflineStock, qsUnit, qsMinStock, qsNotifyMin]);
 
   const handleSave = () => {
     setIsSubmit(true);
     const priceNum = Number((price || "").replace(/[^0-9]/g, ""));
+    const capitalPriceNum = Number((capitalPrice || "").replace(/[^0-9]/g, ""));
 
     setVariants(prev => [
       ...prev,
       {
         name,
         price: priceNum,
+        ...(stock
+          ? {
+              stock: {
+                count: stock.offlineStock,
+                unit: stock.unit,
+                minStock: stock.minStock,
+                notifyMin: stock.notifyMin,
+              },
+            }
+          : {}),
       },
     ]);
 
+    console.log("✅ Variant saved to store");
     router.back();
   };
 
@@ -117,17 +165,28 @@ export default function MaterialVariantScreen() {
         <View style={styles.contentSection}>
           <MenuRow
             title="Kelola Stok"
-            rightText="Stok Tidak Aktif"
+            rightText={
+              stock
+                ? `Stok Aktif (${stock.offlineStock} ${stock.unit})`
+                : "Stok Tidak Aktif"
+            }
             showBottomBorder={false}
             variant="link"
             onPress={() => {
-              // Untuk sekarang hanya meneruskan nilai dasar stok/varian jika sudah ada
               router.push({
                 pathname: "/dashboard/recipe-and-materials/variant-stock",
                 params: {
                   ...(name ? {name} : {}),
                   ...(price ? {price} : {}),
                   ...(capitalPrice ? {capitalPrice} : {}),
+                  ...(stock
+                    ? {
+                        offlineStock: String(stock.offlineStock),
+                        unit: stock.unit,
+                        minStock: String(stock.minStock),
+                        notifyMin: stock.notifyMin ? "1" : "0",
+                      }
+                    : {}),
                 },
               } as never);
             }}

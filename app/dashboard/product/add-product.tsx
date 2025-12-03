@@ -21,9 +21,8 @@ import {StyleSheet, View, Alert, ActivityIndicator} from "react-native";
 import {KeyboardAwareScrollView} from "react-native-keyboard-aware-scroll-view";
 import {useSafeAreaInsets} from "react-native-safe-area-context";
 import productApi from "@/services/endpoints/products";
-import categoryApi from "@/services/endpoints/categories";
 import merkApi from "@/services/endpoints/merks";
-import {Category, Merk} from "@/types/api";
+import {Merk} from "@/types/api";
 
 export default function AddProductScreen() {
   const colorScheme = useColorScheme() ?? "light";
@@ -34,26 +33,13 @@ export default function AddProductScreen() {
 
   const confirmationRef = useRef<ConfirmationDialogHandle | null>(null);
 
-  const [categories, setCategories] = useState<Category[]>([]);
   const [merks, setMerks] = useState<Merk[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
-    loadCategories();
     loadMerks();
   }, []);
-
-  const loadCategories = async () => {
-    try {
-      const response = await categoryApi.getCategories();
-      if (response.data) {
-        setCategories(response.data);
-      }
-    } catch (error) {
-      console.error("Failed to load categories:", error);
-    }
-  };
 
   const loadMerks = async () => {
     try {
@@ -344,11 +330,7 @@ export default function AddProductScreen() {
             label="Pilih Kategori"
             value={category}
             size="md"
-            onChange={(category: any) => {
-              setCategory(category.id);
-            }}
-            onUpdate={(category: any) => {}}
-            categories={categories}
+            onChange={setCategory}
           />
           <ComboInput
             label="Resep Produk"

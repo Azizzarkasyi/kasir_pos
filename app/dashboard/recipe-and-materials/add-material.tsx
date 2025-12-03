@@ -37,6 +37,7 @@ export default function AddMaterialScreen() {
     capitalPrice,
     barcode,
     variants,
+    stock,
     setName,
     setPrice,
     setBrand,
@@ -44,6 +45,7 @@ export default function AddMaterialScreen() {
     setCapitalPrice,
     setBarcode,
     setVariants,
+    setStock,
   } = useProductFormStore(state => state);
   const {variant_name, variant_price} = useLocalSearchParams<{
     variant_name?: string;
@@ -125,9 +127,9 @@ export default function AddMaterialScreen() {
       return;
     }
 
-    // Validate merk_id
-    if (!brand || brand.length < 10 || !brand.startsWith("cm")) {
-      Alert.alert("Error", "Merk harus dipilih");
+    // Validate merk_id (optional)
+    if (brand && brand.length < 10) {
+      Alert.alert("Error", "Merk tidak valid");
       return;
     }
 
@@ -137,13 +139,40 @@ export default function AddMaterialScreen() {
       const payload: any = {
         name: name.trim(),
         price: numericPrice,
-        merk_id: brand,
         is_ingredient: true, // Flag untuk bahan baku
       };
+
+      if (brand) payload.merk_id = brand;
 
       if (imageUri) payload.photo_url = imageUri;
       if (capitalPrice > 0) payload.capital_price = capitalPrice;
       if (barcode) payload.barcode = barcode;
+
+      // Add stock if configured - Backend expects flat structure
+      if (stock) {
+        payload.stock = stock.offlineStock;
+        payload.is_stock_active = true;
+        payload.min_stock = stock.minStock;
+        payload.notify_on_stock_ronouts = stock.notifyMin;
+        // Note: unit adalah string (pcs, kg, etc), tapi backend expect unit_id
+        // Untuk sekarang kita skip unit_id, atau bisa fetch units API dulu
+      }
+
+      // Add variants if any - Backend expects flat structure per variant
+      if (variants.length > 0) {
+        payload.variants = variants.map(v => ({
+          name: v.name,
+          price: v.price,
+          ...(v.stock
+            ? {
+                stock: v.stock.count,
+                is_stock_active: true,
+                min_stock: v.stock.minStock,
+                notify_on_stock_ronouts: v.stock.notifyMin,
+              }
+            : {}),
+        }));
+      }
 
       console.log("📦 Creating material:", payload);
 
@@ -163,6 +192,7 @@ export default function AddMaterialScreen() {
               setCapitalPrice(0);
               setBarcode("");
               setVariants([]);
+              setStock(null);
               router.back();
             },
           },
@@ -224,8 +254,11 @@ export default function AddMaterialScreen() {
           />
           <ThemedInput
             label="Harga Modal"
-            value={String(capitalPrice)}
-            onChangeText={v => setCapitalPrice(Number(v))}
+            value={capitalPrice > 0 ? String(capitalPrice) : ""}
+            onChangeText={v => {
+              const num = Number(v.replace(/[^0-9]/g, ""));
+              setCapitalPrice(num);
+            }}
             numericOnly
             placeholder="Harga Modal"
             placeholderTextColor={Colors[colorScheme].icon}
@@ -240,7 +273,11 @@ export default function AddMaterialScreen() {
         <View style={styles.rowContent}>
           <MenuRow
             title="Kelola Stok"
-            rightText="Stok Tidak Aktif"
+            rightText={
+              stock
+                ? `Stok Aktif (${stock.offlineStock} ${stock.unit})`
+                : "Stok Tidak Aktif"
+            }
             showBottomBorder={false}
             variant="link"
             onPress={() =>

@@ -6,6 +6,7 @@ import Header from "@/components/header";
 import ImageUpload from "@/components/image-upload";
 import MenuRow from "@/components/menu-row";
 import MerkPicker from "@/components/mollecules/merk-picker";
+import CategoryPicker from "@/components/mollecules/category-picker";
 import {ThemedButton} from "@/components/themed-button";
 import {ThemedInput} from "@/components/themed-input";
 import {ThemedText} from "@/components/themed-text";
@@ -35,15 +36,21 @@ export default function EditMaterialScreen() {
     name,
     price,
     brand,
+    category,
     imageUri,
     capitalPrice,
+    barcode,
     variants,
+    stock,
     setName,
     setPrice,
     setBrand,
+    setCategory,
     setImageUri,
     setCapitalPrice,
+    setBarcode,
     setVariants,
+    setStock,
     reset,
   } = useProductFormStore(state => state);
 
@@ -82,10 +89,48 @@ export default function EditMaterialScreen() {
         if (response.data) {
           const product = response.data;
           setName(product.name);
-          setPrice(String(product.price));
+
           if (product.merk_id) setBrand(product.merk_id);
+          if (product.category_id) setCategory(product.category_id);
           if (product.photo_url) setImageUri(product.photo_url);
-          if (product.capital_price) setCapitalPrice(product.capital_price);
+          if (product.barcode) setBarcode(product.barcode);
+
+          // Load variants or create default from product data
+          if (product.variants && product.variants.length > 0) {
+            // Product has variants - load them
+            const loadedVariants = product.variants.map((v: any) => ({
+              id: v.id,
+              name: v.name,
+              price: v.price,
+              ...(v.stock || v.is_stock_active
+                ? {
+                    stock: {
+                      count: v.stock || 0,
+                      unit: v.unit?.name || "pcs",
+                      minStock: v.min_stock || 0,
+                      notifyMin: v.notify_on_stock_ronouts || false,
+                    },
+                  }
+                : {}),
+            }));
+            setVariants(loadedVariants);
+          } else {
+            // No variants - use product level data as main variant
+            if (product.price) {
+              setPrice(String(product.price));
+            }
+            if (product.capital_price) setCapitalPrice(product.capital_price);
+
+            // Load stock data if available at product level
+            if (product.is_stock_active) {
+              setStock({
+                offlineStock: product.stock || 0,
+                unit: product.unit?.name || "pcs",
+                minStock: product.min_stock || 0,
+                notifyMin: product.notify_on_stock_ronouts || false,
+              });
+            }
+          }
 
           console.log("✅ Material loaded:", product);
         }
@@ -163,23 +208,81 @@ export default function EditMaterialScreen() {
       return;
     }
 
-    if (!brand || brand.length < 10 || !brand.startsWith("cm")) {
-      Alert.alert("Error", "Merk harus dipilih");
+    // Validate merk_id and category_id (optional)
+    if (brand && brand.length < 10) {
+      Alert.alert("Error", "Merk tidak valid");
+      return;
+    }
+
+    if (category && category.length < 10) {
+      Alert.alert("Error", "Kategori tidak valid");
       return;
     }
 
     try {
       setIsSaving(true);
 
+      // UpdateProductDto structure: name, merk_id, category_id are required by backend
+      // Price, stock, capital_price are NOT in product level for update - they're at variant level
+
+      // Backend requires merk_id and category_id, use existing values or alert user
+      if (!brand) {
+        Alert.alert("Error", "Merk harus dipilih");
+        setIsSaving(false);
+        return;
+      }
+
+      if (!category) {
+        Alert.alert("Error", "Kategori harus dipilih");
+        setIsSaving(false);
+        return;
+      }
+
       const payload: any = {
         name: name.trim(),
-        price: numericPrice,
         merk_id: brand,
+        category_id: category,
         is_ingredient: true,
       };
 
       if (imageUri) payload.photo_url = imageUri;
-      if (capitalPrice > 0) payload.capital_price = capitalPrice;
+
+      // For update, backend expects variants array
+      if (variants.length > 0) {
+        // Has variants - update them
+        payload.variants = variants.map(v => ({
+          ...(v.id ? {id: v.id} : {}), // Include ID if updating existing variant
+          name: v.name,
+          price: v.price,
+          ...(v.stock
+            ? {
+                stock: v.stock.count,
+                is_stock_active: true,
+                min_stock: v.stock.minStock,
+                notify_on_stock_ronouts: v.stock.notifyMin,
+              }
+            : {}),
+        }));
+      } else {
+        // No variants - create default variant from product data
+        // This handles products that were created without variants
+        payload.variants = [
+          {
+            name: "Default",
+            price: numericPrice,
+            ...(capitalPrice > 0 ? {capital_price: capitalPrice} : {}),
+            ...(barcode ? {barcode} : {}),
+            ...(stock
+              ? {
+                  stock: stock.offlineStock,
+                  is_stock_active: true,
+                  min_stock: stock.minStock,
+                  notify_on_stock_ronouts: stock.notifyMin,
+                }
+              : {}),
+          },
+        ];
+      }
 
       console.log("📦 Updating material:", payload);
 
@@ -268,11 +371,20 @@ export default function EditMaterialScreen() {
             size="md"
             onChange={setBrand}
           />
+          <CategoryPicker
+            label="Pilih Kategori"
+            value={category}
+            size="md"
+            onChange={setCategory}
+          />
 
           <ThemedInput
             label="Harga Modal"
-            value={String(capitalPrice)}
-            onChangeText={v => setCapitalPrice(Number(v))}
+            value={capitalPrice > 0 ? String(capitalPrice) : ""}
+            onChangeText={v => {
+              const num = Number(v.replace(/[^0-9]/g, ""));
+              setCapitalPrice(num);
+            }}
             numericOnly
             placeholder="Harga Modal"
             placeholderTextColor={Colors[colorScheme].icon}
@@ -287,7 +399,11 @@ export default function EditMaterialScreen() {
         <View style={styles.rowContent}>
           <MenuRow
             title="Kelola Stok"
-            rightText="Stok Tidak Aktif"
+            rightText={
+              stock
+                ? `Stok Aktif (${stock.offlineStock} ${stock.unit})`
+                : "Stok Tidak Aktif"
+            }
             showBottomBorder={false}
             variant="link"
             onPress={() =>

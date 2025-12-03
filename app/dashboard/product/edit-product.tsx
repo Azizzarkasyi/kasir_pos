@@ -21,9 +21,8 @@ import {StyleSheet, View, ActivityIndicator, Alert} from "react-native";
 import {KeyboardAwareScrollView} from "react-native-keyboard-aware-scroll-view";
 import {useSafeAreaInsets} from "react-native-safe-area-context";
 import productApi from "@/services/endpoints/products";
-import categoryApi from "@/services/endpoints/categories";
 import merkApi from "@/services/endpoints/merks";
-import {Category, Merk, Product} from "@/types/api";
+import {Merk, Product} from "@/types/api";
 
 export default function EditProductScreen() {
   const colorScheme = useColorScheme() ?? "light";
@@ -65,7 +64,6 @@ export default function EditProductScreen() {
     id?: string;
   }>();
 
-  const [categories, setCategories] = useState<Category[]>([]);
   const [merks, setMerks] = useState<Merk[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -74,7 +72,6 @@ export default function EditProductScreen() {
 
   React.useEffect(() => {
     loadProduct();
-    loadCategories();
     loadMerks();
 
     return () => {
@@ -167,17 +164,6 @@ export default function EditProductScreen() {
       router.back();
     } finally {
       setIsLoading(false);
-    }
-  };
-
-  const loadCategories = async () => {
-    try {
-      const response = await categoryApi.getCategories();
-      if (response.data) {
-        setCategories(response.data);
-      }
-    } catch (error) {
-      console.error("Failed to load categories:", error);
     }
   };
 
@@ -433,13 +419,7 @@ export default function EditProductScreen() {
             label="Pilih Kategori"
             value={category}
             size="md"
-            onChange={(category: any) => {
-              setCategory(category.id);
-            }}
-            onUpdate={(category: any) => {
-              // Handle category update if needed
-            }}
-            categories={categories}
+            onChange={setCategory}
           />
         </View>
 

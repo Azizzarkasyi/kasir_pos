@@ -1,18 +1,27 @@
-import { Colors } from "@/constants/theme";
-import { useColorScheme } from "@/hooks/use-color-scheme";
-import { AntDesign, Ionicons } from "@expo/vector-icons";
+import {Colors} from "@/constants/theme";
+import {useColorScheme} from "@/hooks/use-color-scheme";
+import categoryApi from "@/services/endpoints/categories";
+import {AntDesign, Ionicons} from "@expo/vector-icons";
 import React from "react";
-import { Modal, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import {
+  ActivityIndicator,
+  Alert,
+  Modal,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import AddCategoryModal from "../drawers/add-category-modal";
-import { ThemedButton } from "../themed-button";
+import {ThemedButton} from "../themed-button";
 
 type CategoryPickerProps = {
   label?: string;
   value: string;
-  onUpdate: (next: Category) => void;
-  onChange: (category: Category) => void;
+  onUpdate?: (next: Category) => void;
+  onChange: (categoryId: string) => void;
   size?: "sm" | "md" | "base";
-  categories?: Category[];
 };
 
 const CategoryPicker: React.FC<CategoryPickerProps> = ({
@@ -21,14 +30,39 @@ const CategoryPicker: React.FC<CategoryPickerProps> = ({
   onUpdate,
   onChange,
   size = "md",
-  categories,
 }) => {
   const colorScheme = useColorScheme() ?? "light";
   const styles = createStyles(colorScheme, size);
   const [visible, setVisible] = React.useState(false);
+  const [categories, setCategories] = React.useState<Category[]>([]);
+  const [loading, setLoading] = React.useState(false);
 
   const [isAdd, setIsAdd] = React.useState(false);
-  const [editingValue, setEditingValue] = React.useState<Category | undefined>(undefined);
+  const [editingValue, setEditingValue] = React.useState<Category | undefined>(
+    undefined
+  );
+
+  // Fetch categories on mount and when modal opens
+  React.useEffect(() => {
+    if (visible) {
+      loadCategories();
+    }
+  }, [visible]);
+
+  const loadCategories = async () => {
+    try {
+      setLoading(true);
+      const response = await categoryApi.getCategories();
+      if (response.data) {
+        setCategories(response.data);
+      }
+    } catch (error: any) {
+      console.error("❌ Failed to load categories:", error);
+      Alert.alert("Error", "Gagal memuat kategori");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const openModal = () => {
     setIsAdd(false);
@@ -42,11 +76,47 @@ const CategoryPicker: React.FC<CategoryPickerProps> = ({
     setEditingValue(undefined);
   };
 
-  const handleSubmit = (category: Category) => {
-    onUpdate(category);
-    setVisible(false);
-    setIsAdd(false);
-    setEditingValue(undefined);
+  const handleSubmit = async (category: Category) => {
+    try {
+      setLoading(true);
+      let savedCategory: Category;
+
+      if (category.id) {
+        // Update existing category
+        const response = await categoryApi.updateCategory(category.id, {
+          name: category.name,
+        });
+        savedCategory = response.data!;
+        console.log("✅ Category updated:", savedCategory);
+      } else {
+        // Create new category
+        const response = await categoryApi.createCategory({
+          name: category.name,
+        });
+        savedCategory = response.data!;
+        console.log("✅ Category created:", savedCategory);
+      }
+
+      // Refresh list
+      await loadCategories();
+
+      // Call onUpdate if provided
+      if (onUpdate) {
+        onUpdate(savedCategory);
+      }
+
+      // Select the new/updated category
+      onChange(savedCategory.id);
+
+      setVisible(false);
+      setIsAdd(false);
+      setEditingValue(undefined);
+    } catch (error: any) {
+      console.error("❌ Failed to save category:", error);
+      Alert.alert("Error", error.message || "Gagal menyimpan kategori");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleAddCategory = () => {
@@ -63,24 +133,50 @@ const CategoryPicker: React.FC<CategoryPickerProps> = ({
 
   return (
     <View style={styles.container}>
-      <TouchableOpacity style={styles.inputLike} activeOpacity={0.7} onPress={openModal}>
-        <Text style={[styles.inputText, { color: value ? Colors[colorScheme].text : Colors[colorScheme].icon }]}>
+      <TouchableOpacity
+        style={styles.inputLike}
+        activeOpacity={0.7}
+        onPress={openModal}
+      >
+        <Text
+          style={[
+            styles.inputText,
+            {
+              color: value
+                ? Colors[colorScheme].text
+                : Colors[colorScheme].icon,
+            },
+          ]}
+        >
           {selectedCategory?.name || "Pilih Kategori"}
         </Text>
-        <Ionicons name="chevron-down" size={18} color={Colors[colorScheme].icon} />
+        <Ionicons
+          name="chevron-down"
+          size={18}
+          color={Colors[colorScheme].icon}
+        />
       </TouchableOpacity>
 
       <AddCategoryModal
-        visible={Boolean(visible && isAdd && editingValue)}
+        visible={Boolean(visible && isAdd)}
         onClose={closeModal}
         onSubmit={handleSubmit}
         initialValue={editingValue}
         label="Nama Kategori"
       />
 
-      <Modal visible={visible && !isAdd} transparent animationType="fade" onRequestClose={closeModal}>
+      <Modal
+        visible={visible && !isAdd}
+        transparent
+        animationType="fade"
+        onRequestClose={closeModal}
+      >
         <View style={styles.modalRoot}>
-          <TouchableOpacity style={styles.backdrop} activeOpacity={1} onPress={closeModal} />
+          <TouchableOpacity
+            style={styles.backdrop}
+            activeOpacity={1}
+            onPress={closeModal}
+          />
 
           <View style={styles.modalCard}>
             <View style={styles.modalHeader}>
@@ -88,35 +184,51 @@ const CategoryPicker: React.FC<CategoryPickerProps> = ({
             </View>
 
             <ScrollView style={styles.listContainer}>
-              {(categories ?? []).map(item => (
-                <View key={item.id} style={styles.listItemRow}>
-                  <TouchableOpacity
-                    style={styles.listItem}
-                    activeOpacity={0.7}
-                    onPress={() => {
-                      onChange(item);
-                      closeModal();
-                    }}
-                  >
-                    <Text
-                      style={[
-                        styles.listItemText,
-                        item.id === value && { color: Colors[colorScheme].primary, fontWeight: "600" },
-                      ]}
-                    >
-                      {item.name}
-                    </Text>
-                  </TouchableOpacity>
-
-                  <TouchableOpacity
-                    style={styles.editButton}
-                    activeOpacity={0.7}
-                    onPress={() => handleEditCategory(item)}
-                  >
-                    <AntDesign name="edit" size={20} color={Colors[colorScheme].primary} />
-                  </TouchableOpacity>
+              {loading ? (
+                <View style={{padding: 20, alignItems: "center"}}>
+                  <ActivityIndicator
+                    size="small"
+                    color={Colors[colorScheme].primary}
+                  />
                 </View>
-              ))}
+              ) : (
+                categories.map(item => (
+                  <View key={item.id} style={styles.listItemRow}>
+                    <TouchableOpacity
+                      style={styles.listItem}
+                      activeOpacity={0.7}
+                      onPress={() => {
+                        onChange(item.id);
+                        closeModal();
+                      }}
+                    >
+                      <Text
+                        style={[
+                          styles.listItemText,
+                          item.id === value && {
+                            color: Colors[colorScheme].primary,
+                            fontWeight: "600",
+                          },
+                        ]}
+                      >
+                        {item.name}
+                      </Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                      style={styles.editButton}
+                      activeOpacity={0.7}
+                      onPress={() => handleEditCategory(item)}
+                    >
+                      <AntDesign
+                        name="edit"
+                        size={20}
+                        color={Colors[colorScheme].primary}
+                      />
+                    </TouchableOpacity>
+                  </View>
+                ))
+              )}
             </ScrollView>
 
             <ThemedButton
@@ -142,7 +254,10 @@ const CategoryPicker: React.FC<CategoryPickerProps> = ({
   );
 };
 
-const createStyles = (colorScheme: "light" | "dark", size: "sm" | "md" | "base") =>
+const createStyles = (
+  colorScheme: "light" | "dark",
+  size: "sm" | "md" | "base"
+) =>
   StyleSheet.create({
     container: {
       width: "100%",
