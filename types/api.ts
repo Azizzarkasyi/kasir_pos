@@ -211,15 +211,21 @@ export interface TransactionItem {
 }
 
 export interface CreateTransactionRequest {
+  payment_method: "cash" | "debt";
   items: {
-    productId: number;
+    product_id: string;
+    variant_id?: string;
     quantity: number;
-    price: number;
+    note?: string;
   }[];
-  paymentMethod: "cash" | "card" | "transfer" | "qris";
-  customerId?: number;
-  employeeId?: number;
-  notes?: string;
+  discount?: number;
+  paid_amount: number;
+  customer_name?: string;
+  note?: string;
+  additional_fees?: {
+    name: string;
+    amount: number;
+  }[];
 }
 
 // Pagination

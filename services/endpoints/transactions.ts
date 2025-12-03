@@ -1,9 +1,44 @@
-import apiService from '../api';
+import apiService from "../api";
 import {
   Transaction,
   CreateTransactionRequest,
   ApiResponse,
-} from '../../types/api';
+} from "../../types/api";
+
+/**
+ * Transform transaction from snake_case to camelCase
+ */
+const transformTransaction = (data: any): Transaction => {
+  // Generate invoice number if not present
+  const invoiceNumber =
+    data.invoice_number || data.invoiceNumber || `TRX-${data.id}`;
+
+  return {
+    id: data.id,
+    invoiceNumber: invoiceNumber,
+    totalAmount: data.total_amount || data.total || data.totalAmount || 0,
+    paymentMethod: (
+      data.payment_method || data.paymentMethod
+    )?.toLowerCase() as any,
+    paymentStatus: (data.payment_status ||
+      data.status ||
+      data.paymentStatus) as any,
+    items: (data.items || []).map((item: any) => ({
+      id: item.id,
+      productId: item.product_id || item.productId,
+      productName:
+        item.product?.name || item.productName || item.name || "Item",
+      quantity: item.quantity || 0,
+      price: item.price || item.product?.price || item.variant?.price || 0,
+      subtotal: item.subtotal || item.quantity * (item.price || 0),
+    })),
+    customerId: data.customer_id || data.customerId,
+    employeeId: data.employee_id || data.cashier_id || data.employeeId,
+    notes: data.notes || data.note || "",
+    createdAt: data.created_at || data.createdAt || new Date().toISOString(),
+    updatedAt: data.updated_at || data.updatedAt,
+  };
+};
 
 /**
  * Transaction API Endpoints
@@ -19,17 +54,30 @@ export const transactionApi = {
     endDate?: string;
     paymentMethod?: string;
     paymentStatus?: string;
+    search?: string;
   }): Promise<ApiResponse<Transaction[]>> {
-    const response = await apiService.get<Transaction[]>('/transactions', params);
-    return response;
+    const response = await apiService.get<any[]>("/transactions", params);
+
+    // Transform response
+    if (response.data) {
+      response.data = response.data.map(transformTransaction);
+    }
+
+    return response as ApiResponse<Transaction[]>;
   },
 
   /**
    * Get transaction by ID
    */
   async getTransaction(id: number): Promise<ApiResponse<Transaction>> {
-    const response = await apiService.get<Transaction>(`/transactions/${id}`);
-    return response;
+    const response = await apiService.get<any>(`/transactions/${id}`);
+
+    // Transform response
+    if (response.data) {
+      response.data = transformTransaction(response.data);
+    }
+
+    return response as ApiResponse<Transaction>;
   },
 
   /**
@@ -38,27 +86,34 @@ export const transactionApi = {
   async createTransaction(
     data: CreateTransactionRequest
   ): Promise<ApiResponse<Transaction>> {
-    const response = await apiService.post<Transaction>('/transactions', data);
-    return response;
+    const response = await apiService.post<any>("/transactions", data);
+
+    // Transform response
+    if (response.data) {
+      response.data = transformTransaction(response.data);
+    }
+
+    return response as ApiResponse<Transaction>;
   },
 
   /**
    * Cancel transaction
    */
   async cancelTransaction(id: number): Promise<ApiResponse<Transaction>> {
-    const response = await apiService.patch<Transaction>(
-      `/transactions/${id}/cancel`
-    );
-    return response;
+    const response = await apiService.patch<any>(`/transactions/${id}/cancel`);
+
+    // Transform response
+    if (response.data) {
+      response.data = transformTransaction(response.data);
+    }
+
+    return response as ApiResponse<Transaction>;
   },
 
   /**
    * Get transaction statistics
    */
-  async getStats(params?: {
-    startDate?: string;
-    endDate?: string;
-  }): Promise<
+  async getStats(params?: {startDate?: string; endDate?: string}): Promise<
     ApiResponse<{
       totalRevenue: number;
       totalTransactions: number;
@@ -69,7 +124,7 @@ export const transactionApi = {
       totalRevenue: number;
       totalTransactions: number;
       averageTransaction: number;
-    }>('/transactions/stats', params);
+    }>("/transactions/stats", params);
     return response;
   },
 
@@ -89,7 +144,7 @@ export const transactionApi = {
       totalRevenue: number;
       totalTransactions: number;
       transactions: Transaction[];
-    }>('/transactions/daily', { date });
+    }>("/transactions/daily", {date});
     return response;
   },
 };

@@ -1,22 +1,62 @@
 "use client";
 
 import Header from "@/components/header";
-import { Colors } from "@/constants/theme";
-import { useColorScheme } from "@/hooks/use-color-scheme";
-import { Ionicons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
-import React from "react";
-import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import {Colors} from "@/constants/theme";
+import {useColorScheme} from "@/hooks/use-color-scheme";
+import {Ionicons} from "@expo/vector-icons";
+import {useRouter, useLocalSearchParams} from "expo-router";
+import React, {useEffect, useState} from "react";
+import {StyleSheet, Text, TouchableOpacity, View, Share} from "react-native";
+import {useCartStore} from "@/stores/cart-store";
+
+type TransactionResult = {
+  id: string;
+  invoiceNumber: string;
+  totalAmount: number;
+  paidAmount: number;
+  changeAmount: number;
+  paymentMethod: string;
+  createdAt: string;
+};
 
 export default function TransactionSettlementPage() {
   const colorScheme = useColorScheme() ?? "light";
   const styles = createStyles(colorScheme);
   const router = useRouter();
+  const params = useLocalSearchParams();
 
-  const paymentMethod = "Tunai";
-  const totalTagihan = 20000;
-  const diterima = 20000;
-  const kembali = 0;
+  const {getTotalAmount, clearCart} = useCartStore();
+
+  const [transaction, setTransaction] = useState<TransactionResult | null>(
+    null
+  );
+
+  useEffect(() => {
+    // Parse transaction data from params
+    if (params.transaction) {
+      try {
+        const txnData = JSON.parse(params.transaction as string);
+        setTransaction(txnData);
+      } catch (error) {
+        console.error("Failed to parse transaction data:", error);
+      }
+    }
+  }, [params.transaction]);
+
+  const paymentMethod =
+    transaction?.paymentMethod === "cash" ? "Tunai" : "Hutang";
+  const totalTagihan = transaction?.totalAmount || 0;
+  const diterima = transaction?.paidAmount || 0;
+  const kembali = transaction?.changeAmount || 0;
+  const transactionDate = transaction?.createdAt
+    ? new Date(transaction.createdAt).toLocaleString("id-ID", {
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+      })
+    : "-";
 
   const formatCurrency = (value: number) => {
     if (!value) return "0";
@@ -25,11 +65,34 @@ export default function TransactionSettlementPage() {
     return withDots;
   };
 
+  const handleShareReceipt = async () => {
+    try {
+      const message = `Transaksi Berhasil\n\nNo: ${
+        transaction?.invoiceNumber || "-"
+      }\nTotal: Rp ${formatCurrency(totalTagihan)}\nBayar: Rp ${formatCurrency(
+        diterima
+      )}\nKembali: Rp ${formatCurrency(
+        kembali
+      )}\nMetode: ${paymentMethod}\nWaktu: ${transactionDate}`;
+
+      await Share.share({
+        message: message,
+      });
+    } catch (error) {
+      console.error("Share failed:", error);
+    }
+  };
+
+  const handleNewTransaction = () => {
+    clearCart();
+    router.replace("/dashboard/transaction");
+  };
+
   return (
     <View
       style={[
         styles.container,
-        { backgroundColor: Colors[colorScheme].background },
+        {backgroundColor: Colors[colorScheme].background},
       ]}
     >
       <Header
@@ -49,7 +112,12 @@ export default function TransactionSettlementPage() {
           </View>
 
           <Text style={styles.successTitle}>Transaksi Berhasil</Text>
-          <Text style={styles.successSubtitle}>20-Nov-2025, 07:24</Text>
+          <Text style={styles.successSubtitle}>{transactionDate}</Text>
+          {transaction?.invoiceNumber && (
+            <Text style={[styles.successSubtitle, {marginTop: 4}]}>
+              #{transaction.invoiceNumber}
+            </Text>
+          )}
         </View>
 
         <View style={styles.detailWrapper}>
@@ -59,7 +127,9 @@ export default function TransactionSettlementPage() {
           </View>
           <View style={styles.detailRow}>
             <Text style={styles.detailLabel}>Total Tagihan</Text>
-            <Text style={styles.detailValue}>Rp{formatCurrency(totalTagihan)}</Text>
+            <Text style={styles.detailValue}>
+              Rp{formatCurrency(totalTagihan)}
+            </Text>
           </View>
           <View style={styles.detailRow}>
             <Text style={styles.detailLabel}>Diterima</Text>
@@ -74,22 +144,43 @@ export default function TransactionSettlementPage() {
 
       <View style={styles.bottomWrapper}>
         <View style={styles.topButtonsRow}>
-          <TouchableOpacity style={styles.secondaryButton}>
+          <TouchableOpacity
+            style={styles.secondaryButton}
+            onPress={() => {
+              // TODO: Implement print functionality
+              console.log("Print receipt");
+            }}
+          >
             <Text style={styles.secondaryButtonText}>Cetak Struk</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.secondaryButton} onPress={() => { router.push("/dashboard/transaction/share-struck" as never)}}>
+          <TouchableOpacity
+            style={styles.secondaryButton}
+            onPress={() => {
+              if (transaction) {
+                router.push({
+                  pathname: "/dashboard/transaction/share-struck",
+                  params: {transactionId: transaction.id},
+                });
+              } else {
+                handleShareReceipt();
+              }
+            }}
+          >
             <Text style={styles.secondaryButtonText}>Kirim Struk</Text>
           </TouchableOpacity>
         </View>
 
         <TouchableOpacity
-          style={[styles.primaryButton, { backgroundColor: Colors[colorScheme].primary }]}
-          onPress={() => router.replace("/dashboard/transaction" as never)}
+          style={[
+            styles.primaryButton,
+            {backgroundColor: Colors[colorScheme].primary},
+          ]}
+          onPress={handleNewTransaction}
         >
           <Text
             style={[
               styles.primaryButtonText,
-              { color: Colors[colorScheme].text },
+              {color: Colors[colorScheme].text},
             ]}
           >
             Transaksi Baru
@@ -204,4 +295,3 @@ const createStyles = (colorScheme: "light" | "dark") =>
       fontWeight: "700",
     },
   });
-

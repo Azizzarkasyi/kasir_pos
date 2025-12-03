@@ -6,11 +6,11 @@ import SelectVariantModal from "@/components/drawers/select-variant-modal";
 import Header from "@/components/header";
 import Sidebar from "@/components/layouts/dashboard/sidebar";
 import CalculatorInput from "@/components/mollecules/calculator-input";
-import { Colors } from "@/constants/theme";
-import { useColorScheme } from "@/hooks/use-color-scheme";
-import { AntDesign, Ionicons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
-import React from "react";
+import {Colors} from "@/constants/theme";
+import {useColorScheme} from "@/hooks/use-color-scheme";
+import {AntDesign, Ionicons} from "@expo/vector-icons";
+import {useRouter} from "expo-router";
+import React, {useState, useEffect, useCallback} from "react";
 import {
   Image,
   StatusBar,
@@ -19,25 +19,16 @@ import {
   TextInput,
   TouchableOpacity,
   View,
+  ActivityIndicator,
+  FlatList,
+  RefreshControl,
 } from "react-native";
+import {productApi} from "@/services/endpoints/products";
+import {categoryApi} from "@/services/endpoints/categories";
+import {Product, Category} from "@/types/api";
+import {useCartStore} from "@/stores/cart-store";
 
 const STATUS_BAR_HEIGHT = StatusBar.currentHeight ?? 0;
-
-type ProductVariant = {
-  id: string;
-  name: string;
-  price: number;
-  stock?: number;
-};
-
-type Product = {
-  id: string;
-  name: string;
-  remaining: number;
-  price: number;
-  category: string;
-  variants?: ProductVariant[];
-};
 
 type CheckoutItem = {
   productId: string;
@@ -47,60 +38,111 @@ type CheckoutItem = {
 };
 
 export default function PaymentPage() {
-  const [amount, setAmount] = React.useState<string>("0");
+  const [amount, setAmount] = useState<string>("0");
   const colorScheme = useColorScheme() ?? "light";
   const styles = createStyles(colorScheme);
   const router = useRouter();
-  const [activeTab, setActiveTab] = React.useState<"manual" | "product" | "favorite">("product");
-  const products = React.useMemo(
-    (): Product[] => [
-      {
-        id: "burger-1",
-        name: "Burger",
-        remaining: 28,
-        price: 1000,
-        category: "all",
-        variants: [
-          {
-            id: "burger-1-ori",
-            name: "Original",
-            price: 1000,
-            stock: 10
-          },
-          {
-            id: "burger-1-cheese",
-            name: "Cheese",
-            price: 1200,
-            stock: 10
-          },
-        ],
-      },
-      {
-        id: "mie-goreng-1",
-        name: "Mie Goreng",
-        remaining: 12,
-        price: 8000,
-        category: "mie",
-      },
-    ],
-    []
-  );
 
-  const [checkoutProducts, setCheckoutProducts] = React.useState<CheckoutItem[]>(
-    []
+  const [activeTab, setActiveTab] = useState<"manual" | "product" | "favorite">(
+    "product"
   );
+  const [products, setProducts] = useState<Product[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string>("all");
+  const [searchQuery, setSearchQuery] = useState<string>("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
-  const [variantModalVisible, setVariantModalVisible] = React.useState(false);
+  const [checkoutProducts, setCheckoutProducts] = useState<CheckoutItem[]>([]);
+  const [variantModalVisible, setVariantModalVisible] = useState(false);
   const [selectedProductForVariant, setSelectedProductForVariant] =
-    React.useState<Product | null>(null);
-
-  const [customQtyModalVisible, setCustomQtyModalVisible] = React.useState(false);
+    useState<Product | null>(null);
+  const [customQtyModalVisible, setCustomQtyModalVisible] = useState(false);
   const [selectedProductForCustomQty, setSelectedProductForCustomQty] =
-    React.useState<Product | null>(null);
+    useState<Product | null>(null);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
-  const [isSidebarOpen, setIsSidebarOpen] = React.useState(false);
+  // Cart store
+  const {
+    items: cartItems,
+    addItem,
+    getTotalItems,
+    getTotalAmount,
+  } = useCartStore();
 
-  const isEmptyState = products.length === 0;
+  // Fetch products from API
+  const fetchProducts = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      const params: any = {};
+
+      if (searchQuery) {
+        params.search = searchQuery;
+      }
+
+      if (selectedCategoryId !== "all") {
+        params.category_id = selectedCategoryId;
+      }
+
+      // Note: Backend doesn't support is_favorite filter yet
+      // if (activeTab === "favorite") {
+      //   params.is_favorite = true;
+      // }
+
+      const response = await productApi.getProducts(params);
+
+      if (response.data) {
+        setProducts(response.data);
+      }
+    } catch (error: any) {
+      console.error("❌ Failed to fetch products:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [searchQuery, selectedCategoryId, activeTab]);
+
+  // Fetch categories
+  const fetchCategories = useCallback(async () => {
+    try {
+      const response = await categoryApi.getCategories();
+      if (response.data) {
+        setCategories(response.data);
+      }
+    } catch (error: any) {
+      console.error("❌ Failed to fetch categories:", error);
+    }
+  }, []);
+
+  // Initial load
+  useEffect(() => {
+    fetchCategories();
+  }, [fetchCategories]);
+
+  // Load products when filters change
+  useEffect(() => {
+    if (activeTab !== "manual") {
+      fetchProducts();
+    }
+  }, [fetchProducts, activeTab]);
+
+  // Debounced search
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (activeTab !== "manual") {
+        fetchProducts();
+      }
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await fetchProducts();
+    setRefreshing(false);
+  };
+
+  const isEmptyState = products.length === 0 && !isLoading;
 
   const formatAmount = (value: string) => {
     if (!value) return "0";
@@ -112,32 +154,55 @@ export default function PaymentPage() {
   };
 
   const handleAddProductToCheckout = (productId: string) => {
-    setCheckoutProducts((prev) => {
+    const product = products.find(p => p.id === productId);
+    if (!product) return;
+
+    addItem({
+      productId: product.id,
+      productName: product.name,
+      variantId: null,
+      variantName: null,
+      quantity: 1,
+      unitPrice: product.price || 0,
+      note: "",
+    });
+
+    // Also update local state for backward compatibility
+    setCheckoutProducts(prev => {
       const existing = prev.find(
-        (item) => item.productId === productId && !item.variantId
+        item => item.productId === productId && !item.variantId
       );
       if (existing) {
-        return prev.map((item) =>
+        return prev.map(item =>
           item.productId === productId && !item.variantId
-            ? { ...item, quantity: item.quantity + 1 }
+            ? {...item, quantity: item.quantity + 1}
             : item
         );
       }
-      return [
-        ...prev,
-        { productId, variantId: null, quantity: 1, note: "" },
-      ];
+      return [...prev, {productId, variantId: null, quantity: 1, note: ""}];
     });
   };
 
   const handleProductPress = (product: Product) => {
-    if (product.variants && product.variants.length > 0) {
+    // Check if product has multiple variants
+    if (product.variants && product.variants.length > 1) {
       setSelectedProductForVariant(product);
       setVariantModalVisible(true);
       return;
     }
 
-    handleAddProductToCheckout(product.id);
+    // If only one variant or no variant, add directly with default variant
+    if (product.variants && product.variants.length === 1) {
+      const variant = product.variants[0];
+      handleConfirmVariant({
+        productId: product.id,
+        variantId: variant.id,
+        quantity: 1,
+        note: "",
+      });
+    } else {
+      handleAddProductToCheckout(product.id);
+    }
   };
 
   const handleProductLongPress = (product: Product) => {
@@ -151,9 +216,25 @@ export default function PaymentPage() {
     quantity: number;
     note: string;
   }) => {
-    setCheckoutProducts((prev) => {
+    const product = products.find(p => p.id === payload.productId);
+    const variant = product?.variants?.find(v => v.id === payload.variantId);
+
+    if (product && variant) {
+      addItem({
+        productId: product.id,
+        productName: product.name,
+        variantId: variant.id,
+        variantName: variant.name,
+        quantity: payload.quantity,
+        unitPrice: variant.price,
+        note: payload.note,
+      });
+    }
+
+    // Also update local state
+    setCheckoutProducts(prev => {
       const existingIndex = prev.findIndex(
-        (item) =>
+        item =>
           item.productId === payload.productId &&
           item.variantId === payload.variantId
       );
@@ -186,19 +267,23 @@ export default function PaymentPage() {
 
   const getProductQuantity = (productId: string) => {
     return checkoutProducts
-      .filter((item) => item.productId === productId)
+      .filter(item => item.productId === productId)
       .reduce((sum, item) => sum + item.quantity, 0);
   };
 
   const getProductNote = (productId: string) => {
     const item = checkoutProducts.find(
-      (checkoutItem) => checkoutItem.productId === productId && !checkoutItem.variantId
+      checkoutItem =>
+        checkoutItem.productId === productId && !checkoutItem.variantId
     );
     return item?.note ?? "";
   };
 
-  const handleConfirmCustomQuantity = (payload: { quantity: number; note: string }) => {
-    const { quantity, note } = payload;
+  const handleConfirmCustomQuantity = (payload: {
+    quantity: number;
+    note: string;
+  }) => {
+    const {quantity, note} = payload;
     if (!selectedProductForCustomQty) {
       setCustomQtyModalVisible(false);
       return;
@@ -206,9 +291,9 @@ export default function PaymentPage() {
 
     const productId = selectedProductForCustomQty.id;
 
-    setCheckoutProducts((prev) => {
+    setCheckoutProducts(prev => {
       const index = prev.findIndex(
-        (item) => item.productId === productId && !item.variantId
+        item => item.productId === productId && !item.variantId
       );
 
       if (index >= 0) {
@@ -247,13 +332,32 @@ export default function PaymentPage() {
   };
 
   const getItemUnitPrice = (item: CheckoutItem) => {
-    const product = products.find((p) => p.id === item.productId);
+    const product = products.find(p => p.id === item.productId);
     if (!product) return 0;
+
     if (item.variantId) {
-      const variant = product.variants?.find((v) => v.id === item.variantId);
-      return variant?.price ?? product.price;
+      const variant = product.variants?.find(v => v.id === item.variantId);
+      return variant?.price ?? 0;
     }
-    return product.price;
+
+    // If product has variants but no variant selected, use first variant price
+    if (product.variants && product.variants.length > 0) {
+      return product.variants[0].price;
+    }
+
+    return product.price || 0;
+  };
+
+  const getProductStock = (productId: string) => {
+    const product = products.find(p => p.id === productId);
+    if (!product) return 0;
+
+    // Sum all variant stocks or return product stock
+    if (product.variants && product.variants.length > 0) {
+      return product.variants.reduce((sum, v) => sum + (v.stock || 0), 0);
+    }
+
+    return product.stock || 0;
   };
 
   const checkoutItemsCount = checkoutProducts.reduce(
@@ -277,7 +381,7 @@ export default function PaymentPage() {
     <View
       style={[
         styles.container,
-        { backgroundColor: Colors[colorScheme].background },
+        {backgroundColor: Colors[colorScheme].background},
       ]}
     >
       <Header
@@ -307,30 +411,37 @@ export default function PaymentPage() {
             <View
               style={[
                 styles.searchInner,
-                { backgroundColor: Colors[colorScheme].background },
+                {backgroundColor: Colors[colorScheme].background},
               ]}
             >
-              <Ionicons name="search-outline" style={styles.searchIcon} size={16} color={Colors[colorScheme].icon} />
+              <Ionicons
+                name="search-outline"
+                style={styles.searchIcon}
+                size={16}
+                color={Colors[colorScheme].icon}
+              />
               <TextInput
                 placeholder="Cari Produk"
                 placeholderTextColor={Colors[colorScheme].icon}
-                style={[
-                  styles.searchInput,
-                  { color: Colors[colorScheme].text },
-                ]}
+                style={[styles.searchInput, {color: Colors[colorScheme].text}]}
+                value={searchQuery}
+                onChangeText={setSearchQuery}
               />
             </View>
           </View>
 
           <View style={styles.headerIcons}>
-            <TouchableOpacity onPress={() => { }} style={styles.headerIconBox}>
+            <TouchableOpacity onPress={() => {}} style={styles.headerIconBox}>
               <Ionicons
                 name="barcode-outline"
                 size={24}
                 color={Colors[colorScheme].icon}
               />
             </TouchableOpacity>
-            <TouchableOpacity onPress={() => { }} style={styles.headerIconBox}>
+            <TouchableOpacity
+              onPress={() => router.push("/dashboard/transaction/history")}
+              style={styles.headerIconBox}
+            >
               <AntDesign
                 name="history"
                 size={20}
@@ -344,21 +455,18 @@ export default function PaymentPage() {
         <View
           style={[
             styles.tabsContainer,
-            { backgroundColor: Colors[colorScheme].tabBackground },
+            {backgroundColor: Colors[colorScheme].tabBackground},
           ]}
         >
-           <TouchableOpacity
-            style={[
-              styles.tab,
-              activeTab === "manual" && styles.tabActive,
-            ]}
+          <TouchableOpacity
+            style={[styles.tab, activeTab === "manual" && styles.tabActive]}
             onPress={() => setActiveTab("manual")}
           >
             <Text
               style={
                 activeTab === "manual"
-                  ? [styles.tabActiveText, { color: Colors[colorScheme].text }]
-                  : [styles.tabText, { color: Colors[colorScheme].icon }]
+                  ? [styles.tabActiveText, {color: Colors[colorScheme].text}]
+                  : [styles.tabText, {color: Colors[colorScheme].icon}]
               }
             >
               Manual
@@ -369,7 +477,7 @@ export default function PaymentPage() {
               styles.tab,
               activeTab === "product" && [
                 styles.tabActive,
-                { backgroundColor: Colors[colorScheme].secondary },
+                {backgroundColor: Colors[colorScheme].secondary},
               ],
             ]}
             onPress={() => setActiveTab("product")}
@@ -377,8 +485,8 @@ export default function PaymentPage() {
             <Text
               style={
                 activeTab === "product"
-                  ? [styles.tabActiveText, { color: Colors[colorScheme].text }]
-                  : [styles.tabText, { color: Colors[colorScheme].icon }]
+                  ? [styles.tabActiveText, {color: Colors[colorScheme].text}]
+                  : [styles.tabText, {color: Colors[colorScheme].icon}]
               }
             >
               Produk
@@ -389,7 +497,7 @@ export default function PaymentPage() {
               styles.tab,
               activeTab === "favorite" && [
                 styles.tabActive,
-                { backgroundColor: Colors[colorScheme].secondary },
+                {backgroundColor: Colors[colorScheme].secondary},
               ],
             ]}
             onPress={() => setActiveTab("favorite")}
@@ -397,8 +505,8 @@ export default function PaymentPage() {
             <Text
               style={
                 activeTab === "favorite"
-                  ? [styles.tabActiveText, { color: Colors[colorScheme].text }]
-                  : [styles.tabText, { color: Colors[colorScheme].icon }]
+                  ? [styles.tabActiveText, {color: Colors[colorScheme].text}]
+                  : [styles.tabText, {color: Colors[colorScheme].icon}]
               }
             >
               Favorit
@@ -415,14 +523,14 @@ export default function PaymentPage() {
             <View
               style={[
                 styles.displayWrapper,
-                { backgroundColor: Colors[colorScheme].background },
+                {backgroundColor: Colors[colorScheme].background},
               ]}
             >
               <View style={styles.displayAmountRow}>
                 <Text
                   style={[
                     styles.displayAmount,
-                    { color: Colors[colorScheme].text },
+                    {color: Colors[colorScheme].text},
                   ]}
                 >
                   {formatAmount(amount)}
@@ -439,22 +547,64 @@ export default function PaymentPage() {
           <View
             style={[
               styles.productWrapper,
-              { backgroundColor: Colors[colorScheme].secondary },
+              {backgroundColor: Colors[colorScheme].secondary},
             ]}
           >
             <View style={styles.badgeRow}>
-              <View style={[styles.badge, styles.badgeActive]}>
-                <Text style={[styles.badgeText, styles.badgeTextActive]}>All</Text>
-              </View>
-              <View style={styles.badge}>
-                <Text style={styles.badgeText}>mie</Text>
-              </View>
-              <View style={styles.badge}>
-                <Text style={styles.badgeText}>minuman</Text>
-              </View>
+              <TouchableOpacity
+                style={[
+                  styles.badge,
+                  selectedCategoryId === "all" && styles.badgeActive,
+                ]}
+                onPress={() => setSelectedCategoryId("all")}
+              >
+                <Text
+                  style={[
+                    styles.badgeText,
+                    selectedCategoryId === "all" && styles.badgeTextActive,
+                  ]}
+                >
+                  All
+                </Text>
+              </TouchableOpacity>
+              {categories.map(category => (
+                <TouchableOpacity
+                  key={category.id}
+                  style={[
+                    styles.badge,
+                    selectedCategoryId === category.id && styles.badgeActive,
+                  ]}
+                  onPress={() => setSelectedCategoryId(category.id)}
+                >
+                  <Text
+                    style={[
+                      styles.badgeText,
+                      selectedCategoryId === category.id &&
+                        styles.badgeTextActive,
+                    ]}
+                  >
+                    {category.name}
+                  </Text>
+                </TouchableOpacity>
+              ))}
             </View>
 
-            {isEmptyState ? (
+            {isLoading ? (
+              <View style={styles.blankStateWrapper}>
+                <ActivityIndicator
+                  size="large"
+                  color={Colors[colorScheme].primary}
+                />
+                <Text
+                  style={[
+                    styles.blankStateText,
+                    {color: Colors[colorScheme].text, marginTop: 16},
+                  ]}
+                >
+                  Memuat produk...
+                </Text>
+              </View>
+            ) : isEmptyState ? (
               <View style={styles.blankStateWrapper}>
                 <Image
                   source={require("../../../assets/ilustrations/empty.jpg")}
@@ -464,26 +614,41 @@ export default function PaymentPage() {
                 <Text
                   style={[
                     styles.blankStateText,
-                    { color: Colors[colorScheme].text },
+                    {color: Colors[colorScheme].text},
                   ]}
                 >
-                  Belum Ada Produk
+                  {searchQuery ? "Produk tidak ditemukan" : "Belum Ada Produk"}
                 </Text>
               </View>
             ) : (
-              <View style={styles.productListWrapper}>
-                {products.map((product) => (
+              <FlatList
+                data={products}
+                renderItem={({item: product}) => (
                   <ProductItem
                     key={product.id}
                     name={product.name}
-                    remaining={product.remaining}
-                    price={product.price}
+                    remaining={getProductStock(product.id)}
+                    price={
+                      product.variants && product.variants.length > 0
+                        ? product.variants[0].price
+                        : product.price || 0
+                    }
                     quantity={getProductQuantity(product.id)}
                     onPress={() => handleProductPress(product)}
                     onLongPress={() => handleProductLongPress(product)}
                   />
-                ))}
-              </View>
+                )}
+                keyExtractor={item => item.id}
+                contentContainerStyle={styles.productListWrapper}
+                refreshControl={
+                  <RefreshControl
+                    refreshing={refreshing}
+                    onRefresh={onRefresh}
+                    colors={[Colors[colorScheme].primary]}
+                    tintColor={Colors[colorScheme].primary}
+                  />
+                }
+              />
             )}
           </View>
         )}
@@ -492,36 +657,31 @@ export default function PaymentPage() {
         <View
           style={[
             styles.bottomWrapper,
-            { backgroundColor: Colors[colorScheme].secondary },
+            {backgroundColor: Colors[colorScheme].secondary},
           ]}
         >
           <View style={styles.bottomHandle} />
           <TouchableOpacity
             style={[
               styles.chargeButton,
-              { backgroundColor: Colors[colorScheme].primary },
+              {backgroundColor: Colors[colorScheme].primary},
             ]}
-            disabled={
-              activeTab !== "manual" && checkoutItemsCount === 0
-            }
+            disabled={activeTab !== "manual" && getTotalItems() === 0}
             onPress={() => {
-              if (activeTab !== "manual" && checkoutItemsCount === 0) {
+              if (activeTab !== "manual" && getTotalItems() === 0) {
                 return;
               }
-              router.push("/dashboard/transaction/summary");
+              router.replace("/dashboard/transaction/summary");
             }}
           >
-            <Text
-              style={[
-                styles.chargeButtonText,
-                { color: "white" },
-              ]}
-            >
+            <Text style={[styles.chargeButtonText, {color: "white"}]}>
               {activeTab === "manual"
                 ? `Tagih = Rp ${amount === "0" ? "0" : formatAmount(amount)}`
-                : checkoutItemsCount === 0
-                  ? "Pilih produk terlebih dahulu"
-                  : `(${checkoutItemsCount} Produk)  Rp ${formatCurrency(checkoutTotalAmount)}`}
+                : getTotalItems() === 0
+                ? "Pilih produk terlebih dahulu"
+                : `(${getTotalItems()} Produk)  Rp ${formatCurrency(
+                    getTotalAmount()
+                  )}`}
             </Text>
           </TouchableOpacity>
         </View>
@@ -608,7 +768,8 @@ const createStyles = (colorScheme: "light" | "dark") =>
       color: Colors[colorScheme].text,
     },
     searchWrapper: {
-      flex: 1, borderColor: Colors[colorScheme].border,
+      flex: 1,
+      borderColor: Colors[colorScheme].border,
       borderWidth: 1,
       borderRadius: 8,
     },
@@ -789,4 +950,3 @@ const createStyles = (colorScheme: "light" | "dark") =>
       fontSize: 16,
     },
   });
-

@@ -4,18 +4,23 @@ import TransactionHistoryGroupHeader from "@/components/atoms/transaction-histor
 import TransactionHistoryItem from "@/components/atoms/transaction-history-item";
 import Header from "@/components/header";
 import Sidebar from "@/components/layouts/dashboard/sidebar";
-import { Colors } from "@/constants/theme";
-import { useColorScheme } from "@/hooks/use-color-scheme";
-import { Ionicons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
-import React from "react";
+import {Colors} from "@/constants/theme";
+import {useColorScheme} from "@/hooks/use-color-scheme";
+import {Ionicons} from "@expo/vector-icons";
+import {useRouter} from "expo-router";
+import React, {useState, useEffect, useCallback} from "react";
 import {
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+  ActivityIndicator,
+  FlatList,
+  RefreshControl,
 } from "react-native";
+import {transactionApi} from "@/services/endpoints/transactions";
+import {Transaction} from "@/types/api";
 
 type TransactionHistoryGroupProps = {
   dateLabel: string;
@@ -31,7 +36,7 @@ const TransactionHistoryGroup: React.FC<TransactionHistoryGroupProps> = ({
   const colorScheme = useColorScheme() ?? "light";
 
   return (
-    <View style={{ marginBottom: 12 }}>
+    <View style={{marginBottom: 12}}>
       <TransactionHistoryGroupHeader
         dateLabel={dateLabel}
         totalAmount={totalAmount}
@@ -47,19 +52,33 @@ const TransactionHistoryGroup: React.FC<TransactionHistoryGroupProps> = ({
   );
 };
 
+type GroupedTransaction = {
+  date: string;
+  dateLabel: string;
+  transactions: Transaction[];
+  totalAmount: number;
+};
+
 export default function TransactionHistoryPage() {
   const colorScheme = useColorScheme() ?? "light";
   const styles = createStyles(colorScheme);
   const router = useRouter();
 
-  const [activeMenu, setActiveMenu] = React.useState("history");
-  const [isDrawerOpen, setIsDrawerOpen] = React.useState(false);
+  const [activeMenu, setActiveMenu] = useState("history");
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [groupedTransactions, setGroupedTransactions] = useState<
+    GroupedTransaction[]
+  >([]);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
-  const openDrawer = React.useCallback(() => {
+  const openDrawer = useCallback(() => {
     setIsDrawerOpen(true);
   }, []);
 
-  const closeDrawer = React.useCallback(() => {
+  const closeDrawer = useCallback(() => {
     setIsDrawerOpen(false);
   }, []);
 
@@ -70,13 +89,107 @@ export default function TransactionHistoryPage() {
     return withDots;
   };
 
-  const totalHariIni = 20000;
+  // Group transactions by date
+  const groupTransactionsByDate = useCallback((txns: Transaction[]) => {
+    const grouped: {[key: string]: GroupedTransaction} = {};
+
+    txns.forEach(txn => {
+      try {
+        // Validate and parse date
+        const dateValue = txn.createdAt;
+        if (!dateValue) {
+          console.warn("Transaction missing createdAt:", txn.id);
+          return;
+        }
+
+        const date = new Date(dateValue);
+
+        // Check if date is valid
+        if (isNaN(date.getTime())) {
+          console.warn("Invalid date for transaction:", txn.id, dateValue);
+          return;
+        }
+
+        const dateKey = date.toISOString().split("T")[0];
+
+        if (!grouped[dateKey]) {
+          const dateLabel = date.toLocaleDateString("id-ID", {
+            weekday: "long",
+            day: "numeric",
+            month: "short",
+            year: "numeric",
+          });
+
+          grouped[dateKey] = {
+            date: dateKey,
+            dateLabel,
+            transactions: [],
+            totalAmount: 0,
+          };
+        }
+
+        grouped[dateKey].transactions.push(txn);
+        grouped[dateKey].totalAmount += txn.totalAmount;
+      } catch (error) {
+        console.error("Error grouping transaction:", txn.id, error);
+      }
+    });
+
+    return Object.values(grouped).sort(
+      (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+    );
+  }, []);
+
+  // Fetch transactions
+  const fetchTransactions = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      const params: any = {};
+
+      if (searchQuery) {
+        // Search by invoice number or other fields
+        params.search = searchQuery;
+      }
+
+      const response = await transactionApi.getTransactions(params);
+
+      if (response.data) {
+        setTransactions(response.data);
+        const grouped = groupTransactionsByDate(response.data);
+        setGroupedTransactions(grouped);
+      }
+    } catch (error: any) {
+      console.error("❌ Failed to fetch transactions:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [searchQuery, groupTransactionsByDate]);
+
+  // Initial load
+  useEffect(() => {
+    fetchTransactions();
+  }, []);
+
+  // Debounced search
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      fetchTransactions();
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await fetchTransactions();
+    setRefreshing(false);
+  };
 
   return (
     <View
       style={[
         styles.container,
-        { backgroundColor: Colors[colorScheme].background },
+        {backgroundColor: Colors[colorScheme].background},
       ]}
     >
       <Header
@@ -112,44 +225,114 @@ export default function TransactionHistoryPage() {
             <TextInput
               placeholder="Cari No. Transaksi"
               placeholderTextColor={Colors[colorScheme].icon}
-              style={[styles.searchInput, { color: Colors[colorScheme].text }]}
+              style={[styles.searchInput, {color: Colors[colorScheme].text}]}
+              value={searchQuery}
+              onChangeText={setSearchQuery}
             />
           </View>
         </View>
 
-        <TransactionHistoryGroup
-          dateLabel="Kamis, 20 Nov 2025"
-          totalAmount={totalHariIni}
-        >
-          <TransactionHistoryItem
-            code="#3240736L"
-            paymentMethod="Tunai"
-            amount={20000}
-            time="07:24"
+        {isLoading ? (
+          <View
+            style={{flex: 1, justifyContent: "center", alignItems: "center"}}
+          >
+            <ActivityIndicator
+              size="large"
+              color={Colors[colorScheme].primary}
+            />
+            <Text
+              style={[
+                styles.footerText,
+                {color: Colors[colorScheme].text, marginTop: 16},
+              ]}
+            >
+              Memuat transaksi...
+            </Text>
+          </View>
+        ) : groupedTransactions.length === 0 ? (
+          <View
+            style={{flex: 1, justifyContent: "center", alignItems: "center"}}
+          >
+            <Text
+              style={[styles.footerText, {color: Colors[colorScheme].icon}]}
+            >
+              {searchQuery
+                ? "Transaksi tidak ditemukan"
+                : "Belum ada transaksi"}
+            </Text>
+          </View>
+        ) : (
+          <FlatList
+            data={groupedTransactions}
+            renderItem={({item: group}) => (
+              <TransactionHistoryGroup
+                dateLabel={group.dateLabel}
+                totalAmount={group.totalAmount}
+              >
+                {group.transactions.map(txn => {
+                  let time = "-";
+                  try {
+                    const date = new Date(txn.createdAt);
+                    if (!isNaN(date.getTime())) {
+                      time = date.toLocaleTimeString("id-ID", {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      });
+                    }
+                  } catch (error) {
+                    console.error(
+                      "Error parsing time for transaction:",
+                      txn.id
+                    );
+                  }
 
-          />
-          <TransactionHistoryItem
-            code="#3240736L"
-            paymentMethod="Tunai"
-            amount={20000}
-            time="07:24"
+                  const paymentMethodStr = String(
+                    txn.paymentMethod
+                  ).toLowerCase();
+                  const displayPaymentMethod =
+                    paymentMethodStr === "cash"
+                      ? "Tunai"
+                      : paymentMethodStr === "card"
+                      ? "Kartu"
+                      : paymentMethodStr === "transfer"
+                      ? "Transfer"
+                      : paymentMethodStr === "debt"
+                      ? "Hutang"
+                      : "QRIS";
 
+                  return (
+                    <TransactionHistoryItem
+                      key={txn.id}
+                      code={`#${txn.invoiceNumber}`}
+                      paymentMethod={displayPaymentMethod}
+                      amount={txn.totalAmount}
+                      time={time}
+                    />
+                  );
+                })}
+              </TransactionHistoryGroup>
+            )}
+            keyExtractor={item => item.date}
+            contentContainerStyle={{paddingBottom: 100}}
+            refreshControl={
+              <RefreshControl
+                refreshing={refreshing}
+                onRefresh={onRefresh}
+                colors={[Colors[colorScheme].primary]}
+                tintColor={Colors[colorScheme].primary}
+              />
+            }
+            ListFooterComponent={
+              <View style={styles.footerSpacer}>
+                <Text
+                  style={[styles.footerText, {color: Colors[colorScheme].icon}]}
+                >
+                  Tidak ada data lagi.
+                </Text>
+              </View>
+            }
           />
-          <TransactionHistoryItem
-            code="#3240736L"
-            paymentMethod="Tunai"
-            amount={20000}
-            time="07:24"
-          />
-        </TransactionHistoryGroup>
-
-        {/* Footer text */}
-        <View style={styles.footerSpacer} />
-        <Text
-          style={[styles.footerText, { color: Colors[colorScheme].icon }]}
-        >
-          Tidak ada data lagi.
-        </Text>
+        )}
       </View>
 
       <Sidebar
@@ -208,4 +391,3 @@ const createStyles = (colorScheme: "light" | "dark") =>
       textAlign: "center",
     },
   });
-
