@@ -1,18 +1,25 @@
 import ConfirmationDialog, {
-    ConfirmationDialogHandle,
+  ConfirmationDialogHandle,
 } from "@/components/drawers/confirmation-dialog";
 import Header from "@/components/header";
 import ImageUpload from "@/components/image-upload";
-import { ThemedButton } from "@/components/themed-button";
-import { ThemedInput } from "@/components/themed-input";
-import { ThemedText } from "@/components/themed-text";
-import { Colors } from "@/constants/theme";
-import { useColorScheme } from "@/hooks/use-color-scheme";
-import { settingsApi, UserProfile } from "@/services";
-import { useRouter } from "expo-router";
-import React, { useEffect, useState } from "react";
-import { ActivityIndicator, Alert, StyleSheet, useWindowDimensions, View } from "react-native";
-import { ScrollView } from "react-native-gesture-handler";
+import {ThemedButton} from "@/components/themed-button";
+import {ThemedInput} from "@/components/themed-input";
+import {ThemedText} from "@/components/themed-text";
+import {Colors} from "@/constants/theme";
+import {useColorScheme} from "@/hooks/use-color-scheme";
+import assetApi, {prepareFileFromUri} from "@/services/endpoints/assets";
+import {settingsApi, UserProfile} from "@/services";
+import {useRouter} from "expo-router";
+import React, {useEffect, useState} from "react";
+import {
+  ActivityIndicator,
+  Alert,
+  StyleSheet,
+  useWindowDimensions,
+  View,
+} from "react-native";
+import {ScrollView} from "react-native-gesture-handler";
 
 export default function ProfileSettingScreen() {
   const colorScheme = useColorScheme() ?? "light";
@@ -50,7 +57,7 @@ export default function ProfileSettingScreen() {
         setName(response.data.name);
         setEmail(response.data.email);
         setPhone(response.data.phone);
-        setPhotoUri(response.data.photo);
+        setPhotoUri(response.data.profile_url);
       }
     } catch (error: any) {
       console.error("❌ Failed to load profile:", error);
@@ -73,10 +80,48 @@ export default function ProfileSettingScreen() {
 
     setIsSaving(true);
     try {
-      await settingsApi.updateProfile({
+      // Upload profile photo first if selected and it's a local file
+      let uploadedPhotoUrl: string | undefined;
+      if (photoUri && !photoUri.startsWith("http")) {
+        console.log("📤 Uploading profile photo...");
+        try {
+          const file = prepareFileFromUri(photoUri);
+          const uploadResponse = await assetApi.uploadImage(file);
+          if (uploadResponse.data?.url) {
+            uploadedPhotoUrl = uploadResponse.data.url;
+            console.log("✅ Profile photo uploaded:", uploadedPhotoUrl);
+          }
+        } catch (uploadError: any) {
+          console.error("❌ Photo upload failed:", uploadError);
+          Alert.alert(
+            "Peringatan",
+            "Gagal upload foto. Lanjutkan tanpa mengubah foto?",
+            [
+              {
+                text: "Batal",
+                style: "cancel",
+                onPress: () => setIsSaving(false),
+              },
+              {text: "Lanjutkan", onPress: () => {}},
+            ]
+          );
+          return;
+        }
+      }
+
+      const payload: any = {
         name: name.trim(),
         email: email.trim(),
-      });
+      };
+
+      // Add uploaded photo URL or keep existing URL
+      if (uploadedPhotoUrl) {
+        payload.profile_url = uploadedPhotoUrl;
+      } else if (photoUri && photoUri.startsWith("http")) {
+        payload.profile_url = photoUri;
+      }
+
+      await settingsApi.updateProfile(payload);
       Alert.alert("Berhasil", "Profil berhasil diperbarui");
       loadProfile();
     } catch (error: any) {
@@ -165,96 +210,93 @@ export default function ProfileSettingScreen() {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.contentWrapper}>
-        <View style={styles.sectionCard1}>
-          <ImageUpload uri={photoUri} onPress={() => {}} />
-          {/* <View style={{marginTop: 16}}>
-            <ThemedButton
-              title="Terapkan Foto"
-              variant="primary"
-              onPress={() => {}}
-            />
-          </View> */}
-        </View>
-
-        <View style={styles.sectionCard}>
-          <ThemedText type="subtitle-2" style={styles.sectionTitle}>
-            Data Diri
-          </ThemedText>
-          <ThemedInput label="Nama" value={name} onChangeText={setName} />
-          <ThemedInput label="Nomor Hp" value={phone} editable={false} />
-          <ThemedInput
-            label="Email"
-            value={email}
-            onChangeText={setEmail}
-            keyboardType="email-address"
-          />
-          <View style={styles.sectionButtonWrapper}>
-            <ThemedButton
-              title={isSaving ? "Menyimpan..." : "Simpan"}
-              size="medium"
-              onPress={handleSaveProfile}
-              disabled={isSaving}
+          <View style={styles.sectionCard1}>
+            <ImageUpload
+              uri={photoUri}
+              initials={(name || "PR").slice(0, 2).toUpperCase()}
+              onImageSelected={uri => setPhotoUri(uri)}
             />
           </View>
-        </View>
 
-        <View style={styles.sectionCard}>
-          <ThemedText type="subtitle-2" style={styles.sectionTitle}>
-            PIN
-          </ThemedText>
-          <ThemedText style={styles.pinHintText}>
-            Hanya diisi jika ingin diganti
-          </ThemedText>
-          <ThemedInput
-            label="Masukkan 6 Angka PIN Lama"
-            value={oldPin}
-            onChangeText={setOldPin}
-            isPassword
-            numericOnly
-            maxLength={6}
-          />
-          <ThemedInput
-            label="Masukkan 6 Angka PIN Baru"
-            value={newPin}
-            onChangeText={setNewPin}
-            isPassword
-            numericOnly
-            maxLength={6}
-          />
-          <ThemedInput
-            label="Konfirmasi 6 Angka PIN Baru"
-            value={confirmPin}
-            onChangeText={setConfirmPin}
-            isPassword
-            numericOnly
-            maxLength={6}
-            error={pinError}
-          />
-          <View style={styles.sectionButtonWrapper}>
-            <ThemedButton
-              title={isChangingPin ? "Mengubah..." : "Ganti PIN"}
-              size="medium"
-              onPress={handleChangePin}
-              disabled={isChangingPin}
+          <View style={styles.sectionCard}>
+            <ThemedText type="subtitle-2" style={styles.sectionTitle}>
+              Data Diri
+            </ThemedText>
+            <ThemedInput label="Nama" value={name} onChangeText={setName} />
+            <ThemedInput label="Nomor Hp" value={phone} editable={false} />
+            <ThemedInput
+              label="Email"
+              value={email}
+              onChangeText={setEmail}
+              keyboardType="email-address"
             />
+            <View style={styles.sectionButtonWrapper}>
+              <ThemedButton
+                title={isSaving ? "Menyimpan..." : "Simpan"}
+                size="medium"
+                onPress={handleSaveProfile}
+                disabled={isSaving}
+              />
+            </View>
           </View>
-        </View>
 
-        <View style={styles.sectionCard}>
-          <ThemedText type="subtitle-2">Kelola Akun</ThemedText>
-          <ThemedText style={styles.accountWarningText}>
-            Akan menghapus secara permanen akunmu. Kamu tidak bisa lagi
-            mengakses semua riwayat transaksi, laporan dan data pribadi
-          </ThemedText>
-          <View style={styles.sectionButtonWrapper}>
-            <ThemedButton
-              title="Hapus Akun"
-              variant="secondary"
-              size="medium"
-              onPress={handleDeleteAccount}
+          <View style={styles.sectionCard}>
+            <ThemedText type="subtitle-2" style={styles.sectionTitle}>
+              PIN
+            </ThemedText>
+            <ThemedText style={styles.pinHintText}>
+              Hanya diisi jika ingin diganti
+            </ThemedText>
+            <ThemedInput
+              label="Masukkan 6 Angka PIN Lama"
+              value={oldPin}
+              onChangeText={setOldPin}
+              isPassword
+              numericOnly
+              maxLength={6}
             />
+            <ThemedInput
+              label="Masukkan 6 Angka PIN Baru"
+              value={newPin}
+              onChangeText={setNewPin}
+              isPassword
+              numericOnly
+              maxLength={6}
+            />
+            <ThemedInput
+              label="Konfirmasi 6 Angka PIN Baru"
+              value={confirmPin}
+              onChangeText={setConfirmPin}
+              isPassword
+              numericOnly
+              maxLength={6}
+              error={pinError}
+            />
+            <View style={styles.sectionButtonWrapper}>
+              <ThemedButton
+                title={isChangingPin ? "Mengubah..." : "Ganti PIN"}
+                size="medium"
+                onPress={handleChangePin}
+                disabled={isChangingPin}
+              />
+            </View>
           </View>
-        </View>
+
+          <View style={styles.sectionCard}>
+            <ThemedText type="subtitle-2">Kelola Akun</ThemedText>
+            <ThemedText style={styles.accountWarningText}>
+              Akan menghapus secara permanen akunmu. Kamu tidak bisa lagi
+              mengakses semua riwayat transaksi, laporan dan data pribadi
+            </ThemedText>
+            <View style={styles.sectionButtonWrapper}>
+              <ThemedButton
+                title="Hapus Akun"
+                variant="secondary"
+                size="medium"
+                onPress={handleDeleteAccount}
+              />
+            </View>
+          </View>
         </View>
       </ScrollView>
 
@@ -263,7 +305,11 @@ export default function ProfileSettingScreen() {
   );
 }
 
-const createStyles = (colorScheme: "light" | "dark", isTablet: boolean, isTabletLandscape: boolean) =>
+const createStyles = (
+  colorScheme: "light" | "dark",
+  isTablet: boolean,
+  isTabletLandscape: boolean
+) =>
   StyleSheet.create({
     container: {
       flex: 1,

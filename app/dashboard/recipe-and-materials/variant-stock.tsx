@@ -4,17 +4,17 @@ import ConfirmationDialog, {
 } from "@/components/drawers/confirmation-dialog";
 import Header from "@/components/header";
 import UnitPicker from "@/components/mollecules/unit-picker";
-import { ThemedButton } from "@/components/themed-button";
-import { ThemedInput } from "@/components/themed-input";
-import { ThemedText } from "@/components/themed-text";
-import { Colors } from "@/constants/theme";
-import { useColorScheme } from "@/hooks/use-color-scheme";
-import { useProductFormStore } from "@/stores/product-form-store";
-import { useLocalSearchParams, useNavigation, useRouter } from "expo-router";
-import React, { useEffect, useRef, useState } from "react";
-import { StyleSheet, View, useWindowDimensions } from "react-native";
-import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+import {ThemedButton} from "@/components/themed-button";
+import {ThemedInput} from "@/components/themed-input";
+import {ThemedText} from "@/components/themed-text";
+import {Colors} from "@/constants/theme";
+import {useColorScheme} from "@/hooks/use-color-scheme";
+import {useProductFormStore} from "@/stores/product-form-store";
+import {useLocalSearchParams, useNavigation, useRouter} from "expo-router";
+import React, {useEffect, useRef, useState} from "react";
+import {StyleSheet, View, useWindowDimensions} from "react-native";
+import {KeyboardAwareScrollView} from "react-native-keyboard-aware-scroll-view";
+import {useSafeAreaInsets} from "react-native-safe-area-context";
 
 export default function StockSettingsScreen() {
   const colorScheme = useColorScheme() ?? "light";
@@ -26,10 +26,7 @@ export default function StockSettingsScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const navigation = useNavigation();
-  const {
-    variantId,
-    from,
-  } = useLocalSearchParams<{
+  const {variantId, from} = useLocalSearchParams<{
     variantId?: string;
     from?: string;
   }>();
@@ -38,15 +35,15 @@ export default function StockSettingsScreen() {
   const variants = useProductFormStore(state => state.variants);
   const setVariants = useProductFormStore(state => state.setVariants);
   const pendingVariant = useProductFormStore(state => state.pendingVariant);
-  const setPendingVariant = useProductFormStore(state => state.setPendingVariant);
+  const setPendingVariant = useProductFormStore(
+    state => state.setPendingVariant
+  );
 
   const [offlineStock, setOfflineStock] = useState(0);
   const [unit, setUnit] = useState("");
   const [minStock, setMinStock] = useState(0);
   const [notifyMin, setNotifyMin] = useState(true);
   const [isSubmit, setIsSubmit] = useState(false);
-
-
 
   const handleSave = async () => {
     try {
@@ -60,6 +57,12 @@ export default function StockSettingsScreen() {
         unit_id: unit,
       });
 
+      const stockFields = buildStockFields();
+      console.log("💾 Saving variant stock:", {
+        variantId,
+        from,
+        stockFields,
+      });
 
       if (variantId) {
         if (from === "add") {
@@ -68,21 +71,25 @@ export default function StockSettingsScreen() {
               ? pendingVariant
               : ({id: String(variantId)} as any);
 
-          setPendingVariant({
+          const updated = {
             ...base,
-            ...buildStockFields(),
-          } as any);
+            ...stockFields,
+          };
+          console.log("💾 Updated pendingVariant:", updated);
+          setPendingVariant(updated as any);
         } else {
-          setVariants(prev =>
-            prev.map(v =>
+          setVariants(prev => {
+            const updated = prev.map(v =>
               v.id === variantId
                 ? {
                     ...v,
-                    ...buildStockFields(),
+                    ...stockFields,
                   }
-                : v,
-            ),
-          );
+                : v
+            );
+            console.log("💾 Updated variants:", updated);
+            return updated;
+          });
         }
       }
 
@@ -164,24 +171,24 @@ export default function StockSettingsScreen() {
       >
         <View style={styles.contentWrapper}>
           <ThemedInput
-          label="Stok Toko Offline"
-          value={String(offlineStock)}
-          onChangeText={v => setOfflineStock(Number(v))}
-          numericOnly
-        />
+            label="Stok Toko Offline"
+            value={String(offlineStock)}
+            onChangeText={v => setOfflineStock(Number(v))}
+            numericOnly
+          />
 
-        <UnitPicker
-          label="Pilih Satuan Unit"
-          value={unit}
-          onChange={setUnit}
-        />
+          <UnitPicker
+            label="Pilih Satuan Unit"
+            value={unit}
+            onChange={setUnit}
+          />
 
-        <ThemedInput
-          label="Minimum Stok"
-          value={String(minStock)}
-          onChangeText={v => setMinStock(Number(v))}
-          numericOnly
-        />
+          <ThemedInput
+            label="Minimum Stok"
+            value={String(minStock)}
+            onChangeText={v => setMinStock(Number(v))}
+            numericOnly
+          />
 
           <View style={styles.row}>
             <Checkbox checked={notifyMin} onChange={setNotifyMin} />
@@ -206,7 +213,11 @@ export default function StockSettingsScreen() {
   );
 }
 
-const createStyles = (colorScheme: "light" | "dark", isTablet: boolean, isTabletLandscape: boolean) =>
+const createStyles = (
+  colorScheme: "light" | "dark",
+  isTablet: boolean,
+  isTabletLandscape: boolean
+) =>
   StyleSheet.create({
     contentWrapper: {
       width: "100%",

@@ -3,19 +3,25 @@ import ConfirmationDialog, {
   ConfirmationDialogHandle,
 } from "@/components/drawers/confirmation-dialog";
 import Header from "@/components/header";
-import { ThemedButton } from "@/components/themed-button";
-import { ThemedInput } from "@/components/themed-input";
-import { ThemedText } from "@/components/themed-text";
-import { Colors } from "@/constants/theme";
-import { useColorScheme } from "@/hooks/use-color-scheme";
+import {ThemedButton} from "@/components/themed-button";
+import {ThemedInput} from "@/components/themed-input";
+import {ThemedText} from "@/components/themed-text";
+import {Colors} from "@/constants/theme";
+import {useColorScheme} from "@/hooks/use-color-scheme";
 import productApi from "@/services/endpoints/products";
-import { useRecipeFormStore } from "@/stores/recipe-form-store";
-import { Product, ProductVariant } from "@/types/api";
-import { useNavigation, useRouter } from "expo-router";
-import React, { useEffect, useRef, useState } from "react";
-import { ActivityIndicator, StyleSheet, Text, useWindowDimensions, View } from "react-native";
-import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+import {useRecipeFormStore} from "@/stores/recipe-form-store";
+import {Product, ProductVariant} from "@/types/api";
+import {useNavigation, useRouter} from "expo-router";
+import React, {useEffect, useRef, useState} from "react";
+import {
+  ActivityIndicator,
+  StyleSheet,
+  Text,
+  useWindowDimensions,
+  View,
+} from "react-native";
+import {KeyboardAwareScrollView} from "react-native-keyboard-aware-scroll-view";
+import {useSafeAreaInsets} from "react-native-safe-area-context";
 
 type IngredientVariant = {
   id: string;
@@ -26,13 +32,13 @@ type IngredientVariant = {
 type IngredientOption = {
   label: string;
   value: string;
-  unit: { id: string; name: string };
+  unit: {id: string; name: string};
   variants?: IngredientVariant[];
 };
 
 export default function IngredientsScreen() {
   const colorScheme = useColorScheme() ?? "light";
-  const { width, height } = useWindowDimensions();
+  const {width, height} = useWindowDimensions();
   const isTablet = Math.min(width, height) >= 600;
   const isLandscape = width > height;
   const isTabletLandscape = isTablet && isLandscape;
@@ -63,20 +69,33 @@ export default function IngredientsScreen() {
     const loadIngredients = async () => {
       try {
         setIsLoading(true);
-        const response = await productApi.getProducts();
+        // Use getIngredients instead of getProducts to filter is_ingredient=true
+        const response = await productApi.getIngredients();
 
         if (response.data) {
-          // Filter hanya produk dengan is_ingredient = true
-          const ingredientProducts = response.data.filter(
-            (p: Product) => p.is_ingredient === true
+          console.log("📦 Total ingredients loaded:", response.data.length);
+          console.log(
+            "📦 First 3 ingredients sample:",
+            response.data.slice(0, 3).map((p: Product) => ({
+              id: p.id,
+              name: p.name,
+              is_ingredient: p.is_ingredient,
+            }))
           );
-          setIngredients(ingredientProducts);
+
+          setIngredients(response.data);
           console.log(
             "✅ Loaded",
-            ingredientProducts.length,
+            response.data.length,
             "ingredients for recipe:",
-            ingredientProducts.map(p => ({ id: p.id, name: p.name }))
+            response.data.map((p: Product) => ({id: p.id, name: p.name}))
           );
+
+          if (response.data.length === 0) {
+            console.warn(
+              "⚠️ No ingredients found. Make sure products have is_ingredient=true"
+            );
+          }
         }
       } catch (error: any) {
         console.error("❌ Failed to load ingredients:", error);
@@ -100,7 +119,7 @@ export default function IngredientsScreen() {
         variants: found.variants?.length,
       });
       // Set unit (default to pcs if not available)
-      setSelectedUnit({ id: "pcs", name: "Pcs" });
+      setSelectedUnit({id: "pcs", name: "Pcs"});
 
       // Set available variants
       const vars = found.variants || [];
@@ -125,11 +144,11 @@ export default function IngredientsScreen() {
     console.log("🔍 Debug handleSave:", {
       selectedProductId,
       selectedProduct: selectedProduct
-        ? { id: selectedProduct.id, name: selectedProduct.name }
+        ? {id: selectedProduct.id, name: selectedProduct.name}
         : null,
       selectedVariantId,
       selectedVariant: selectedVariant
-        ? { id: selectedVariant.id, name: selectedVariant.name }
+        ? {id: selectedVariant.id, name: selectedVariant.name}
         : null,
       quantity: qtyNum,
     });
@@ -146,7 +165,7 @@ export default function IngredientsScreen() {
         variant_id: selectedVariant?.id,
       },
       unit: selectedUnit
-        ? { id: selectedUnit.id, name: selectedUnit.name }
+        ? {id: selectedUnit.id, name: selectedUnit.name}
         : undefined,
       amount: qtyNum,
     });
@@ -189,7 +208,7 @@ export default function IngredientsScreen() {
   }, [navigation, isDirty]);
 
   return (
-    <View style={{ flex: 1, backgroundColor: Colors[colorScheme].background }}>
+    <View style={{flex: 1, backgroundColor: Colors[colorScheme].background}}>
       <Header
         showHelp={false}
         title="Tambah Bahan Resep"
@@ -214,7 +233,7 @@ export default function IngredientsScreen() {
               color={Colors[colorScheme].primary}
             />
             <ThemedText
-              style={{ marginTop: 16, color: Colors[colorScheme].icon }}
+              style={{marginTop: 16, color: Colors[colorScheme].icon}}
             >
               Memuat daftar bahan...
             </ThemedText>
@@ -233,7 +252,7 @@ export default function IngredientsScreen() {
                 }
               }}
               items={[
-                { label: "Pilih Bahan", value: "" },
+                {label: "Pilih Bahan", value: ""},
                 ...ingredients.map(ing => ({
                   label: ing.name,
                   value: ing.id,
@@ -272,7 +291,6 @@ export default function IngredientsScreen() {
               numericOnly
             />
           </View>
-
         </View>
       </KeyboardAwareScrollView>
 
@@ -287,7 +305,11 @@ export default function IngredientsScreen() {
   );
 }
 
-const createStyles = (colorScheme: "light" | "dark", isTablet: boolean, isTabletLandscape: boolean) =>
+const createStyles = (
+  colorScheme: "light" | "dark",
+  isTablet: boolean,
+  isTabletLandscape: boolean
+) =>
   StyleSheet.create({
     contentWrapper: {
       width: "100%",

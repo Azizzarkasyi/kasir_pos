@@ -2,25 +2,26 @@ import RecipeItem from "@/components/atoms/recipe-item";
 import CategoryModal from "@/components/drawers/category-modal";
 import Header from "@/components/header";
 import ProductCard from "@/components/product-card";
-import { ThemedInput } from "@/components/themed-input";
-import { ThemedText } from "@/components/themed-text";
-import { Colors } from "@/constants/theme";
-import { useColorScheme } from "@/hooks/use-color-scheme";
+import {ThemedInput} from "@/components/themed-input";
+import {ThemedText} from "@/components/themed-text";
+import {Colors} from "@/constants/theme";
+import {useColorScheme} from "@/hooks/use-color-scheme";
 import productApi from "@/services/endpoints/products";
-import recipeApi, { Recipe } from "@/services/endpoints/recipes";
-import { Product } from "@/types/api";
-import { Ionicons } from "@expo/vector-icons";
-import { useFocusEffect, useRouter } from "expo-router";
-import React, { useCallback, useState } from "react";
+import recipeApi, {Recipe} from "@/services/endpoints/recipes";
+import {Product} from "@/types/api";
+import {Ionicons} from "@expo/vector-icons";
+import {useFocusEffect, useRouter} from "expo-router";
+import React, {useCallback, useState} from "react";
 import {
   ActivityIndicator,
   Alert,
   StyleSheet,
-  TouchableOpacity, useWindowDimensions,
+  TouchableOpacity,
+  useWindowDimensions,
   View,
 } from "react-native";
-import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+import {KeyboardAwareScrollView} from "react-native-keyboard-aware-scroll-view";
+import {useSafeAreaInsets} from "react-native-safe-area-context";
 
 export default function ProductsScreen() {
   const colorScheme = useColorScheme() ?? "light";
@@ -48,7 +49,6 @@ export default function ProductsScreen() {
     try {
       const response = await productApi.getIngredients();
       if (response.data) {
-       
         setIngredients(response.data);
         console.log("✅ Loaded", response.data.length, "ingredients");
       }
@@ -182,90 +182,7 @@ export default function ProductsScreen() {
         {/* --- 2. CONTENT SECTION (Dengan Padding) --- */}
         <View style={styles.contentContainer}>
           <View style={styles.contentWrapper}>
-          {activeTab === "bahan" ? (
-            <View>
-              <View style={styles.searchRow}>
-                {/* PENTING: Gunakan View Wrapper dengan flex: 1 untuk Input 
-                   Ini akan memaksa input mengisi sisa ruang kosong secara otomatis
-                */}
-                <View style={{flex: 1}}>
-                  <ThemedInput
-                    label="Cari Bahan"
-                    value={search}
-                    onChangeText={setSearch}
-                    leftIconName="search"
-                    size="md"
-                    width="100%" // Input mengisi wrapper flex:1 tadi
-                    showLabel={false}
-                    placeholder="Cari Bahan"
-                  />
-                </View>
-
-                <TouchableOpacity style={styles.filterButton}>
-                  <Ionicons
-                    name="options-outline"
-                    size={isTablet ? 28 : 20}
-                    color={Colors[colorScheme].text}
-                  />
-                </TouchableOpacity>
-              </View>
-
-              {isLoading ? (
-                <View style={styles.loadingContainer}>
-                  <ActivityIndicator
-                    size="large"
-                    color={Colors[colorScheme].primary}
-                  />
-                  <ThemedText style={styles.loadingText}>
-                    Memuat data bahan...
-                  </ThemedText>
-                </View>
-              ) : (
-                <View style={{marginTop: 16}}>
-                  {ingredients.filter(p =>
-                    p.name.toLowerCase().includes(search.toLowerCase())
-                  ).length === 0 ? (
-                    <View style={styles.emptyContainer}>
-                      <ThemedText style={styles.emptyText}>
-                        {search ? "Bahan tidak ditemukan" : "Belum ada bahan"}
-                      </ThemedText>
-                    </View>
-                  ) : (
-                    ingredients
-                      .filter(p =>
-                        p.name.toLowerCase().includes(search.toLowerCase())
-                      )
-                      .map(product => {
-                        const totalStock =
-                          product.variants?.reduce(
-                            (sum, v) => sum + (v.stock || 0),
-                            0
-                          ) || 0;
-                        return (
-                          <ProductCard
-                            key={product.id}
-                            initials={(product.name || "PR")
-                              .slice(0, 2)
-                              .toUpperCase()}
-                            name={product.name}
-                            stockCount={totalStock}
-                            variantCount={product.variants?.length ?? 0}
-                            onPress={() => {
-                              router.push({
-                                pathname:
-                                  "/dashboard/recipe-and-materials/edit-material",
-                                params: {id: product.id},
-                              } as never);
-                            }}
-                          />
-                        );
-                      })
-                  )}
-                </View>
-              )}
-            </View>
-          ) : (
-            <View>
+            {activeTab === "bahan" ? (
               <View>
                 <View style={styles.searchRow}>
                   {/* PENTING: Gunakan View Wrapper dengan flex: 1 untuk Input 
@@ -273,65 +190,149 @@ export default function ProductsScreen() {
                 */}
                   <View style={{flex: 1}}>
                     <ThemedInput
-                      label="Cari Resep"
+                      label="Cari Bahan"
                       value={search}
                       onChangeText={setSearch}
                       leftIconName="search"
                       size="md"
                       width="100%" // Input mengisi wrapper flex:1 tadi
                       showLabel={false}
-                      placeholder="Cari Resep"
+                      placeholder="Cari Bahan"
                     />
                   </View>
+
+                  <TouchableOpacity style={styles.filterButton}>
+                    <Ionicons
+                      name="options-outline"
+                      size={isTablet ? 28 : 20}
+                      color={Colors[colorScheme].text}
+                    />
+                  </TouchableOpacity>
                 </View>
+
+                {isLoading ? (
+                  <View style={styles.loadingContainer}>
+                    <ActivityIndicator
+                      size="large"
+                      color={Colors[colorScheme].primary}
+                    />
+                    <ThemedText style={styles.loadingText}>
+                      Memuat data bahan...
+                    </ThemedText>
+                  </View>
+                ) : (
+                  <View style={{marginTop: 16}}>
+                    {ingredients.filter(p =>
+                      p.name.toLowerCase().includes(search.toLowerCase())
+                    ).length === 0 ? (
+                      <View style={styles.emptyContainer}>
+                        <ThemedText style={styles.emptyText}>
+                          {search ? "Bahan tidak ditemukan" : "Belum ada bahan"}
+                        </ThemedText>
+                      </View>
+                    ) : (
+                      ingredients
+                        .filter(p =>
+                          p.name.toLowerCase().includes(search.toLowerCase())
+                        )
+                        .map(product => {
+                          const totalStock =
+                            product.variants?.reduce(
+                              (sum, v) => sum + (v.stock || 0),
+                              0
+                            ) || 0;
+                          return (
+                            <ProductCard
+                              key={product.id}
+                              initials={(product.name || "PR")
+                                .slice(0, 2)
+                                .toUpperCase()}
+                              name={product.name}
+                              photoUrl={product.photo_url}
+                              stockCount={totalStock}
+                              variantCount={product.variants?.length ?? 0}
+                              onPress={() => {
+                                router.push({
+                                  pathname:
+                                    "/dashboard/recipe-and-materials/edit-material",
+                                  params: {id: product.id},
+                                } as never);
+                              }}
+                            />
+                          );
+                        })
+                    )}
+                  </View>
+                )}
               </View>
-              {isLoading ? (
-                <View style={styles.loadingContainer}>
-                  <ActivityIndicator
-                    size="large"
-                    color={Colors[colorScheme].primary}
-                  />
-                  <ThemedText style={styles.loadingText}>
-                    Memuat data resep...
-                  </ThemedText>
-                </View>
-              ) : (
-                <View style={{marginTop: 16}}>
-                  {recipes.filter(r =>
-                    r.name.toLowerCase().includes(search.toLowerCase())
-                  ).length === 0 ? (
-                    <View style={styles.emptyContainer}>
-                      <ThemedText style={styles.emptyText}>
-                        {search ? "Resep tidak ditemukan" : "Belum ada resep"}
-                      </ThemedText>
+            ) : (
+              <View>
+                <View>
+                  <View style={styles.searchRow}>
+                    {/* PENTING: Gunakan View Wrapper dengan flex: 1 untuk Input 
+                   Ini akan memaksa input mengisi sisa ruang kosong secara otomatis
+                */}
+                    <View style={{flex: 1}}>
+                      <ThemedInput
+                        label="Cari Resep"
+                        value={search}
+                        onChangeText={setSearch}
+                        leftIconName="search"
+                        size="md"
+                        width="100%" // Input mengisi wrapper flex:1 tadi
+                        showLabel={false}
+                        placeholder="Cari Resep"
+                      />
                     </View>
-                  ) : (
-                    recipes
-                      .filter(r =>
-                        r.name.toLowerCase().includes(search.toLowerCase())
-                      )
-                      .map(recipe => (
-                        <RecipeItem
-                          key={recipe.id}
-                          initials={(recipe.name || "RC")
-                            .slice(0, 2)
-                            .toUpperCase()}
-                          name={recipe.name}
-                          subtitle={`${recipe.items?.length || 0} bahan`}
-                          onPress={() =>
-                            router.push({
-                              pathname:
-                                "/dashboard/recipe-and-materials/edit-recipe",
-                              params: {id: recipe.id},
-                            } as never)
-                          }
-                        />
-                      ))
-                  )}
+                  </View>
                 </View>
-              )}
-            </View>
-          )}
+                {isLoading ? (
+                  <View style={styles.loadingContainer}>
+                    <ActivityIndicator
+                      size="large"
+                      color={Colors[colorScheme].primary}
+                    />
+                    <ThemedText style={styles.loadingText}>
+                      Memuat data resep...
+                    </ThemedText>
+                  </View>
+                ) : (
+                  <View style={{marginTop: 16}}>
+                    {recipes.filter(r =>
+                      r.name.toLowerCase().includes(search.toLowerCase())
+                    ).length === 0 ? (
+                      <View style={styles.emptyContainer}>
+                        <ThemedText style={styles.emptyText}>
+                          {search ? "Resep tidak ditemukan" : "Belum ada resep"}
+                        </ThemedText>
+                      </View>
+                    ) : (
+                      recipes
+                        .filter(r =>
+                          r.name.toLowerCase().includes(search.toLowerCase())
+                        )
+                        .map(recipe => (
+                          <RecipeItem
+                            key={recipe.id}
+                            initials={(recipe.name || "RC")
+                              .slice(0, 2)
+                              .toUpperCase()}
+                            name={recipe.name}
+                            subtitle={`${recipe.items?.length || 0} bahan`}
+                            onPress={() =>
+                              router.push({
+                                pathname:
+                                  "/dashboard/recipe-and-materials/edit-recipe",
+                                params: {id: recipe.id},
+                              } as never)
+                            }
+                          />
+                        ))
+                    )}
+                  </View>
+                )}
+              </View>
+            )}
           </View>
         </View>
       </KeyboardAwareScrollView>
@@ -340,7 +341,11 @@ export default function ProductsScreen() {
         style={[styles.fab, {bottom: insets.bottom + 24}]}
         onPress={goAdd}
       >
-        <Ionicons name="add" size={isTablet ? 36 : 28} color={Colors[colorScheme].background} />
+        <Ionicons
+          name="add"
+          size={isTablet ? 36 : 28}
+          color={Colors[colorScheme].background}
+        />
       </TouchableOpacity>
 
       <CategoryModal
@@ -353,7 +358,11 @@ export default function ProductsScreen() {
   );
 }
 
-const createStyles = (colorScheme: "light" | "dark", isTablet: boolean, isTabletLandscape: boolean) =>
+const createStyles = (
+  colorScheme: "light" | "dark",
+  isTablet: boolean,
+  isTabletLandscape: boolean
+) =>
   StyleSheet.create({
     tabsRow: {
       flexDirection: "row",

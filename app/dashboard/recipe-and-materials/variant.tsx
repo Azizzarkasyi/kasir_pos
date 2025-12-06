@@ -3,20 +3,20 @@ import ConfirmationDialog, {
 } from "@/components/drawers/confirmation-dialog";
 import Header from "@/components/header";
 import MenuRow from "@/components/menu-row";
-import { ThemedButton } from "@/components/themed-button";
-import { ThemedInput } from "@/components/themed-input";
-import { Colors } from "@/constants/theme";
-import { useColorScheme } from "@/hooks/use-color-scheme";
-import { useProductFormStore } from "@/stores/product-form-store";
-import { useLocalSearchParams, useNavigation, useRouter } from "expo-router";
-import React, { useEffect, useRef, useState } from "react";
-import { StyleSheet, View, useWindowDimensions } from "react-native";
-import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+import {ThemedButton} from "@/components/themed-button";
+import {ThemedInput} from "@/components/themed-input";
+import {Colors} from "@/constants/theme";
+import {useColorScheme} from "@/hooks/use-color-scheme";
+import {useProductFormStore} from "@/stores/product-form-store";
+import {useLocalSearchParams, useNavigation, useRouter} from "expo-router";
+import React, {useEffect, useRef, useState} from "react";
+import {StyleSheet, View, useWindowDimensions} from "react-native";
+import {KeyboardAwareScrollView} from "react-native-keyboard-aware-scroll-view";
+import {useSafeAreaInsets} from "react-native-safe-area-context";
 
 export default function VariantScreen() {
   const colorScheme = useColorScheme() ?? "light";
-  const { width, height } = useWindowDimensions();
+  const {width, height} = useWindowDimensions();
   const isTablet = Math.min(width, height) >= 600;
   const isLandscape = width > height;
   const isTabletLandscape = isTablet && isLandscape;
@@ -61,9 +61,12 @@ export default function VariantScreen() {
   }>();
 
   const confirmationRef = useRef<ConfirmationDialogHandle | null>(null);
+  const variants = useProductFormStore(state => state.variants);
   const setVariants = useProductFormStore(state => state.setVariants);
   const pendingVariant = useProductFormStore(state => state.pendingVariant);
-  const setPendingVariant = useProductFormStore(state => state.setPendingVariant);
+  const setPendingVariant = useProductFormStore(
+    state => state.setPendingVariant
+  );
   const [name, setName] = useState("");
   const [price, setPrice] = useState("");
   const [enableCostBarcode, setEnableCostBarcode] = useState(false);
@@ -136,8 +139,8 @@ export default function VariantScreen() {
       }
       if (qsCapitalPrice) {
         const parsedCapital = Number(
-          String(qsCapitalPrice).replace(/[^0-9]/g, ""))
-          ;
+          String(qsCapitalPrice).replace(/[^0-9]/g, "")
+        );
         if (!Number.isNaN(parsedCapital)) {
           setCapitalPrice(parsedCapital);
         }
@@ -152,30 +155,20 @@ export default function VariantScreen() {
     setIsSubmit(true);
     const priceNum = Number((price || "").replace(/[^0-9]/g, ""));
 
-    const buildStockFields = () => {
-      if (!stock) return {};
-      return {
-        stock: stock.offlineStock,
-        is_stock_active: true,
-        min_stock: stock.minStock,
-        notify_on_stock_ronouts: stock.notifyMin,
-        unit_id: stock.unit,
-      };
-    };
-
     if (qsFrom === "edit" && qsVariantId) {
       setVariants(prev =>
         prev.map(v =>
           v.id === qsVariantId
             ? {
-              ...v,
-              name,
-              capital_price: capitalPrice,
-              price: priceNum,
-              ...buildStockFields(),
-            }
-            : v,
-        ),
+                ...v,
+                name,
+                capital_price: capitalPrice,
+                price: priceNum,
+                // Keep existing stock fields from store (already updated by variant-stock)
+                // Don't override with local state
+              }
+            : v
+        )
       );
     } else {
       const baseStockFields = (() => {
@@ -188,7 +181,7 @@ export default function VariantScreen() {
             unit_id: pendingVariant.unit_id,
           };
         }
-        return buildStockFields();
+        return {}; // No stock fields if not set
       })();
 
       const generatedId = pendingVariant?.id ?? `${Date.now()}`;
@@ -239,7 +232,7 @@ export default function VariantScreen() {
   }, [navigation, isDirty, isSubmit]);
 
   return (
-    <View style={{ flex: 1, backgroundColor: Colors[colorScheme].background }}>
+    <View style={{flex: 1, backgroundColor: Colors[colorScheme].background}}>
       <Header title="Variasi Bahan" showHelp={false} />
       <KeyboardAwareScrollView
         contentContainerStyle={{
@@ -253,14 +246,14 @@ export default function VariantScreen() {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.contentWrapper}>
-          <View style={[styles.contentSection, { paddingVertical: 12 }]}>
+          <View style={[styles.contentSection, {paddingVertical: 12}]}>
             <ThemedInput
               label="Nama Variasi"
               size="md"
               value={name}
               onChangeText={setName}
             />
-        
+
             <ThemedInput
               label="Harga Modal"
               value={capitalPrice ? String(capitalPrice) : ""}
@@ -268,7 +261,6 @@ export default function VariantScreen() {
               onChangeText={v => setCapitalPrice(v ? Number(v) : 0)}
               numericOnly
             />
-           
           </View>
         </View>
 
@@ -278,11 +270,22 @@ export default function VariantScreen() {
           <View style={styles.contentSection}>
             <MenuRow
               title="Kelola Stok"
-              rightText={
-                (stock || pendingVariant) ?
-                  `Stok Aktif (${qsFrom === "edit" ? stock?.offlineStock : pendingVariant?.stock})`
-                  : "Stok Tidak Aktif"
-              }
+              rightText={(() => {
+                // Get stock from store based on variant ID
+                if (qsFrom === "edit" && qsVariantId) {
+                  const currentVariant = variants.find(
+                    v => v.id === qsVariantId
+                  );
+                  if (currentVariant && currentVariant.is_stock_active) {
+                    return `Stok Aktif (${currentVariant.stock || 0})`;
+                  }
+                } else if (qsFrom === "add" && pendingVariant) {
+                  if (pendingVariant.is_stock_active) {
+                    return `Stok Aktif (${pendingVariant.stock || 0})`;
+                  }
+                }
+                return "Stok Tidak Aktif";
+              })()}
               showBottomBorder={false}
               variant="link"
               onPress={() => {
@@ -295,8 +298,8 @@ export default function VariantScreen() {
                     pendingVariant && pendingVariant.id
                       ? pendingVariant
                       : {
-                        id: `${Date.now()}`,
-                      };
+                          id: `${Date.now()}`,
+                        };
 
                   const updated = {
                     ...base,
@@ -326,7 +329,7 @@ export default function VariantScreen() {
       <View style={styles.bottomBar}>
         <ThemedButton title="Simpan" onPress={handleSave} />
         {qsVariantId ? (
-          <View style={{ marginTop: 8 }}>
+          <View style={{marginTop: 8}}>
             <ThemedButton
               title="Hapus Varian"
               variant="secondary"
@@ -346,7 +349,11 @@ export default function VariantScreen() {
   );
 }
 
-const createStyles = (colorScheme: "light" | "dark", isTablet: boolean, isTabletLandscape: boolean) =>
+const createStyles = (
+  colorScheme: "light" | "dark",
+  isTablet: boolean,
+  isTabletLandscape: boolean
+) =>
   StyleSheet.create({
     contentWrapper: {
       width: "100%",

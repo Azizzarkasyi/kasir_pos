@@ -9,14 +9,14 @@ export interface UserProfile {
   name: string;
   email: string;
   phone: string;
-  photo?: string;
+  profile_url?: string;
   role: string;
 }
 
 export interface UpdateProfileRequest {
   name?: string;
   email?: string;
-  photo?: string;
+  profile_url?: string;
 }
 
 export interface ChangePinRequest {

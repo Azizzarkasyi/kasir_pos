@@ -1,15 +1,15 @@
-import { ApiResponse } from '../../types/api';
-import apiService from '../api';
+import {ApiResponse} from "../../types/api";
+import apiService from "../api";
 
 export interface Branch {
   id: string;
   store_id: string;
   name: string;
   phone: string | null;
-  province: { id: string | number; name: string };
-  city: { id: string | number; name: string };
-  subdistrict: { id: string | number; name: string };
-  village: { id: string | number; name: string };
+  province: {id: string | number; name: string};
+  city: {id: string | number; name: string};
+  subdistrict: {id: string | number; name: string};
+  village: {id: string | number; name: string};
   address: string;
   status: string;
   created_at: string;
@@ -28,7 +28,7 @@ export const branchApi = {
     limit?: number;
     search?: string;
   }): Promise<ApiResponse<Branch[]>> {
-    const response = await apiService.get<Branch[]>('/branches', params);
+    const response = await apiService.get<Branch[]>("/branches", params);
     return response;
   },
 
@@ -37,6 +37,51 @@ export const branchApi = {
    */
   async getBranch(id: string): Promise<ApiResponse<Branch>> {
     const response = await apiService.get<Branch>(`/branches/${id}`);
+    return response;
+  },
+
+  /**
+   * Create new branch
+   */
+  async createBranch(data: {
+    name: string;
+    phone?: string;
+    province: {id: string | number; name: string};
+    city: {id: string | number; name: string};
+    subdistrict: {id: string | number; name: string};
+    village: {id: string | number; name: string};
+    address: string;
+    status: string;
+  }): Promise<ApiResponse<Branch>> {
+    const response = await apiService.post<Branch>("/branches", data);
+    return response;
+  },
+
+  /**
+   * Update branch
+   */
+  async updateBranch(
+    id: string,
+    data: {
+      name?: string;
+      phone?: string;
+      province?: {id: string | number; name: string};
+      city?: {id: string | number; name: string};
+      subdistrict?: {id: string | number; name: string};
+      village?: {id: string | number; name: string};
+      address?: string;
+      status?: string;
+    }
+  ): Promise<ApiResponse<Branch>> {
+    const response = await apiService.put<Branch>(`/branches/${id}`, data);
+    return response;
+  },
+
+  /**
+   * Delete branch
+   */
+  async deleteBranch(id: string): Promise<ApiResponse<void>> {
+    const response = await apiService.delete<void>(`/branches/${id}`);
     return response;
   },
 };

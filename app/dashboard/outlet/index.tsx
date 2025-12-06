@@ -1,12 +1,22 @@
-
 import Header from "@/components/header";
-import { ThemedText } from "@/components/themed-text";
-import { Colors } from "@/constants/theme";
-import { useColorScheme } from "@/hooks/use-color-scheme";
-import { AntDesign, Ionicons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
-import React from "react";
-import { StyleSheet, TextInput, TouchableOpacity, useWindowDimensions, View } from "react-native";
+import {ThemedText} from "@/components/themed-text";
+import {Colors} from "@/constants/theme";
+import {useColorScheme} from "@/hooks/use-color-scheme";
+import {AntDesign, Ionicons} from "@expo/vector-icons";
+import {useRouter} from "expo-router";
+import {useFocusEffect} from "@react-navigation/native";
+import React, {useState, useEffect, useCallback} from "react";
+import {
+  StyleSheet,
+  TextInput,
+  TouchableOpacity,
+  useWindowDimensions,
+  View,
+  ActivityIndicator,
+  FlatList,
+  RefreshControl,
+} from "react-native";
+import {branchApi, Branch} from "@/services/endpoints/branches";
 
 type OutletItemProps = {
   name: string;
@@ -17,11 +27,26 @@ type OutletItemProps = {
   onPress?: () => void;
 };
 
-const OutletItem: React.FC<OutletItemProps> = ({ name, isPrimary, address, styles, isTablet, onPress }) => {
+const OutletItem: React.FC<OutletItemProps> = ({
+  name,
+  isPrimary,
+  address,
+  styles,
+  isTablet,
+  onPress,
+}) => {
   return (
-    <TouchableOpacity activeOpacity={0.7} style={styles.outletCard} onPress={onPress}>
+    <TouchableOpacity
+      activeOpacity={0.7}
+      style={styles.outletCard}
+      onPress={onPress}
+    >
       <View style={styles.outletIconWrapper}>
-        <AntDesign name="shop" size={isTablet ? 32 : 24} style={styles.outletIcon} />
+        <AntDesign
+          name="shop"
+          size={isTablet ? 32 : 24}
+          style={styles.outletIcon}
+        />
       </View>
 
       <View style={styles.outletInfoWrapper}>
@@ -41,13 +66,63 @@ const OutletItem: React.FC<OutletItemProps> = ({ name, isPrimary, address, style
 
 const SelectBranchScreen = () => {
   const colorScheme = useColorScheme() ?? "light";
-  const { width, height } = useWindowDimensions();
+  const {width, height} = useWindowDimensions();
   const isTablet = Math.min(width, height) >= 600;
   const isLandscape = width > height;
   const isTabletLandscape = isTablet && isLandscape;
   const styles = createStyles(colorScheme, isTablet, isTabletLandscape);
-  const [isSearchFocused, setIsSearchFocused] = React.useState(false);
+  const [isSearchFocused, setIsSearchFocused] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [branches, setBranches] = useState<Branch[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   const router = useRouter();
+
+  // Fetch branches
+  const fetchBranches = async () => {
+    try {
+      setIsLoading(true);
+      const params: any = {};
+      if (searchQuery) {
+        params.search = searchQuery;
+      }
+
+      const response = await branchApi.getBranches(params);
+      console.log(
+        "📥 Fetched branches:",
+        response.data?.length || 0,
+        "outlets"
+      );
+      if (response.data) {
+        setBranches(response.data);
+      }
+    } catch (error: any) {
+      console.error("❌ Failed to fetch branches:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Refresh when screen comes into focus
+  useFocusEffect(
+    useCallback(() => {
+      fetchBranches();
+    }, [])
+  );
+
+  // Debounced search
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      fetchBranches();
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await fetchBranches();
+    setRefreshing(false);
+  };
 
   return (
     <>
@@ -57,10 +132,12 @@ const SelectBranchScreen = () => {
         withNotificationButton={false}
       />
       <View style={styles.container}>
-
         <View style={styles.contentWrapper}>
           <View
-            style={[styles.searchWrapper, isSearchFocused && styles.searchWrapperFocused]}
+            style={[
+              styles.searchWrapper,
+              isSearchFocused && styles.searchWrapperFocused,
+            ]}
           >
             <Ionicons
               name="search"
@@ -71,19 +148,58 @@ const SelectBranchScreen = () => {
               placeholder="Cari Outlet"
               placeholderTextColor="#A0A0A0"
               style={styles.searchInput}
+              value={searchQuery}
+              onChangeText={setSearchQuery}
               onFocus={() => setIsSearchFocused(true)}
               onBlur={() => setIsSearchFocused(false)}
             />
           </View>
 
-          <OutletItem
-            name="Pusat"
-            isPrimary
-            address="Arjowinangun, Kalipare, Kab. Malang"
-            styles={styles}
-            isTablet={isTablet}
-            onPress={() => router.push("/dashboard/outlet/edit" as never)}
-          />
+          {isLoading && !refreshing ? (
+            <View style={{paddingVertical: 32, alignItems: "center"}}>
+              <ActivityIndicator
+                size="large"
+                color={Colors[colorScheme].primary}
+              />
+              <ThemedText
+                style={{marginTop: 16, color: Colors[colorScheme].icon}}
+              >
+                Memuat outlet...
+              </ThemedText>
+            </View>
+          ) : branches.length === 0 ? (
+            <View style={{paddingVertical: 32, alignItems: "center"}}>
+              <ThemedText style={{color: Colors[colorScheme].icon}}>
+                {searchQuery ? "Outlet tidak ditemukan" : "Belum ada outlet"}
+              </ThemedText>
+            </View>
+          ) : (
+            <FlatList
+              data={branches}
+              keyExtractor={item => item.id}
+              renderItem={({item}) => (
+                <OutletItem
+                  name={item.name}
+                  isPrimary={item.status === "primary"}
+                  address={`${item.village.name}, ${item.subdistrict.name}, ${item.city.name}`}
+                  styles={styles}
+                  isTablet={isTablet}
+                  onPress={() =>
+                    router.push(`/dashboard/outlet/edit?id=${item.id}` as never)
+                  }
+                />
+              )}
+              contentContainerStyle={{gap: isTablet ? 12 : 8}}
+              refreshControl={
+                <RefreshControl
+                  refreshing={refreshing}
+                  onRefresh={onRefresh}
+                  colors={[Colors[colorScheme].primary]}
+                  tintColor={Colors[colorScheme].primary}
+                />
+              }
+            />
+          )}
         </View>
 
         <TouchableOpacity
@@ -91,15 +207,22 @@ const SelectBranchScreen = () => {
           style={styles.fab}
           onPress={() => router.push("/dashboard/outlet/add" as never)}
         >
-          <AntDesign name="plus" size={isTablet ? 32 : 24} style={styles.fabIcon} />
+          <AntDesign
+            name="plus"
+            size={isTablet ? 32 : 24}
+            style={styles.fabIcon}
+          />
         </TouchableOpacity>
       </View>
     </>
-
   );
 };
 
-const createStyles = (colorScheme: "light" | "dark", isTablet: boolean, isTabletLandscape: boolean) =>
+const createStyles = (
+  colorScheme: "light" | "dark",
+  isTablet: boolean,
+  isTabletLandscape: boolean
+) =>
   StyleSheet.create({
     container: {
       flex: 1,
@@ -197,7 +320,7 @@ const createStyles = (colorScheme: "light" | "dark", isTablet: boolean, isTablet
       justifyContent: "center",
       backgroundColor: Colors[colorScheme].primary,
       shadowColor: Colors[colorScheme].shadow,
-      shadowOffset: { width: 0, height: 4 },
+      shadowOffset: {width: 0, height: 4},
       shadowOpacity: 0.5,
       shadowRadius: 6,
       elevation: 6,
@@ -208,4 +331,3 @@ const createStyles = (colorScheme: "light" | "dark", isTablet: boolean, isTablet
   });
 
 export default SelectBranchScreen;
-

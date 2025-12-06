@@ -1,14 +1,21 @@
-import { Colors } from "@/constants/theme";
-import { useColorScheme } from "@/hooks/use-color-scheme";
+import {Colors} from "@/constants/theme";
+import {useColorScheme} from "@/hooks/use-color-scheme";
 import React from "react";
-import { StyleSheet, TouchableOpacity, View, useWindowDimensions } from "react-native";
-import { ThemedText } from "./themed-text";
+import {
+  StyleSheet,
+  TouchableOpacity,
+  View,
+  useWindowDimensions,
+  Image,
+} from "react-native";
+import {ThemedText} from "./themed-text";
 
 type Props = {
   initials: string;
   name: string;
   variantCount?: number;
   stockCount?: number;
+  photoUrl?: string | null;
   onPress?: () => void;
 };
 
@@ -17,6 +24,7 @@ export default function ProductCard({
   name,
   variantCount,
   stockCount,
+  photoUrl,
   onPress,
 }: Props) {
   const colorScheme = useColorScheme() ?? "light";
@@ -27,13 +35,19 @@ export default function ProductCard({
   return (
     <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.8}>
       <View style={styles.avatar}>
-        <ThemedText style={styles.avatarText}>{initials}</ThemedText>
+        {photoUrl ? (
+          <Image source={{uri: photoUrl}} style={styles.avatarImage} />
+        ) : (
+          <ThemedText style={styles.avatarText}>{initials}</ThemedText>
+        )}
       </View>
-      <View style={{ flex: 1 }}>
+      <View style={{flex: 1}}>
         <ThemedText style={styles.nameText}>{name}</ThemedText>
-        <ThemedText style={styles.variantText}>{variantCount} Varian</ThemedText>
+        <ThemedText style={styles.variantText}>
+          {variantCount} Varian
+        </ThemedText>
       </View>
-      <View >
+      <View>
         <ThemedText style={styles.stockText}>Stok</ThemedText>
         <ThemedText style={styles.stockCountText}>{stockCount}</ThemedText>
       </View>
@@ -60,6 +74,12 @@ const createStyles = (colorScheme: "light" | "dark", isTablet: boolean) =>
       backgroundColor: Colors[colorScheme].border,
       alignItems: "center",
       justifyContent: "center",
+      overflow: "hidden",
+    },
+    avatarImage: {
+      width: "100%",
+      height: "100%",
+      resizeMode: "cover",
     },
     avatarText: {
       color: Colors[colorScheme].background,

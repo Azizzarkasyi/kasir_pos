@@ -1,14 +1,21 @@
-import { Colors } from "@/constants/theme";
-import { useColorScheme } from "@/hooks/use-color-scheme";
+import {Colors} from "@/constants/theme";
+import {useColorScheme} from "@/hooks/use-color-scheme";
 import React from "react";
-import { StyleSheet, TouchableOpacity, useWindowDimensions, View } from "react-native";
-import { ThemedText } from "../themed-text";
+import {
+  Image,
+  StyleSheet,
+  TouchableOpacity,
+  useWindowDimensions,
+  View,
+} from "react-native";
+import {ThemedText} from "../themed-text";
 
 export type RecipeItemProps = {
   initials: string;
   name: string;
   subtitle?: string;
   rightText?: string;
+  photoUrl?: string;
   onPress?: () => void;
 };
 
@@ -17,6 +24,7 @@ const RecipeItem: React.FC<RecipeItemProps> = ({
   name,
   subtitle,
   rightText,
+  photoUrl,
   onPress,
 }) => {
   const colorScheme = useColorScheme() ?? "light";
@@ -25,26 +33,22 @@ const RecipeItem: React.FC<RecipeItemProps> = ({
   const styles = createStyles(colorScheme, isTablet);
 
   return (
-    <TouchableOpacity
-      style={styles.card}
-      onPress={onPress}
-      activeOpacity={0.8}
-    >
+    <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.8}>
       <View style={styles.avatar}>
-        <ThemedText style={styles.avatarText}>{initials}</ThemedText>
+        {photoUrl ? (
+          <Image source={{uri: photoUrl}} style={styles.avatarImage} />
+        ) : (
+          <ThemedText style={styles.avatarText}>{initials}</ThemedText>
+        )}
       </View>
-      <View style={{ flex: 1 }}>
+      <View style={{flex: 1}}>
         <ThemedText style={styles.name}>{name}</ThemedText>
         {!!subtitle && (
-          <ThemedText style={styles.subtitle}>
-            {subtitle}
-          </ThemedText>
+          <ThemedText style={styles.subtitle}>{subtitle}</ThemedText>
         )}
       </View>
       {!!rightText && (
-        <ThemedText style={styles.rightText}>
-          {rightText}
-        </ThemedText>
+        <ThemedText style={styles.rightText}>{rightText}</ThemedText>
       )}
     </TouchableOpacity>
   );
@@ -70,6 +74,12 @@ const createStyles = (colorScheme: "light" | "dark", isTablet: boolean) =>
       backgroundColor: Colors[colorScheme].primary,
       alignItems: "center",
       justifyContent: "center",
+      overflow: "hidden",
+    },
+    avatarImage: {
+      width: "100%",
+      height: "100%",
+      resizeMode: "cover",
     },
     name: {
       fontWeight: "700",

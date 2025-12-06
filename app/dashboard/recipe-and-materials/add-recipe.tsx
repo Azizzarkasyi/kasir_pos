@@ -5,18 +5,19 @@ import ConfirmationDialog, {
 } from "@/components/drawers/confirmation-dialog";
 import Header from "@/components/header";
 import ImageUpload from "@/components/image-upload";
-import { ThemedButton } from "@/components/themed-button";
-import { ThemedInput } from "@/components/themed-input";
-import { ThemedText } from "@/components/themed-text";
-import { Colors } from "@/constants/theme";
-import { useColorScheme } from "@/hooks/use-color-scheme";
+import {ThemedButton} from "@/components/themed-button";
+import {ThemedInput} from "@/components/themed-input";
+import {ThemedText} from "@/components/themed-text";
+import {Colors} from "@/constants/theme";
+import {useColorScheme} from "@/hooks/use-color-scheme";
+import assetApi, {prepareFileFromUri} from "@/services/endpoints/assets";
 import recipeApi from "@/services/endpoints/recipes";
-import { useRecipeFormStore } from "@/stores/recipe-form-store";
-import { useNavigation, useRouter } from "expo-router";
-import React, { useEffect, useRef, useState } from "react";
-import { Alert, StyleSheet, useWindowDimensions, View } from "react-native";
-import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+import {useRecipeFormStore} from "@/stores/recipe-form-store";
+import {useNavigation, useRouter} from "expo-router";
+import React, {useEffect, useRef, useState} from "react";
+import {Alert, StyleSheet, useWindowDimensions, View} from "react-native";
+import {KeyboardAwareScrollView} from "react-native-keyboard-aware-scroll-view";
+import {useSafeAreaInsets} from "react-native-safe-area-context";
 
 export default function AddProductScreen() {
   const colorScheme = useColorScheme() ?? "light";
@@ -144,15 +145,16 @@ export default function AddProductScreen() {
             <ImageUpload
               uri={imageUri || undefined}
               initials={(name || "NP").slice(0, 2).toUpperCase()}
-              onPress={() => {
-                // Integrasi picker bisa ditambahkan nanti
-                setImageUri(null);
-              }}
+              onImageSelected={uri => setImageUri(uri)}
             />
 
             <View style={{height: 24}} />
 
-            <ThemedInput label="Nama Resep" value={name} onChangeText={setName} />
+            <ThemedInput
+              label="Nama Resep"
+              value={name}
+              onChangeText={setName}
+            />
 
             <ComboInput
               label="Pilih Kategori"
@@ -176,7 +178,9 @@ export default function AddProductScreen() {
                 {ingredients.map((v, idx) => (
                   <RecipeIngredientItem
                     key={idx}
-                    initials={(v.ingredient.name || "VR").slice(0, 2).toUpperCase()}
+                    initials={(v.ingredient.name || "VR")
+                      .slice(0, 2)
+                      .toUpperCase()}
                     name={v.ingredient.name}
                     variantName={v.ingredient.name}
                     count={v.amount}
@@ -200,7 +204,7 @@ export default function AddProductScreen() {
               variant="secondary"
               onPress={() =>
                 router.push(
-                  "/dashboard/recipe-and-materials/ingredients" as never,
+                  "/dashboard/recipe-and-materials/ingredients" as never
                 )
               }
             />
@@ -219,7 +223,11 @@ export default function AddProductScreen() {
   );
 }
 
-const createStyles = (colorScheme: "light" | "dark", isTablet: boolean, isTabletLandscape: boolean) =>
+const createStyles = (
+  colorScheme: "light" | "dark",
+  isTablet: boolean,
+  isTabletLandscape: boolean
+) =>
   StyleSheet.create({
     inlineCard: {
       marginTop: isTablet ? 12 : 8,

@@ -1,17 +1,18 @@
 import HelpPopup from "@/components/atoms/help-popup";
 import Header from "@/components/header";
 import ImageUpload from "@/components/image-upload";
-import { ThemedButton } from "@/components/themed-button";
-import { ThemedInput } from "@/components/themed-input";
-import { ThemedText } from "@/components/themed-text";
-import { Colors } from "@/constants/theme";
-import { useColorScheme } from "@/hooks/use-color-scheme";
-import { settingsApi, StruckConfig } from "@/services";
-import { Ionicons } from "@expo/vector-icons";
+import {ThemedButton} from "@/components/themed-button";
+import {ThemedInput} from "@/components/themed-input";
+import {ThemedText} from "@/components/themed-text";
+import {Colors} from "@/constants/theme";
+import {useColorScheme} from "@/hooks/use-color-scheme";
+import assetApi, {prepareFileFromUri} from "@/services/endpoints/assets";
+import {settingsApi, StruckConfig} from "@/services";
+import {Ionicons} from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useNavigation } from "@react-navigation/native";
-import { useRouter } from "expo-router";
-import React, { useEffect, useState } from "react";
+import {useNavigation} from "@react-navigation/native";
+import {useRouter} from "expo-router";
+import React, {useEffect, useState} from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -20,7 +21,7 @@ import {
   useWindowDimensions,
   View,
 } from "react-native";
-import { ScrollView } from "react-native-gesture-handler";
+import {ScrollView} from "react-native-gesture-handler";
 
 export default function ReceiptSettingScreen() {
   const colorScheme = useColorScheme() ?? "light";
@@ -93,8 +94,39 @@ export default function ReceiptSettingScreen() {
 
     setIsSaving(true);
     try {
+      // Upload logo first if selected and it's a local file
+      let uploadedLogoUrl: string | undefined;
+      if (logoUri && !logoUri.startsWith("http")) {
+        console.log("📤 Uploading receipt logo...");
+        try {
+          const file = prepareFileFromUri(logoUri);
+          const uploadResponse = await assetApi.uploadImage(file);
+          if (uploadResponse.data?.url) {
+            uploadedLogoUrl = uploadResponse.data.url;
+            console.log("✅ Receipt logo uploaded:", uploadedLogoUrl);
+          }
+        } catch (uploadError: any) {
+          console.error("❌ Logo upload failed:", uploadError);
+          Alert.alert(
+            "Peringatan",
+            "Gagal upload logo. Lanjutkan tanpa mengubah logo?",
+            [
+              {
+                text: "Batal",
+                style: "cancel",
+                onPress: () => setIsSaving(false),
+              },
+              {text: "Lanjutkan", onPress: () => {}},
+            ]
+          );
+          return;
+        }
+      }
+
       await settingsApi.updateStruckConfig(branchId, {
-        logo_url: logoUri,
+        logo_url:
+          uploadedLogoUrl ||
+          (logoUri?.startsWith("http") ? logoUri : undefined),
         header_description: extraNotes.trim(),
         footer_description: message.trim(),
       });
@@ -146,102 +178,113 @@ export default function ReceiptSettingScreen() {
       >
         <View style={styles.contentWrapper}>
           <View style={styles.sectionCard}>
-            <ImageUpload uri={logoUri} onPress={() => setLogoUri(undefined)} />
+            <ImageUpload
+              uri={logoUri}
+              initials="LG"
+              onImageSelected={uri => setLogoUri(uri)}
+            />
           </View>
         </View>
 
         <View style={styles.sectionDivider} />
 
         <View style={styles.contentWrapper}>
+          <View style={styles.sectionCard}>
+            <ThemedText type="subtitle-2">Pengaturan Dasar</ThemedText>
+            <ThemedInput
+              label="Keterangan Tambahan (Opsional)"
+              value={extraNotes}
+              size="md"
+              onChangeText={setExtraNotes}
+              multiline
+              maxLength={100}
+              rightIcon={
+                <TouchableOpacity onPress={() => setShowHelpExtra(true)}>
+                  <Ionicons
+                    name="help-circle-outline"
+                    size={isTablet ? 28 : 20}
+                    color={Colors[colorScheme].primary}
+                  />
+                </TouchableOpacity>
+              }
+              inputContainerStyle={{
+                height: isTablet ? 120 : 100,
+                alignItems: "center",
+                paddingVertical: isTablet ? 16 : 12,
+              }}
+            />
+            <View style={styles.counterRow}>
+              <ThemedText
+                style={{
+                  color: Colors[colorScheme].icon,
+                  fontSize: isTablet ? 16 : 14,
+                }}
+              >{`${extraNotes.length}/100`}</ThemedText>
+            </View>
+            <ThemedInput
+              label="Pesan (Opsional)"
+              value={message}
+              onChangeText={setMessage}
+              multiline
+              size="md"
+              maxLength={100}
+              rightIcon={
+                <TouchableOpacity onPress={() => setShowHelpMessage(true)}>
+                  <Ionicons
+                    name="help-circle-outline"
+                    size={isTablet ? 28 : 20}
+                    color={Colors[colorScheme].primary}
+                  />
+                </TouchableOpacity>
+              }
+              inputContainerStyle={{
+                height: isTablet ? 120 : 100,
+                alignItems: "center",
+                paddingVertical: isTablet ? 16 : 12,
+              }}
+            />
+            <View style={styles.counterRow}>
+              <ThemedText
+                style={{
+                  color: Colors[colorScheme].icon,
+                  fontSize: isTablet ? 16 : 14,
+                }}
+              >{`${message.length}/100`}</ThemedText>
+            </View>
+          </View>
 
-        <View style={styles.sectionCard}>
-          <ThemedText type="subtitle-2">Pengaturan Dasar</ThemedText>
-          <ThemedInput
-            label="Keterangan Tambahan (Opsional)"
-            value={extraNotes}
-            size="md"
-            onChangeText={setExtraNotes}
-            multiline
-            maxLength={100}
-            rightIcon={
-              <TouchableOpacity onPress={() => setShowHelpExtra(true)}>
-                <Ionicons
-                  name="help-circle-outline"
-                  size={isTablet ? 28 : 20}
-                  color={Colors[colorScheme].primary}
-                />
-              </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.sectionCardHighlight}
+            onPress={() =>
+              router.push("/dashboard/setting/order-receipt" as never)
             }
-            inputContainerStyle={{
-              height: isTablet ? 120 : 100,
-              alignItems: "center",
-              paddingVertical: isTablet ? 16 : 12,
-            }}
-          />
-          <View style={styles.counterRow}>
-            <ThemedText
-              style={{color: Colors[colorScheme].icon, fontSize: isTablet ? 16 : 14}}
-            >{`${extraNotes.length}/100`}</ThemedText>
-          </View>
-          <ThemedInput
-            label="Pesan (Opsional)"
-            value={message}
-            onChangeText={setMessage}
-            multiline
-            size="md"
-            maxLength={100}
-            rightIcon={
-              <TouchableOpacity onPress={() => setShowHelpMessage(true)}>
-                <Ionicons
-                  name="help-circle-outline"
-                  size={isTablet ? 28 : 20}
-                  color={Colors[colorScheme].primary}
-                />
-              </TouchableOpacity>
-            }
-            inputContainerStyle={{
-              height: isTablet ? 120 : 100,
-              alignItems: "center",
-              paddingVertical: isTablet ? 16 : 12,
-            }}
-          />
-          <View style={styles.counterRow}>
-            <ThemedText
-              style={{color: Colors[colorScheme].icon, fontSize: isTablet ? 16 : 14}}
-            >{`${message.length}/100`}</ThemedText>
-          </View>
-        </View>
+          >
+            <View style={{flex: 1}}>
+              <ThemedText
+                style={{fontWeight: "600", fontSize: isTablet ? 20 : 16}}
+              >
+                Ingin Pengaturan Tambahan?
+              </ThemedText>
+              <ThemedText style={styles.extraDescription}>
+                Kamu akan lebih leluasa mengatur struk sesuai keinginanmu.
+              </ThemedText>
+            </View>
+            <View style={styles.rightChevron}>
+              <Ionicons
+                name="chevron-forward-outline"
+                size={isTablet ? 24 : 18}
+                color={Colors[colorScheme].primary}
+              />
+            </View>
+          </TouchableOpacity>
 
-        <TouchableOpacity
-          style={styles.sectionCardHighlight}
-          onPress={() =>
-            router.push("/dashboard/setting/order-receipt" as never)
-          }
-        >
-          <View style={{flex: 1}}>
-            <ThemedText style={{fontWeight: "600", fontSize: isTablet ? 20 : 16}}>
-              Ingin Pengaturan Tambahan?
-            </ThemedText>
-            <ThemedText style={styles.extraDescription}>
-              Kamu akan lebih leluasa mengatur struk sesuai keinginanmu.
-            </ThemedText>
-          </View>
-          <View style={styles.rightChevron}>
-            <Ionicons
-              name="chevron-forward-outline"
-              size={isTablet ? 24 : 18}
-              color={Colors[colorScheme].primary}
+          <View style={styles.bottomButtonWrapper}>
+            <ThemedButton
+              title={isSaving ? "Menyimpan..." : "Simpan"}
+              onPress={handleSave}
+              disabled={isSaving}
             />
           </View>
-        </TouchableOpacity>
-
-        <View style={styles.bottomButtonWrapper}>
-          <ThemedButton
-            title={isSaving ? "Menyimpan..." : "Simpan"}
-            onPress={handleSave}
-            disabled={isSaving}
-          />
-        </View>
         </View>
         <HelpPopup
           visible={showHelpExtra}
@@ -260,7 +303,11 @@ export default function ReceiptSettingScreen() {
   );
 }
 
-const createStyles = (colorScheme: "light" | "dark", isTablet: boolean, isTabletLandscape: boolean) =>
+const createStyles = (
+  colorScheme: "light" | "dark",
+  isTablet: boolean,
+  isTabletLandscape: boolean
+) =>
   StyleSheet.create({
     container: {
       flex: 1,

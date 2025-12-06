@@ -9,25 +9,26 @@ import ImageUpload from "@/components/image-upload";
 import MenuRow from "@/components/menu-row";
 import CategoryPicker from "@/components/mollecules/category-picker";
 import MerkPicker from "@/components/mollecules/merk-picker";
-import { ThemedButton } from "@/components/themed-button";
-import { ThemedInput } from "@/components/themed-input";
-import { ThemedText } from "@/components/themed-text";
-import { Colors } from "@/constants/theme";
-import { useColorScheme } from "@/hooks/use-color-scheme";
-import { recipeApi } from "@/services";
+import {ThemedButton} from "@/components/themed-button";
+import {ThemedInput} from "@/components/themed-input";
+import {ThemedText} from "@/components/themed-text";
+import {Colors} from "@/constants/theme";
+import {useColorScheme} from "@/hooks/use-color-scheme";
+import {recipeApi} from "@/services";
 import merkApi from "@/services/endpoints/merks";
 import productApi from "@/services/endpoints/products";
-import { useProductFormStore } from "@/stores/product-form-store";
-import { Merk } from "@/types/api";
-import { useNavigation, useRouter } from "expo-router";
-import React, { useEffect, useRef, useState } from "react";
-import { Alert, StyleSheet, useWindowDimensions, View } from "react-native";
-import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+import assetApi, {prepareFileFromUri} from "@/services/endpoints/assets";
+import {useProductFormStore} from "@/stores/product-form-store";
+import {Merk} from "@/types/api";
+import {useNavigation, useRouter} from "expo-router";
+import React, {useEffect, useRef, useState} from "react";
+import {Alert, StyleSheet, useWindowDimensions, View} from "react-native";
+import {KeyboardAwareScrollView} from "react-native-keyboard-aware-scroll-view";
+import {useSafeAreaInsets} from "react-native-safe-area-context";
 
 export default function AddProductScreen() {
   const colorScheme = useColorScheme() ?? "light";
-  const { width, height } = useWindowDimensions();
+  const {width, height} = useWindowDimensions();
   const isTablet = Math.min(width, height) >= 600;
   const isLandscape = width > height;
   const isTabletLandscape = isTablet && isLandscape;
@@ -169,6 +170,35 @@ export default function AddProductScreen() {
     try {
       setIsSaving(true);
 
+      // Upload image first if selected
+      let uploadedImageUrl: string | undefined;
+      if (imageUri && !imageUri.startsWith("http")) {
+        console.log("📤 Uploading product image...");
+        try {
+          const file = prepareFileFromUri(imageUri);
+          const uploadResponse = await assetApi.uploadImage(file);
+          if (uploadResponse.data?.url) {
+            uploadedImageUrl = uploadResponse.data.url;
+            console.log("✅ Product image uploaded:", uploadedImageUrl);
+          }
+        } catch (uploadError: any) {
+          console.error("❌ Image upload failed:", uploadError);
+          Alert.alert(
+            "Peringatan",
+            "Gagal upload gambar. Lanjutkan tanpa gambar?",
+            [
+              {
+                text: "Batal",
+                style: "cancel",
+                onPress: () => setIsSaving(false),
+              },
+              {text: "Lanjutkan", onPress: () => {}},
+            ]
+          );
+          return;
+        }
+      }
+
       // Build payload sesuai CreateProductDto
       const payload: any = {
         name: name.trim(),
@@ -188,7 +218,11 @@ export default function AddProductScreen() {
         payload.recipe_id = recipe;
       }
 
-      if (imageUri) {
+      // Add uploaded image URL
+      if (uploadedImageUrl) {
+        payload.photo_url = uploadedImageUrl;
+      } else if (imageUri && imageUri.startsWith("http")) {
+        // If already uploaded URL, use it directly
         payload.photo_url = imageUri;
       }
 
@@ -224,7 +258,7 @@ export default function AddProductScreen() {
 
       // Variants - structure sudah sama dengan CreateProductVariantPayload,
       // jadi bisa langsung dilempar ke payload tanpa mapping tambahan
-      payload.variants = variants.map((v) => {
+      payload.variants = variants.map(v => {
         const {id, ...rest} = v;
         return rest;
       });
@@ -279,7 +313,7 @@ export default function AddProductScreen() {
   };
 
   return (
-    <View style={{ flex: 1, backgroundColor: Colors[colorScheme].background }}>
+    <View style={{flex: 1, backgroundColor: Colors[colorScheme].background}}>
       <Header title="Tambah Produk" showHelp={false} />
       <KeyboardAwareScrollView
         contentContainerStyle={{
@@ -296,10 +330,11 @@ export default function AddProductScreen() {
           <ImageUpload
             uri={imageUri || undefined}
             initials={(name || "NP").slice(0, 2).toUpperCase()}
-            onPress={() => {
-              // Integrasi picker bisa ditambahkan nanti
-              setImageUri(null);
+            onImageSelected={uri => {
+              console.log("📸 Product image selected:", uri);
+              setImageUri(uri);
             }}
+            disabled={isSaving}
           />
 
           <View style={styles.contentSection}>
@@ -357,7 +392,7 @@ export default function AddProductScreen() {
         <View style={styles.sectionDivider} />
 
         <View style={styles.contentWrapper}>
-          <View style={{ paddingHorizontal: 20, paddingVertical: 6 }}>
+          <View style={{paddingHorizontal: 20, paddingVertical: 6}}>
             <MenuRow
               title="Atur Harga Modal dan Barcode"
               variant="toggle"
@@ -397,27 +432,29 @@ export default function AddProductScreen() {
                   pathname: "/dashboard/product/stock",
                   params: {
                     from: "add",
-                    ...(name ? { name } : {}),
-                    ...(price ? { price } : {}),
-                    ...(brand ? { brand } : {}),
-                    ...(category ? { category } : {}),
-                    ...(favorite ? { favorite: String(favorite) } : {}),
+                    ...(name ? {name} : {}),
+                    ...(price ? {price} : {}),
+                    ...(brand ? {brand} : {}),
+                    ...(category ? {category} : {}),
+                    ...(favorite ? {favorite: String(favorite)} : {}),
                     ...(enableCostBarcode
-                      ? { enableCostBarcode: String(enableCostBarcode) }
+                      ? {enableCostBarcode: String(enableCostBarcode)}
                       : {}),
-                    ...(imageUri ? { imageUri } : {}),
-                    ...(capitalPrice ? { capitalPrice: String(capitalPrice) } : {}),
-                    ...(barcode ? { barcode } : {}),
+                    ...(imageUri ? {imageUri} : {}),
+                    ...(capitalPrice
+                      ? {capitalPrice: String(capitalPrice)}
+                      : {}),
+                    ...(barcode ? {barcode} : {}),
                     ...(variants.length
-                      ? { variants: JSON.stringify(variants) }
+                      ? {variants: JSON.stringify(variants)}
                       : {}),
                     ...(stock
                       ? {
-                        offlineStock: String(stock.offlineStock),
-                        unit: stock.unit,
-                        minStock: String(stock.minStock),
-                        notifyMin: stock.notifyMin ? "1" : "0",
-                      }
+                          offlineStock: String(stock.offlineStock),
+                          unit: stock.unit,
+                          minStock: String(stock.minStock),
+                          notifyMin: stock.notifyMin ? "1" : "0",
+                        }
                       : {}),
                   },
                 } as never)
@@ -455,7 +492,9 @@ export default function AddProductScreen() {
                                 offlineStock: String(v.stock),
                                 unit: v.unit_id || "pcs",
                                 minStock: String(v.min_stock || 0),
-                                notifyMin: v.notify_on_stock_ronouts ? "1" : "0",
+                                notifyMin: v.notify_on_stock_ronouts
+                                  ? "1"
+                                  : "0",
                               }
                             : {}),
                           ...(v.id ? {variantId: v.id} : {}),
@@ -496,7 +535,11 @@ export default function AddProductScreen() {
   );
 }
 
-const createStyles = (colorScheme: "light" | "dark", isTablet: boolean, isTabletLandscape: boolean) =>
+const createStyles = (
+  colorScheme: "light" | "dark",
+  isTablet: boolean,
+  isTabletLandscape: boolean
+) =>
   StyleSheet.create({
     contentWrapper: {
       width: "100%",

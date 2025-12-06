@@ -6,25 +6,32 @@ import Header from "@/components/header";
 import ImageUpload from "@/components/image-upload";
 import CategoryPicker from "@/components/mollecules/category-picker";
 import MerkPicker from "@/components/mollecules/merk-picker";
-import { ThemedButton } from "@/components/themed-button";
-import { ThemedInput } from "@/components/themed-input";
-import { ThemedText } from "@/components/themed-text";
-import { Colors } from "@/constants/theme";
-import { useColorScheme } from "@/hooks/use-color-scheme";
-import { recipeApi } from "@/services";
+import {ThemedButton} from "@/components/themed-button";
+import {ThemedInput} from "@/components/themed-input";
+import {ThemedText} from "@/components/themed-text";
+import {Colors} from "@/constants/theme";
+import {useColorScheme} from "@/hooks/use-color-scheme";
+import {recipeApi} from "@/services";
 import merkApi from "@/services/endpoints/merks";
 import productApi from "@/services/endpoints/products";
-import { useProductFormStore } from "@/stores/product-form-store";
-import { Merk, Product } from "@/types/api";
-import { useLocalSearchParams, useNavigation, useRouter } from "expo-router";
-import React, { useEffect, useRef, useState } from "react";
-import { ActivityIndicator, Alert, StyleSheet, useWindowDimensions, View } from "react-native";
-import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+import assetApi, {prepareFileFromUri} from "@/services/endpoints/assets";
+import {useProductFormStore} from "@/stores/product-form-store";
+import {Merk, Product} from "@/types/api";
+import {useLocalSearchParams, useNavigation, useRouter} from "expo-router";
+import React, {useEffect, useRef, useState} from "react";
+import {
+  ActivityIndicator,
+  Alert,
+  StyleSheet,
+  useWindowDimensions,
+  View,
+} from "react-native";
+import {KeyboardAwareScrollView} from "react-native-keyboard-aware-scroll-view";
+import {useSafeAreaInsets} from "react-native-safe-area-context";
 
 export default function EditProductScreen() {
   const colorScheme = useColorScheme() ?? "light";
-  const { width, height } = useWindowDimensions();
+  const {width, height} = useWindowDimensions();
   const isTablet = Math.min(width, height) >= 600;
   const isLandscape = width > height;
   const isTabletLandscape = isTablet && isLandscape;
@@ -75,7 +82,10 @@ export default function EditProductScreen() {
   const [defaultVariantId, setDefaultVariantId] = useState<string | null>(null);
 
   React.useEffect(() => {
-    loadProduct();
+    // Only load product data once on mount
+    if (!productData) {
+      loadProduct();
+    }
     loadMerks();
     loadRecipes();
 
@@ -100,8 +110,6 @@ export default function EditProductScreen() {
         const product = response.data;
         setProductData(product);
 
-    
-
         // Populate form dari product
         setName(product.name);
         setBrand(product.merk_id || "");
@@ -110,7 +118,6 @@ export default function EditProductScreen() {
         setImageUri(product.photo_url || null);
 
         console.log("Product data:", product.variants);
-
 
         // Load variants (kecuali yang default) - simpan ID untuk update
         if (product.variants && product.variants.length > 0) {
@@ -194,7 +201,7 @@ export default function EditProductScreen() {
           // Tetap di sini
         },
         onConfirm: () => {
-          reset()
+          reset();
           navigation.dispatch(action);
         },
       });
@@ -217,36 +224,66 @@ export default function EditProductScreen() {
       return;
     }
 
-    // Clean and parse price
+    // Clean and parse price (optional for materials)
     const cleanPrice = String(price).replace(/[^0-9]/g, "");
-    const numericPrice = Number(cleanPrice);
-
-    if (!cleanPrice || numericPrice <= 0) {
-      Alert.alert("Error", "Harga jual harus lebih dari 0");
-      return;
-    }
+    const numericPrice = Number(cleanPrice) || 0;
 
     try {
       setIsSaving(true);
+
+      // Upload image first if selected and it's a local file
+      let uploadedImageUrl: string | undefined;
+      if (imageUri && !imageUri.startsWith("http")) {
+        console.log("📤 Uploading material image...");
+        try {
+          const file = prepareFileFromUri(imageUri);
+          const uploadResponse = await assetApi.uploadImage(file);
+          if (uploadResponse.data?.url) {
+            uploadedImageUrl = uploadResponse.data.url;
+            console.log("✅ Material image uploaded:", uploadedImageUrl);
+          }
+        } catch (uploadError: any) {
+          console.error("❌ Image upload failed:", uploadError);
+          Alert.alert(
+            "Peringatan",
+            "Gagal upload gambar. Lanjutkan tanpa mengubah gambar?",
+            [
+              {
+                text: "Batal",
+                style: "cancel",
+                onPress: () => setIsSaving(false),
+              },
+              {text: "Lanjutkan", onPress: () => {}},
+            ]
+          );
+          return;
+        }
+      }
 
       // Build payload sesuai UpdateProductDto
       // Level product HANYA boleh ada: name, merk_id, category_id, is_favorite, photo_url
       const payload: any = {
         name: name.trim(),
         is_favorite: favorite,
+        is_ingredient: true, // Mark as ingredient
       };
 
-      // merk_id wajib ada
+      // merk_id optional
       if (brand && brand.length > 10 && brand.startsWith("cm")) {
         payload.merk_id = brand;
-      } 
+      }
 
-      // category_id wajib ada
-      if (category) {
+      // category_id optional
+      if (category && category.length > 10) {
         payload.category_id = category;
-      } 
+      }
 
-      if (imageUri) payload.photo_url = imageUri;
+      // Add uploaded image URL
+      if (uploadedImageUrl) {
+        payload.photo_url = uploadedImageUrl;
+      } else if (imageUri && imageUri.startsWith("http")) {
+        payload.photo_url = imageUri;
+      }
 
       // Build variants array
       const allVariants: any[] = [];
@@ -285,14 +322,20 @@ export default function EditProductScreen() {
 
       // 2. Tambahkan variant non-default yang sudah ada
       if (variants.length > 0) {
+        console.log("📦 Variants from store before mapping:", variants);
         const nonDefaultVariants = variants.map(v => ({
           ...v,
         }));
+        console.log("📦 Mapped nonDefaultVariants:", nonDefaultVariants);
         allVariants.push(...nonDefaultVariants);
       }
 
       payload.variants = allVariants;
 
+      console.log(
+        "📦 Final payload.variants:",
+        JSON.stringify(payload.variants, null, 2)
+      );
       console.log("Updating product:", payload);
       const response = await productApi.updateProduct(params.id, payload);
 
@@ -317,11 +360,11 @@ export default function EditProductScreen() {
 
   if (isLoading) {
     return (
-      <View style={{ flex: 1, backgroundColor: Colors[colorScheme].background }}>
+      <View style={{flex: 1, backgroundColor: Colors[colorScheme].background}}>
         <Header title="Edit Bahan" showHelp={false} />
-        <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+        <View style={{flex: 1, justifyContent: "center", alignItems: "center"}}>
           <ActivityIndicator size="large" color={Colors[colorScheme].primary} />
-          <ThemedText style={{ marginTop: 16, color: Colors[colorScheme].icon }}>
+          <ThemedText style={{marginTop: 16, color: Colors[colorScheme].icon}}>
             Memuat data produk...
           </ThemedText>
         </View>
@@ -330,7 +373,7 @@ export default function EditProductScreen() {
   }
 
   return (
-    <View style={{ flex: 1, backgroundColor: Colors[colorScheme].background }}>
+    <View style={{flex: 1, backgroundColor: Colors[colorScheme].background}}>
       <Header title="Edit Bahan" showHelp={false} />
       <KeyboardAwareScrollView
         contentContainerStyle={{
@@ -346,10 +389,11 @@ export default function EditProductScreen() {
           <ImageUpload
             uri={imageUri || undefined}
             initials={(name || "NP").slice(0, 2).toUpperCase()}
-            onPress={() => {
-              // Integrasi picker bisa ditambahkan nanti
-              setImageUri(null);
+            onImageSelected={uri => {
+              console.log("📸 Material image selected:", uri);
+              setImageUri(uri);
             }}
+            disabled={isSaving}
           />
 
           <View style={styles.contentSection}>
@@ -401,39 +445,49 @@ export default function EditProductScreen() {
             {variants.length > 0 ? (
               <>
                 <ThemedText type="subtitle-2">Varian</ThemedText>
-                {variants.map((v, idx) => (
-                  <VariantItem
-                    key={idx}
-                    initials={(v.name || "VR").slice(0, 2).toUpperCase()}
-                    name={v.name}
-                    price={v.price}
-                    stock={
-                      v.is_stock_active && typeof v.stock === "number"
-                        ? {count: v.stock, unit: v.unit_id || "pcs"}
-                        : undefined
-                    }
-                    onPress={() =>
-                      router.push({
-                        pathname: "/dashboard/recipe-and-materials/variant",
-                        params: {
-                          from: "edit",
-                          ...(v.id ? {variantId: v.id} : {}),
-                          name: v.name,
-                          price: String(v.price),
-                          capitalPrice: String(v.capital_price),
-                          ...(typeof v.stock === "number"
-                            ? {
-                                offlineStock: String(v.stock),
-                                unit: v.unit_id || "pcs",
-                                minStock: String(v.min_stock || 0),
-                                notifyMin: v.notify_on_stock_ronouts ? "1" : "0",
-                              }
-                            : {}),
-                        },
-                      } as never)
-                    }
-                  />
-                ))}
+                {variants.map((v, idx) => {
+                  console.log(`📦 Variant ${idx} data:`, {
+                    name: v.name,
+                    stock: v.stock,
+                    is_stock_active: v.is_stock_active,
+                    stockType: typeof v.stock,
+                  });
+                  return (
+                    <VariantItem
+                      key={idx}
+                      initials={(v.name || "VR").slice(0, 2).toUpperCase()}
+                      name={v.name}
+                      price={v.price}
+                      stock={
+                        v.is_stock_active && typeof v.stock === "number"
+                          ? {count: v.stock, unit: v.unit_id || "pcs"}
+                          : undefined
+                      }
+                      onPress={() =>
+                        router.push({
+                          pathname: "/dashboard/recipe-and-materials/variant",
+                          params: {
+                            from: "edit",
+                            ...(v.id ? {variantId: v.id} : {}),
+                            name: v.name,
+                            price: String(v.price),
+                            capitalPrice: String(v.capital_price),
+                            ...(typeof v.stock === "number"
+                              ? {
+                                  offlineStock: String(v.stock),
+                                  unit: v.unit_id || "pcs",
+                                  minStock: String(v.min_stock || 0),
+                                  notifyMin: v.notify_on_stock_ronouts
+                                    ? "1"
+                                    : "0",
+                                }
+                              : {}),
+                          },
+                        } as never)
+                      }
+                    />
+                  );
+                })}
               </>
             ) : null}
 
@@ -474,11 +528,14 @@ export default function EditProductScreen() {
                           router.back();
                         } catch (error: any) {
                           console.error("Failed to delete product:", error);
-                          Alert.alert("Error", error.message || "Gagal menghapus produk");
+                          Alert.alert(
+                            "Error",
+                            error.message || "Gagal menghapus produk"
+                          );
                         }
                       },
                     },
-                  ],
+                  ]
                 );
               }}
             />
@@ -500,7 +557,11 @@ export default function EditProductScreen() {
   );
 }
 
-const createStyles = (colorScheme: "light" | "dark", isTablet: boolean, isTabletLandscape: boolean) =>
+const createStyles = (
+  colorScheme: "light" | "dark",
+  isTablet: boolean,
+  isTabletLandscape: boolean
+) =>
   StyleSheet.create({
     contentWrapper: {
       width: "100%",

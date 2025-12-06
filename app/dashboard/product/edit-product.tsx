@@ -8,25 +8,32 @@ import ImageUpload from "@/components/image-upload";
 import MenuRow from "@/components/menu-row";
 import CategoryPicker from "@/components/mollecules/category-picker";
 import MerkPicker from "@/components/mollecules/merk-picker";
-import { ThemedButton } from "@/components/themed-button";
-import { ThemedInput } from "@/components/themed-input";
-import { ThemedText } from "@/components/themed-text";
-import { Colors } from "@/constants/theme";
-import { useColorScheme } from "@/hooks/use-color-scheme";
-import { recipeApi } from "@/services";
+import {ThemedButton} from "@/components/themed-button";
+import {ThemedInput} from "@/components/themed-input";
+import {ThemedText} from "@/components/themed-text";
+import {Colors} from "@/constants/theme";
+import {useColorScheme} from "@/hooks/use-color-scheme";
+import {recipeApi} from "@/services";
 import merkApi from "@/services/endpoints/merks";
 import productApi from "@/services/endpoints/products";
-import { useProductFormStore } from "@/stores/product-form-store";
-import { Merk, Product } from "@/types/api";
-import { useLocalSearchParams, useNavigation, useRouter } from "expo-router";
-import React, { useEffect, useRef, useState } from "react";
-import { ActivityIndicator, Alert, StyleSheet, useWindowDimensions, View } from "react-native";
-import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+import assetApi, {prepareFileFromUri} from "@/services/endpoints/assets";
+import {useProductFormStore} from "@/stores/product-form-store";
+import {Merk, Product} from "@/types/api";
+import {useLocalSearchParams, useNavigation, useRouter} from "expo-router";
+import React, {useEffect, useRef, useState} from "react";
+import {
+  ActivityIndicator,
+  Alert,
+  StyleSheet,
+  useWindowDimensions,
+  View,
+} from "react-native";
+import {KeyboardAwareScrollView} from "react-native-keyboard-aware-scroll-view";
+import {useSafeAreaInsets} from "react-native-safe-area-context";
 
 export default function EditProductScreen() {
   const colorScheme = useColorScheme() ?? "light";
-  const { width, height } = useWindowDimensions();
+  const {width, height} = useWindowDimensions();
   const isTablet = Math.min(width, height) >= 600;
   const isLandscape = width > height;
   const isTabletLandscape = isTablet && isLandscape;
@@ -228,7 +235,7 @@ export default function EditProductScreen() {
           // Tetap di sini
         },
         onConfirm: () => {
-          reset()
+          reset();
           navigation.dispatch(action);
         },
       });
@@ -263,6 +270,35 @@ export default function EditProductScreen() {
     try {
       setIsSaving(true);
 
+      // Upload image first if selected and it's a local file
+      let uploadedImageUrl: string | undefined;
+      if (imageUri && !imageUri.startsWith("http")) {
+        console.log("📤 Uploading product image...");
+        try {
+          const file = prepareFileFromUri(imageUri);
+          const uploadResponse = await assetApi.uploadImage(file);
+          if (uploadResponse.data?.url) {
+            uploadedImageUrl = uploadResponse.data.url;
+            console.log("✅ Product image uploaded:", uploadedImageUrl);
+          }
+        } catch (uploadError: any) {
+          console.error("❌ Image upload failed:", uploadError);
+          Alert.alert(
+            "Peringatan",
+            "Gagal upload gambar. Lanjutkan tanpa mengubah gambar?",
+            [
+              {
+                text: "Batal",
+                style: "cancel",
+                onPress: () => setIsSaving(false),
+              },
+              {text: "Lanjutkan", onPress: () => {}},
+            ]
+          );
+          return;
+        }
+      }
+
       // Build payload sesuai UpdateProductDto
       // Level product HANYA boleh ada: name, merk_id, category_id, is_favorite, photo_url
       const payload: any = {
@@ -273,14 +309,20 @@ export default function EditProductScreen() {
       // merk_id wajib ada
       if (brand && brand.length > 10 && brand.startsWith("cm")) {
         payload.merk_id = brand;
-      } 
+      }
 
       // category_id wajib ada
       if (category) {
         payload.category_id = category;
-      } 
+      }
 
-      if (imageUri) payload.photo_url = imageUri;
+      // Add uploaded image URL
+      if (uploadedImageUrl) {
+        payload.photo_url = uploadedImageUrl;
+      } else if (imageUri && imageUri.startsWith("http")) {
+        // If already uploaded URL, use it directly
+        payload.photo_url = imageUri;
+      }
 
       // Build variants array
       const allVariants: any[] = [];
@@ -351,11 +393,11 @@ export default function EditProductScreen() {
 
   if (isLoading) {
     return (
-      <View style={{ flex: 1, backgroundColor: Colors[colorScheme].background }}>
+      <View style={{flex: 1, backgroundColor: Colors[colorScheme].background}}>
         <Header title="Edit Produk" showHelp={false} />
-        <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+        <View style={{flex: 1, justifyContent: "center", alignItems: "center"}}>
           <ActivityIndicator size="large" color={Colors[colorScheme].primary} />
-          <ThemedText style={{ marginTop: 16, color: Colors[colorScheme].icon }}>
+          <ThemedText style={{marginTop: 16, color: Colors[colorScheme].icon}}>
             Memuat data produk...
           </ThemedText>
         </View>
@@ -364,7 +406,7 @@ export default function EditProductScreen() {
   }
 
   return (
-    <View style={{ flex: 1, backgroundColor: Colors[colorScheme].background }}>
+    <View style={{flex: 1, backgroundColor: Colors[colorScheme].background}}>
       <Header title="Edit Produk" showHelp={false} />
       <KeyboardAwareScrollView
         contentContainerStyle={{
@@ -380,10 +422,11 @@ export default function EditProductScreen() {
           <ImageUpload
             uri={imageUri || undefined}
             initials={(name || "NP").slice(0, 2).toUpperCase()}
-            onPress={() => {
-              // Integrasi picker bisa ditambahkan nanti
-              setImageUri(null);
+            onImageSelected={uri => {
+              console.log("📸 Product image selected:", uri);
+              setImageUri(uri);
             }}
+            disabled={isSaving}
           />
 
           <View style={styles.contentSection}>
@@ -446,7 +489,7 @@ export default function EditProductScreen() {
         <View style={styles.sectionDivider} />
 
         <View style={styles.contentWrapper}>
-          <View style={{ paddingHorizontal: 20, paddingVertical: 6 }}>
+          <View style={{paddingHorizontal: 20, paddingVertical: 6}}>
             <MenuRow
               title="Atur Harga Modal dan Barcode"
               variant="toggle"
@@ -486,7 +529,7 @@ export default function EditProductScreen() {
                   pathname: "/dashboard/product/stock",
                   params: {
                     from: "edit",
-                    ...(params.id ? { id: String(params.id) } : {}),
+                    ...(params.id ? {id: String(params.id)} : {}),
                   },
                 } as never)
               }
@@ -524,7 +567,9 @@ export default function EditProductScreen() {
                                 offlineStock: String(v.stock),
                                 unit: v.unit_id || "pcs",
                                 minStock: String(v.min_stock || 0),
-                                notifyMin: v.notify_on_stock_ronouts ? "1" : "0",
+                                notifyMin: v.notify_on_stock_ronouts
+                                  ? "1"
+                                  : "0",
                               }
                             : {}),
                         },
@@ -572,11 +617,14 @@ export default function EditProductScreen() {
                           router.back();
                         } catch (error: any) {
                           console.error("Failed to delete product:", error);
-                          Alert.alert("Error", error.message || "Gagal menghapus produk");
+                          Alert.alert(
+                            "Error",
+                            error.message || "Gagal menghapus produk"
+                          );
                         }
                       },
                     },
-                  ],
+                  ]
                 );
               }}
             />
@@ -598,7 +646,11 @@ export default function EditProductScreen() {
   );
 }
 
-const createStyles = (colorScheme: "light" | "dark", isTablet: boolean, isTabletLandscape: boolean) =>
+const createStyles = (
+  colorScheme: "light" | "dark",
+  isTablet: boolean,
+  isTabletLandscape: boolean
+) =>
   StyleSheet.create({
     contentWrapper: {
       width: "100%",
