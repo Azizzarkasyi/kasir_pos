@@ -10,6 +10,7 @@ type StockProductItemProps = {
   variant?: string;
   quantity: number | string;
   onPress?: () => void;
+  isTablet?: boolean;
 };
 
 const StockProductItem: React.FC<StockProductItemProps> = ({
@@ -17,9 +18,10 @@ const StockProductItem: React.FC<StockProductItemProps> = ({
   variant,
   quantity,
   onPress,
+  isTablet = false,
 }) => {
   const colorScheme = useColorScheme() ?? "light";
-  const styles = createStyles(colorScheme);
+  const styles = createStyles(colorScheme, isTablet);
 
   const initials = (name || "-")
     .trim()
@@ -41,7 +43,7 @@ const StockProductItem: React.FC<StockProductItemProps> = ({
       </View>
 
       <View style={styles.middleColumn}>
-        <ThemedText type="defaultSemiBold" numberOfLines={1}>
+        <ThemedText type="defaultSemiBold" style={styles.nameText} numberOfLines={1}>
           {name}
         </ThemedText>
         {!!variant && (
@@ -61,45 +63,48 @@ const StockProductItem: React.FC<StockProductItemProps> = ({
   );
 };
 
-const createStyles = (colorScheme: "light" | "dark") =>
+const createStyles = (colorScheme: "light" | "dark", isTablet: boolean) =>
   StyleSheet.create({
     container: {
       flexDirection: "row",
       alignItems: "center",
-      paddingHorizontal: 16,
-      paddingVertical: 12,
+      paddingHorizontal: isTablet ? 32 : 16,
+      paddingVertical: isTablet ? 18 : 12,
       borderBottomWidth: 1,
       borderBottomColor: Colors[colorScheme].border,
       backgroundColor: Colors[colorScheme].background,
     },
     leftBox: {
-      width: 48,
-      height: 48,
-      borderRadius: 8,
+      width: isTablet ? 64 : 48,
+      height: isTablet ? 64 : 48,
+      borderRadius: isTablet ? 12 : 8,
       backgroundColor: Colors[colorScheme].border,
       alignItems: "center",
       justifyContent: "center",
-      marginRight: 12,
+      marginRight: isTablet ? 18 : 12,
     },
     initials: {
       fontWeight: "700",
-      fontSize: 18,
+      fontSize: isTablet ? 24 : 18,
       color: Colors[colorScheme].icon,
     },
     middleColumn: {
       flex: 1,
       justifyContent: "center",
     },
+    nameText: {
+      fontSize: isTablet ? 20 : 16,
+    },
     variantText: {
-      fontSize: 13,
+      fontSize: isTablet ? 18 : 13,
       color: Colors[colorScheme].icon,
-      marginTop: 2,
+      marginTop: isTablet ? 4 : 2,
     },
     qtyBox: {
-      minWidth: 60,
-      paddingHorizontal: 16,
-      paddingVertical: 8,
-      borderRadius: 6,
+      minWidth: isTablet ? 80 : 60,
+      paddingHorizontal: isTablet ? 20 : 16,
+      paddingVertical: isTablet ? 12 : 8,
+      borderRadius: isTablet ? 10 : 6,
       borderWidth: 1,
       borderColor: Colors[colorScheme].border,
       alignItems: "center",
@@ -107,7 +112,7 @@ const createStyles = (colorScheme: "light" | "dark") =>
     },
     qtyText: {
       fontWeight: "600",
-      fontSize: 14,
+      fontSize: isTablet ? 20 : 14,
       color: Colors[colorScheme].text,
     },
   });

@@ -2,7 +2,16 @@ import { Colors } from "@/constants/theme";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { Ionicons } from "@expo/vector-icons";
 import React from "react";
-import { StyleProp, StyleSheet, Switch, TextStyle, TouchableOpacity, View, ViewStyle } from "react-native";
+import {
+  StyleProp,
+  StyleSheet,
+  Switch,
+  TextStyle,
+  TouchableOpacity,
+  View,
+  ViewStyle,
+  useWindowDimensions,
+} from "react-native";
 import { ThemedText } from "./themed-text";
 
 type MenuRowProps = {
@@ -37,7 +46,9 @@ const MenuRow: React.FC<MenuRowProps> = ({
   leftIconName,
 }) => {
   const colorScheme = useColorScheme() ?? "light";
-  const styles = createStyles(colorScheme);
+  const { width, height } = useWindowDimensions();
+  const isTablet = Math.min(width, height) >= 600;
+  const styles = createStyles(colorScheme, isTablet);
   const top =
     typeof StyleSheet.hairlineWidth === "number" ? StyleSheet.hairlineWidth : 1;
   const bottom =
@@ -61,7 +72,7 @@ const MenuRow: React.FC<MenuRowProps> = ({
             {leftIconName ? (
               <Ionicons
                 name={leftIconName}
-                size={20}
+                size={isTablet ? 26 : 20}
                 color={Colors[colorScheme].primary}
               />
             ) : null}
@@ -83,7 +94,7 @@ const MenuRow: React.FC<MenuRowProps> = ({
           ) : null}
           <Ionicons
             name="chevron-forward-outline"
-            size={18}
+            size={isTablet ? 24 : 18}
             color={Colors[colorScheme].icon}
           />
         </View>
@@ -101,7 +112,7 @@ const MenuRow: React.FC<MenuRowProps> = ({
           {leftIconName ? (
             <Ionicons
               name={leftIconName}
-              size={20}
+              size={isTablet ? 26 : 20}
               color={Colors[colorScheme].primary}
             />
           ) : null}
@@ -127,6 +138,7 @@ const MenuRow: React.FC<MenuRowProps> = ({
               true: Colors[colorScheme].primary,
             }}
             thumbColor={Colors[colorScheme].text}
+            style={isTablet ? {transform: [{scaleX: 1.3}, {scaleY: 1.3}]} : undefined}
           />
         </View>
       ) : (
@@ -136,7 +148,7 @@ const MenuRow: React.FC<MenuRowProps> = ({
           ) : null}
           <Ionicons
             name="chevron-forward-outline"
-            size={18}
+            size={isTablet ? 24 : 18}
             color={Colors[colorScheme].icon}
           />
         </View>
@@ -145,15 +157,15 @@ const MenuRow: React.FC<MenuRowProps> = ({
   );
 };
 
-const createStyles = (colorScheme: "light" | "dark") =>
+const createStyles = (colorScheme: "light" | "dark", isTablet: boolean) =>
   StyleSheet.create({
     row: {
       flexDirection: "row",
       alignItems: "center",
       justifyContent: "space-between",
-      paddingVertical: 12,
-      minHeight: 64,
-      gap: 50,
+      paddingVertical: isTablet ? 16 : 12,
+      minHeight: isTablet ? 72 : 64,
+      gap: isTablet ? 24 : 50,
     },
     titleRow: {
       flexDirection: "row",
@@ -162,12 +174,14 @@ const createStyles = (colorScheme: "light" | "dark") =>
     },
     rowTitle: {
       fontWeight: "700",
+      // phone: default 14; tablet: lebih besar
+      fontSize: isTablet ? 20 : 14,
     },
     rowSubtitle: {
       marginTop: 2,
       color: Colors[colorScheme].icon,
-      lineHeight: 18,
-      fontSize: 12,
+      lineHeight: isTablet ? 24 : 18,
+      fontSize: isTablet ? 18 : 12,
     },
     badge: {
       borderWidth: 1,
@@ -176,7 +190,7 @@ const createStyles = (colorScheme: "light" | "dark") =>
       paddingHorizontal: 8,
     },
     badgeText: {
-      fontSize: 10,
+      fontSize: isTablet ? 14 : 10,
       fontWeight: "700",
       color: Colors[colorScheme].primary,
     },
@@ -189,7 +203,7 @@ const createStyles = (colorScheme: "light" | "dark") =>
     },
     rightText: {
       color: Colors[colorScheme].icon,
-      fontSize: 14,
+      fontSize: isTablet ? 18 : 14,
     },
   });
 

@@ -1,3 +1,4 @@
+import DashboardBottomNav from "@/components/layouts/dashboard/bottom-nav";
 import { Colors } from "@/constants/theme";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { Roboto_400Regular, Roboto_500Medium, Roboto_700Bold } from "@expo-google-fonts/roboto";
@@ -35,7 +36,8 @@ export default function RootLayout() {
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <Stack>
+      <View style={{ flex: 1 }}>
+        <Stack>
         <Stack.Screen name="index" options={{ headerShown: false }} />
         <Stack.Screen name="auth/Login/login" options={{ headerShown: false }} />
         <Stack.Screen
@@ -242,8 +244,9 @@ export default function RootLayout() {
           name="dashboard/transaction/share-struck"
           options={{ headerShown: false, title: "Pratinjau Struk" }}
         />
-
       </Stack>
+      </View>
+      <DashboardBottomNav />
     </GestureHandlerRootView>
   );
 }

@@ -3,31 +3,38 @@ import CategoryModal from "@/components/drawers/category-modal";
 import FilterProductModal from "@/components/drawers/filter-product-modal";
 import Header from "@/components/header";
 import ProductCard from "@/components/product-card";
-import {ThemedInput} from "@/components/themed-input";
-import {ThemedText} from "@/components/themed-text";
-import {Colors} from "@/constants/theme";
-import {useColorScheme} from "@/hooks/use-color-scheme";
-import {Ionicons} from "@expo/vector-icons";
-import {useRouter, useFocusEffect} from "expo-router";
-import React, {useState, useEffect, useCallback} from "react";
+import { ThemedInput } from "@/components/themed-input";
+import { ThemedText } from "@/components/themed-text";
+import { Colors } from "@/constants/theme";
+import { useColorScheme } from "@/hooks/use-color-scheme";
+import categoryApi from "@/services/endpoints/categories";
+import productApi from "@/services/endpoints/products";
+import { useProductFormStore } from "@/stores/product-form-store";
+import { Category, Product } from "@/types/api";
+import { Ionicons } from "@expo/vector-icons";
+import { useFocusEffect, useRouter } from "expo-router";
+import React, { useCallback, useEffect, useState } from "react";
 import {
+  ActivityIndicator,
+  Alert,
   StyleSheet,
   TouchableOpacity,
   View,
-  ActivityIndicator,
-  Alert,
+  useWindowDimensions,
 } from "react-native";
-import {KeyboardAwareScrollView} from "react-native-keyboard-aware-scroll-view";
-import {useSafeAreaInsets} from "react-native-safe-area-context";
-import productApi from "@/services/endpoints/products";
-import categoryApi from "@/services/endpoints/categories";
-import {Product, Category} from "@/types/api";
+import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function ProductsScreen() {
   const colorScheme = useColorScheme() ?? "light";
-  const styles = createStyles(colorScheme);
+  const {width, height} = useWindowDimensions();
+  const isTablet = Math.min(width, height) >= 600;
+  const isLandscape = width > height;
+  const isTabletLandscape = isTablet && isLandscape;
+  const styles = createStyles(colorScheme, isTablet, isTabletLandscape);
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  const {reset} = useProductFormStore()
 
   const [activeTab, setActiveTab] = useState<"produk" | "kategori">("produk");
   const [search, setSearch] = useState("");
@@ -148,6 +155,7 @@ export default function ProductsScreen() {
       return;
     }
 
+    reset()
     router.push("/dashboard/product/add-product" as never);
   };
 
@@ -203,7 +211,8 @@ export default function ProductsScreen() {
         </View>
 
         {/* --- 2. CONTENT SECTION (Dengan Padding) --- */}
-        <View style={styles.contentContainer}>
+        <View style={styles.contentWrapper}>
+          <View style={styles.contentContainer}>
           {activeTab === "produk" ? (
             <View>
               <View style={styles.searchRow}>
@@ -229,7 +238,7 @@ export default function ProductsScreen() {
                 >
                   <Ionicons
                     name="options-outline"
-                    size={20}
+                    size={isTablet ? 26 : 20}
                     color={Colors[colorScheme].text}
                   />
                 </TouchableOpacity>
@@ -245,7 +254,7 @@ export default function ProductsScreen() {
                   </View>
                 ) : filteredProducts.length === 0 ? (
                   <View style={{paddingVertical: 40, alignItems: "center"}}>
-                    <ThemedText style={{color: Colors[colorScheme].icon}}>
+                    <ThemedText style={styles.emptyText}>
                       {search
                         ? "Tidak ada produk ditemukan"
                         : "Belum ada produk"}
@@ -286,7 +295,7 @@ export default function ProductsScreen() {
                 </View>
               ) : categories.length === 0 ? (
                 <View style={{paddingVertical: 40, alignItems: "center"}}>
-                  <ThemedText style={{color: Colors[colorScheme].icon}}>
+                  <ThemedText style={styles.emptyText}>
                     Belum ada kategori
                   </ThemedText>
                 </View>
@@ -301,14 +310,15 @@ export default function ProductsScreen() {
               )}
             </View>
           )}
+          </View>
         </View>
       </KeyboardAwareScrollView>
 
       <TouchableOpacity
-        style={[styles.fab, {bottom: insets.bottom + 24}]}
+        style={[styles.fab, {bottom: insets.bottom + (isTablet ? 32 : 24)}]}
         onPress={goAdd}
       >
-        <Ionicons name="add" size={28} color={Colors[colorScheme].background} />
+        <Ionicons name="add" size={isTablet ? 36 : 28} color={Colors[colorScheme].background} />
       </TouchableOpacity>
 
       <CategoryModal
@@ -335,18 +345,23 @@ export default function ProductsScreen() {
   );
 }
 
-const createStyles = (colorScheme: "light" | "dark") =>
+const createStyles = (colorScheme: "light" | "dark", isTablet: boolean, isTabletLandscape: boolean) =>
   StyleSheet.create({
+    contentWrapper: {
+      width: "100%",
+      maxWidth: isTabletLandscape ? 960 : undefined,
+      alignSelf: "center",
+    },
     tabsRow: {
       flexDirection: "row",
       borderBottomWidth: 1,
       borderBottomColor: "#E0E0E0",
       backgroundColor: Colors[colorScheme].background,
-      marginTop: 10,
+      marginTop: isTablet ? 14 : 10,
     },
     tabItem: {
       flex: 1,
-      paddingVertical: 14,
+      paddingVertical: isTablet ? 18 : 14,
       alignItems: "center",
       justifyContent: "center",
       position: "relative",
@@ -356,41 +371,46 @@ const createStyles = (colorScheme: "light" | "dark") =>
       bottom: -1, // Supaya menutupi garis border abu-abu
       left: 0,
       right: 0,
-      height: 3,
+      height: isTablet ? 4 : 3,
       backgroundColor: Colors[colorScheme].primary,
     },
     tabText: {
-      fontSize: 14,
+      fontSize: isTablet ? 20 : 14,
       fontWeight: "600",
     },
 
     // Container baru untuk isi halaman agar punya jarak kiri-kanan
     contentContainer: {
-      paddingHorizontal: 20,
+      paddingHorizontal: isTablet ? 28 : 20,
     },
 
     searchRow: {
       flexDirection: "row",
       alignItems: "center",
-      gap: 12,
-      marginTop: 16,
+      gap: isTablet ? 16 : 12,
+      marginTop: isTablet ? 20 : 16,
+    },
+    emptyText: {
+      color: Colors[colorScheme].icon,
+      fontSize: isTablet ? 18 : 14,
+      textAlign: "center",
     },
     filterButton: {
-      width: 50,
-      height: 50,
+      width: isTablet ? 60 : 50,
+      height: isTablet ? 60 : 50,
       borderWidth: 1,
       borderColor: Colors[colorScheme].border,
-      borderRadius: 8,
+      borderRadius: isTablet ? 10 : 8,
       alignItems: "center",
       justifyContent: "center",
     },
 
     fab: {
       position: "absolute",
-      right: 24,
-      width: 56,
-      height: 56,
-      borderRadius: 28,
+      right: isTablet ? 32 : 24,
+      width: isTablet ? 68 : 56,
+      height: isTablet ? 68 : 56,
+      borderRadius: isTablet ? 34 : 28,
       alignItems: "center",
       justifyContent: "center",
       backgroundColor: Colors[colorScheme].primary,

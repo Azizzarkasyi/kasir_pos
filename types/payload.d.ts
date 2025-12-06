@@ -183,6 +183,7 @@ interface CreateEmployeePayload {
   email: string;
   phone: string;
   pin: string;
+  branch_ids: string[];
   role: 'cashier' | 'manager';
 }
 
@@ -192,6 +193,7 @@ interface UpdateEmployeePayload {
   phone?: string;
   pin?: string;
   pin_confirmation?: string;
+  branch_ids?: string[];
 }
 
 interface FilterEmployeeQuery extends PaginationQuery {
@@ -201,7 +203,7 @@ interface FilterEmployeeQuery extends PaginationQuery {
 
 interface InviteEmployeePayload {
   user_id: string;
-  branch_id: string;
+  branch_ids: string[];
   role?: string;
   is_default_branch?: boolean;
 }

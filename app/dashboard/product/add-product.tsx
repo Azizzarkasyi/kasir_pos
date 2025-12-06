@@ -9,24 +9,29 @@ import ImageUpload from "@/components/image-upload";
 import MenuRow from "@/components/menu-row";
 import CategoryPicker from "@/components/mollecules/category-picker";
 import MerkPicker from "@/components/mollecules/merk-picker";
-import {ThemedButton} from "@/components/themed-button";
-import {ThemedInput} from "@/components/themed-input";
-import {ThemedText} from "@/components/themed-text";
-import {Colors} from "@/constants/theme";
-import {useColorScheme} from "@/hooks/use-color-scheme";
-import {useProductFormStore} from "@/stores/product-form-store";
-import {useNavigation, useRouter} from "expo-router";
-import React, {useEffect, useRef, useState} from "react";
-import {StyleSheet, View, Alert, ActivityIndicator} from "react-native";
-import {KeyboardAwareScrollView} from "react-native-keyboard-aware-scroll-view";
-import {useSafeAreaInsets} from "react-native-safe-area-context";
-import productApi from "@/services/endpoints/products";
+import { ThemedButton } from "@/components/themed-button";
+import { ThemedInput } from "@/components/themed-input";
+import { ThemedText } from "@/components/themed-text";
+import { Colors } from "@/constants/theme";
+import { useColorScheme } from "@/hooks/use-color-scheme";
+import { recipeApi } from "@/services";
 import merkApi from "@/services/endpoints/merks";
-import {Merk} from "@/types/api";
+import productApi from "@/services/endpoints/products";
+import { useProductFormStore } from "@/stores/product-form-store";
+import { Merk } from "@/types/api";
+import { useNavigation, useRouter } from "expo-router";
+import React, { useEffect, useRef, useState } from "react";
+import { Alert, StyleSheet, useWindowDimensions, View } from "react-native";
+import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function AddProductScreen() {
   const colorScheme = useColorScheme() ?? "light";
-  const styles = createStyles(colorScheme);
+  const { width, height } = useWindowDimensions();
+  const isTablet = Math.min(width, height) >= 600;
+  const isLandscape = width > height;
+  const isTabletLandscape = isTablet && isLandscape;
+  const styles = createStyles(colorScheme, isTablet, isTabletLandscape);
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const navigation = useNavigation();
@@ -34,11 +39,13 @@ export default function AddProductScreen() {
   const confirmationRef = useRef<ConfirmationDialogHandle | null>(null);
 
   const [merks, setMerks] = useState<Merk[]>([]);
+  const [recipes, setRecipes] = useState<{id: string; name: string}[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     loadMerks();
+    loadRecipes();
   }, []);
 
   const loadMerks = async () => {
@@ -49,6 +56,17 @@ export default function AddProductScreen() {
       }
     } catch (error) {
       console.error("Failed to load merks:", error);
+    }
+  };
+
+  const loadRecipes = async () => {
+    try {
+      const response = await recipeApi.getRecipes();
+      if (response.data) {
+        setRecipes(response.data.map(r => ({id: r.id, name: r.name})));
+      }
+    } catch (error) {
+      console.error("Failed to load recipes:", error);
     }
   };
 
@@ -75,8 +93,6 @@ export default function AddProductScreen() {
     setImageUri,
     setCapitalPrice,
     setBarcode,
-    setVariants,
-    setStock,
   } = useProductFormStore(state => state);
 
   const isDirty = Object.values({
@@ -206,33 +222,13 @@ export default function AddProductScreen() {
         }
       }
 
-      // Variants - hanya kirim jika ada variant tambahan
-      // Backend akan otomatis membuat variant "Regular" sebagai default dari data product level
-      if (variants && variants.length > 0) {
-        payload.variants = variants.map(v => {
-          const variantData: any = {
-            name: v.name,
-            price: Number(v.price),
-          };
+      // Variants - structure sudah sama dengan CreateProductVariantPayload,
+      // jadi bisa langsung dilempar ke payload tanpa mapping tambahan
+      payload.variants = variants.map((v) => {
+        const {id, ...rest} = v;
+        return rest;
+      });
 
-          if (v.stock) {
-            variantData.stock = v.stock.count || 0;
-            variantData.is_stock_active = true;
-            variantData.min_stock = v.stock.minStock || 0;
-            variantData.notify_on_stock_ronouts = v.stock.notifyMin || false;
-
-            if (
-              v.stock.unit &&
-              v.stock.unit.length > 10 &&
-              v.stock.unit.startsWith("cm")
-            ) {
-              variantData.unit_id = v.stock.unit;
-            }
-          }
-
-          return variantData;
-        });
-      }
       // Jika tidak ada variant tambahan, jangan kirim field variants
       // Backend akan otomatis membuat variant default "Regular"
 
@@ -283,7 +279,7 @@ export default function AddProductScreen() {
   };
 
   return (
-    <View style={{flex: 1, backgroundColor: Colors[colorScheme].background}}>
+    <View style={{ flex: 1, backgroundColor: Colors[colorScheme].background }}>
       <Header title="Tambah Produk" showHelp={false} />
       <KeyboardAwareScrollView
         contentContainerStyle={{
@@ -296,187 +292,201 @@ export default function AddProductScreen() {
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
-        <ImageUpload
-          uri={imageUri || undefined}
-          initials={(name || "NP").slice(0, 2).toUpperCase()}
-          onPress={() => {
-            // Integrasi picker bisa ditambahkan nanti
-            setImageUri(null);
-          }}
-        />
-
-        <View style={styles.contentSection}>
-          <ThemedInput
-            label="Nama Produk"
-            size="md"
-            value={name}
-            onChangeText={setName}
-          />
-          <ThemedInput
-            label="Harga Jual"
-            value={price}
-            size="md"
-            onChangeText={setPrice}
-            numericOnly
+        <View style={styles.contentWrapper}>
+          <ImageUpload
+            uri={imageUri || undefined}
+            initials={(name || "NP").slice(0, 2).toUpperCase()}
+            onPress={() => {
+              // Integrasi picker bisa ditambahkan nanti
+              setImageUri(null);
+            }}
           />
 
-          <MerkPicker
-            label="Pilih Merk"
-            value={brand}
-            size="md"
-            onChange={setBrand}
-          />
-          <CategoryPicker
-            label="Pilih Kategori"
-            value={category}
-            size="md"
-            onChange={setCategory}
-          />
-          <ComboInput
-            label="Resep Produk"
-            value={recipe}
-            size="md"
-            onChangeText={setRecipe}
-            items={[
-              {label: "Pilih Resep", value: ""},
-              {label: "Tanpa Resep", value: "none"},
-              {label: "Resep Default", value: "default"},
-            ]}
-          />
-        </View>
-
-        <View style={styles.sectionDivider} />
-
-        <View style={styles.rowSection}>
-          <MenuRow
-            title="Produk Favorit"
-            subtitle="Tampilkan produk di kategori terdepan."
-            variant="toggle"
-            value={favorite}
-            onValueChange={setFavorite}
-            badgeText="Baru"
-          />
-        </View>
-
-        <View style={styles.sectionDivider} />
-
-        <View style={{paddingHorizontal: 20, paddingVertical: 6}}>
-          <MenuRow
-            title="Atur Harga Modal dan Barcode"
-            variant="toggle"
-            value={enableCostBarcode}
-            onValueChange={setEnableCostBarcode}
-            showBottomBorder={!enableCostBarcode}
-          />
-          {enableCostBarcode ? (
-            <CostBarcodeFields
-              capitalPrice={capitalPrice}
-              onCapitalPriceChange={setCapitalPrice}
-              barcode={barcode}
-              onBarcodeChange={setBarcode}
-              onPressScan={() =>
-                router.push("/dashboard/product/add-barcode" as never)
-              }
+          <View style={styles.contentSection}>
+            <ThemedInput
+              label="Nama Produk"
+              size="md"
+              value={name}
+              onChangeText={setName}
             />
-          ) : null}
+            <ThemedInput
+              label="Harga Jual"
+              value={price}
+              size="md"
+              onChangeText={setPrice}
+              numericOnly
+            />
+
+            <MerkPicker
+              label="Pilih Merk"
+              value={brand}
+              size="md"
+              onChange={setBrand}
+            />
+            <CategoryPicker
+              label="Pilih Kategori"
+              value={category}
+              size="md"
+              onChange={setCategory}
+            />
+            <ComboInput
+              label="Resep Produk"
+              value={recipe}
+              size="md"
+              onChangeText={setRecipe}
+              items={recipes.map(r => ({label: r.name, value: r.id}))}
+            />
+          </View>
         </View>
 
         <View style={styles.sectionDivider} />
 
-        <View style={styles.rowSection}>
-          <MenuRow
-            title="Kelola Stok"
-            showBottomBorder={false}
-            rightText={
-              stock
-                ? `Stok Aktif (${stock.offlineStock} ${stock.unit})`
-                : "Stok Tidak Aktif"
-            }
-            variant="link"
-            onPress={() =>
-              router.push({
-                pathname: "/dashboard/product/stock",
-                params: {
-                  from: "add",
-                  ...(name ? {name} : {}),
-                  ...(price ? {price} : {}),
-                  ...(brand ? {brand} : {}),
-                  ...(category ? {category} : {}),
-                  ...(favorite ? {favorite: String(favorite)} : {}),
-                  ...(enableCostBarcode
-                    ? {enableCostBarcode: String(enableCostBarcode)}
-                    : {}),
-                  ...(imageUri ? {imageUri} : {}),
-                  ...(capitalPrice ? {capitalPrice: String(capitalPrice)} : {}),
-                  ...(barcode ? {barcode} : {}),
-                  ...(variants.length
-                    ? {variants: JSON.stringify(variants)}
-                    : {}),
-                  ...(stock
-                    ? {
+        <View style={styles.contentWrapper}>
+          <View style={styles.rowSection}>
+            <MenuRow
+              title="Produk Favorit"
+              subtitle="Tampilkan produk di kategori terdepan."
+              variant="toggle"
+              value={favorite}
+              onValueChange={setFavorite}
+              badgeText="Baru"
+            />
+          </View>
+        </View>
+
+        <View style={styles.sectionDivider} />
+
+        <View style={styles.contentWrapper}>
+          <View style={{ paddingHorizontal: 20, paddingVertical: 6 }}>
+            <MenuRow
+              title="Atur Harga Modal dan Barcode"
+              variant="toggle"
+              value={enableCostBarcode}
+              onValueChange={setEnableCostBarcode}
+              showBottomBorder={!enableCostBarcode}
+            />
+            {enableCostBarcode ? (
+              <CostBarcodeFields
+                capitalPrice={capitalPrice}
+                onCapitalPriceChange={setCapitalPrice}
+                barcode={barcode}
+                onBarcodeChange={setBarcode}
+                onPressScan={() =>
+                  router.push("/dashboard/product/add-barcode" as never)
+                }
+              />
+            ) : null}
+          </View>
+        </View>
+
+        <View style={styles.sectionDivider} />
+
+        <View style={styles.contentWrapper}>
+          <View style={styles.rowSection}>
+            <MenuRow
+              title="Kelola Stok"
+              showBottomBorder={false}
+              rightText={
+                stock
+                  ? `Stok Aktif (${stock.offlineStock})`
+                  : "Stok Tidak Aktif"
+              }
+              variant="link"
+              onPress={() =>
+                router.push({
+                  pathname: "/dashboard/product/stock",
+                  params: {
+                    from: "add",
+                    ...(name ? { name } : {}),
+                    ...(price ? { price } : {}),
+                    ...(brand ? { brand } : {}),
+                    ...(category ? { category } : {}),
+                    ...(favorite ? { favorite: String(favorite) } : {}),
+                    ...(enableCostBarcode
+                      ? { enableCostBarcode: String(enableCostBarcode) }
+                      : {}),
+                    ...(imageUri ? { imageUri } : {}),
+                    ...(capitalPrice ? { capitalPrice: String(capitalPrice) } : {}),
+                    ...(barcode ? { barcode } : {}),
+                    ...(variants.length
+                      ? { variants: JSON.stringify(variants) }
+                      : {}),
+                    ...(stock
+                      ? {
                         offlineStock: String(stock.offlineStock),
                         unit: stock.unit,
                         minStock: String(stock.minStock),
                         notifyMin: stock.notifyMin ? "1" : "0",
                       }
-                    : {}),
-                },
-              } as never)
-            }
-          />
+                      : {}),
+                  },
+                } as never)
+              }
+            />
+          </View>
         </View>
 
         <View style={styles.sectionDivider} />
-        <View style={styles.variantsSection}>
-          {variants.length > 0 ? (
-            <>
-              <ThemedText type="subtitle-2">Varian</ThemedText>
-              {variants.map((v, idx) => (
-                <VariantItem
-                  key={idx}
-                  initials={(v.name || "VR").slice(0, 2).toUpperCase()}
-                  name={v.name}
-                  price={v.price}
-                  stock={v.stock}
-                  onPress={() => {}}
-                />
-              ))}
-            </>
-          ) : null}
+        <View style={styles.contentWrapper}>
+          <View style={styles.variantsSection}>
+            {variants.length > 0 ? (
+              <>
+                <ThemedText type="subtitle-2">Varian</ThemedText>
+                {variants.map((v, idx) => (
+                  <VariantItem
+                    key={idx}
+                    initials={(v.name || "VR").slice(0, 2).toUpperCase()}
+                    name={v.name}
+                    price={v.price}
+                    stock={
+                      v.is_stock_active && typeof v.stock === "number"
+                        ? {count: v.stock, unit: v.unit_id || "pcs"}
+                        : undefined
+                    }
+                    onPress={() =>
+                      router.push({
+                        pathname: "/dashboard/product/variant",
+                        params: {
+                          from: "edit",
+                          name: v.name,
+                          price: String(v.price),
+                          ...(typeof v.stock === "number"
+                            ? {
+                                offlineStock: String(v.stock),
+                                unit: v.unit_id || "pcs",
+                                minStock: String(v.min_stock || 0),
+                                notifyMin: v.notify_on_stock_ronouts ? "1" : "0",
+                              }
+                            : {}),
+                          ...(v.id ? {variantId: v.id} : {}),
+                        },
+                      } as never)
+                    }
+                  />
+                ))}
+              </>
+            ) : null}
 
-          <ThemedButton
-            title="Tambah Varian"
-            variant="secondary"
-            onPress={() =>
-              router.push({
-                pathname: "/dashboard/product/variant",
-                params: {
-                  from: "add",
-                  ...(name ? {name} : {}),
-                  ...(price ? {price} : {}),
-                  ...(brand ? {brand} : {}),
-                  ...(category ? {category} : {}),
-                  ...(favorite ? {favorite: String(favorite)} : {}),
-                  ...(enableCostBarcode
-                    ? {enableCostBarcode: String(enableCostBarcode)}
-                    : {}),
-                  ...(imageUri ? {imageUri} : {}),
-                  ...(capitalPrice ? {capitalPrice: String(capitalPrice)} : {}),
-                  ...(barcode ? {barcode} : {}),
-                  ...(variants.length
-                    ? {variants: JSON.stringify(variants)}
-                    : {}),
-                },
-              } as never)
-            }
-          />
-          <View style={styles.bottomBar}>
             <ThemedButton
-              title={isSaving ? "Menyimpan..." : "Simpan"}
-              variant="primary"
-              onPress={handleSave}
-              disabled={isSaving}
+              title="Tambah Varian"
+              variant="secondary"
+              onPress={() =>
+                router.push({
+                  pathname: "/dashboard/product/variant",
+                  params: {
+                    from: "add",
+                  },
+                } as never)
+              }
             />
+            <View style={styles.bottomBar}>
+              <ThemedButton
+                title={isSaving ? "Menyimpan..." : "Simpan"}
+                variant="primary"
+                onPress={handleSave}
+                disabled={isSaving}
+              />
+            </View>
           </View>
         </View>
       </KeyboardAwareScrollView>
@@ -486,35 +496,40 @@ export default function AddProductScreen() {
   );
 }
 
-const createStyles = (colorScheme: "light" | "dark") =>
+const createStyles = (colorScheme: "light" | "dark", isTablet: boolean, isTabletLandscape: boolean) =>
   StyleSheet.create({
+    contentWrapper: {
+      width: "100%",
+      maxWidth: isTabletLandscape ? 960 : undefined,
+      alignSelf: "center",
+    },
     inlineCard: {
       marginTop: 8,
     },
     sectionDivider: {
       backgroundColor: Colors[colorScheme].border2,
-      height: 6,
+      height: isTablet ? 10 : 6,
     },
     contentSection: {
-      paddingHorizontal: 20,
-      paddingVertical: 24,
+      paddingHorizontal: isTablet ? 28 : 20,
+      paddingVertical: isTablet ? 28 : 24,
     },
     rowSection: {
-      paddingHorizontal: 20,
-      paddingVertical: 6,
+      paddingHorizontal: isTablet ? 28 : 20,
+      paddingVertical: isTablet ? 10 : 6,
     },
     variantsSection: {
-      paddingHorizontal: 20,
-      paddingVertical: 18,
-      gap: 12,
+      paddingHorizontal: isTablet ? 28 : 20,
+      paddingVertical: isTablet ? 22 : 18,
+      gap: isTablet ? 16 : 12,
       flexDirection: "column",
     },
     bottomBar: {
       left: 0,
       right: 0,
       bottom: 0,
-      paddingBottom: 16,
-      paddingTop: 8,
+      paddingBottom: isTablet ? 22 : 16,
+      paddingTop: isTablet ? 12 : 8,
       backgroundColor: Colors[colorScheme].background,
     },
   });

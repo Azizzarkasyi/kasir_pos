@@ -2,12 +2,13 @@ import { Colors } from "@/constants/theme";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import React, { useState } from "react";
 import {
-  Modal,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
+    Modal,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
+    useWindowDimensions,
 } from "react-native";
 
 interface ChangePhoneModalProps {
@@ -25,7 +26,9 @@ const ChangePhoneModal: React.FC<ChangePhoneModalProps> = ({
 }) => {
   const [phoneNumber, setPhoneNumber] = useState(initialValue);
   const colorScheme = useColorScheme() ?? "light";
-  const styles = createStyles(colorScheme);
+  const {width, height} = useWindowDimensions();
+  const isTablet = Math.min(width, height) >= 600;
+  const styles = createStyles(colorScheme, isTablet);
 
   return (
     <Modal
@@ -72,7 +75,7 @@ const ChangePhoneModal: React.FC<ChangePhoneModalProps> = ({
   );
 };
 
-const createStyles = (colorScheme: "light" | "dark") =>
+const createStyles = (colorScheme: "light" | "dark", isTablet: boolean) =>
   StyleSheet.create({
     overlay: {
       flex: 1,
@@ -83,10 +86,10 @@ const createStyles = (colorScheme: "light" | "dark") =>
     },
     card: {
       width: "100%",
-      maxWidth: 340,
+      maxWidth: isTablet ? 420 : 340,
       backgroundColor: Colors[colorScheme].background,
       borderRadius: 12,
-      padding: 24,
+      padding: isTablet ? 28 : 24,
       // Shadow untuk iOS
       shadowColor: Colors[colorScheme].shadow,
       shadowOffset: {width: 0, height: 2},
@@ -96,7 +99,7 @@ const createStyles = (colorScheme: "light" | "dark") =>
       elevation: 5,
     },
     title: {
-      fontSize: 18,
+      fontSize: isTablet ? 20 : 18,
       fontWeight: "700",
       color: Colors[colorScheme].text,
       marginBottom: 24,
@@ -107,12 +110,12 @@ const createStyles = (colorScheme: "light" | "dark") =>
       justifyContent: "center",
     },
     input: {
-      height: 50,
+      height: isTablet ? 56 : 50,
       borderWidth: 1,
       borderColor: Colors[colorScheme].border,
       borderRadius: 6,
       paddingHorizontal: 12,
-      fontSize: 16,
+      fontSize: isTablet ? 18 : 16,
       color: Colors[colorScheme].text,
       backgroundColor: Colors[colorScheme].background,
     },
@@ -126,7 +129,7 @@ const createStyles = (colorScheme: "light" | "dark") =>
       zIndex: 1,
     },
     floatingLabelText: {
-      fontSize: 12,
+      fontSize: isTablet ? 13 : 12,
       color: Colors[colorScheme].icon,
       fontWeight: "500",
     },
@@ -137,7 +140,7 @@ const createStyles = (colorScheme: "light" | "dark") =>
     },
     button: {
       flex: 1,
-      paddingVertical: 12,
+      paddingVertical: isTablet ? 14 : 12,
       borderRadius: 6,
       alignItems: "center",
       justifyContent: "center",
@@ -153,12 +156,12 @@ const createStyles = (colorScheme: "light" | "dark") =>
     textCancel: {
       color: Colors[colorScheme].icon,
       fontWeight: "600",
-      fontSize: 14,
+      fontSize: isTablet ? 15 : 14,
     },
     textSave: {
       color: Colors[colorScheme].background,
       fontWeight: "600",
-      fontSize: 14,
+      fontSize: isTablet ? 15 : 14,
     },
   });
 

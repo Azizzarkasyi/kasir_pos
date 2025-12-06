@@ -1,23 +1,24 @@
+import SmallLogo from "@/components/atoms/logo-sm";
 import CountryCodePicker from "@/components/country-code-picker";
-import Header from "@/components/header";
-import Logo from "@/components/logo";
 import SplashScreen from "@/components/splash-screen";
-import {ThemedButton} from "@/components/themed-button";
-import {ThemedInput} from "@/components/themed-input";
-import {ThemedText} from "@/components/themed-text";
-import {Colors} from "@/constants/theme";
-import {useColorScheme} from "@/hooks/use-color-scheme";
-import {useRouter} from "expo-router";
-import React, {useState} from "react";
+import { ThemedButton } from "@/components/themed-button";
+import { ThemedInput } from "@/components/themed-input";
+import { ThemedText } from "@/components/themed-text";
+import { Colors } from "@/constants/theme";
+import { useColorScheme } from "@/hooks/use-color-scheme";
+import { useRouter } from "expo-router";
+import React, { useState } from "react";
 import {
+  Image,
   Keyboard,
   Platform,
   StyleSheet,
   TouchableOpacity,
   View,
+  useWindowDimensions,
 } from "react-native";
-import {KeyboardAwareScrollView} from "react-native-keyboard-aware-scroll-view";
-import {useSafeAreaInsets} from "react-native-safe-area-context";
+import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function LoginScreen() {
   const colorScheme = useColorScheme() ?? "light";
@@ -29,8 +30,10 @@ export default function LoginScreen() {
   const [pinError, setPinError] = useState("");
   const router = useRouter();
   const [isLoggingIn, setIsLoggingIn] = useState(false);
+  const { width, height } = useWindowDimensions();
+  const isTablet = Math.min(width, height) >= 600;
 
-  const styles = createStyles(colorScheme);
+  const styles = createStyles(colorScheme, isTablet);
   const countryItems = [
     {label: "Indonesia", value: "🇮🇩"},
     {label: "Malaysia", value: "🇲🇾"},
@@ -156,7 +159,7 @@ export default function LoginScreen() {
 
   return (
     <View style={styles.container}>
-      <Header withShadow={false} />
+      {/* <Header withShadow={false}  /> */}
       <KeyboardAwareScrollView
         contentContainerStyle={[
           styles.scrollContainer,
@@ -169,7 +172,7 @@ export default function LoginScreen() {
         keyboardShouldPersistTaps="handled"
         style={{backgroundColor: Colors[colorScheme].background}}
       >
-        <Logo />
+        <Image source={require("@/assets/ilustrations/login.png")} style={styles.loginIlustration} />
 
         <View style={styles.formContainer}>
           {isPhoneLogin ? (
@@ -230,6 +233,10 @@ export default function LoginScreen() {
           />
         </View>
 
+        <View style={{ marginTop: isTablet ? 20 : 0}}>
+          <SmallLogo/>
+        </View>
+
         <View style={styles.footer}>
           <TouchableOpacity>
             <ThemedText style={styles.footerText}>Lupa PIN ?</ThemedText>
@@ -247,25 +254,36 @@ export default function LoginScreen() {
   );
 }
 
-const createStyles = (colorScheme: "light" | "dark") =>
+const createStyles = (colorScheme: "light" | "dark", isTablet: boolean) =>
   StyleSheet.create({
     container: {
       flex: 1,
       backgroundColor: Colors[colorScheme].background,
     },
+    loginIlustration: {
+      width: isTablet ? 450 : 300,
+      height: isTablet ? 450 : 300,
+      resizeMode: "contain",
+      marginBottom: isTablet ? 20 : 0,
+    },
     scrollContainer: {
       flexGrow: 1,
       paddingHorizontal: 20,
-      justifyContent: "space-between",
+      justifyContent: isTablet ? "center" : "space-between",
+      alignItems: "center",
     },
     formContainer: {
-      flex: 1,
+      marginTop: -80,
+      flexShrink: 0,
+      width: "100%",
+      maxWidth: isTablet ? 480 : 400,
+      alignSelf: "center",
     },
     toggleLoginText: {
       color: Colors[colorScheme].icon,
       textAlign: "center",
       marginTop: 8,
-      fontSize: 14,
+      fontSize: isTablet ? 16 : 14,
     },
     footer: {
       alignItems: "center",
@@ -273,7 +291,7 @@ const createStyles = (colorScheme: "light" | "dark") =>
     },
     footerText: {
       color: Colors[colorScheme].icon,
-      fontSize: 14,
+      fontSize: isTablet ? 16 : 14,
       fontWeight: "500",
     },
     overlay: {

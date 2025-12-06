@@ -9,6 +9,7 @@ import {
   StyleSheet,
   Text,
   TouchableOpacity,
+  useWindowDimensions,
   View,
 } from "react-native";
 
@@ -34,7 +35,11 @@ const PaymentCalculator: React.FC<PaymentCalculatorProps> = ({
   onChangeValue,
 }) => {
   const colorScheme = useColorScheme() ?? "light";
-  const styles = createStyles(colorScheme);
+  const { width, height } = useWindowDimensions();
+  const isTablet = Math.min(width, height) >= 600;
+  const isLandscape = width > height;
+  const isTabletLandscape = isTablet && isLandscape;
+  const styles = createStyles(colorScheme, isTablet, isTabletLandscape);
   const [mode, setMode] = React.useState<PaymentCalculatorMode>("auto");
 
   const handleQuickAmount = (val: string) => {
@@ -58,7 +63,7 @@ const PaymentCalculator: React.FC<PaymentCalculatorProps> = ({
         >
           <Ionicons
             name="card-outline"
-            size={16}
+            size={isTablet ? 20 : 16}
             color={Colors[colorScheme].primary}
           />
           <Text style={styles.typeNominalText}>
@@ -66,7 +71,7 @@ const PaymentCalculator: React.FC<PaymentCalculatorProps> = ({
           </Text>
           <Ionicons
             name="chevron-forward"
-            size={16}
+            size={isTablet ? 20 : 16}
             color={Colors[colorScheme].primary}
           />
         </TouchableOpacity>
@@ -104,32 +109,32 @@ const PaymentCalculator: React.FC<PaymentCalculatorProps> = ({
   );
 };
 
-const createStyles = (colorScheme: "light" | "dark") =>
+const createStyles = (colorScheme: "light" | "dark", isTablet: boolean, isTabletLandscape: boolean) =>
   StyleSheet.create({
     container: {
-      borderTopWidth: 1,
+      borderTopWidth: isTabletLandscape ? 0 : 1,
       borderTopColor: Colors[colorScheme].border,
       backgroundColor: Colors[colorScheme].secondary,
-      paddingTop: 8,
+      paddingTop: isTablet ? 12 : 6,
     },
     topRow: {
-      paddingHorizontal: 16,
-      paddingTop: 8,
-      paddingBottom: 4,
+      paddingHorizontal: isTablet ? 24 : 16,
+      paddingTop: isTablet ? 12 : 6,
+      paddingBottom: isTablet ? 6 : 4,
     },
     typeNominalBadge: {
       flexDirection: "row",
       alignItems: "center",
-      columnGap: 4,
-      paddingHorizontal: 12,
-      paddingVertical: 6,
+      columnGap: isTablet ? 6 : 4,
+      paddingHorizontal: isTablet ? 16 : 12,
+      paddingVertical: isTablet ? 10 : 6,
       borderRadius: 999,
       backgroundColor: Colors[colorScheme].background,
       borderWidth: 1,
       borderColor: Colors[colorScheme].primary,
     },
     typeNominalText: {
-      fontSize: 14,
+      fontSize: isTablet ? 18 : 14,
       color: Colors[colorScheme].primary,
       fontWeight: "600",
     },
@@ -137,25 +142,25 @@ const createStyles = (colorScheme: "light" | "dark") =>
       backgroundColor: Colors[colorScheme].secondary,
     },
     nominalWrapper: {
-      paddingHorizontal: 16,
-      paddingVertical: 12,
+      paddingHorizontal: isTablet ? 24 : 16,
+      paddingVertical: isTablet ? 16 : 12,
       backgroundColor: Colors[colorScheme].secondary,
     },
     quickGrid: {
       flexDirection: "row",
       flexWrap: "wrap",
       justifyContent: "space-between",
-      rowGap: 8,
+      rowGap: isTablet ? 12 : 8,
     },
     quickButton: {
       width: "48%",
-      height: 48,
-      borderRadius: 8,
+      height: isTablet ? 60 : 48,
+      borderRadius: isTablet ? 10 : 8,
       alignItems: "center",
       justifyContent: "center",
     },
     quickButtonText: {
-      fontSize: 14,
+      fontSize: isTablet ? 18 : 14,
       fontWeight: "600",
     },
   });

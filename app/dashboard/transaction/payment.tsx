@@ -2,24 +2,28 @@
 
 import Header from "@/components/header";
 import PaymentCalculator from "@/components/mollecules/payment-calculator";
-import {Colors} from "@/constants/theme";
-import {useColorScheme} from "@/hooks/use-color-scheme";
-import {useRouter} from "expo-router";
-import React, {useState, useEffect, useRef} from "react";
+import { Colors } from "@/constants/theme";
+import { useColorScheme } from "@/hooks/use-color-scheme";
+import { transactionApi } from "@/services/endpoints/transactions";
+import { useCartStore } from "@/stores/cart-store";
+import { useRouter } from "expo-router";
+import React, { useEffect, useState } from "react";
 import {
+  Alert,
   StyleSheet,
   Text,
   TextInput,
-  TouchableOpacity,
+  TouchableOpacity, useWindowDimensions,
   View,
-  Alert,
 } from "react-native";
-import {useCartStore} from "@/stores/cart-store";
-import {transactionApi} from "@/services/endpoints/transactions";
 
 export default function PaymentPage() {
   const colorScheme = useColorScheme() ?? "light";
-  const styles = createStyles(colorScheme);
+    const { width, height } = useWindowDimensions();
+    const isTablet = Math.min(width, height) >= 600;
+    const isLandscape = width > height;
+    const isTabletLandscape = isTablet && isLandscape;
+  const styles = createStyles(colorScheme, isTablet, isTabletLandscape);
   const router = useRouter();
 
   const {
@@ -162,7 +166,8 @@ export default function PaymentPage() {
 
       {/* Content */}
       <View style={styles.mainWrapper}>
-        <View style={styles.contentWrapper}>
+                {/* Left Column - Amount & Inputs */}
+        <View style={styles.leftColumn}>
           <View style={styles.amountWrapper}>
             <Text
               style={[styles.amountLabel, {color: Colors[colorScheme].icon}]}
@@ -285,15 +290,15 @@ export default function PaymentPage() {
   );
 }
 
-const createStyles = (colorScheme: "light" | "dark") =>
+const createStyles = (colorScheme: "light" | "dark", isTablet: boolean, isTabletLandscape: boolean) =>
   StyleSheet.create({
     container: {
       flex: 1,
     },
     headerWrapper: {
-      paddingTop: 12,
-      paddingBottom: 12,
-      paddingHorizontal: 16,
+      paddingTop: isTablet ? 16 : 12,
+      paddingBottom: isTablet ? 16 : 12,
+      paddingHorizontal: isTablet ? 24 : 16,
       shadowColor: "#000000",
       shadowOffset: {width: 0, height: 2},
       shadowOpacity: 0.16,
@@ -309,9 +314,9 @@ const createStyles = (colorScheme: "light" | "dark") =>
       justifyContent: "space-between",
     },
     backButton: {
-      width: 32,
-      height: 32,
-      borderRadius: 16,
+      width: isTablet ? 44 : 32,
+      height: isTablet ? 44 : 32,
+      borderRadius: isTablet ? 22 : 16,
       alignItems: "center",
       justifyContent: "center",
     },
@@ -320,22 +325,29 @@ const createStyles = (colorScheme: "light" | "dark") =>
       alignItems: "center",
     },
     totalText: {
-      fontSize: 20,
+      fontSize: isTablet ? 24 : 20,
       fontWeight: "600",
       color: Colors[colorScheme].text,
     },
     headerRightPlaceholder: {
-      width: 32,
-      height: 32,
+      width: isTablet ? 44 : 32,
+      height: isTablet ? 44 : 32,
     },
     mainWrapper: {
       flex: 1,
+            flexDirection: isTabletLandscape ? "row" : "column",
     },
-    contentWrapper: {
-      flex: 1,
-      paddingHorizontal: 4,
-      paddingTop: 16,
+    leftColumn: {
+      flex: isTabletLandscape ? 1 : 1,
+      paddingHorizontal: isTablet ? 24 : 4,
+      paddingTop: isTablet ? 24 : 16,
       flexDirection: "column",
+            borderRightWidth: isTabletLandscape ? 1 : 0,
+            borderRightColor: Colors[colorScheme].border,
+        },
+        rightColumn: {
+            flex: isTabletLandscape ? 1 : undefined,
+            justifyContent: isTabletLandscape ? "flex-end" : undefined,
     },
     amountWrapper: {
       alignItems: "center",
@@ -345,12 +357,12 @@ const createStyles = (colorScheme: "light" | "dark") =>
       gap: 8,
     },
     amountLabel: {
-      fontSize: 14,
+      fontSize: isTablet ? 20 : 14,
       color: Colors[colorScheme].icon,
-      marginBottom: 4,
+      marginBottom: isTablet ? 8 : 4,
     },
     amountValue: {
-      fontSize: 32,
+      fontSize: isTablet ? 42 : 32,
       fontWeight: "700",
       color: Colors[colorScheme].text,
     },
@@ -368,28 +380,31 @@ const createStyles = (colorScheme: "light" | "dark") =>
       color: Colors[colorScheme].primary,
     },
     noteWrapper: {
-      marginBottom: 12,
-      paddingHorizontal: 12,
+      marginBottom: isTablet ? 16 : 8,
+      paddingHorizontal: isTablet ? 16 : 12,
     },
     noteInput: {
       borderRadius: 999,
       backgroundColor: Colors[colorScheme].background,
-      paddingHorizontal: 16,
-      paddingVertical: 10,
-      fontSize: 14,
+      paddingHorizontal: isTablet ? 20 : 16,
+      paddingVertical: isTablet ? 14 : 10,
+      fontSize: isTablet ? 18 : 14,
       borderColor: Colors[colorScheme].border,
       borderWidth: 1,
       color: Colors[colorScheme].text,
     },
     methodRow: {
       flexDirection: "row",
-      marginBottom: 16,
+      marginBottom: isTablet ? 24 : 16,
       justifyContent: "space-evenly",
+            paddingHorizontal: isTablet ? 16 : 12,
+            gap: isTablet ? 16 : 8,
     },
     methodBadge: {
-      paddingHorizontal: 14,
-      paddingVertical: 6,
-      borderRadius: 999,
+      paddingHorizontal: isTablet ? 18 : 14,
+      paddingVertical: isTablet ? 10 : 6,
+            flex: isTablet ? 1 : undefined,
+      borderRadius: 100,
       backgroundColor: Colors[colorScheme].secondary,
       borderWidth: 1,
       borderColor: Colors[colorScheme].border,
@@ -399,7 +414,7 @@ const createStyles = (colorScheme: "light" | "dark") =>
       borderColor: Colors[colorScheme].primary,
     },
     methodBadgeText: {
-      fontSize: 13,
+      fontSize: isTablet ? 18 : 13,
       color: Colors[colorScheme].text,
       fontWeight: "500",
     },
@@ -409,21 +424,21 @@ const createStyles = (colorScheme: "light" | "dark") =>
     },
 
     bottomWrapper: {
-      paddingHorizontal: 16,
-      paddingVertical: 16,
+      paddingHorizontal: isTablet ? 24 : 16,
+      paddingVertical: isTablet ? 20 : 16,
       borderTopWidth: 1,
       borderTopColor: Colors[colorScheme].border,
       backgroundColor: Colors[colorScheme].background,
     },
     continueButton: {
       width: "100%",
-      height: 54,
-      borderRadius: 8,
+      height: isTablet ? 64 : 54,
+      borderRadius: isTablet ? 10 : 8,
       alignItems: "center",
       justifyContent: "center",
     },
     continueButtonText: {
-      fontSize: 16,
+      fontSize: isTablet ? 20 : 16,
       fontWeight: "600",
     },
   });

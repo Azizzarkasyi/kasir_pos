@@ -4,42 +4,46 @@ import TransactionHistoryGroupHeader from "@/components/atoms/transaction-histor
 import TransactionHistoryItem from "@/components/atoms/transaction-history-item";
 import Header from "@/components/header";
 import Sidebar from "@/components/layouts/dashboard/sidebar";
-import {Colors} from "@/constants/theme";
-import {useColorScheme} from "@/hooks/use-color-scheme";
-import {Ionicons} from "@expo/vector-icons";
-import {useRouter} from "expo-router";
-import React, {useState, useEffect, useCallback} from "react";
+import { Colors } from "@/constants/theme";
+import { useColorScheme } from "@/hooks/use-color-scheme";
+import { transactionApi } from "@/services/endpoints/transactions";
+import { Transaction } from "@/types/api";
+import { Ionicons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
+import React, { useCallback, useEffect, useState } from "react";
 import {
+  ActivityIndicator,
+  FlatList,
+  RefreshControl,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
+  useWindowDimensions,
   View,
-  ActivityIndicator,
-  FlatList,
-  RefreshControl,
 } from "react-native";
-import {transactionApi} from "@/services/endpoints/transactions";
-import {Transaction} from "@/types/api";
 
 type TransactionHistoryGroupProps = {
   dateLabel: string;
   totalAmount: number;
   children: React.ReactNode;
+  isTablet?: boolean;
 };
 
 const TransactionHistoryGroup: React.FC<TransactionHistoryGroupProps> = ({
   dateLabel,
   totalAmount,
   children,
+  isTablet = false,
 }) => {
   const colorScheme = useColorScheme() ?? "light";
 
   return (
-    <View style={{marginBottom: 12}}>
+    <View style={{marginBottom: isTablet ? 16 : 12}}>
       <TransactionHistoryGroupHeader
         dateLabel={dateLabel}
         totalAmount={totalAmount}
+        isTablet={isTablet}
       />
       <View
         style={{
@@ -61,7 +65,9 @@ type GroupedTransaction = {
 
 export default function TransactionHistoryPage() {
   const colorScheme = useColorScheme() ?? "light";
-  const styles = createStyles(colorScheme);
+  const { width, height } = useWindowDimensions();
+  const isTablet = Math.min(width, height) >= 600;
+  const styles = createStyles(colorScheme, isTablet);
   const router = useRouter();
 
   const [activeMenu, setActiveMenu] = useState("history");
@@ -204,8 +210,8 @@ export default function TransactionHistoryPage() {
           >
             <Ionicons
               name="menu-outline"
-              size={24}
-              color={Colors[colorScheme].icon}
+              size={isTablet ? 28 : 24}
+              color="white"
             />
           </TouchableOpacity>
         }
@@ -218,7 +224,7 @@ export default function TransactionHistoryPage() {
           <View style={styles.searchInner}>
             <Ionicons
               name="search-outline"
-              size={18}
+              size={isTablet ? 22 : 18}
               color={Colors[colorScheme].icon}
               style={styles.searchIcon}
             />
@@ -347,47 +353,46 @@ export default function TransactionHistoryPage() {
   );
 }
 
-const createStyles = (colorScheme: "light" | "dark") =>
+const createStyles = (colorScheme: "light" | "dark", isTablet: boolean) =>
   StyleSheet.create({
     container: {
       flex: 1,
     },
     headerIconButton: {
-      borderRadius: 18,
+      borderRadius: isTablet ? 22 : 18,
       alignItems: "center",
       justifyContent: "center",
     },
     contentWrapper: {
       flex: 1,
-
-      paddingTop: 16,
+      paddingTop: isTablet ? 24 : 16,
     },
     searchWrapper: {
-      marginBottom: 16,
-      paddingHorizontal: 16,
+      marginBottom: isTablet ? 20 : 16,
+      paddingHorizontal: isTablet ? 24 : 16,
     },
     searchInner: {
       flexDirection: "row",
       alignItems: "center",
       borderRadius: 999,
       borderWidth: 1,
-      paddingHorizontal: 12,
+      paddingHorizontal: isTablet ? 16 : 12,
       backgroundColor: Colors[colorScheme].secondary,
       borderColor: Colors[colorScheme].border,
     },
     searchIcon: {
-      marginRight: 8,
+      marginRight: isTablet ? 12 : 8,
     },
     searchInput: {
       flex: 1,
-      paddingVertical: 10,
-      fontSize: 14,
+      paddingVertical: isTablet ? 14 : 10,
+      fontSize: isTablet ? 20 : 14,
     },
     footerSpacer: {
-      paddingVertical: 16,
+      paddingVertical: isTablet ? 20 : 16,
     },
     footerText: {
-      fontSize: 13,
+      fontSize: isTablet ? 20 : 13,
       textAlign: "center",
     },
   });

@@ -7,6 +7,7 @@ import {
     StyleSheet,
     Text,
     TouchableOpacity,
+    useWindowDimensions,
     View,
 } from "react-native";
 
@@ -31,7 +32,9 @@ const SelectLanguageModal: React.FC<SelectLanguageModalProps> = ({
     onClose,
 }) => {
     const colorScheme = useColorScheme() ?? "light";
-    const styles = createStyles(colorScheme);
+    const { width, height } = useWindowDimensions();
+    const isTablet = Math.min(width, height) >= 600;
+    const styles = createStyles(colorScheme, isTablet);
 
     const handleSelect = (next: LanguageValue) => {
         onChange(next);
@@ -54,7 +57,7 @@ const SelectLanguageModal: React.FC<SelectLanguageModalProps> = ({
                         >
                             <Ionicons
                                 name="close"
-                                size={20}
+                                size={isTablet ? 28 : 20}
                                 color={Colors[colorScheme].icon}
                             />
                         </TouchableOpacity>
@@ -84,22 +87,22 @@ const SelectLanguageModal: React.FC<SelectLanguageModalProps> = ({
     );
 };
 
-const createStyles = (colorScheme: "light" | "dark") =>
+const createStyles = (colorScheme: "light" | "dark", isTablet: boolean) =>
     StyleSheet.create({
         backdrop: {
             flex: 1,
             backgroundColor: "rgba(0,0,0,0.45)",
             justifyContent: "center",
             alignItems: "center",
-            paddingHorizontal: 24,
+            paddingHorizontal: isTablet ? 40 : 24,
         },
         card: {
             width: "100%",
-            maxWidth: 420,
-            borderRadius: 16,
+            maxWidth: isTablet ? 500 : 420,
+            borderRadius: isTablet ? 20 : 16,
             backgroundColor: Colors[colorScheme].secondary,
-            paddingHorizontal: 24,
-            paddingVertical: 24,
+            paddingHorizontal: isTablet ? 32 : 24,
+            paddingVertical: isTablet ? 32 : 24,
             shadowColor: "#000",
             shadowOffset: { width: 0, height: 4 },
             shadowOpacity: 0.25,
@@ -110,39 +113,39 @@ const createStyles = (colorScheme: "light" | "dark") =>
             flexDirection: "row",
             alignItems: "center",
             justifyContent: "space-between",
-            marginBottom: 16,
+            marginBottom: isTablet ? 24 : 16,
         },
         title: {
-            fontSize: 18,
+            fontSize: isTablet ? 22 : 18,
             fontWeight: "700",
             color: Colors[colorScheme].text,
         },
         optionsContainer: {
-            marginTop: 10,
-            rowGap: 16,
+            marginTop: isTablet ? 16 : 10,
+            rowGap: isTablet ? 24 : 16,
         },
         optionRow: {
             flexDirection: "row",
             alignItems: "center",
         },
         radioOuter: {
-            width: 24,
-            height: 24,
-            borderRadius: 12,
+            width: isTablet ? 32 : 24,
+            height: isTablet ? 32 : 24,
+            borderRadius: isTablet ? 16 : 12,
             borderWidth: 2,
             borderColor: Colors[colorScheme].primary,
             alignItems: "center",
             justifyContent: "center",
-            marginRight: 12,
+            marginRight: isTablet ? 16 : 12,
         },
         radioInner: {
-            width: 12,
-            height: 12,
-            borderRadius: 6,
+            width: isTablet ? 16 : 12,
+            height: isTablet ? 16 : 12,
+            borderRadius: isTablet ? 8 : 6,
             backgroundColor: Colors[colorScheme].primary,
         },
         optionLabel: {
-            fontSize: 16,
+            fontSize: isTablet ? 20 : 16,
             color: Colors[colorScheme].text,
         },
     });

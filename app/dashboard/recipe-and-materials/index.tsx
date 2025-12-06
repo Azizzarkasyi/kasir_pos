@@ -2,29 +2,33 @@ import RecipeItem from "@/components/atoms/recipe-item";
 import CategoryModal from "@/components/drawers/category-modal";
 import Header from "@/components/header";
 import ProductCard from "@/components/product-card";
-import {ThemedInput} from "@/components/themed-input";
-import {ThemedText} from "@/components/themed-text";
-import {Colors} from "@/constants/theme";
-import {useColorScheme} from "@/hooks/use-color-scheme";
+import { ThemedInput } from "@/components/themed-input";
+import { ThemedText } from "@/components/themed-text";
+import { Colors } from "@/constants/theme";
+import { useColorScheme } from "@/hooks/use-color-scheme";
 import productApi from "@/services/endpoints/products";
-import recipeApi, {Recipe} from "@/services/endpoints/recipes";
-import {Product} from "@/types/api";
-import {Ionicons} from "@expo/vector-icons";
-import {useFocusEffect, useRouter} from "expo-router";
-import React, {useCallback, useState} from "react";
+import recipeApi, { Recipe } from "@/services/endpoints/recipes";
+import { Product } from "@/types/api";
+import { Ionicons } from "@expo/vector-icons";
+import { useFocusEffect, useRouter } from "expo-router";
+import React, { useCallback, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
   StyleSheet,
-  TouchableOpacity,
+  TouchableOpacity, useWindowDimensions,
   View,
 } from "react-native";
-import {KeyboardAwareScrollView} from "react-native-keyboard-aware-scroll-view";
-import {useSafeAreaInsets} from "react-native-safe-area-context";
+import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function ProductsScreen() {
   const colorScheme = useColorScheme() ?? "light";
-  const styles = createStyles(colorScheme);
+  const {width, height} = useWindowDimensions();
+  const isTablet = Math.min(width, height) >= 600;
+  const isLandscape = width > height;
+  const isTabletLandscape = isTablet && isLandscape;
+  const styles = createStyles(colorScheme, isTablet, isTabletLandscape);
   const insets = useSafeAreaInsets();
   const router = useRouter();
 
@@ -140,7 +144,7 @@ export default function ProductsScreen() {
         keyboardShouldPersistTaps="handled"
       >
         {/* --- 1. TAB SECTION (Full Width) --- */}
-        <View style={styles.tabsRow}>
+        <View style={[styles.tabsRow, isTablet && {marginHorizontal: 60}]}>
           <TouchableOpacity
             style={styles.tabItem}
             onPress={() => setActiveTab("bahan")}
@@ -151,6 +155,7 @@ export default function ProductsScreen() {
                 activeTab === "bahan"
                   ? {color: Colors[colorScheme].primary}
                   : {color: Colors[colorScheme].icon},
+                isTablet && {fontSize: 18},
               ]}
             >
               Bahan
@@ -168,6 +173,7 @@ export default function ProductsScreen() {
                 activeTab === "resep"
                   ? {color: Colors[colorScheme].primary}
                   : {color: Colors[colorScheme].icon},
+                isTablet && {fontSize: 18},
               ]}
             >
               Resep
@@ -178,6 +184,7 @@ export default function ProductsScreen() {
 
         {/* --- 2. CONTENT SECTION (Dengan Padding) --- */}
         <View style={styles.contentContainer}>
+          <View style={styles.contentWrapper}>
           {activeTab === "bahan" ? (
             <View>
               <View style={styles.searchRow}>
@@ -200,7 +207,7 @@ export default function ProductsScreen() {
                 <TouchableOpacity style={styles.filterButton}>
                   <Ionicons
                     name="options-outline"
-                    size={20}
+                    size={isTablet ? 28 : 20}
                     color={Colors[colorScheme].text}
                   />
                 </TouchableOpacity>
@@ -328,6 +335,7 @@ export default function ProductsScreen() {
               )}
             </View>
           )}
+          </View>
         </View>
       </KeyboardAwareScrollView>
 
@@ -335,7 +343,7 @@ export default function ProductsScreen() {
         style={[styles.fab, {bottom: insets.bottom + 24}]}
         onPress={goAdd}
       >
-        <Ionicons name="add" size={28} color={Colors[colorScheme].background} />
+        <Ionicons name="add" size={isTablet ? 36 : 28} color={Colors[colorScheme].background} />
       </TouchableOpacity>
 
       <CategoryModal
@@ -348,62 +356,66 @@ export default function ProductsScreen() {
   );
 }
 
-const createStyles = (colorScheme: "light" | "dark") =>
+const createStyles = (colorScheme: "light" | "dark", isTablet: boolean, isTabletLandscape: boolean) =>
   StyleSheet.create({
     tabsRow: {
       flexDirection: "row",
       borderBottomWidth: 1,
       borderBottomColor: "#E0E0E0",
       backgroundColor: Colors[colorScheme].background,
-      marginTop: 10,
+      marginTop: isTablet ? 16 : 10,
     },
     tabItem: {
-      flex: 1, // Membagi lebar 50:50
-      paddingVertical: 12,
+      flex: 1,
+      paddingVertical: isTablet ? 16 : 12,
       alignItems: "center",
       justifyContent: "center",
       position: "relative",
     },
     activeTabLine: {
       position: "absolute",
-      bottom: -1, // Supaya menutupi garis border abu-abu
+      bottom: -1,
       left: 0,
       right: 0,
-      height: 3,
+      height: isTablet ? 4 : 3,
       backgroundColor: Colors[colorScheme].primary,
     },
     tabText: {
-      fontSize: 14,
+      fontSize: isTablet ? 18 : 14,
       fontWeight: "600",
     },
 
-    // Container baru untuk isi halaman agar punya jarak kiri-kanan
     contentContainer: {
-      paddingHorizontal: 20,
+      paddingHorizontal: isTablet ? 80 : 20,
+    },
+    contentWrapper: {
+      width: "100%",
+      maxWidth: isTabletLandscape ? 960 : undefined,
+      alignSelf: "center",
     },
 
     searchRow: {
       flexDirection: "row",
-      alignItems: "center", // Memastikan Input dan Tombol sejajar vertikal
-      gap: 12,
-      marginTop: 16,
+      alignItems: "center",
+      gap: isTablet ? 16 : 12,
+      marginTop: isTablet ? 24 : 16,
     },
     filterButton: {
-      width: 50, // Sesuaikan lebar tombol
-      height: 50, // Sesuaikan tinggi agar sama dengan Input Anda (biasanya input sekitar 48-50)
+      width: isTablet ? 60 : 50,
+      height: isTablet ? 60 : 50,
       borderWidth: 1,
       borderColor: Colors[colorScheme].border,
-      borderRadius: 8,
+      borderRadius: isTablet ? 12 : 8,
       alignItems: "center",
       justifyContent: "center",
     },
 
     fab: {
       position: "absolute",
-      right: 24,
-      width: 56,
-      height: 56,
-      borderRadius: 28,
+      right: isTablet ? 40 : 24,
+      width: isTablet ? 72 : 56,
+      height: isTablet ? 72 : 56,
+      borderRadius: isTablet ? 36 : 28,
       alignItems: "center",
       justifyContent: "center",
       backgroundColor: Colors[colorScheme].primary,

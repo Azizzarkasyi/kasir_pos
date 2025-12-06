@@ -6,22 +6,26 @@ import Header from "@/components/header";
 import ImageUpload from "@/components/image-upload";
 import MenuRow from "@/components/menu-row";
 import MerkPicker from "@/components/mollecules/merk-picker";
-import {ThemedButton} from "@/components/themed-button";
-import {ThemedInput} from "@/components/themed-input";
-import {ThemedText} from "@/components/themed-text";
-import {Colors} from "@/constants/theme";
-import {useColorScheme} from "@/hooks/use-color-scheme";
+import { ThemedButton } from "@/components/themed-button";
+import { ThemedInput } from "@/components/themed-input";
+import { ThemedText } from "@/components/themed-text";
+import { Colors } from "@/constants/theme";
+import { useColorScheme } from "@/hooks/use-color-scheme";
 import productApi from "@/services/endpoints/products";
-import {useProductFormStore} from "@/stores/product-form-store";
-import {useLocalSearchParams, useNavigation, useRouter} from "expo-router";
-import React, {useEffect, useRef, useState} from "react";
-import {Alert, StyleSheet, View} from "react-native";
-import {KeyboardAwareScrollView} from "react-native-keyboard-aware-scroll-view";
-import {useSafeAreaInsets} from "react-native-safe-area-context";
+import { useProductFormStore } from "@/stores/product-form-store";
+import { useLocalSearchParams, useNavigation, useRouter } from "expo-router";
+import React, { useEffect, useRef, useState } from "react";
+import { Alert, StyleSheet, useWindowDimensions, View } from "react-native";
+import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function AddMaterialScreen() {
   const colorScheme = useColorScheme() ?? "light";
-  const styles = createStyles(colorScheme);
+  const {width, height} = useWindowDimensions();
+  const isTablet = Math.min(width, height) >= 600;
+  const isLandscape = width > height;
+  const isTabletLandscape = isTablet && isLandscape;
+  const styles = createStyles(colorScheme, isTablet, isTabletLandscape);
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const navigation = useNavigation();
@@ -224,17 +228,20 @@ export default function AddMaterialScreen() {
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
-        <ImageUpload
-          uri={imageUri || undefined}
-          initials={(name || "NP").slice(0, 2).toUpperCase()}
-          onPress={() => {
-            setImageUri(null);
-          }}
-        />
+        <View style={styles.contentWrapper}>
+          <ImageUpload
+            uri={imageUri || undefined}
+            initials={(name || "NP").slice(0, 2).toUpperCase()}
+            onPress={() => {
+              setImageUri(null);
+            }}
+          />
+        </View>
 
         <View style={{height: 24}} />
 
         <View style={styles.rowSection}>
+          <View style={styles.contentWrapper}>
           <ThemedInput
             label="Nama Produk"
             value={name}
@@ -252,43 +259,47 @@ export default function AddMaterialScreen() {
             size="md"
             onChange={setBrand}
           />
-          <ThemedInput
-            label="Harga Modal"
-            value={capitalPrice > 0 ? String(capitalPrice) : ""}
-            onChangeText={v => {
+            <ThemedInput
+              label="Harga Modal"
+              value={capitalPrice > 0 ? String(capitalPrice) : ""}
+              onChangeText={v => {
               const num = Number(v.replace(/[^0-9]/g, ""));
               setCapitalPrice(num);
             }}
-            numericOnly
-            placeholder="Harga Modal"
-            placeholderTextColor={Colors[colorScheme].icon}
-            inputContainerStyle={{
-              backgroundColor: colorScheme === "dark" ? "#1F1F1F" : "#FFFFFF",
-            }}
-          />
+              numericOnly
+              placeholder="Harga Modal"
+              placeholderTextColor={Colors[colorScheme].icon}
+              inputContainerStyle={{
+                backgroundColor: colorScheme === "dark" ? "#1F1F1F" : "#FFFFFF",
+              }}
+            />
+          </View>
         </View>
 
         <View style={styles.sectionDivider} />
 
         <View style={styles.rowContent}>
-          <MenuRow
-            title="Kelola Stok"
-            rightText={
+          <View style={styles.contentWrapper}>
+            <MenuRow
+              title="Kelola Stok"
+              rightText={
               stock
                 ? `Stok Aktif (${stock.offlineStock} ${stock.unit})`
                 : "Stok Tidak Aktif"
-            }
+              }
             showBottomBorder={false}
-            variant="link"
-            onPress={() =>
-              router.push("/dashboard/recipe-and-materials/stock" as never)
-            }
-          />
+              variant="link"
+              onPress={() =>
+                router.push("/dashboard/recipe-and-materials/stock" as never)
+              }
+            />
+          </View>
         </View>
 
         <View style={styles.sectionDivider} />
 
         <View style={styles.variantsSection}>
+          <View style={styles.contentWrapper}>
           {variants.length > 0 ? (
             <>
               <ThemedText type="subtitle-2">Varian</ThemedText>
@@ -305,18 +316,21 @@ export default function AddMaterialScreen() {
             </>
           ) : null}
 
-          <ThemedButton
-            title="Tambah Varian"
-            variant="secondary"
-            onPress={() =>
-              router.push("/dashboard/recipe-and-materials/variant" as never)
-            }
-          />
+            <ThemedButton
+              title="Tambah Varian"
+              variant="secondary"
+              onPress={() =>
+                router.push("/dashboard/recipe-and-materials/variant" as never)
+              }
+            />
+          </View>
         </View>
       </KeyboardAwareScrollView>
 
       <View style={styles.bottomBar}>
-        <ThemedButton title="Simpan" variant="primary" onPress={handleSave} />
+        <View style={styles.contentWrapper}>
+          <ThemedButton title="Simpan" variant="primary" onPress={handleSave} />
+        </View>
       </View>
 
       <ConfirmationDialog ref={confirmationRef} />
@@ -324,27 +338,32 @@ export default function AddMaterialScreen() {
   );
 }
 
-const createStyles = (colorScheme: "light" | "dark") =>
+const createStyles = (colorScheme: "light" | "dark", isTablet: boolean, isTabletLandscape: boolean) =>
   StyleSheet.create({
     inlineCard: {
-      marginTop: 8,
+      marginTop: isTablet ? 12 : 8,
     },
     sectionDivider: {
       backgroundColor: Colors[colorScheme].border2,
-      height: 12,
+      height: isTablet ? 16 : 12,
+    },
+    contentWrapper: {
+      width: "100%",
+      maxWidth: isTabletLandscape ? 960 : undefined,
+      alignSelf: "center",
     },
     rowSection: {
-      paddingHorizontal: 20,
-      paddingVertical: 24,
+      paddingHorizontal: isTablet ? 80 : 20,
+      paddingVertical: isTablet ? 32 : 24,
     },
     rowContent: {
-      paddingHorizontal: 20,
-      paddingVertical: 6,
+      paddingHorizontal: isTablet ? 80 : 20,
+      paddingVertical: isTablet ? 10 : 6,
     },
     variantsSection: {
-      paddingHorizontal: 20,
-      paddingVertical: 18,
-      gap: 12,
+      paddingHorizontal: isTablet ? 80 : 20,
+      paddingVertical: isTablet ? 24 : 18,
+      gap: isTablet ? 16 : 12,
       flexDirection: "column",
     },
     bottomBar: {
@@ -352,9 +371,9 @@ const createStyles = (colorScheme: "light" | "dark") =>
       left: 0,
       right: 0,
       bottom: 0,
-      paddingHorizontal: 20,
-      paddingBottom: 16,
-      paddingTop: 8,
+      paddingHorizontal: isTablet ? 80 : 20,
+      paddingBottom: isTablet ? 24 : 16,
+      paddingTop: isTablet ? 12 : 8,
       backgroundColor: Colors[colorScheme].background,
     },
   });

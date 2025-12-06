@@ -8,6 +8,7 @@ import {
   Text,
   TouchableOpacity,
   useColorScheme,
+  useWindowDimensions,
   View,
 } from "react-native";
 
@@ -26,7 +27,9 @@ const DIGIT_BUTTONS: string[][] = [
 export function CalculatorInput({ value, onChangeValue }: CalculatorInputProps) {
   const [internalValue, setInternalValue] = React.useState<string>(value ?? "0");
   const colorScheme = useColorScheme() ?? "light";
-  const styles = createStyles(colorScheme);
+  const { width, height } = useWindowDimensions();
+  const isTablet = Math.min(width, height) >= 600;
+  const styles = createStyles(colorScheme, isTablet);
 
   const currentValue = value ?? internalValue;
 
@@ -92,7 +95,7 @@ export function CalculatorInput({ value, onChangeValue }: CalculatorInputProps) 
         {/* Right side: actions */}
         <View style={styles.actionsColumn}>
           <TouchableOpacity onPress={handleBackspace} style={styles.backspaceButton}>
-            <Ionicons name="backspace-outline" size={24} color={Colors[colorScheme].icon} />
+            <Ionicons name="backspace-outline" size={isTablet ? 28 : 24} color={Colors[colorScheme].icon} />
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -107,7 +110,7 @@ export function CalculatorInput({ value, onChangeValue }: CalculatorInputProps) 
   );
 }
 
-const createStyles = (colorScheme: "light" | "dark") => StyleSheet.create({
+const createStyles = (colorScheme: "light" | "dark", isTablet: boolean) => StyleSheet.create({
   container: {
     backgroundColor: Colors[colorScheme].background,
   },
@@ -115,51 +118,51 @@ const createStyles = (colorScheme: "light" | "dark") => StyleSheet.create({
     flexDirection: "row",
     justifyContent: "flex-end",
     alignItems: "center",
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingHorizontal: isTablet ? 24 : 16,
+    paddingVertical: isTablet ? 16 : 12,
     borderTopWidth: 1,
     borderBottomWidth: 1,
     borderColor: "#E5E7EB",
     backgroundColor: "#F9FAFB",
   },
   displayText: {
-    fontSize: 24,
+    fontSize: isTablet ? 32 : 24,
     fontWeight: "700",
     color: "#111827",
   },
   keypadRow: {
     flexDirection: "row",
-    padding: 12,
+    padding: isTablet ? 16 : 12,
   },
   digitsGrid: {
     flex: 1,
     flexDirection: "row",
     flexWrap: "wrap",
-    gap: 8,
+    gap: isTablet ? 12 : 8,
   },
   digitButton: {
     width: "30%",
-    height: 55,
+    height: isTablet ? 70 : 50,
     borderWidth: 1,
     borderColor: Colors[colorScheme].border,
-    borderRadius: 8,
+    borderRadius: isTablet ? 10 : 8,
     backgroundColor: Colors[colorScheme].background,
     alignItems: "center",
     justifyContent: "center",
   },
   digitButtonText: {
-    fontSize: 20,
+    fontSize: isTablet ? 26 : 20,
     fontWeight: "600",
     color: Colors[colorScheme].icon,
   },
   actionsColumn: {
-    width: 72,
-    rowGap: 8,
+    width: isTablet ? 90 : 72,
+    rowGap: isTablet ? 12 : 8,
     backgroundColor: Colors[colorScheme].background,
   },
   backspaceButton: {
-    height: 48,
-    borderRadius: 8,
+    height: isTablet ? 60 : 48,
+    borderRadius: isTablet ? 10 : 8,
     borderWidth: 1,
     borderColor: Colors[colorScheme].border,
     backgroundColor: Colors[colorScheme].background,
@@ -169,14 +172,14 @@ const createStyles = (colorScheme: "light" | "dark") => StyleSheet.create({
 
   clearButton: {
     flex: 1,
-    borderRadius: 8,
+    borderRadius: isTablet ? 10 : 8,
     borderWidth: 1,
     borderColor: Colors[colorScheme].border,
     alignItems: "center",
     justifyContent: "center",
   },
   clearText: {
-    fontSize: 20,
+    fontSize: isTablet ? 26 : 20,
     fontWeight: "600",
     color: Colors[colorScheme].icon,
   },

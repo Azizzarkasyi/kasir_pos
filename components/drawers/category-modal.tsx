@@ -30,18 +30,15 @@ const CategoryModal: React.FC<CategoryModalProps> = ({
     const styles = createStyles(colorScheme);
 
     const [name, setName] = useState(initialName);
-    const [internalVisible, setInternalVisible] = useState(visible);
 
     const opacity = useRef(new Animated.Value(1)).current;
     const scale = useRef(new Animated.Value(1)).current;
+    console.log(visible);
 
     useEffect(() => {
         if (visible) {
-            setInternalVisible(true);
             setName(initialName);
             opacity.setValue(1);
-        } else {
-            setInternalVisible(false);
         }
     }, [visible, initialName, opacity]);
 
@@ -54,7 +51,7 @@ const CategoryModal: React.FC<CategoryModalProps> = ({
 
     return (
         <Modal
-            visible={internalVisible}
+            visible={visible}
             transparent
             animationType="none"
             onRequestClose={onClose}

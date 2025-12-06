@@ -3,7 +3,7 @@ import { useColorScheme } from "@/hooks/use-color-scheme";
 import { Ionicons, MaterialIcons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import React from "react";
-import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { StyleSheet, Text, TouchableOpacity, useWindowDimensions, View } from "react-native";
 
 interface TransactionHistoryItemProps {
   code: string;
@@ -11,6 +11,7 @@ interface TransactionHistoryItemProps {
   amount: number;
   time: string;
   onPress?: () => void;
+  isTablet?: boolean;
 }
 
 const TransactionHistoryItem: React.FC<TransactionHistoryItemProps> = ({
@@ -19,9 +20,12 @@ const TransactionHistoryItem: React.FC<TransactionHistoryItemProps> = ({
   amount,
   time,
   onPress,
+  isTablet: isTabletProp,
 }) => {
   const colorScheme = useColorScheme() ?? "light";
-  const styles = createStyles(colorScheme);
+  const { width, height } = useWindowDimensions();
+  const isTablet = isTabletProp ?? Math.min(width, height) >= 600;
+  const styles = createStyles(colorScheme, isTablet);
   const router = useRouter();
 
   const formatCurrency = (value: number) => {
@@ -49,7 +53,7 @@ const TransactionHistoryItem: React.FC<TransactionHistoryItemProps> = ({
         <View style={styles.iconWrapper}>
           <MaterialIcons
             name="receipt-long"
-            size={20}
+            size={isTablet ? 26 : 20}
             color={Colors[colorScheme].icon}
           />
         </View>
@@ -76,37 +80,37 @@ const TransactionHistoryItem: React.FC<TransactionHistoryItemProps> = ({
 
       <Ionicons
         name="chevron-forward"
-        size={18}
+        size={isTablet ? 24 : 18}
         color={Colors[colorScheme].icon}
       />
     </TouchableOpacity>
   );
 };
 
-const createStyles = (colorScheme: "light" | "dark") =>
+const createStyles = (colorScheme: "light" | "dark", isTablet: boolean) =>
   StyleSheet.create({
     container: {
       flexDirection: "row",
       alignItems: "center",
       justifyContent: "space-between",
-      paddingVertical: 12,
-      paddingHorizontal: 16,
+      paddingVertical: isTablet ? 16 : 12,
+      paddingHorizontal: isTablet ? 20 : 16,
       borderBottomWidth: 1,
       borderBottomColor: Colors[colorScheme].tabBackground,
-      borderRadius: 8,
+      borderRadius: isTablet ? 12 : 8,
       backgroundColor: Colors[colorScheme].secondary,
-      columnGap: 12,
+      columnGap: isTablet ? 16 : 12,
     },
     left: {
       flexDirection: "row",
       alignItems: "center",
-      columnGap: 12,
+      columnGap: isTablet ? 16 : 12,
       flex: 1,
     },
     iconWrapper: {
-      width: 32,
-      height: 32,
-      borderRadius: 8,
+      width: isTablet ? 44 : 32,
+      height: isTablet ? 44 : 32,
+      borderRadius: isTablet ? 12 : 8,
       borderWidth: 1,
       borderColor: Colors[colorScheme].border,
       alignItems: "center",
@@ -114,24 +118,24 @@ const createStyles = (colorScheme: "light" | "dark") =>
       backgroundColor: Colors[colorScheme].background,
     },
     codeText: {
-      fontSize: 14,
+      fontSize: isTablet ? 20 : 14,
       fontWeight: "600",
-      marginBottom: 2,
+      marginBottom: isTablet ? 4 : 2,
     },
     subtitleText: {
-      fontSize: 12,
+      fontSize: isTablet ? 18 : 12,
     },
     right: {
       alignItems: "flex-end",
-      marginRight: 4,
+      marginRight: isTablet ? 8 : 4,
     },
     amountText: {
-      fontSize: 14,
+      fontSize: isTablet ? 20 : 14,
       fontWeight: "600",
-      marginBottom: 2,
+      marginBottom: isTablet ? 4 : 2,
     },
     timeText: {
-      fontSize: 12,
+      fontSize: isTablet ? 18 : 12,
     },
   });
 

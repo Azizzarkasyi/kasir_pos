@@ -2,7 +2,7 @@ import { Colors } from "@/constants/theme";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { Ionicons } from "@expo/vector-icons";
 import React from "react";
-import { Image, StyleSheet, TouchableOpacity, View } from "react-native";
+import { Image, StyleSheet, TouchableOpacity, useWindowDimensions, View } from "react-native";
 import { ThemedText } from "./themed-text";
 
 interface ImageUploadProps {
@@ -17,7 +17,9 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
   onPress,
 }) => {
   const colorScheme = useColorScheme() ?? "light";
-  const styles = createStyles(colorScheme);
+  const {width, height} = useWindowDimensions();
+  const isTablet = Math.min(width, height) >= 600;
+  const styles = createStyles(colorScheme, isTablet);
 
   return (
     <View style={styles.container}>
@@ -28,24 +30,24 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
           <ThemedText style={styles.initials}>{initials}</ThemedText>
         )}
         <TouchableOpacity style={styles.cameraBtn} onPress={onPress}>
-          <Ionicons name="camera" size={20} color={Colors[colorScheme].text} />
+          <Ionicons name="camera" size={isTablet ? 28 : 20} color={Colors[colorScheme].text} />
         </TouchableOpacity>
       </View>
     </View>
   );
 };
 
-const createStyles = (colorScheme: "light" | "dark") =>
+const createStyles = (colorScheme: "light" | "dark", isTablet: boolean) =>
   StyleSheet.create({
     container: {
       alignItems: "center",
-      marginTop: 12,
-      marginBottom: 12,
+      marginTop: isTablet ? 20 : 12,
+      marginBottom: isTablet ? 20 : 12,
     },
     square: {
-      width: 104,
-      height: 104,
-      borderRadius: 8,
+      width: isTablet ? 140 : 104,
+      height: isTablet ? 140 : 104,
+      borderRadius: isTablet ? 12 : 8,
       backgroundColor: Colors[colorScheme].border,
       alignItems: "center",
       justifyContent: "center",
@@ -54,20 +56,20 @@ const createStyles = (colorScheme: "light" | "dark") =>
     image: {
       width: "100%",
       height: "100%",
-      borderRadius: 8,
+      borderRadius: isTablet ? 12 : 8,
     },
     initials: {
-      fontSize: 28,
+      fontSize: isTablet ? 40 : 28,
       fontWeight: "700",
       color: Colors[colorScheme].background,
     },
     cameraBtn: {
       position: "absolute",
-      bottom: -16,
-      right: -20,
-      width: 40,
-      height: 40,
-      borderRadius: 20,
+      bottom: isTablet ? -20 : -16,
+      right: isTablet ? -24 : -20,
+      width: isTablet ? 52 : 40,
+      height: isTablet ? 52 : 40,
+      borderRadius: isTablet ? 26 : 20,
       backgroundColor: Colors[colorScheme].background,
       alignItems: "center",
       justifyContent: "center",

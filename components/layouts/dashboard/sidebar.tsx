@@ -1,18 +1,20 @@
-import {Colors} from "@/constants/theme";
-import {useColorScheme} from "@/hooks/use-color-scheme";
-import {AntDesign} from "@expo/vector-icons";
-import {usePathname, useRouter} from "expo-router";
-import React, {useEffect, useState} from "react";
+import { Colors } from "@/constants/theme";
+import { useColorScheme } from "@/hooks/use-color-scheme";
+import { authApi, settingsApi, UserProfile } from "@/services";
+import { AntDesign } from "@expo/vector-icons";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { usePathname, useRouter } from "expo-router";
+import React, { useEffect, useState } from "react";
 import {
+  ActivityIndicator,
   ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
+  useWindowDimensions,
   View,
-  ActivityIndicator,
 } from "react-native";
-import {settingsApi, authApi, UserProfile} from "@/services";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import { DASHBOARD_MENU_ITEMS, getDashboardRouteForKey } from "./menu-config";
 
 type SidebarItemProps = {
   label: string;
@@ -21,6 +23,7 @@ type SidebarItemProps = {
 
   onPress?: () => void;
   styles: ReturnType<typeof createStyles>;
+  iconSize: number;
 };
 
 const SidebarItem: React.FC<SidebarItemProps> = ({
@@ -29,6 +32,7 @@ const SidebarItem: React.FC<SidebarItemProps> = ({
   active,
   onPress,
   styles,
+  iconSize,
 }) => {
   return (
     <TouchableOpacity
@@ -38,7 +42,7 @@ const SidebarItem: React.FC<SidebarItemProps> = ({
       <View style={styles.itemContent}>
         <AntDesign
           name={icon}
-          size={20}
+          size={iconSize}
           color={active ? styles.itemActiveIcon.color : styles.itemIcon.color}
         />
         <Text style={[styles.itemLabel, active && styles.itemLabelActive]}>
@@ -56,21 +60,6 @@ type SidebarProps = {
   onSelect?: (key: string) => void;
 };
 
-const MENU_ITEMS: {
-  key: string;
-  label: string;
-  icon: React.ComponentProps<typeof AntDesign>["name"];
-}[] = [
-  {key: "home", label: "Beranda", icon: "home"},
-  {key: "products", label: "Kelola Produk", icon: "appstore"},
-  {key: "transactions", label: "Transaksi", icon: "swap"},
-  {key: "history", label: "Riwayat Transaksi", icon: "profile"},
-  {key: "outlet", label: "Outlet", icon: "shop"},
-  {key: "employees", label: "Pegawai", icon: "team"},
-  {key: "settings", label: "Pengaturan", icon: "setting"},
-  {key: "help", label: "Bantuan", icon: "question-circle"},
-];
-
 const Sidebar: React.FC<SidebarProps> = ({
   activeKey,
   isOpen,
@@ -78,7 +67,9 @@ const Sidebar: React.FC<SidebarProps> = ({
   onSelect,
 }) => {
   const colorScheme = useColorScheme() ?? "light";
-  const styles = createStyles(colorScheme);
+  const {width, height} = useWindowDimensions();
+  const isTablet = Math.min(width, height) >= 600;
+  const styles = createStyles(colorScheme, isTablet);
   const router = useRouter();
   const pathname = usePathname();
   const [profile, setProfile] = useState<UserProfile | null>(null);
@@ -137,25 +128,6 @@ const Sidebar: React.FC<SidebarProps> = ({
     }
   };
 
-  const getRouteForKey = (key: string): string | null => {
-    switch (key) {
-      case "home":
-        return "/dashboard/home";
-      case "products":
-        return "/dashboard/product/manage";
-      case "transactions":
-        return "/dashboard/transaction";
-      case "settings":
-        return "/dashboard/setting";
-      case "history":
-        return "/dashboard/transaction/history";
-      case "employees":
-        return "/dashboard/employee";
-      default:
-        return null;
-    }
-  };
-
   const handleSelectItem = (key: string) => {
     onSelect?.(key);
 
@@ -168,7 +140,7 @@ const Sidebar: React.FC<SidebarProps> = ({
       return;
     }
 
-    const route = getRouteForKey(key);
+    const route = getDashboardRouteForKey(key as any);
     if (route) {
       if (pathname !== route) {
         router.push(route as never);
@@ -203,7 +175,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                 ) : (
                   <AntDesign
                     name="user"
-                    size={28}
+                    size={isTablet ? 32 : 28}
                     color={Colors[colorScheme].primary}
                   />
                 )}
@@ -232,7 +204,7 @@ const Sidebar: React.FC<SidebarProps> = ({
               </View>
               <AntDesign
                 name="right"
-                size={16}
+                size={isTablet ? 20 : 16}
                 color={Colors[colorScheme].icon}
               />
             </TouchableOpacity>
@@ -271,7 +243,7 @@ const Sidebar: React.FC<SidebarProps> = ({
           </View>
 
           <ScrollView contentContainerStyle={styles.scrollContent}>
-            {MENU_ITEMS.map(item => (
+            {DASHBOARD_MENU_ITEMS.filter(item => item.key !== "profile").map(item => (
               <SidebarItem
                 key={item.key}
                 label={item.label}
@@ -279,6 +251,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                 active={activeKey === item.key}
                 onPress={() => handleSelectItem(item.key)}
                 styles={styles}
+                iconSize={isTablet ? 26 : 20}
               />
             ))}
           </ScrollView>
@@ -293,7 +266,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                 <Text style={styles.feedbackLink}>ELBIC</Text>
                 <AntDesign
                   name="right"
-                  size={14}
+                  size={isTablet ? 18 : 14}
                   color={Colors[colorScheme].primary}
                 />
               </View>
@@ -318,7 +291,7 @@ const Sidebar: React.FC<SidebarProps> = ({
 
 export default Sidebar;
 
-const createStyles = (colorScheme: "light" | "dark") =>
+const createStyles = (colorScheme: "light" | "dark", isTablet: boolean) =>
   StyleSheet.create({
     overlay: {
       position: "absolute",
@@ -332,36 +305,36 @@ const createStyles = (colorScheme: "light" | "dark") =>
       zIndex: 30,
     },
     drawer: {
-      width: 260,
-      maxWidth: "80%",
+      width: isTablet ? 360 : 260,
+      maxWidth: isTablet ? "55%" : "80%",
       backgroundColor: Colors[colorScheme].secondary,
     },
     container: {
       flex: 1,
-      paddingTop: 40,
-      paddingHorizontal: 16,
+      paddingTop: isTablet ? 64 : 40,
+      paddingHorizontal: isTablet ? 28 : 16,
       backgroundColor: Colors[colorScheme].background,
     },
     topSection: {
-      paddingBottom: 16,
+      paddingBottom: isTablet ? 24 : 16,
       borderBottomWidth: StyleSheet.hairlineWidth,
       borderBottomColor: Colors[colorScheme].border2,
     },
     scrollContent: {
-      paddingVertical: 16,
-      paddingBottom: 24,
+      paddingVertical: isTablet ? 24 : 16,
+      paddingBottom: isTablet ? 36 : 24,
     },
     bottomSection: {
-      paddingTop: 12,
-      paddingBottom: 16,
+      paddingTop: isTablet ? 20 : 12,
+      paddingBottom: isTablet ? 24 : 16,
     },
     itemContainer: {},
     itemContent: {
       flexDirection: "row",
       alignItems: "center",
-      paddingVertical: 10,
-      paddingHorizontal: 8,
-      gap: 12,
+      paddingVertical: isTablet ? 14 : 10,
+      paddingHorizontal: isTablet ? 16 : 8,
+      gap: isTablet ? 18 : 12,
     },
     itemIcon: {
       color: Colors[colorScheme].icon,
@@ -370,7 +343,7 @@ const createStyles = (colorScheme: "light" | "dark") =>
       color: Colors[colorScheme].background,
     },
     itemLabel: {
-      fontSize: 14,
+      fontSize: isTablet ? 18 : 14,
       color: Colors[colorScheme].text,
     },
     itemLabelActive: {
@@ -385,13 +358,13 @@ const createStyles = (colorScheme: "light" | "dark") =>
     profileRow: {
       flexDirection: "row",
       alignItems: "center",
-      marginBottom: 12,
-      gap: 12,
+      marginBottom: isTablet ? 20 : 12,
+      gap: isTablet ? 20 : 12,
     },
     avatarCircle: {
-      width: 56,
-      height: 56,
-      borderRadius: 28,
+      width: isTablet ? 72 : 56,
+      height: isTablet ? 72 : 56,
+      borderRadius: isTablet ? 36 : 28,
       borderWidth: 2,
       borderColor: Colors[colorScheme].primary,
       alignItems: "center",
@@ -407,17 +380,17 @@ const createStyles = (colorScheme: "light" | "dark") =>
       backgroundColor: Colors[colorScheme].primary,
     },
     badgeFreeText: {
-      fontSize: 10,
+      fontSize: isTablet ? 14 : 10,
       color: "#FFFFFF",
       fontWeight: "700",
     },
     profileName: {
-      fontSize: 14,
+      fontSize: isTablet ? 22 : 14,
       fontWeight: "600",
       color: Colors[colorScheme].text,
     },
     profileRole: {
-      fontSize: 12,
+      fontSize: isTablet? 18: 12,
       color: Colors[colorScheme].icon,
       marginTop: 2,
     },
@@ -425,38 +398,39 @@ const createStyles = (colorScheme: "light" | "dark") =>
       flexDirection: "row",
       justifyContent: "space-between",
       alignItems: "center",
-      paddingTop: 12,
+      paddingTop: isTablet ? 20 : 12,
     },
     outletName: {
-      fontSize: 14,
+      fontSize: isTablet ? 18 : 14,
       fontWeight: "600",
       color: Colors[colorScheme].text,
     },
     outletLocation: {
-      fontSize: 12,
+      fontSize: isTablet ? 16 : 12,
       color: Colors[colorScheme].icon,
       marginTop: 2,
     },
     outletButton: {
-      paddingHorizontal: 12,
-      paddingVertical: 6,
+      paddingHorizontal: isTablet ? 20 : 12,
+      paddingVertical: isTablet ? 10 : 6,
       borderRadius: 16,
+
       backgroundColor: Colors[colorScheme].primary,
     },
     outletButtonText: {
-      fontSize: 12,
+      fontSize: isTablet ? 18 : 12,
       fontWeight: "600",
       color: Colors[colorScheme].background,
     },
     feedbackCard: {
       borderRadius: 12,
-      paddingHorizontal: 12,
-      paddingVertical: 10,
+      paddingHorizontal: isTablet ? 20 : 12,
+      paddingVertical: isTablet ? 14 : 10,
       backgroundColor: Colors[colorScheme].secondary,
-      marginBottom: 8,
+      marginBottom: isTablet ? 16 : 8,
     },
     feedbackTitle: {
-      fontSize: 12,
+      fontSize: isTablet ? 18 : 12,
       fontWeight: "600",
       color: Colors[colorScheme].text,
       marginBottom: 4,
@@ -467,25 +441,25 @@ const createStyles = (colorScheme: "light" | "dark") =>
       flexWrap: "wrap",
     },
     feedbackSubtitle: {
-      fontSize: 12,
+      fontSize: isTablet ? 16 : 12,
       color: Colors[colorScheme].icon,
     },
     feedbackLink: {
-      fontSize: 12,
+      fontSize: isTablet ? 16 : 12,
       color: Colors[colorScheme].primary,
       fontWeight: "600",
     },
     versionWrapper: {
-      paddingHorizontal: 4,
-      paddingTop: 4,
+      paddingHorizontal: isTablet ? 12 : 4,
+      paddingTop: isTablet ? 8 : 4,
     },
     versionBrand: {
-      fontSize: 16,
+      fontSize: isTablet ? 22 : 16,
       fontWeight: "700",
       color: Colors[colorScheme].primary,
     },
     versionText: {
-      fontSize: 11,
+      fontSize: isTablet ? 15 : 11,
       color: Colors[colorScheme].icon,
       marginTop: 2,
     },

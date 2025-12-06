@@ -3,20 +3,24 @@ import ConfirmationDialog, {
 } from "@/components/drawers/confirmation-dialog";
 import Header from "@/components/header";
 import MenuRow from "@/components/menu-row";
-import {ThemedButton} from "@/components/themed-button";
-import {ThemedInput} from "@/components/themed-input";
-import {Colors} from "@/constants/theme";
-import {useColorScheme} from "@/hooks/use-color-scheme";
-import {useProductFormStore} from "@/stores/product-form-store";
-import {useNavigation, useRouter} from "expo-router";
-import React, {useEffect, useRef, useState} from "react";
-import {StyleSheet, View} from "react-native";
-import {KeyboardAwareScrollView} from "react-native-keyboard-aware-scroll-view";
-import {useSafeAreaInsets} from "react-native-safe-area-context";
+import { ThemedButton } from "@/components/themed-button";
+import { ThemedInput } from "@/components/themed-input";
+import { Colors } from "@/constants/theme";
+import { useColorScheme } from "@/hooks/use-color-scheme";
+import { useProductFormStore } from "@/stores/product-form-store";
+import { useLocalSearchParams, useNavigation, useRouter } from "expo-router";
+import React, { useEffect, useRef, useState } from "react";
+import { StyleSheet, useWindowDimensions, View } from "react-native";
+import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function MaterialVariantScreen() {
   const colorScheme = useColorScheme() ?? "light";
-  const styles = createStyles(colorScheme);
+  const {width, height} = useWindowDimensions();
+  const isTablet = Math.min(width, height) >= 600;
+  const isLandscape = width > height;
+  const isTabletLandscape = isTablet && isLandscape;
+  const styles = createStyles(colorScheme, isTablet, isTabletLandscape);
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const navigation = useNavigation();
@@ -34,9 +38,6 @@ export default function MaterialVariantScreen() {
     notifyMin: boolean;
   } | null>(null);
   const [isSubmit, setIsSubmit] = useState(false);
-
-  // Import useLocalSearchParams
-  const {useLocalSearchParams} = require("expo-router");
   const {
     offlineStock: qsOfflineStock,
     unit: qsUnit,
@@ -138,48 +139,51 @@ export default function MaterialVariantScreen() {
         showsVerticalScrollIndicator={false}
       >
         <View style={[styles.contentSection, {paddingVertical: 12}]}>
-          <ThemedInput
-            label="Nama Varian"
-            size="md"
-            value={name}
-            onChangeText={setName}
-          />
-          <ThemedInput
-            label="Harga Jual"
-            value={price}
-            size="md"
-            onChangeText={setPrice}
-            numericOnly
-          />
-          <ThemedInput
-            label="Harga Modal"
-            value={capitalPrice}
-            size="md"
-            onChangeText={setCapitalPrice}
-            numericOnly
-          />
+          <View style={styles.contentWrapper}>
+            <ThemedInput
+              label="Nama Varian"
+              size="md"
+              value={name}
+              onChangeText={setName}
+            />
+            <ThemedInput
+              label="Harga Jual"
+              value={price}
+              size="md"
+              onChangeText={setPrice}
+              numericOnly
+            />
+            <ThemedInput
+              label="Harga Modal"
+              value={capitalPrice}
+              size="md"
+              onChangeText={setCapitalPrice}
+              numericOnly
+            />
+          </View>
         </View>
 
         <View style={styles.sectionDivider} />
 
         <View style={styles.contentSection}>
-          <MenuRow
-            title="Kelola Stok"
-            rightText={
+          <View style={styles.contentWrapper}>
+            <MenuRow
+              title="Kelola Stok"
+              rightText={
               stock
                 ? `Stok Aktif (${stock.offlineStock} ${stock.unit})`
                 : "Stok Tidak Aktif"
-            }
+              }
             showBottomBorder={false}
-            variant="link"
-            onPress={() => {
-              router.push({
-                pathname: "/dashboard/recipe-and-materials/variant-stock",
-                params: {
-                  ...(name ? {name} : {}),
-                  ...(price ? {price} : {}),
-                  ...(capitalPrice ? {capitalPrice} : {}),
-                  ...(stock
+              variant="link"
+              onPress={() => {
+                  router.push({
+                  pathname: "/dashboard/recipe-and-materials/variant-stock",
+                  params: {
+                    ...(name ? {name} : {}),
+                    ...(price ? {price} : {}),
+                    ...(capitalPrice ? {capitalPrice} : {}),
+                    ...(stock
                     ? {
                         offlineStock: String(stock.offlineStock),
                         unit: stock.unit,
@@ -188,14 +192,17 @@ export default function MaterialVariantScreen() {
                       }
                     : {}),
                 },
-              } as never);
-            }}
-          />
+                } as never);
+              }}
+            />
+          </View>
         </View>
       </KeyboardAwareScrollView>
 
       <View style={styles.bottomBar}>
-        <ThemedButton title="Simpan" onPress={handleSave} />
+        <View style={styles.contentWrapper}>
+          <ThemedButton title="Simpan" onPress={handleSave} />
+        </View>
       </View>
 
       <ConfirmationDialog ref={confirmationRef} />
@@ -203,23 +210,28 @@ export default function MaterialVariantScreen() {
   );
 }
 
-const createStyles = (colorScheme: "light" | "dark") =>
+const createStyles = (colorScheme: "light" | "dark", isTablet: boolean, isTabletLandscape: boolean) =>
   StyleSheet.create({
     sectionDivider: {
       backgroundColor: Colors[colorScheme].border2,
-      height: 12,
+      height: isTablet ? 16 : 12,
+    },
+    contentWrapper: {
+      width: "100%",
+      maxWidth: isTabletLandscape ? 960 : undefined,
+      alignSelf: "center",
     },
     contentSection: {
-      paddingHorizontal: 20,
+      paddingHorizontal: isTablet ? 80 : 20,
     },
     bottomBar: {
       position: "absolute",
       left: 0,
       right: 0,
       bottom: 0,
-      paddingHorizontal: 20,
-      paddingBottom: 24,
-      paddingTop: 8,
+      paddingHorizontal: isTablet ? 80 : 20,
+      paddingBottom: isTablet ? 32 : 24,
+      paddingTop: isTablet ? 12 : 8,
       backgroundColor: Colors[colorScheme].background,
     },
   });

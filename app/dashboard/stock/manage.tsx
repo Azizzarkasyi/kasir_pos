@@ -1,24 +1,24 @@
 import StockProductItem from "@/components/atoms/stock-product-item";
 import EditStockModal from "@/components/drawers/edit-stock-modal";
 import Header from "@/components/header";
-import {ThemedInput} from "@/components/themed-input";
-import {ThemedText} from "@/components/themed-text";
-import {Colors} from "@/constants/theme";
-import {useColorScheme} from "@/hooks/use-color-scheme";
+import { ThemedInput } from "@/components/themed-input";
+import { ThemedText } from "@/components/themed-text";
+import { Colors } from "@/constants/theme";
+import { useColorScheme } from "@/hooks/use-color-scheme";
 import productApi from "@/services/endpoints/products";
-import {Product, ProductVariant} from "@/types/api";
-import {AntDesign} from "@expo/vector-icons";
-import {useFocusEffect} from "expo-router";
-import React, {useCallback, useState} from "react";
+import { Product, ProductVariant } from "@/types/api";
+import { AntDesign } from "@expo/vector-icons";
+import { useFocusEffect } from "expo-router";
+import React, { useCallback, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
   StyleSheet,
-  TouchableOpacity,
+  TouchableOpacity, useWindowDimensions,
   View,
 } from "react-native";
-import {KeyboardAwareScrollView} from "react-native-keyboard-aware-scroll-view";
-import {useSafeAreaInsets} from "react-native-safe-area-context";
+import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 type StockItem = {
   id: string;
@@ -31,7 +31,11 @@ type StockItem = {
 
 export default function ManageStockScreen() {
   const colorScheme = useColorScheme() ?? "light";
-  const styles = createStyles(colorScheme);
+  const { width, height } = useWindowDimensions();
+  const isTablet = Math.min(width, height) >= 600;
+  const isLandscape = width > height;
+  const isTabletLandscape = isTablet && isLandscape;
+  const styles = createStyles(colorScheme, isTablet, isTabletLandscape);
   const insets = useSafeAreaInsets();
 
   const [search, setSearch] = useState("");
@@ -103,8 +107,8 @@ export default function ManageStockScreen() {
       <Header title="Kelola Stok" showHelp={false} />
       <KeyboardAwareScrollView
         contentContainerStyle={{
-          paddingTop: 8,
-          paddingBottom: insets.bottom + 40,
+          paddingTop: isTablet ? 16 : 8,
+          paddingBottom: insets.bottom + (isTablet ? 60 : 40),
         }}
         enableOnAndroid
         keyboardOpeningTime={0}
@@ -112,23 +116,31 @@ export default function ManageStockScreen() {
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
-        <View style={styles.searchRow}>
-          <View style={{flex: 1, flexDirection: "row", alignItems: "center"}}>
-            <ThemedInput
-              label="Cari Produk"
-              value={search}
-              onChangeText={setSearch}
-              leftIconName="search"
-              showLabel={false}
-              size="md"
-              placeholder="Cari Produk"
-              width="100%"
-            />
-          </View>
+        <View style={styles.contentWrapper}>
+          <View style={styles.searchRow}>
+            <View style={{flex: 1, flexDirection: "row", alignItems: "center"}}>
+              <ThemedInput
+                label="Cari Produk"
+                value={search}
+                onChangeText={setSearch}
+                leftIconName="search"
+                showLabel={false}
+                size="md"
+                placeholder="Cari Produk"
+                width="100%"
+              />
+            </View>
 
-          <TouchableOpacity style={styles.scanButton} onPress={() => {}}>
-            <AntDesign name="scan" size={24} color={Colors[colorScheme].text} />
-          </TouchableOpacity>
+            <TouchableOpacity style={styles.scanButton} onPress={() => {
+              
+            }}>
+              <AntDesign
+                name="scan"
+                size={isTablet ? 32 : 24}
+                color={Colors[colorScheme].text}
+              />
+            </TouchableOpacity>
+          </View>
         </View>
 
         {isLoading ? (
@@ -230,20 +242,25 @@ export default function ManageStockScreen() {
   );
 }
 
-const createStyles = (colorScheme: "light" | "dark") =>
+const createStyles = (colorScheme: "light" | "dark", isTablet: boolean, isTabletLandscape: boolean) =>
   StyleSheet.create({
+    contentWrapper: {
+      width: "100%",
+      maxWidth: isTabletLandscape ? 960 : undefined,
+      alignSelf: "center",
+    },
     searchRow: {
       flexDirection: "row",
       alignItems: "center",
-      paddingHorizontal: 20,
-      marginTop: 8,
-      gap: 12,
+      paddingHorizontal: isTablet ? 32 : 20,
+      marginTop: isTablet ? 16 : 8,
+      gap: isTablet ? 16 : 12,
     },
     scanButton: {
-      borderRadius: 8,
+      borderRadius: isTablet ? 12 : 8,
       borderWidth: 1,
-      width: 50,
-      height: 50,
+      width: isTablet ? 60 : 50,
+      height: isTablet ? 60 : 50,
       alignItems: "center",
       justifyContent: "center",
       borderColor: Colors[colorScheme].border,

@@ -1,8 +1,8 @@
+import { Colors } from "@/constants/theme";
+import { useColorScheme } from "@/hooks/use-color-scheme";
+import { Ionicons } from "@expo/vector-icons";
 import React from "react";
-import {TouchableOpacity, StyleSheet} from "react-native";
-import {Ionicons} from "@expo/vector-icons";
-import {useColorScheme} from "@/hooks/use-color-scheme";
-import {Colors} from "@/constants/theme";
+import { StyleSheet, TouchableOpacity, useWindowDimensions } from "react-native";
 
 interface CheckboxProps {
   checked: boolean;
@@ -11,7 +11,9 @@ interface CheckboxProps {
 
 const Checkbox: React.FC<CheckboxProps> = ({checked, onChange}) => {
   const colorScheme = useColorScheme() ?? "light";
-  const styles = createStyles(colorScheme);
+  const {width, height} = useWindowDimensions();
+  const isTablet = Math.min(width, height) >= 600;
+  const styles = createStyles(colorScheme, isTablet);
 
   return (
     <TouchableOpacity
@@ -21,7 +23,7 @@ const Checkbox: React.FC<CheckboxProps> = ({checked, onChange}) => {
       {checked && (
         <Ionicons
           name="checkmark"
-          size={20}
+          size={isTablet ? 26 : 20}
           color={Colors[colorScheme].background}
         />
       )}
@@ -29,14 +31,14 @@ const Checkbox: React.FC<CheckboxProps> = ({checked, onChange}) => {
   );
 };
 
-const createStyles = (colorScheme: "light" | "dark") =>
+const createStyles = (colorScheme: "light" | "dark", isTablet: boolean) =>
   StyleSheet.create({
     checkbox: {
-      width: 24,
-      height: 24,
-      borderWidth: 1,
+      width: isTablet ? 32 : 24,
+      height: isTablet ? 32 : 24,
+      borderWidth: isTablet ? 2 : 1,
       borderColor: Colors[colorScheme].icon,
-      borderRadius: 4,
+      borderRadius: isTablet ? 6 : 4,
       justifyContent: "center",
       alignItems: "center",
     },

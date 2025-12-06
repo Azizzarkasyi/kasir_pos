@@ -1,25 +1,29 @@
 import EmployeeCard from "@/components/employee-card";
 import Header from "@/components/header";
-import {ThemedInput} from "@/components/themed-input";
-import {Colors} from "@/constants/theme";
-import {useColorScheme} from "@/hooks/use-color-scheme";
+import { ThemedInput } from "@/components/themed-input";
+import { Colors } from "@/constants/theme";
+import { useColorScheme } from "@/hooks/use-color-scheme";
 import employeeApi from "@/services/endpoints/employees";
-import {Employee} from "@/types/api";
-import {Ionicons} from "@expo/vector-icons";
-import {useFocusEffect, useRouter} from "expo-router";
-import React, {useCallback, useState} from "react";
+import { Employee } from "@/types/api";
+import { Ionicons } from "@expo/vector-icons";
+import { useFocusEffect, useRouter } from "expo-router";
+import React, { useCallback, useState } from "react";
 import {
   ActivityIndicator,
   FlatList,
   StyleSheet,
-  TouchableOpacity,
+  TouchableOpacity, useWindowDimensions,
   View,
 } from "react-native";
-import {useSafeAreaInsets} from "react-native-safe-area-context";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function EmployeeScreen() {
   const colorScheme = useColorScheme() ?? "light";
-  const styles = createStyles(colorScheme);
+  const { width, height } = useWindowDimensions();
+  const isTablet = Math.min(width, height) >= 600;
+  const isLandscape = width > height;
+  const isTabletLandscape = isTablet && isLandscape;
+  const styles = createStyles(colorScheme, isTablet, isTabletLandscape);
   const insets = useSafeAreaInsets();
   const router = useRouter();
 
@@ -74,27 +78,28 @@ export default function EmployeeScreen() {
   };
 
   return (
-    <View style={{flex: 1, backgroundColor: Colors[colorScheme].background}}>
+    <View style={{ flex: 1, backgroundColor: Colors[colorScheme].background }}>
       <Header title="Pegawai" showHelp={false} />
       <View style={[styles.contentContainer]}>
-        <View style={[styles.searchRow, {paddingHorizontal: 20}]}>
-          <View style={{flex: 1}}>
-            <ThemedInput
-              label="Cari Pegawai"
-              value={search}
-              onChangeText={setSearch}
-              size="sm"
-              leftIconName="search"
-              width="100%"
-              showLabel={false}
-              placeholder="Cari Pegawai"
-            />
+        <View style={styles.contentWrapper}>
+          <View style={[styles.searchRow, { paddingHorizontal: isTablet ? 40 : 20 }]}>
+            <View style={{ flex: 1 }}>
+              <ThemedInput
+                label="Cari Pegawai"
+                value={search}
+                onChangeText={setSearch}
+                size="sm"
+                leftIconName="search"
+                width="100%"
+                showLabel={false}
+                placeholder="Cari Pegawai"
+              />
+            </View>
           </View>
         </View>
-
         {loading && !refreshing ? (
           <View
-            style={{flex: 1, justifyContent: "center", alignItems: "center"}}
+            style={{ flex: 1, justifyContent: "center", alignItems: "center" }}
           >
             <ActivityIndicator
               size="large"
@@ -105,10 +110,10 @@ export default function EmployeeScreen() {
           <FlatList
             data={employees}
             keyExtractor={item => String(item.id)}
-            contentContainerStyle={{paddingBottom: 100, marginTop: 16}}
+            contentContainerStyle={{ paddingBottom: 100, marginTop: 16 }}
             refreshing={refreshing}
             onRefresh={() => loadEmployees(true)}
-            renderItem={({item}) => (
+            renderItem={({ item }) => (
               <EmployeeCard
                 initials={item.name.slice(0, 2).toUpperCase()}
                 name={item.name}
@@ -125,7 +130,7 @@ export default function EmployeeScreen() {
               />
             )}
             ListEmptyComponent={
-              <View style={{alignItems: "center", marginTop: 40}}>
+              <View style={{ alignItems: "center", marginTop: 40 }}>
                 <Ionicons
                   name="people-outline"
                   size={48}
@@ -138,32 +143,38 @@ export default function EmployeeScreen() {
       </View>
 
       <TouchableOpacity
-        style={[styles.fab, {bottom: insets.bottom + 24}]}
+        style={[styles.fab, { bottom: insets.bottom + (isTablet ? 40 : 24) }]}
         onPress={goAdd}
       >
-        <Ionicons name="add" size={28} color={Colors[colorScheme].background} />
+        <Ionicons name="add" size={isTablet ? 36 : 28} color={Colors[colorScheme].background} />
       </TouchableOpacity>
     </View>
   );
 }
 
-const createStyles = (colorScheme: "light" | "dark") =>
+const createStyles = (colorScheme: "light" | "dark", isTablet: boolean, isTabletLandscape: boolean) =>
   StyleSheet.create({
     contentContainer: {
       flex: 1,
     },
+    contentWrapper: {
+      flex: 1,
+      width: "100%",
+      maxWidth: isTabletLandscape ? 960 : undefined,
+      alignSelf: "center",
+    },
     searchRow: {
       flexDirection: "row",
       alignItems: "center",
-      gap: 12,
-      marginTop: 16,
+      gap: isTablet ? 16 : 12,
+      marginTop: isTablet ? 24 : 16,
     },
     fab: {
       position: "absolute",
-      right: 24,
-      width: 56,
-      height: 56,
-      borderRadius: 28,
+      right: isTablet ? 40 : 24,
+      width: isTablet ? 72 : 56,
+      height: isTablet ? 72 : 56,
+      borderRadius: isTablet ? 36 : 28,
       alignItems: "center",
       justifyContent: "center",
       backgroundColor: Colors[colorScheme].primary,

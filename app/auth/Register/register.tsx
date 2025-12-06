@@ -1,17 +1,17 @@
 import Checkbox from "@/components/checkbox";
 import ComboInput from "@/components/combo-input";
 import Header from "@/components/header";
-import {ThemedButton} from "@/components/themed-button";
-import {ThemedInput} from "@/components/themed-input";
-import {ThemedText} from "@/components/themed-text";
-import {Colors} from "@/constants/theme";
-import {useColorScheme} from "@/hooks/use-color-scheme";
-import React, {useState} from "react";
-import {StyleSheet, View, Alert, ActivityIndicator} from "react-native";
-import {KeyboardAwareScrollView} from "react-native-keyboard-aware-scroll-view";
-import {useSafeAreaInsets} from "react-native-safe-area-context";
-import {authApi} from "@/services";
-import {useRouter} from "expo-router";
+import { ThemedButton } from "@/components/themed-button";
+import { ThemedInput } from "@/components/themed-input";
+import { ThemedText } from "@/components/themed-text";
+import { Colors } from "@/constants/theme";
+import { useColorScheme } from "@/hooks/use-color-scheme";
+import { authApi } from "@/services";
+import { useRouter } from "expo-router";
+import React, { useState } from "react";
+import { ActivityIndicator, Alert, StyleSheet, TouchableOpacity, useWindowDimensions, View } from "react-native";
+import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const businessTypes = [
   {label: "Pilih Tipe Bisnis", value: ""},
@@ -29,7 +29,11 @@ const kelurahanData = [
 
 const RegisterScreen = () => {
   const colorScheme = useColorScheme() ?? "light";
-  const styles = createStyles(colorScheme);
+  const {width, height} = useWindowDimensions();
+  const isTablet = Math.min(width, height) >= 600;
+  const isLandscape = width > height;
+  const isTabletLandscape = isTablet && isLandscape;
+  const styles = createStyles(colorScheme, isTablet, isTabletLandscape);
   const insets = useSafeAreaInsets();
   const router = useRouter();
 
@@ -141,12 +145,12 @@ const RegisterScreen = () => {
   };
 
   return (
-    <View style={{flex: 1, backgroundColor: Colors[colorScheme].background}}>
+    <View style={styles.container}>
       <Header title="Daftar" />
       <KeyboardAwareScrollView
         contentContainerStyle={[
           styles.scrollContainer,
-          {paddingBottom: insets.bottom + 80},
+          {paddingBottom:  insets.bottom + 80},
         ]}
         enableOnAndroid
         keyboardOpeningTime={0}
@@ -155,17 +159,15 @@ const RegisterScreen = () => {
         keyboardShouldPersistTaps="handled"
         style={{
           backgroundColor: Colors[colorScheme].background,
-          paddingVertical: 24,
+          paddingVertical: isTablet ? 32 : 20,
         }}
       >
-        <ThemedText style={styles.subtitle}>
-          Halo Usahawan, lengkapi data dibawah ini.
-        </ThemedText>
-
-        <View style={styles.section}>
-          <ThemedText type="subtitle" style={{marginBottom: 12}}>
-            Data Usaha
+        <View style={styles.contentWrapper}>
+          <ThemedText style={styles.subtitle}>
+            Halo Usahawan, lengkapi data dibawah ini.
           </ThemedText>
+
+          <View style={styles.section}>
           <ThemedInput
             label="Nama Usaha"
             value={businessName}
@@ -213,11 +215,17 @@ const RegisterScreen = () => {
             error={errors.outletAddress}
             multiline
             numberOfLines={3}
+            inputContainerStyle={{
+              height: 120,
+              alignItems: "flex-start",
+            }}
           />
         </View>
 
         <View style={styles.section}>
-          <ThemedText type="subtitle">Data Diri Pemilik Usaha</ThemedText>
+          <ThemedText type="subtitle" style={{marginBottom: 12}}>
+            Data Diri Pemilik Usaha
+          </ThemedText>
           <ThemedInput
             label="Nama Pemilik"
             value={ownerName}
@@ -275,14 +283,21 @@ const RegisterScreen = () => {
 
           <View style={styles.termsContainer}>
             <Checkbox checked={agreedToTerms} onChange={setAgreedToTerms} />
-            <ThemedText style={styles.termsText}>
-              Dengan ini saya telah menyetujui{" "}
-              <ThemedText style={styles.link}>Syarat dan Ketentuan</ThemedText>{" "}
-              serta{" "}
-              <ThemedText style={styles.link}>Kebijakan Privasi</ThemedText>{" "}
-              Qasir
-            </ThemedText>
+            <TouchableOpacity
+              activeOpacity={0.8}
+              onPress={() => setAgreedToTerms(!agreedToTerms)}
+              style={{flex: 1}}
+            >
+              <ThemedText style={styles.termsText}>
+                Dengan ini saya telah menyetujui{" "}
+                <ThemedText style={styles.link}>Syarat dan Ketentuan</ThemedText>{" "}
+                serta{" "}
+                <ThemedText style={styles.link}>Kebijakan Privasi</ThemedText>{" "}
+                Qasir
+              </ThemedText>
+            </TouchableOpacity>
           </View>
+        </View>
         </View>
       </KeyboardAwareScrollView>
       <View style={styles.bottomBar}>
@@ -303,16 +318,28 @@ const RegisterScreen = () => {
   );
 };
 
-const createStyles = (colorScheme: "light" | "dark") =>
+const createStyles = (
+  colorScheme: "light" | "dark",
+  isTablet: boolean,
+  isTabletLandscape: boolean,
+) =>
   StyleSheet.create({
     container: {
       flex: 1,
       backgroundColor: Colors[colorScheme].background,
-      paddingHorizontal: 20,
+      paddingHorizontal: 0,
+      paddingBottom: isTabletLandscape ? 80: 20,
     },
     scrollContainer: {
-      paddingBottom: 20,
-      paddingHorizontal: 20,
+      flexGrow: 1,
+      paddingBottom: isTabletLandscape ? 80: 20,
+      paddingHorizontal: isTablet ? 24 : 16,
+    },
+    contentWrapper: {
+      width: "100%",
+      maxWidth: isTabletLandscape ? 960 : undefined,
+      alignSelf: "center",
+      paddingHorizontal: isTablet ? 56 : 4,
     },
     title: {
       marginTop: 20,
@@ -321,20 +348,22 @@ const createStyles = (colorScheme: "light" | "dark") =>
       marginTop: 8,
       marginBottom: 20,
       color: Colors[colorScheme].icon,
+      fontSize: isTablet ? 18 : 16,
     },
     section: {
-      marginBottom: 20,
+      marginBottom: isTablet ? 24 : 16,
     },
     termsContainer: {
       flexDirection: "row",
       alignItems: "flex-start",
       marginTop: 16,
-      marginBottom: 100,
+      marginBottom: isTablet ? 80 : 40,
     },
     termsText: {
       marginLeft: 10,
       flex: 1,
-      lineHeight: 20,
+      lineHeight: isTablet ? 24 : 20,
+      fontSize: isTablet ? 16 : 14,
     },
     link: {
       color: Colors[colorScheme].primary,

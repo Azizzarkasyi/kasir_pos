@@ -2,27 +2,30 @@
 
 import CheckoutItem from "@/components/atoms/checkout-item";
 import Header from "@/components/header";
-import {ThemedButton} from "@/components/themed-button";
-import {Colors} from "@/constants/theme";
-import {useColorScheme} from "@/hooks/use-color-scheme";
-import {Ionicons} from "@expo/vector-icons";
-import {useRouter, useLocalSearchParams} from "expo-router";
-import React, {useState, useEffect} from "react";
+import { ThemedButton } from "@/components/themed-button";
+import { Colors } from "@/constants/theme";
+import { useColorScheme } from "@/hooks/use-color-scheme";
+import { transactionApi } from "@/services/endpoints/transactions";
+import { Transaction } from "@/types/api";
+import { Ionicons } from "@expo/vector-icons";
+import { useLocalSearchParams, useRouter } from "expo-router";
+import React, { useEffect, useState } from "react";
 import {
+  ActivityIndicator,
+  Alert,
   ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
+  useWindowDimensions,
   View,
-  ActivityIndicator,
-  Alert,
 } from "react-native";
-import {transactionApi} from "@/services/endpoints/transactions";
-import {Transaction} from "@/types/api";
 
 export default function TransactionDetailPage() {
   const colorScheme = useColorScheme() ?? "light";
-  const styles = createStyles(colorScheme);
+    const { width, height } = useWindowDimensions();
+    const isTablet = Math.min(width, height) >= 600;
+  const styles = createStyles(colorScheme, isTablet);
   const router = useRouter();
   const params = useLocalSearchParams();
 
@@ -228,7 +231,7 @@ export default function TransactionDetailPage() {
               name={
                 isDetailOpen ? "chevron-up-outline" : "chevron-down-outline"
               }
-              size={18}
+              size={isTablet ? 24 : 18}
               color={Colors[colorScheme].icon}
             />
           </TouchableOpacity>
@@ -244,6 +247,7 @@ export default function TransactionDetailPage() {
                     quantity={item.quantity}
                     unitPrice={item.price}
                     hideDeleteButton
+                                        isTablet={isTablet}
                   />
                 ))}
               </View>
@@ -284,136 +288,137 @@ export default function TransactionDetailPage() {
   );
 }
 
-const createStyles = (colorScheme: "light" | "dark") =>
-  StyleSheet.create({
-    container: {
-      flex: 1,
-    },
-    contentWrapper: {
-      flex: 1,
-    },
-    contentInner: {
-      paddingHorizontal: 16,
-      paddingVertical: 16,
-      rowGap: 16,
-    },
-    sectionCard: {
-      borderRadius: 12,
-      backgroundColor: Colors[colorScheme].background,
-      borderWidth: 1,
-      borderColor: Colors[colorScheme].border,
-      paddingVertical: 16,
-    },
-    infoWrapper: {
-      padding: 16,
-    },
-    sectionCard2: {
-      borderRadius: 12,
-      backgroundColor: Colors[colorScheme].background,
-      borderWidth: 1,
-      borderColor: Colors[colorScheme].border,
-    },
-    sectionHeaderRowPrimary: {
-      flexDirection: "row",
-      alignItems: "center",
-      paddingBottom: 16,
-      paddingHorizontal: 16,
-      justifyContent: "space-between",
-    },
-    sectionHeaderRowSecondary: {
-      flexDirection: "row",
-      padding: 16,
-      alignItems: "center",
-      justifyContent: "space-between",
-    },
-    sectionTitle: {
-      fontSize: 14,
-      fontWeight: "600",
-      color: Colors[colorScheme].text,
-    },
-    sectionCode: {
-      fontSize: 14,
-      fontWeight: "500",
-      color: Colors[colorScheme].icon,
-    },
-    divider: {
-      height: 1,
-      backgroundColor: Colors[colorScheme].border,
-    },
-    infoRow: {
-      flexDirection: "row",
-      alignItems: "center",
-      justifyContent: "space-between",
-      marginBottom: 8,
-    },
-    infoLabel: {
-      fontSize: 13,
-      color: Colors[colorScheme].icon,
-    },
-    infoValue: {
-      fontSize: 13,
-      fontWeight: "500",
-      color: Colors[colorScheme].text,
-    },
-    buttonStack: {
-      marginTop: 16,
-      rowGap: 10,
-    },
-    headerIconButton: {
-      paddingHorizontal: 8,
-      paddingVertical: 6,
-    },
-    outlineButton: {
-      width: "100%",
-      height: 44,
-      borderRadius: 8,
-      borderWidth: 1,
-      borderColor: Colors[colorScheme].border,
-      alignItems: "center",
-      justifyContent: "center",
-      backgroundColor: Colors[colorScheme].secondary,
-    },
-    outlineButtonText: {
-      fontSize: 14,
-      fontWeight: "600",
-      color: Colors[colorScheme].text,
-    },
-    primaryButton: {
-      width: "100%",
-      height: 44,
-      borderRadius: 8,
-      alignItems: "center",
-      justifyContent: "center",
-    },
-    primaryButtonText: {
-      fontSize: 14,
-      fontWeight: "600",
-    },
-    itemsWrapper: {
-      marginTop: 8,
-      rowGap: 8,
-    },
-    summaryWrapper: {
-      marginTop: 12,
-      borderTopWidth: 1,
-      borderColor: Colors[colorScheme].border2,
-    },
-    summaryRow: {
-      flexDirection: "row",
-      alignItems: "center",
-      justifyContent: "space-between",
-      paddingHorizontal: 16,
-      paddingVertical: 12,
-      borderBottomWidth: 1,
-      borderBottomColor: Colors[colorScheme].border2,
-    },
-    summaryLabel: {
-      fontSize: 13,
-      color: Colors[colorScheme].icon,
-    },
-    summaryValue: {
-      fontSize: 13,
-      fontWeight: "600",
-      color: Colors[colorScheme].text,
-    },
-  });
+const createStyles = (colorScheme: "light" | "dark", isTablet: boolean) =>
+    StyleSheet.create({
+        container: {
+            flex: 1,
+        },
+        contentWrapper: {
+            flex: 1,
+        },
+        contentInner: {
+            paddingHorizontal: isTablet ? 24 : 16,
+            paddingVertical: isTablet ? 24 : 16,
+            rowGap: isTablet ? 20 : 16,
+        },
+        sectionCard: {
+            borderRadius: isTablet ? 16 : 12,
+            backgroundColor: Colors[colorScheme].background,
+            borderWidth: 1,
+            borderColor: Colors[colorScheme].border,
+            paddingVertical: isTablet ? 20 : 16,
+        },
+        infoWrapper: {
+            padding: isTablet ? 20 : 16,
+        },
+        sectionCard2: {
+            borderRadius: isTablet ? 16 : 12,
+            backgroundColor: Colors[colorScheme].background,
+            borderWidth: 1,
+            borderColor: Colors[colorScheme].border,
+        },
+        sectionHeaderRowPrimary: {
+            flexDirection: "row",
+            alignItems: "center",
+            paddingBottom: isTablet ? 20 : 16,
+            paddingHorizontal: isTablet ? 20 : 16,
+            justifyContent: "space-between",
+        },
+        sectionHeaderRowSecondary: {
+            flexDirection: "row",
+            padding: isTablet ? 20 : 16,
+            alignItems: "center",
+            justifyContent: "space-between",
+        },
+        sectionTitle: {
+            fontSize: isTablet ? 20 : 14,
+            fontWeight: "600",
+            color: Colors[colorScheme].text,
+        },
+        sectionCode: {
+            fontSize: isTablet ? 20 : 14,
+            fontWeight: "500",
+            color: Colors[colorScheme].icon,
+        },
+        divider: {
+            height: 1,
+            backgroundColor: Colors[colorScheme].border,
+        },
+        infoRow: {
+            flexDirection: "row",
+            alignItems: "center",
+            justifyContent: "space-between",
+            marginBottom: isTablet ? 12 : 8,
+        },
+        infoLabel: {
+            fontSize: isTablet ? 20 : 13,
+            color: Colors[colorScheme].icon,
+        },
+        infoValue: {
+            fontSize: isTablet ? 20 : 13,
+            fontWeight: "500",
+            color: Colors[colorScheme].text,
+        },
+        buttonStack: {
+            marginTop: isTablet ? 20 : 16,
+            rowGap: isTablet ? 14 : 10,
+        },
+        headerIconButton: {
+            paddingHorizontal: isTablet ? 12 : 8,
+            paddingVertical: isTablet ? 8 : 6,
+        },
+        outlineButton: {
+            width: "100%",
+            height: isTablet ? 52 : 44,
+            borderRadius: isTablet ? 12 : 8,
+            borderWidth: 1,
+            borderColor: Colors[colorScheme].border,
+            alignItems: "center",
+            justifyContent: "center",
+            backgroundColor: Colors[colorScheme].secondary,
+        },
+        outlineButtonText: {
+            fontSize: isTablet ? 20 : 14,
+            fontWeight: "600",
+            color: Colors[colorScheme].text,
+        },
+        primaryButton: {
+            width: "100%",
+            height: isTablet ? 52 : 44,
+            borderRadius: isTablet ? 12 : 8,
+            alignItems: "center",
+            justifyContent: "center",
+        },
+        primaryButtonText: {
+            fontSize: isTablet ? 20 : 14,
+            fontWeight: "600",
+        },
+        itemsWrapper: {
+            marginTop: isTablet ? 12 : 8,
+            rowGap: isTablet ? 12 : 8,
+        },
+        summaryWrapper: {
+            marginTop: isTablet ? 16 : 12,
+            borderTopWidth: 1,
+            borderColor: Colors[colorScheme].border2,
+        },
+        summaryRow: {
+            flexDirection: "row",
+            alignItems: "center",
+            justifyContent: "space-between",
+            paddingHorizontal: isTablet ? 20 : 16,
+            paddingVertical: isTablet ? 16 : 12,
+            borderBottomWidth: 1,
+            borderBottomColor: Colors[colorScheme].border2,
+        },
+        summaryLabel: {
+            fontSize: isTablet ? 20 : 13,
+            color: Colors[colorScheme].icon,
+        },
+        summaryValue: {
+            fontSize: isTablet ? 20 : 13,
+            fontWeight: "600",
+            color: Colors[colorScheme].text,
+        },
+    });
+

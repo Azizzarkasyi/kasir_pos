@@ -1,22 +1,25 @@
 import SectionDivider from "@/components/atoms/section-divider";
 import SelectLanguageModal, {
-  LanguageValue,
+    LanguageValue,
 } from "@/components/drawers/select-language-modal";
 import Header from "@/components/header";
 import MenuRow from "@/components/menu-row";
-import {ThemedButton} from "@/components/themed-button";
-import {ThemedText} from "@/components/themed-text";
-import {Colors} from "@/constants/theme";
-import {useColorScheme} from "@/hooks/use-color-scheme";
-import {useRouter} from "expo-router";
-import React, {useEffect, useState} from "react";
-import {StyleSheet, Text, TouchableOpacity, View, Alert} from "react-native";
-import {ScrollView} from "react-native-gesture-handler";
-import {settingsApi} from "@/services";
+import { ThemedButton } from "@/components/themed-button";
+import { ThemedText } from "@/components/themed-text";
+import { Colors } from "@/constants/theme";
+import { useColorScheme } from "@/hooks/use-color-scheme";
+import { useRouter } from "expo-router";
+import React, { useEffect, useState } from "react";
+import { Alert, StyleSheet, Text, TouchableOpacity, useWindowDimensions, View } from "react-native";
+import { ScrollView } from "react-native-gesture-handler";
 
 export default function GeneralSettingScreen() {
   const colorScheme = useColorScheme() ?? "light";
-  const styles = createStyles(colorScheme);
+  const {width, height} = useWindowDimensions();
+  const isTablet = Math.min(width, height) >= 600;
+  const isLandscape = width > height;
+  const isTabletLandscape = isTablet && isLandscape;
+  const styles = createStyles(colorScheme, isTablet, isTabletLandscape);
   const router = useRouter();
   const [language, setLanguage] = useState<LanguageValue>("id");
   const [showLanguageModal, setShowLanguageModal] = useState(false);
@@ -99,6 +102,7 @@ export default function GeneralSettingScreen() {
         contentContainerStyle={styles.scrollContainer}
         showsVerticalScrollIndicator={false}
       >
+        <View style={styles.contentWrapper}>
         <View style={styles.sectionCardHighlight}>
           <ThemedText type="subtitle-2" style={styles.syncTitle}>
             Sinkronisasi Data{" "}
@@ -121,8 +125,10 @@ export default function GeneralSettingScreen() {
             />
           </View>
         </View>
+        </View>
         <SectionDivider />
 
+        <View style={styles.contentWrapper}>
         <View style={styles.sectionCard}>
           <ThemedText type="subtitle-2" style={styles.sectionTitle}>
             Umum
@@ -137,8 +143,10 @@ export default function GeneralSettingScreen() {
             onPress={() => setShowLanguageModal(true)}
           />
         </View>
+        </View>
         <SectionDivider />
 
+        <View style={styles.contentWrapper}>
         <View style={styles.sectionCard}>
           <View style={styles.sectionHeaderRow}>
             <ThemedText type="subtitle-2" style={styles.sectionTitle}>
@@ -178,6 +186,7 @@ export default function GeneralSettingScreen() {
             onPress={() => router.push("/dashboard/setting/receipt" as never)}
           />
         </View>
+        </View>
       </ScrollView>
 
       <SelectLanguageModal
@@ -193,28 +202,34 @@ export default function GeneralSettingScreen() {
   );
 }
 
-const createStyles = (colorScheme: "light" | "dark") =>
+const createStyles = (colorScheme: "light" | "dark", isTablet: boolean, isTabletLandscape: boolean) =>
   StyleSheet.create({
     container: {
       flex: 1,
       backgroundColor: Colors[colorScheme].background,
     },
     scrollContainer: {
-      paddingBottom: 20,
+      paddingBottom: isTablet ? 32 : 20,
+      paddingHorizontal: isTablet ? 40 : 0,
+    },
+    contentWrapper: {
+      width: "100%",
+      maxWidth: isTabletLandscape ? 960 : undefined,
+      alignSelf: "center",
     },
     sectionCard: {
-      marginTop: 12,
-      borderRadius: 8,
+      marginTop: isTablet ? 20 : 12,
+      borderRadius: isTablet ? 12 : 8,
       backgroundColor: Colors[colorScheme].background,
-      paddingHorizontal: 24,
-      paddingVertical: 8,
+      paddingHorizontal: isTablet ? 32 : 24,
+      paddingVertical: isTablet ? 12 : 8,
     },
     sectionCardHighlight: {
-      borderRadius: 8,
+      borderRadius: isTablet ? 12 : 8,
       backgroundColor: Colors[colorScheme].secondary,
-      paddingHorizontal: 24,
-      paddingVertical: 24,
-      gap: 4,
+      paddingHorizontal: isTablet ? 32 : 24,
+      paddingVertical: isTablet ? 32 : 24,
+      gap: isTablet ? 8 : 4,
     },
     sectionHeaderRow: {
       flexDirection: "row",
@@ -225,47 +240,48 @@ const createStyles = (colorScheme: "light" | "dark") =>
       flexDirection: "row",
       alignItems: "center",
       justifyContent: "space-between",
-      marginTop: 10,
+      marginTop: isTablet ? 16 : 10,
     },
     syncTitle: {
-      lineHeight: 20,
-      fontSize: 16,
+      lineHeight: isTablet ? 28 : 20,
+      fontSize: isTablet ? 20 : 16,
     },
     syncSubtitle: {
       color: Colors[colorScheme].icon,
-      fontSize: 14,
+      fontSize: isTablet ? 18 : 14,
     },
     syncLastLabel: {
       color: Colors[colorScheme].text,
-      fontSize: 16,
+      fontSize: isTablet ? 20 : 16,
       fontWeight: "600",
     },
     syncLastTime: {
-      fontSize: 14,
+      fontSize: isTablet ? 18 : 14,
       color: Colors[colorScheme].icon,
     },
     sectionTitle: {
       fontWeight: "600",
-      fontSize: 16,
+      fontSize: isTablet ? 20 : 16,
     },
     menuRowTitle: {
       fontWeight: "400",
-      fontSize: 16,
+      fontSize: isTablet ? 20 : 16,
     },
     buyNowText: {
       color: Colors[colorScheme].primary,
+      fontSize: isTablet ? 18 : 14,
     },
     printerRow: {
-      marginTop: 24,
+      marginTop: isTablet ? 32 : 24,
       minHeight: 0,
-      paddingVertical: 12,
+      paddingVertical: isTablet ? 16 : 12,
     },
     scannerRow: {
       minHeight: 0,
-      paddingVertical: 12,
+      paddingVertical: isTablet ? 16 : 12,
     },
     receiptRow: {
       minHeight: 0,
-      paddingVertical: 12,
+      paddingVertical: isTablet ? 16 : 12,
     },
   });

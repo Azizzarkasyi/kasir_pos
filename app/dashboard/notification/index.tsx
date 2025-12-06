@@ -1,18 +1,18 @@
 import Header from "@/components/header";
-import {ThemedText} from "@/components/themed-text";
-import {Colors} from "@/constants/theme";
-import {useColorScheme} from "@/hooks/use-color-scheme";
-import {useRouter} from "expo-router";
-import React, {useState} from "react";
+import { ThemedText } from "@/components/themed-text";
+import { Colors } from "@/constants/theme";
+import { useColorScheme } from "@/hooks/use-color-scheme";
+import { Ionicons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
+import React, { useState } from "react";
 import {
-  Image,
-  StyleSheet,
-  View,
   FlatList,
-  TouchableOpacity,
+  Image,
   RefreshControl,
+  StyleSheet,
+  TouchableOpacity,
+  View, useWindowDimensions,
 } from "react-native";
-import {Ionicons} from "@expo/vector-icons";
 
 type NotificationType = "info" | "promo";
 
@@ -55,7 +55,11 @@ const mockNotifications: Notification[] = [
 
 const NotificationScreen = () => {
   const colorScheme = useColorScheme() ?? "light";
-  const styles = createStyles(colorScheme);
+  const { width, height } = useWindowDimensions();
+  const isTablet = Math.min(width, height) >= 600;
+  const isLandscape = width > height;
+  const isTabletLandscape = isTablet && isLandscape;
+  const styles = createStyles(colorScheme, isTablet, isTabletLandscape);
   const router = useRouter();
 
   const [activeTab, setActiveTab] = useState<NotificationType>("info");
@@ -78,7 +82,7 @@ const NotificationScreen = () => {
 
   const markAsRead = (id: string) => {
     setNotifications(prev =>
-      prev.map(n => (n.id === id ? {...n, isRead: true} : n))
+      prev.map(n => (n.id === id ? { ...n, isRead: true } : n))
     );
   };
 
@@ -102,7 +106,7 @@ const NotificationScreen = () => {
     }
   };
 
-  const renderNotificationItem = ({item}: {item: Notification}) => (
+  const renderNotificationItem = ({ item }: { item: Notification }) => (
     <TouchableOpacity
       style={[
         styles.notificationCard,
@@ -136,39 +140,41 @@ const NotificationScreen = () => {
     <View style={styles.container}>
       <Header title="Notifikasi" showHelp={false} />
 
-      <View style={styles.tabRow}>
-        <TouchableOpacity
-          style={[
-            styles.tabButton,
-            activeTab === "info" && styles.tabButtonActive,
-          ]}
-          onPress={() => setActiveTab("info")}
-        >
-          <ThemedText
+      <View style={styles.contentWrapper}>
+        <View style={styles.tabRow}>
+          <TouchableOpacity
             style={[
-              styles.tabText,
-              activeTab === "info" && styles.tabTextActive,
+              styles.tabButton,
+              activeTab === "info" && styles.tabButtonActive,
             ]}
+            onPress={() => setActiveTab("info")}
           >
-            Informasi
-          </ThemedText>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[
-            styles.tabButton,
-            activeTab === "promo" && styles.tabButtonActive,
-          ]}
-          onPress={() => setActiveTab("promo")}
-        >
-          <ThemedText
+            <ThemedText
+              style={[
+                styles.tabText,
+                activeTab === "info" && styles.tabTextActive,
+              ]}
+            >
+              Informasi
+            </ThemedText>
+          </TouchableOpacity>
+          <TouchableOpacity
             style={[
-              styles.tabText,
-              activeTab === "promo" && styles.tabTextActive,
+              styles.tabButton,
+              activeTab === "promo" && styles.tabButtonActive,
             ]}
+            onPress={() => setActiveTab("promo")}
           >
-            Promo
-          </ThemedText>
-        </TouchableOpacity>
+            <ThemedText
+              style={[
+                styles.tabText,
+                activeTab === "promo" && styles.tabTextActive,
+              ]}
+            >
+              Promo
+            </ThemedText>
+          </TouchableOpacity>
+        </View>
       </View>
 
       {filteredNotifications.length > 0 ? (
@@ -191,7 +197,7 @@ const NotificationScreen = () => {
           <Image
             source={require("@/assets/ilustrations/empty-notif.png")}
             style={styles.emptyImage}
-            resizeMode="cover"
+            resizeMode="contain"
           />
           <ThemedText style={styles.emptyText}>Belum Ada Notifikasi</ThemedText>
         </View>
@@ -200,11 +206,16 @@ const NotificationScreen = () => {
   );
 };
 
-const createStyles = (colorScheme: "light" | "dark") =>
+const createStyles = (colorScheme: "light" | "dark", isTablet: boolean, isTabletLandscape: boolean) =>
   StyleSheet.create({
     container: {
       flex: 1,
       backgroundColor: Colors[colorScheme].background,
+    },
+    contentWrapper: {
+      width: "100%",
+      maxWidth: isTabletLandscape ? 960 : undefined,
+      alignSelf: "center",
     },
     headerRow: {
       flexDirection: "row",
@@ -233,16 +244,16 @@ const createStyles = (colorScheme: "light" | "dark") =>
     },
     tabRow: {
       flexDirection: "row",
-      paddingHorizontal: 16,
-      paddingTop: 16,
-      paddingBottom: 8,
-      gap: 8,
+      paddingHorizontal: isTablet ? 24 : 16,
+      paddingTop: isTablet ? 20 : 16,
+      paddingBottom: isTablet ? 12 : 8,
+      gap: isTablet ? 12 : 8,
     },
     tabButton: {
       flex: 0,
-      minWidth: 110,
-      paddingVertical: 6,
-      paddingHorizontal: 12,
+      minWidth: isTablet ? 130 : 110,
+      paddingVertical: isTablet ? 10 : 6,
+      paddingHorizontal: isTablet ? 16 : 12,
       borderRadius: 16,
       borderWidth: 1,
       borderColor: Colors[colorScheme].border,
@@ -255,11 +266,11 @@ const createStyles = (colorScheme: "light" | "dark") =>
       backgroundColor: Colors[colorScheme].background,
     },
     tabText: {
-      fontSize: 13,
+      fontSize: isTablet ? 15 : 13,
       color: Colors[colorScheme].text,
     },
     tabTextActive: {
-      fontSize: 13,
+      fontSize: isTablet ? 15 : 13,
       color: Colors[colorScheme].primary,
       fontWeight: "600",
     },
@@ -267,17 +278,17 @@ const createStyles = (colorScheme: "light" | "dark") =>
       flex: 1,
       alignItems: "center",
       justifyContent: "center",
-      paddingHorizontal: 24,
-      marginTop: -40,
+      paddingHorizontal: isTablet ? 32 : 24,
+      marginTop: isTablet ? -20 : -40,
     },
     emptyImage: {
-      width: "90%",
-      height: 220,
+      width: isTablet ? "70%" : "90%",
+      height: isTablet ? 480 : 400,
       borderRadius: 16,
-      marginBottom: 16,
+      marginBottom: isTablet ? 20 : 16,
     },
     emptyText: {
-      fontSize: 16,
+      fontSize: isTablet ? 18 : 16,
       color: Colors[colorScheme].icon,
     },
     listContainer: {

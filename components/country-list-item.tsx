@@ -1,7 +1,7 @@
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import React from 'react';
-import { StyleSheet, TouchableOpacity } from 'react-native';
+import { StyleSheet, TouchableOpacity, useWindowDimensions } from 'react-native';
 import RadioButton from './radio-button';
 import { ThemedText } from './themed-text';
 
@@ -13,7 +13,9 @@ interface CountryListItemProps {
 
 const CountryListItem: React.FC<CountryListItemProps> = ({ item, selected, onPress }) => {
   const colorScheme = useColorScheme() ?? 'light';
-  const styles = createStyles(colorScheme);
+  const { width, height } = useWindowDimensions();
+  const isTablet = Math.min(width, height) >= 600;
+  const styles = createStyles(colorScheme, isTablet);
 
   return (
     <TouchableOpacity style={styles.container} onPress={onPress}>
@@ -23,17 +25,18 @@ const CountryListItem: React.FC<CountryListItemProps> = ({ item, selected, onPre
   );
 };
 
-const createStyles = (colorScheme: 'light' | 'dark') =>
+const createStyles = (colorScheme: 'light' | 'dark', isTablet: boolean) =>
   StyleSheet.create({
     container: {
       flexDirection: 'row',
       alignItems: 'center',
-      paddingVertical: 16,
+      paddingVertical: 18,
       borderBottomWidth: 1,
       borderBottomColor: Colors[colorScheme].border2,
     },
     text: {
       marginLeft: 16,
+      fontSize: isTablet ? 18 : 16,
     },
   });
 

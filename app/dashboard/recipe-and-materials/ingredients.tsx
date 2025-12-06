@@ -3,19 +3,19 @@ import ConfirmationDialog, {
   ConfirmationDialogHandle,
 } from "@/components/drawers/confirmation-dialog";
 import Header from "@/components/header";
-import {ThemedButton} from "@/components/themed-button";
-import {ThemedInput} from "@/components/themed-input";
-import {ThemedText} from "@/components/themed-text";
-import {Colors} from "@/constants/theme";
-import {useColorScheme} from "@/hooks/use-color-scheme";
+import { ThemedButton } from "@/components/themed-button";
+import { ThemedInput } from "@/components/themed-input";
+import { ThemedText } from "@/components/themed-text";
+import { Colors } from "@/constants/theme";
+import { useColorScheme } from "@/hooks/use-color-scheme";
 import productApi from "@/services/endpoints/products";
-import {Product, ProductVariant} from "@/types/api";
-import {useRecipeFormStore} from "@/stores/recipe-form-store";
-import {useNavigation, useRouter} from "expo-router";
-import React, {useEffect, useRef, useState} from "react";
-import {ActivityIndicator, StyleSheet, Text, View} from "react-native";
-import {KeyboardAwareScrollView} from "react-native-keyboard-aware-scroll-view";
-import {useSafeAreaInsets} from "react-native-safe-area-context";
+import { useRecipeFormStore } from "@/stores/recipe-form-store";
+import { Product, ProductVariant } from "@/types/api";
+import { useNavigation, useRouter } from "expo-router";
+import React, { useEffect, useRef, useState } from "react";
+import { ActivityIndicator, StyleSheet, Text, useWindowDimensions, View } from "react-native";
+import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 type IngredientVariant = {
   id: string;
@@ -26,13 +26,17 @@ type IngredientVariant = {
 type IngredientOption = {
   label: string;
   value: string;
-  unit: {id: string; name: string};
+  unit: { id: string; name: string };
   variants?: IngredientVariant[];
 };
 
 export default function IngredientsScreen() {
   const colorScheme = useColorScheme() ?? "light";
-  const styles = createStyles(colorScheme);
+  const { width, height } = useWindowDimensions();
+  const isTablet = Math.min(width, height) >= 600;
+  const isLandscape = width > height;
+  const isTabletLandscape = isTablet && isLandscape;
+  const styles = createStyles(colorScheme, isTablet, isTabletLandscape);
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const navigation = useNavigation();
@@ -71,7 +75,7 @@ export default function IngredientsScreen() {
             "✅ Loaded",
             ingredientProducts.length,
             "ingredients for recipe:",
-            ingredientProducts.map(p => ({id: p.id, name: p.name}))
+            ingredientProducts.map(p => ({ id: p.id, name: p.name }))
           );
         }
       } catch (error: any) {
@@ -96,7 +100,7 @@ export default function IngredientsScreen() {
         variants: found.variants?.length,
       });
       // Set unit (default to pcs if not available)
-      setSelectedUnit({id: "pcs", name: "Pcs"});
+      setSelectedUnit({ id: "pcs", name: "Pcs" });
 
       // Set available variants
       const vars = found.variants || [];
@@ -121,11 +125,11 @@ export default function IngredientsScreen() {
     console.log("🔍 Debug handleSave:", {
       selectedProductId,
       selectedProduct: selectedProduct
-        ? {id: selectedProduct.id, name: selectedProduct.name}
+        ? { id: selectedProduct.id, name: selectedProduct.name }
         : null,
       selectedVariantId,
       selectedVariant: selectedVariant
-        ? {id: selectedVariant.id, name: selectedVariant.name}
+        ? { id: selectedVariant.id, name: selectedVariant.name }
         : null,
       quantity: qtyNum,
     });
@@ -142,7 +146,7 @@ export default function IngredientsScreen() {
         variant_id: selectedVariant?.id,
       },
       unit: selectedUnit
-        ? {id: selectedUnit.id, name: selectedUnit.name}
+        ? { id: selectedUnit.id, name: selectedUnit.name }
         : undefined,
       amount: qtyNum,
     });
@@ -185,7 +189,7 @@ export default function IngredientsScreen() {
   }, [navigation, isDirty]);
 
   return (
-    <View style={{flex: 1, backgroundColor: Colors[colorScheme].background}}>
+    <View style={{ flex: 1, backgroundColor: Colors[colorScheme].background }}>
       <Header
         showHelp={false}
         title="Tambah Bahan Resep"
@@ -193,9 +197,9 @@ export default function IngredientsScreen() {
       />
       <KeyboardAwareScrollView
         contentContainerStyle={{
-          paddingHorizontal: 20,
-          paddingBottom: insets.bottom + 80,
-          paddingVertical: 32,
+          paddingHorizontal: isTablet ? 80 : 20,
+          paddingBottom: insets.bottom + (isTablet ? 100 : 80),
+          paddingVertical: isTablet ? 40 : 32,
         }}
         enableOnAndroid
         keyboardOpeningTime={0}
@@ -204,13 +208,13 @@ export default function IngredientsScreen() {
         showsVerticalScrollIndicator={false}
       >
         {isLoading ? (
-          <View style={{paddingTop: 40, alignItems: "center"}}>
+          <View style={styles.contentWrapper}>
             <ActivityIndicator
               size="large"
               color={Colors[colorScheme].primary}
             />
             <ThemedText
-              style={{marginTop: 16, color: Colors[colorScheme].icon}}
+              style={{ marginTop: 16, color: Colors[colorScheme].icon }}
             >
               Memuat daftar bahan...
             </ThemedText>
@@ -229,7 +233,7 @@ export default function IngredientsScreen() {
                 }
               }}
               items={[
-                {label: "Pilih Bahan", value: ""},
+                { label: "Pilih Bahan", value: "" },
                 ...ingredients.map(ing => ({
                   label: ing.name,
                   value: ing.id,
@@ -268,11 +272,14 @@ export default function IngredientsScreen() {
               numericOnly
             />
           </View>
+
         </View>
       </KeyboardAwareScrollView>
 
       <View style={styles.bottomBar}>
-        <ThemedButton title="Simpan" onPress={handleSave} />
+        <View style={styles.contentWrapper}>
+          <ThemedButton title="Simpan" onPress={handleSave} />
+        </View>
       </View>
 
       <ConfirmationDialog ref={confirmationRef} />
@@ -280,35 +287,40 @@ export default function IngredientsScreen() {
   );
 }
 
-const createStyles = (colorScheme: "light" | "dark") =>
+const createStyles = (colorScheme: "light" | "dark", isTablet: boolean, isTabletLandscape: boolean) =>
   StyleSheet.create({
+    contentWrapper: {
+      width: "100%",
+      maxWidth: isTabletLandscape ? 960 : undefined,
+      alignSelf: "center",
+    },
     bottomBar: {
       position: "absolute",
       left: 0,
       right: 0,
       bottom: 0,
-      paddingHorizontal: 20,
-      paddingBottom: 16,
-      paddingTop: 8,
+      paddingHorizontal: isTablet ? 80 : 20,
+      paddingBottom: isTablet ? 24 : 16,
+      paddingTop: isTablet ? 12 : 8,
       backgroundColor: Colors[colorScheme].background,
     },
     quantityRow: {
       flexDirection: "row",
       alignItems: "center",
-      gap: 12,
+      gap: isTablet ? 16 : 12,
     },
     unitBox: {
-      minWidth: 72,
-      height: 56,
-      paddingHorizontal: 12,
+      minWidth: isTablet ? 100 : 72,
+      height: isTablet ? 64 : 56,
+      paddingHorizontal: isTablet ? 16 : 12,
       borderWidth: 1,
-      borderRadius: 8,
+      borderRadius: isTablet ? 12 : 8,
       borderColor: Colors[colorScheme].border,
       justifyContent: "center",
       alignItems: "center",
     },
     unitText: {
-      fontSize: 14,
+      fontSize: isTablet ? 18 : 14,
       color: Colors[colorScheme].text,
     },
     quantityInputWrapper: {

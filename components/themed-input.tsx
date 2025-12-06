@@ -1,7 +1,7 @@
-import {Colors} from "@/constants/theme";
-import {useColorScheme} from "@/hooks/use-color-scheme";
-import {Ionicons} from "@expo/vector-icons";
-import React, {useEffect, useRef, useState} from "react";
+import { Colors } from "@/constants/theme";
+import { useColorScheme } from "@/hooks/use-color-scheme";
+import { Ionicons } from "@expo/vector-icons";
+import React, { useEffect, useRef, useState } from "react";
 import {
   Animated,
   StyleSheet,
@@ -9,6 +9,7 @@ import {
   TextInput,
   TouchableOpacity,
   View,
+  useWindowDimensions,
   type TextInputProps,
   type ViewStyle,
 } from "react-native";
@@ -57,7 +58,16 @@ export function ThemedInput({
   const value = rest.value || "";
   const colorScheme = useColorScheme() ?? "light";
   const editable = rest.editable ?? true;
-  const styles = createStyles(colorScheme, !!error, isFocused, size, editable);
+  const {width: screenWidth, height: screenHeight} = useWindowDimensions();
+  const isTablet = Math.min(screenWidth, screenHeight) >= 600;
+  const styles = createStyles(
+    colorScheme,
+    !!error,
+    isFocused,
+    size,
+    editable,
+    isTablet,
+  );
 
   // Handle numeric-only input
   const handleTextChange = (text: string) => {
@@ -95,7 +105,13 @@ export function ThemedInput({
     size === "sm" ? [12, -8] : size === "md" ? [14, -8] : [16, -8];
 
   const labelFontRange: [number, number] =
-    size === "sm" ? [14, 12] : size === "md" ? [15, 12] : [16, 12];
+    size === "sm"
+      ? isTablet ? [18, 14] : [14, 12]
+      : size === "md"
+      ? isTablet ? [19, 14] : [15, 12]
+      : isTablet
+      ? [20, 14]
+      : [16, 12];
 
   const labelStyle = {
     top: focusAnim.interpolate({
@@ -181,7 +197,8 @@ const createStyles = (
   hasError: boolean,
   isFocused: boolean,
   size: "sm" | "base" | "md",
-  editable: boolean
+  editable: boolean,
+  isTablet: boolean,
 ) =>
   StyleSheet.create({
     container: {
@@ -200,15 +217,36 @@ const createStyles = (
         : isFocused
         ? Colors[colorScheme].primary
         : Colors[colorScheme].border,
-      paddingHorizontal: size === "sm" ? 10 : size === "md" ? 14 : 12,
-      minHeight: size === "sm" ? 48 : size === "md" ? 52 : 56,
+      paddingHorizontal:
+        size === "sm"
+          ? isTablet ? 14 : 10
+          : size === "md"
+          ? isTablet ? 18 : 14
+          : isTablet
+          ? 16
+          : 12,
+      minHeight:
+        size === "sm"
+          ? isTablet ? 56 : 48
+          : size === "md"
+          ? isTablet ? 60 : 52
+          : isTablet
+          ? 64
+          : 56,
       flexDirection: "row",
       alignItems: "center",
       position: "relative",
     },
     label: {
       position: "absolute",
-      fontSize: size === "sm" ? 14 : size === "md" ? 14 : 16,
+      fontSize:
+        size === "sm"
+          ? isTablet ? 18 : 14
+          : size === "md"
+          ? isTablet ? 19 : 14
+          : isTablet
+          ? 20
+          : 16,
       top: size === "sm" ? 12 : size === "md" ? 12 : 16,
       left: 12,
     },
@@ -217,7 +255,14 @@ const createStyles = (
     },
     input: {
       flex: 1,
-      fontSize: size === "sm" ? 14 : size === "md" ? 15 : 16,
+      fontSize:
+        size === "sm"
+          ? isTablet ? 18 : 14
+          : size === "md"
+          ? isTablet ? 19 : 15
+          : isTablet
+          ? 20
+          : 16,
       color: Colors[colorScheme].text,
       height: "100%",
     },
@@ -226,7 +271,7 @@ const createStyles = (
     },
     errorText: {
       color: "red",
-      fontSize: 12,
+      fontSize: isTablet ? 14 : 12,
       marginTop: 4,
       marginLeft: 12,
     },

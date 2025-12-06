@@ -4,7 +4,7 @@ import { Colors } from "@/constants/theme";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { Ionicons } from "@expo/vector-icons";
 import React from "react";
-import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { Image, StyleSheet, Text, TouchableOpacity, useWindowDimensions, View } from "react-native";
 
 type CheckoutItemProps = {
   index: number;
@@ -15,6 +15,8 @@ type CheckoutItemProps = {
   productImageUrl?: string;
   hideDeleteButton?: boolean;
   hideIndex?: boolean;
+  withSummary?: boolean;
+  isTablet?: boolean;
 };
 
 const CheckoutItem: React.FC<CheckoutItemProps> = ({
@@ -23,12 +25,16 @@ const CheckoutItem: React.FC<CheckoutItemProps> = ({
   quantity,
   unitPrice,
   onRemove,
+  withSummary, 
   productImageUrl,
   hideDeleteButton,
   hideIndex,
+  isTablet: isTabletProp,
 }) => {
   const colorScheme = useColorScheme() ?? "light";
-  const styles = createStyles(colorScheme);
+  const { width, height } = useWindowDimensions();
+  const isTablet = isTabletProp ?? Math.min(width, height) >= 600;
+  const styles = createStyles(colorScheme, isTablet);
 
   const initials = React.useMemo(() => {
     const trimmed = name.trim();
@@ -71,7 +77,7 @@ const CheckoutItem: React.FC<CheckoutItemProps> = ({
           <Text style={styles.detailText}>
             Rp {formatCurrency(unitPrice)} x {quantity}
           </Text>
-          <Text style={styles.totalText}>Rp {formatCurrency(subtotal)}</Text>
+          {withSummary && <Text style={styles.totalText}>Rp {formatCurrency(subtotal)}</Text>}
         </View>
       </View>
 
@@ -83,7 +89,7 @@ const CheckoutItem: React.FC<CheckoutItemProps> = ({
         >
           <Ionicons
             name="trash-outline"
-            size={20}
+            size={isTablet ? 26 : 20}
             color="#EF4444"
           />
         </TouchableOpacity>
@@ -92,40 +98,40 @@ const CheckoutItem: React.FC<CheckoutItemProps> = ({
   );
 };
 
-const createStyles = (colorScheme: "light" | "dark") =>
+const createStyles = (colorScheme: "light" | "dark", isTablet: boolean) =>
   StyleSheet.create({
     container: {
       flexDirection: "row",
       alignItems: "center",
-      paddingVertical: 12,
-      paddingHorizontal: 16,
-      columnGap: 12,
+      paddingVertical: isTablet ? 16 : 12,
+      paddingHorizontal: isTablet ? 20 : 16,
+      columnGap: isTablet ? 16 : 12,
     },
     indexText: {
-      width: 18,
-      fontSize: 14,
+      width: isTablet ? 28 : 18,
+      fontSize: isTablet ? 20 : 14,
       fontWeight: "500",
       color: Colors[colorScheme].text,
     },
     avatarWrapper: {
-      marginRight: 8,
+      marginRight: isTablet ? 12 : 8,
     },
     avatarCircle: {
-      width: 40,
-      height: 40,
-      borderRadius: 20,
+      width: isTablet ? 52 : 40,
+      height: isTablet ? 52 : 40,
+      borderRadius: isTablet ? 26 : 20,
       alignItems: "center",
       justifyContent: "center",
       backgroundColor: Colors[colorScheme].border,
     },
     avatarImage: {
-      width: 40,
-      height: 40,
-      borderRadius: 20,
+      width: isTablet ? 52 : 40,
+      height: isTablet ? 52 : 40,
+      borderRadius: isTablet ? 26 : 20,
       resizeMode: "cover",
     },
     avatarText: {
-      fontSize: 14,
+      fontSize: isTablet ? 20 : 14,
       fontWeight: "600",
       color: Colors[colorScheme].icon,
       opacity: 0.7,
@@ -134,10 +140,10 @@ const createStyles = (colorScheme: "light" | "dark") =>
       flex: 1,
     },
     nameText: {
-      fontSize: 15,
+      fontSize: isTablet ? 20 : 15,
       fontWeight: "500",
       color: Colors[colorScheme].text,
-      marginBottom: 2,
+      marginBottom: isTablet ? 4 : 2,
     },
     detailRow: {
       flexDirection: "row",
@@ -145,17 +151,17 @@ const createStyles = (colorScheme: "light" | "dark") =>
       justifyContent: "space-between",
     },
     detailText: {
-      fontSize: 13,
+      fontSize: isTablet ? 18 : 13,
       color: Colors[colorScheme].icon,
     },
     totalText: {
-      fontSize: 13,
+      fontSize: isTablet ? 18 : 13,
       fontWeight: "600",
       color: Colors[colorScheme].text,
     },
     deleteButton: {
-      paddingHorizontal: 4,
-      paddingVertical: 4,
+      paddingHorizontal: isTablet ? 8 : 4,
+      paddingVertical: isTablet ? 8 : 4,
     },
   });
 

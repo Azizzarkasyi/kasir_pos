@@ -1,13 +1,13 @@
 "use client";
 
 import Header from "@/components/header";
-import {Colors} from "@/constants/theme";
-import {useColorScheme} from "@/hooks/use-color-scheme";
-import {Ionicons} from "@expo/vector-icons";
-import {useRouter, useLocalSearchParams} from "expo-router";
-import React, {useEffect, useState} from "react";
-import {StyleSheet, Text, TouchableOpacity, View, Share} from "react-native";
-import {useCartStore} from "@/stores/cart-store";
+import { Colors } from "@/constants/theme";
+import { useColorScheme } from "@/hooks/use-color-scheme";
+import { useCartStore } from "@/stores/cart-store";
+import { Ionicons } from "@expo/vector-icons";
+import { useLocalSearchParams, useRouter } from "expo-router";
+import React, { useEffect, useState } from "react";
+import { ScrollView, Share, StyleSheet, Text, TouchableOpacity, useWindowDimensions, View } from "react-native";
 
 type TransactionResult = {
   id: string;
@@ -21,7 +21,11 @@ type TransactionResult = {
 
 export default function TransactionSettlementPage() {
   const colorScheme = useColorScheme() ?? "light";
-  const styles = createStyles(colorScheme);
+  const { width, height } = useWindowDimensions();
+  const isTablet = Math.min(width, height) >= 600;
+  const isLandscape = width > height;
+  const isTabletLandscape = isTablet && isLandscape;
+  const styles = createStyles(colorScheme, isTablet, isTabletLandscape);
   const router = useRouter();
   const params = useLocalSearchParams();
 
@@ -101,48 +105,51 @@ export default function TransactionSettlementPage() {
         title="Pembayaran Berhasil"
         withNotificationButton={false}
       />
-      <View style={styles.contentWrapper}>
-        <View style={styles.statusWrapper}>
-          <View style={styles.statusIconWrapper}>
-            <Ionicons
-              name="checkmark"
-              size={40}
-              color={Colors[colorScheme].primary}
-            />
-          </View>
+      <ScrollView
+        style={styles.scrollWrapper}
+        contentContainerStyle={styles.scrollContent}
+      >
+        <View style={styles.contentWrapper}>
+          <View style={styles.statusWrapper}>
+            <View style={styles.statusIconWrapper}>
+              <Ionicons
+                name="checkmark"
+                size={isTablet ? 56 : 40}
+                color={Colors[colorScheme].primary}
+              />
+            </View>
 
-          <Text style={styles.successTitle}>Transaksi Berhasil</Text>
-          <Text style={styles.successSubtitle}>{transactionDate}</Text>
+            <Text style={styles.successTitle}>Transaksi Berhasil</Text>
+            <Text style={styles.successSubtitle}>{transactionDate}</Text>
           {transaction?.invoiceNumber && (
             <Text style={[styles.successSubtitle, {marginTop: 4}]}>
               #{transaction.invoiceNumber}
             </Text>
-          )}
+            )}
         </View>
 
-        <View style={styles.detailWrapper}>
-          <View style={styles.detailRow}>
-            <Text style={styles.detailLabel}>Pembayaran</Text>
-            <Text style={styles.detailValue}>{paymentMethod}</Text>
-          </View>
-          <View style={styles.detailRow}>
-            <Text style={styles.detailLabel}>Total Tagihan</Text>
-            <Text style={styles.detailValue}>
+          <View style={styles.detailWrapper}>
+            <View style={styles.detailRow}>
+              <Text style={styles.detailLabel}>Pembayaran</Text>
+              <Text style={styles.detailValue}>{paymentMethod}</Text>
+            </View>
+            <View style={styles.detailRow}>
+              <Text style={styles.detailLabel}>Total Tagihan</Text>
+              <Text style={styles.detailValue}>
               Rp{formatCurrency(totalTagihan)}
             </Text>
+            </View>
+            <View style={styles.detailRow}>
+              <Text style={styles.detailLabel}>Diterima</Text>
+              <Text style={styles.detailValue}>Rp{formatCurrency(diterima)}</Text>
+            </View>
+            <View style={styles.detailRow}>
+              <Text style={styles.detailLabel}>Kembali</Text>
+              <Text style={styles.detailValue}>Rp{formatCurrency(kembali)}</Text>
+            </View>
           </View>
-          <View style={styles.detailRow}>
-            <Text style={styles.detailLabel}>Diterima</Text>
-            <Text style={styles.detailValue}>Rp{formatCurrency(diterima)}</Text>
-          </View>
-          <View style={styles.detailRow}>
-            <Text style={styles.detailLabel}>Kembali</Text>
-            <Text style={styles.detailValue}>Rp{formatCurrency(kembali)}</Text>
-          </View>
-        </View>
-      </View>
 
-      <View style={styles.bottomWrapper}>
+          <View style={styles.bottomWrapper}>
         <View style={styles.topButtonsRow}>
           <TouchableOpacity
             style={styles.secondaryButton}
@@ -170,67 +177,78 @@ export default function TransactionSettlementPage() {
           </TouchableOpacity>
         </View>
 
-        <TouchableOpacity
-          style={[
+          <TouchableOpacity
+            style={[
             styles.primaryButton,
             {backgroundColor: Colors[colorScheme].primary},
           ]}
-          onPress={handleNewTransaction}
-        >
-          <Text
-            style={[
-              styles.primaryButtonText,
-              {color: Colors[colorScheme].text},
-            ]}
+            onPress={handleNewTransaction}
           >
-            Transaksi Baru
-          </Text>
-        </TouchableOpacity>
-      </View>
+            <Text
+              style={[
+                styles.primaryButtonText,
+                {color: "white"},
+              ]}
+            >
+              Transaksi Baru
+            </Text>
+          </TouchableOpacity>
+          </View>
+        </View>
+      </ScrollView>
     </View>
   );
 }
 
-const createStyles = (colorScheme: "light" | "dark") =>
+const createStyles = (colorScheme: "light" | "dark", isTablet: boolean, isTabletLandscape: boolean) =>
   StyleSheet.create({
     container: {
       flex: 1,
-      justifyContent: "space-between",
+    },
+    scrollWrapper: {
+      flex: 1,
+    },
+    scrollContent: {
+      flexGrow: 1,
+      paddingHorizontal: isTablet ? 24 : 16,
     },
     contentWrapper: {
       flex: 1,
-      paddingHorizontal: 24,
-      paddingTop: 40,
+      width: "100%",
+      maxWidth: isTabletLandscape ? 960 : undefined,
+      alignSelf: "center",
+      paddingTop: isTablet ? 56 : 40,
       alignItems: "center",
     },
     statusWrapper: {
       alignItems: "center",
-      marginBottom: 32,
+      marginBottom: isTablet ? 48 : 32,
     },
     statusIconWrapper: {
-      width: 96,
-      height: 96,
-      borderRadius: 48,
-      borderWidth: 4,
+      width: isTablet ? 120 : 96,
+      height: isTablet ? 120 : 96,
+      borderRadius: isTablet ? 60 : 48,
+      borderWidth: isTablet ? 5 : 4,
       borderColor: Colors[colorScheme].primary,
       alignItems: "center",
       justifyContent: "center",
-      marginBottom: 24,
+      marginBottom: isTablet ? 32 : 24,
     },
     successTitle: {
-      fontSize: 22,
+      fontSize: isTablet ? 28 : 22,
       fontWeight: "700",
       color: Colors[colorScheme].text,
-      marginBottom: 6,
+      marginBottom: isTablet ? 10 : 6,
     },
     successSubtitle: {
-      fontSize: 14,
+      fontSize: isTablet ? 18 : 14,
       color: Colors[colorScheme].icon,
     },
     detailWrapper: {
       width: "100%",
-      marginTop: 32,
-      rowGap: 16,
+      maxWidth: isTablet ? 500 : undefined,
+      marginTop: isTablet ? 48 : 32,
+      rowGap: isTablet ? 20 : 16,
     },
     detailRow: {
       flexDirection: "row",
@@ -238,30 +256,30 @@ const createStyles = (colorScheme: "light" | "dark") =>
       justifyContent: "space-between",
     },
     detailLabel: {
-      fontSize: 15,
+      fontSize: isTablet ? 18 : 15,
       color: Colors[colorScheme].icon,
     },
     detailValue: {
-      fontSize: 15,
+      fontSize: isTablet ? 18 : 15,
       fontWeight: "600",
       color: Colors[colorScheme].text,
     },
     bottomWrapper: {
-      paddingHorizontal: 16,
-      paddingVertical: 20,
+      width: "100%",
+      paddingVertical: isTablet ? 24 : 20,
+      marginTop: isTablet ? 48 : 32,
       borderTopWidth: 1,
       borderTopColor: Colors[colorScheme].border,
-      backgroundColor: Colors[colorScheme].background,
-      rowGap: 12,
+      rowGap: isTablet ? 16 : 12,
     },
     topButtonsRow: {
       flexDirection: "row",
-      columnGap: 12,
+      columnGap: isTablet ? 16 : 12,
     },
     secondaryButton: {
       flex: 1,
-      height: 48,
-      borderRadius: 8,
+      height: isTablet ? 56 : 48,
+      borderRadius: isTablet ? 10 : 8,
       alignItems: "center",
       justifyContent: "center",
       borderWidth: 1,
@@ -270,8 +288,8 @@ const createStyles = (colorScheme: "light" | "dark") =>
     },
     secondaryFullButton: {
       width: "100%",
-      height: 48,
-      borderRadius: 8,
+      height: isTablet ? 56 : 48,
+      borderRadius: isTablet ? 10 : 8,
       alignItems: "center",
       justifyContent: "center",
       borderWidth: 1,
@@ -279,19 +297,19 @@ const createStyles = (colorScheme: "light" | "dark") =>
       backgroundColor: Colors[colorScheme].secondary,
     },
     secondaryButtonText: {
-      fontSize: 14,
+      fontSize: isTablet ? 18 : 14,
       fontWeight: "600",
       color: Colors[colorScheme].text,
     },
     primaryButton: {
       width: "100%",
-      height: 52,
-      borderRadius: 8,
+      height: isTablet ? 60 : 52,
+      borderRadius: isTablet ? 10 : 8,
       alignItems: "center",
       justifyContent: "center",
     },
     primaryButtonText: {
-      fontSize: 16,
+      fontSize: isTablet ? 20 : 16,
       fontWeight: "700",
     },
   });

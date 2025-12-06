@@ -2,7 +2,7 @@ import { ThemedText } from "@/components/themed-text";
 import { Colors } from "@/constants/theme";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import React, { forwardRef, useCallback, useImperativeHandle, useState } from "react";
-import { Modal, StyleSheet, TouchableOpacity, View } from "react-native";
+import { Modal, StyleSheet, TouchableOpacity, View, useWindowDimensions } from "react-native";
 
 export type ShowConfirmationDialogParams = {
   title: string;
@@ -17,7 +17,9 @@ export type ConfirmationDialogHandle = {
 
 const ConfirmationDialog = forwardRef<ConfirmationDialogHandle>((_props, ref) => {
   const colorScheme = useColorScheme() ?? "light";
-  const styles = createStyles(colorScheme);
+  const {width, height} = useWindowDimensions();
+  const isTablet = Math.min(width, height) >= 600;
+  const styles = createStyles(colorScheme, isTablet);
 
   const [visible, setVisible] = useState(false);
   const [params, setParams] = useState<ShowConfirmationDialogParams | null>(null);
@@ -88,22 +90,22 @@ const ConfirmationDialog = forwardRef<ConfirmationDialogHandle>((_props, ref) =>
   );
 });
 
-const createStyles = (colorScheme: "light" | "dark") =>
+const createStyles = (colorScheme: "light" | "dark", isTablet: boolean) =>
   StyleSheet.create({
     backdrop: {
       flex: 1,
       backgroundColor: "rgba(0,0,0,0.45)",
       justifyContent: "center",
       alignItems: "center",
-      paddingHorizontal: 24,
+      paddingHorizontal: isTablet ? 32 : 24,
     },
     card: {
       width: "100%",
-      maxWidth: 420,
-      borderRadius: 16,
+      maxWidth: isTablet ? 520 : 420,
+      borderRadius: isTablet ? 20 : 16,
       backgroundColor: Colors[colorScheme].secondary,
-      paddingHorizontal: 24,
-      paddingVertical: 20,
+      paddingHorizontal: isTablet ? 28 : 24,
+      paddingVertical: isTablet ? 24 : 20,
       shadowColor: "#000",
       shadowOffset: { width: 0, height: 4 },
       shadowOpacity: 0.25,
@@ -112,25 +114,25 @@ const createStyles = (colorScheme: "light" | "dark") =>
     },
     title: {
       textAlign: "center",
-      fontSize: 18,
+      fontSize: isTablet ? 26 : 18,
       fontWeight: "700",
-      marginBottom: 8,
+      marginBottom: isTablet ? 18 : 8,
       color: Colors[colorScheme].text,
     },
     message: {
       textAlign: "center",
-      fontSize: 14,
+      fontSize: isTablet ? 20 : 14,
       color: Colors[colorScheme].icon,
-      marginBottom: 20,
+      marginBottom: isTablet ? 24 : 20,
     },
     actionsRow: {
       flexDirection: "row",
-      columnGap: 8,
+      columnGap: isTablet ? 12 : 8,
     },
     button: {
       flex: 1,
-      height: 44,
-      borderRadius: 8,
+      height: isTablet ? 52 : 44,
+      borderRadius: isTablet ? 10 : 8,
       alignItems: "center",
       justifyContent: "center",
     },
@@ -142,7 +144,7 @@ const createStyles = (colorScheme: "light" | "dark") =>
     buttonSecondaryText: {
       color: Colors[colorScheme].text,
       fontWeight: "500",
-      fontSize: 14,
+      fontSize: isTablet ? 18 : 14,
     },
     buttonPrimary: {
       backgroundColor: Colors[colorScheme].primary,
@@ -150,7 +152,7 @@ const createStyles = (colorScheme: "light" | "dark") =>
     buttonPrimaryText: {
       color: Colors[colorScheme].secondary,
       fontWeight: "600",
-      fontSize: 16,
+      fontSize: isTablet ? 20 : 16,
     },
   });
 

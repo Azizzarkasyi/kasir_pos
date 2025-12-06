@@ -1,7 +1,7 @@
 import { Colors } from "@/constants/theme";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import React from "react";
-import { StyleSheet, TouchableOpacity, View } from "react-native";
+import { StyleSheet, TouchableOpacity, useWindowDimensions, View } from "react-native";
 import { ThemedText } from "../themed-text";
 
 export type RecipeItemProps = {
@@ -20,7 +20,9 @@ const RecipeItem: React.FC<RecipeItemProps> = ({
   onPress,
 }) => {
   const colorScheme = useColorScheme() ?? "light";
-  const styles = createStyles(colorScheme);
+  const {width, height} = useWindowDimensions();
+  const isTablet = Math.min(width, height) >= 600;
+  const styles = createStyles(colorScheme, isTablet);
 
   return (
     <TouchableOpacity
@@ -48,42 +50,44 @@ const RecipeItem: React.FC<RecipeItemProps> = ({
   );
 };
 
-const createStyles = (colorScheme: "light" | "dark") =>
+const createStyles = (colorScheme: "light" | "dark", isTablet: boolean) =>
   StyleSheet.create({
     card: {
       flexDirection: "row",
       alignItems: "center",
-      gap: 12,
+      gap: isTablet ? 16 : 12,
       borderBottomColor: Colors[colorScheme].border,
       borderBottomWidth: 1,
-      borderRadius: 12,
-      paddingVertical: 10,
-
-      marginTop: 12,
+      borderRadius: isTablet ? 14 : 12,
+      paddingVertical: isTablet ? 14 : 10,
+      marginTop: isTablet ? 16 : 12,
       backgroundColor: Colors[colorScheme].secondary,
     },
     avatar: {
-      width: 48,
-      height: 48,
-      borderRadius: 12,
+      width: isTablet ? 60 : 48,
+      height: isTablet ? 60 : 48,
+      borderRadius: isTablet ? 14 : 12,
       backgroundColor: Colors[colorScheme].primary,
       alignItems: "center",
       justifyContent: "center",
     },
     name: {
       fontWeight: "700",
-      fontSize: 16,
+      fontSize: isTablet ? 20 : 16,
     },
     subtitle: {
       color: Colors[colorScheme].icon,
-      fontSize: 14,
+      fontSize: isTablet ? 18 : 14,
+      marginTop: isTablet ? 4 : 0,
     },
     rightText: {
       color: Colors[colorScheme].icon,
+      fontSize: isTablet ? 18 : 14,
     },
     avatarText: {
       color: Colors[colorScheme].secondary,
       fontWeight: "700",
+      fontSize: isTablet ? 20 : 16,
     },
   });
 

@@ -5,20 +5,21 @@ import { Colors } from "@/constants/theme";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { AntDesign, Ionicons } from "@expo/vector-icons";
 import React from "react";
-import { StyleSheet, TextInput, TouchableOpacity, View } from "react-native";
+import { StyleSheet, TextInput, TouchableOpacity, useWindowDimensions, View } from "react-native";
 
 type OutletItemProps = {
   name: string;
   isPrimary?: boolean;
   address: string;
   styles: ReturnType<typeof createStyles>;
+  isTablet: boolean;
 };
 
-const OutletItem: React.FC<OutletItemProps> = ({ name, isPrimary, address, styles }) => {
+const OutletItem: React.FC<OutletItemProps> = ({ name, isPrimary, address, styles, isTablet }) => {
   return (
     <TouchableOpacity activeOpacity={0.7} style={styles.outletCard}>
       <View style={styles.outletIconWrapper}>
-        <AntDesign name="shop" size={24} style={styles.outletIcon} />
+        <AntDesign name="shop" size={isTablet ? 32 : 24} style={styles.outletIcon} />
       </View>
 
       <View style={styles.outletInfoWrapper}>
@@ -38,60 +39,75 @@ const OutletItem: React.FC<OutletItemProps> = ({ name, isPrimary, address, style
 
 const SelectBranchScreen = () => {
   const colorScheme = useColorScheme() ?? "light";
-  const styles = createStyles(colorScheme);
+  const { width, height } = useWindowDimensions();
+  const isTablet = Math.min(width, height) >= 600;
+  const isLandscape = width > height;
+  const isTabletLandscape = isTablet && isLandscape;
+  const styles = createStyles(colorScheme, isTablet, isTabletLandscape);
   const [isSearchFocused, setIsSearchFocused] = React.useState(false);
 
   return (
-    <View style={styles.container}>
+    <>
       <Header
         showHelp={false}
         title="Pilih Outlet"
         withNotificationButton={false}
       />
-      <View
-        style={[styles.searchWrapper, isSearchFocused && styles.searchWrapperFocused]}
-      >
-        <Ionicons
-          name="search"
-          size={18}
-          style={styles.searchIcon}
-        />
-        <TextInput
-          placeholder="Cari Outlet"
-          placeholderTextColor="#A0A0A0"
-          style={styles.searchInput}
-          onFocus={() => setIsSearchFocused(true)}
-          onBlur={() => setIsSearchFocused(false)}
-        />
-      </View>
 
-      <OutletItem
-        name="Pusat"
-        isPrimary
-        address="Arjowinangun, Kalipare, Kab. Malang"
-        styles={styles}
-      />
-    </View>
+      <View style={styles.container}>
+        <View style={styles.contentWrapper}>
+          <View
+            style={[styles.searchWrapper, isSearchFocused && styles.searchWrapperFocused]}
+          >
+            <Ionicons
+              name="search"
+              size={isTablet ? 24 : 18}
+              style={styles.searchIcon}
+            />
+            <TextInput
+              placeholder="Cari Outlet"
+              placeholderTextColor="#A0A0A0"
+              style={styles.searchInput}
+              onFocus={() => setIsSearchFocused(true)}
+              onBlur={() => setIsSearchFocused(false)}
+            />
+          </View>
+
+          <OutletItem
+            name="Pusat"
+            isPrimary
+            address="Arjowinangun, Kalipare, Kab. Malang"
+            styles={styles}
+            isTablet={isTablet}
+          />
+        </View>
+      </View>
+    </>
   );
 };
 
-const createStyles = (colorScheme: "light" | "dark") =>
+const createStyles = (colorScheme: "light" | "dark", isTablet: boolean, isTabletLandscape: boolean) =>
   StyleSheet.create({
     container: {
       flex: 1,
-      paddingHorizontal: 16,
+      paddingHorizontal: isTablet ? 40 : 16,
       backgroundColor: Colors[colorScheme].background,
+    },
+    contentWrapper: {
+      width: "100%",
+      maxWidth: isTabletLandscape ? 960 : undefined,
+      alignSelf: "center",
     },
     searchWrapper: {
       flexDirection: "row",
       alignItems: "center",
-      borderRadius: 12,
+      borderRadius: isTablet ? 16 : 12,
       borderWidth: 1,
-      marginTop: 24,
+      marginTop: isTablet ? 32 : 24,
       borderColor: Colors[colorScheme].border,
-      paddingHorizontal: 12,
-      paddingVertical: 12,
-      marginBottom: 16,
+      paddingHorizontal: isTablet ? 16 : 12,
+      paddingVertical: isTablet ? 16 : 12,
+      marginBottom: isTablet ? 24 : 16,
       backgroundColor: Colors[colorScheme].secondary,
     },
     searchWrapperFocused: {
@@ -99,31 +115,31 @@ const createStyles = (colorScheme: "light" | "dark") =>
     },
     searchIcon: {
       color: Colors[colorScheme].icon,
-      marginRight: 8,
+      marginRight: isTablet ? 12 : 8,
     },
     searchInput: {
       flex: 1,
-      fontSize: 14,
+      fontSize: isTablet ? 20 : 14,
       paddingVertical: 0,
     },
     outletCard: {
       flexDirection: "row",
       alignItems: "center",
-      paddingHorizontal: 12,
-      paddingVertical: 12,
-      borderRadius: 12,
+      paddingHorizontal: isTablet ? 20 : 12,
+      paddingVertical: isTablet ? 18 : 12,
+      borderRadius: isTablet ? 16 : 12,
       backgroundColor: Colors[colorScheme].secondary,
       borderWidth: 1,
       borderColor: Colors[colorScheme].border,
     },
     outletIconWrapper: {
-      width: 40,
-      height: 40,
-      borderRadius: 8,
+      width: isTablet ? 56 : 40,
+      height: isTablet ? 56 : 40,
+      borderRadius: isTablet ? 12 : 8,
       alignItems: "center",
       justifyContent: "center",
       backgroundColor: Colors[colorScheme].border2,
-      marginRight: 12,
+      marginRight: isTablet ? 16 : 12,
     },
     outletIcon: {
       color: Colors[colorScheme].icon,
@@ -134,25 +150,26 @@ const createStyles = (colorScheme: "light" | "dark") =>
     outletTitleRow: {
       flexDirection: "row",
       alignItems: "center",
-      marginBottom: 1,
-      gap: 6,
+      marginBottom: isTablet ? 4 : 1,
+      gap: isTablet ? 10 : 6,
     },
     outletName: {
-      fontSize: 14,
+      fontSize: isTablet ? 20 : 14,
       fontWeight: "600",
       color: Colors[colorScheme].text,
     },
     outletBadge: {
-      paddingHorizontal: 8,
+      paddingHorizontal: isTablet ? 12 : 8,
+      paddingVertical: isTablet ? 2 : 0,
       borderRadius: 999,
       backgroundColor: Colors[colorScheme].primary,
     },
     outletBadgeText: {
-      fontSize: 10,
+      fontSize: isTablet ? 14 : 10,
       color: "white",
     },
     outletAddress: {
-      fontSize: 12,
+      fontSize: isTablet ? 18 : 12,
       color: Colors[colorScheme].icon,
     },
   });

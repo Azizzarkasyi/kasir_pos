@@ -8,7 +8,7 @@ import { useColorScheme } from "@/hooks/use-color-scheme";
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "expo-router";
 import React, { useState } from "react";
-import { FlatList, StyleSheet, View } from "react-native";
+import { FlatList, StyleSheet, View, useWindowDimensions } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const countries = [
@@ -27,7 +27,11 @@ const countries = [
 const SelectCountryScreen = () => {
   const colorScheme = useColorScheme() ?? "light";
   const insets = useSafeAreaInsets();
-  const styles = createStyles(colorScheme);
+  const { width, height } = useWindowDimensions();
+  const isTablet = Math.min(width, height) >= 600;
+  const isLandscape = width > height;
+  const isTabletLandscape = isTablet && isLandscape;
+  const styles = createStyles(colorScheme, isTablet, isTabletLandscape);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCountry, setSelectedCountry] = useState<string | null>(null);
   const navigation = useNavigation();
@@ -45,7 +49,7 @@ const SelectCountryScreen = () => {
   );
 
   return (
-    <View style={{ flex: 1, backgroundColor: Colors[colorScheme].background }}>
+    <View style={styles.container}>
       <Header title="Pilih Negara" />
       <View style={styles.headerContentWrapper}>
         <ThemedText style={styles.subtitle}>
@@ -63,25 +67,35 @@ const SelectCountryScreen = () => {
             placeholder="Cari Negara"
             onChangeText={setSearchQuery}
           />
-          <Ionicons
-            name="search"
-            size={25}
-            color={Colors[colorScheme].shadow}
-            style={{ position: "absolute", left: 15, top: 20 }}
-          />
+          <View
+            style={{
+              position: "absolute",
+              left: 15,
+              top: 0,
+              bottom: 0,
+              justifyContent: "center",
+            }}
+          >
+            <Ionicons
+              name="search"
+              size={25}
+              color={Colors[colorScheme].shadow}
+            />
+          </View>
         </View>
       </View>
-      <FlatList
-        data={filteredCountries}
-        renderItem={renderItem}
-        keyExtractor={item => item.id}
-        showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled"
-        style={{ backgroundColor: Colors[colorScheme].background, marginTop: 10 }}
-        contentContainerStyle={{
-          paddingHorizontal: 20,
-          paddingBottom: insets.bottom + 80,
-        }}
+      <View style={styles.listWrapper}>
+        <FlatList
+          data={filteredCountries}
+          renderItem={renderItem}
+          keyExtractor={item => item.id}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+          style={{ backgroundColor: Colors[colorScheme].background, marginTop: 10 }}
+          contentContainerStyle={{
+            paddingHorizontal: isTablet ? 24 : 16,
+            paddingBottom: insets.bottom + 80,
+          }}
         ListEmptyComponent={
           searchQuery
             ? (
@@ -102,7 +116,8 @@ const SelectCountryScreen = () => {
             )
             : null
         }
-      />
+        />
+      </View>
       <View style={styles.bottomBar}>
         <ThemedButton
           title="Lanjutkan"
@@ -114,24 +129,38 @@ const SelectCountryScreen = () => {
   );
 };
 
-const createStyles = (colorScheme: "light" | "dark") =>
+const createStyles = (
+  colorScheme: "light" | "dark",
+  isTablet: boolean,
+  isTabletLandscape: boolean,
+) =>
   StyleSheet.create({
     container: {
       flex: 1,
       backgroundColor: Colors[colorScheme].background,
-      paddingHorizontal: 20,
+      paddingHorizontal: 0,
     },
     content: {
       flex: 1,
     },
     headerContentWrapper: {
-      paddingHorizontal: 20,
-      marginTop: 20,
+      paddingHorizontal: isTablet ? 24 : 16,
+      marginTop: isTablet ? 32 : 16,
+      width: "100%",
+      maxWidth: isTabletLandscape ? 960 : undefined,
+      alignSelf: "center",
     },
     subtitle: {
       marginBottom: 12,
-      fontSize: 14,
+      fontSize: isTablet ? 18 : 14,
+      lineHeight: isTablet ? 24 : 20,
       color: Colors[colorScheme].icon,
+    },
+    listWrapper: {
+      width: "100%",
+      maxWidth: isTabletLandscape ? 960 : undefined,
+      alignSelf: "center",
+      flex: 1,
     },
     emptyStateContainer: {
       flex: 1,
@@ -140,13 +169,14 @@ const createStyles = (colorScheme: "light" | "dark") =>
       paddingTop: 40,
     },
     emptyStateTitle: {
-      fontSize: 16,
+      fontSize: isTablet ? 22 : 18,
       fontWeight: "600",
       marginBottom: 4,
       color: Colors[colorScheme].text,
     },
     emptyStateSubtitle: {
-      fontSize: 14,
+      fontSize: isTablet ? 18 : 16,
+      lineHeight: isTablet ? 22 : 20,
       color: Colors[colorScheme].icon,
       textAlign: "center",
     },

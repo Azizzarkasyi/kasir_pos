@@ -9,7 +9,8 @@ import {
     Modal,
     StyleSheet,
     TouchableWithoutFeedback,
-    View
+    View,
+    useWindowDimensions,
 } from "react-native";
 
 export type FilterCategory = {
@@ -35,7 +36,9 @@ const FilterProductModal: React.FC<FilterProductModalProps> = ({
     onReset,
 }) => {
     const colorScheme = useColorScheme() ?? "light";
-    const styles = createStyles(colorScheme);
+    const {width, height} = useWindowDimensions();
+    const isTablet = Math.min(width, height) >= 600;
+    const styles = createStyles(colorScheme, isTablet);
 
     const [search, setSearch] = useState("");
     const [selectedIds, setSelectedIds] = useState<string[]>(initialSelectedIds);
@@ -148,7 +151,7 @@ const FilterProductModal: React.FC<FilterProductModalProps> = ({
     );
 };
 
-const createStyles = (colorScheme: "light" | "dark") =>
+const createStyles = (colorScheme: "light" | "dark", isTablet: boolean) =>
     StyleSheet.create({
         root: {
             ...StyleSheet.absoluteFillObject,
@@ -164,15 +167,15 @@ const createStyles = (colorScheme: "light" | "dark") =>
             width: "100%",
             justifyContent: "center",
             alignItems: "center",
-            paddingHorizontal: 24,
+            paddingHorizontal: isTablet ? 32 : 24,
         },
         card: {
             width: "100%",
-            maxWidth: 420,
-            borderRadius: 16,
+            maxWidth: isTablet ? 520 : 420,
+            borderRadius: isTablet ? 20 : 16,
             backgroundColor: Colors[colorScheme].background,
-            paddingHorizontal: 20,
-            paddingVertical: 24,
+            paddingHorizontal: isTablet ? 28 : 20,
+            paddingVertical: isTablet ? 32 : 24,
             shadowColor: "#000",
             shadowOffset: { width: 0, height: 4 },
             shadowOpacity: 0.25,
@@ -180,45 +183,47 @@ const createStyles = (colorScheme: "light" | "dark") =>
             elevation: 8,
         },
         title: {
-            fontSize: 16,
+            fontSize: isTablet ? 20 : 16,
             fontWeight: "600",
-            marginBottom: 12,
+            marginBottom: isTablet ? 16 : 12,
             color: Colors[colorScheme].text,
         },
         listContainer: {
-            marginTop: 16,
-            marginBottom: 20,
-            maxHeight: 260,
+            marginTop: isTablet ? 24 : 16,
+            marginBottom: isTablet ? 32 : 20,
+            maxHeight: isTablet ? 340 : 260,
         },
         emptyStateWrapper: {
-            flex: 1,
-            minHeight: 80,
+            flex: isTablet ? 0 : 1,
+            minHeight: isTablet ? 120 : 80,
+            paddingVertical: isTablet ? 24 : 16,
             justifyContent: "center",
             alignItems: "center",
         },
         emptyStateText: {
-            fontSize: 14,
+            fontSize: isTablet ? 18 : 14,
             color: Colors[colorScheme].icon,
+            textAlign: "center",
         },
         checkboxRow: {
             flexDirection: "row",
             alignItems: "center",
-            marginBottom: 12,
+            marginBottom: isTablet ? 16 : 12,
         },
         checkbox: {
-            width: 22,
-            height: 22,
-            borderRadius: 4,
+            width: isTablet ? 28 : 22,
+            height: isTablet ? 28 : 22,
+            borderRadius: isTablet ? 6 : 4,
             borderWidth: 1,
             borderColor: Colors[colorScheme].border,
-            marginRight: 12,
+            marginRight: isTablet ? 16 : 12,
             backgroundColor: Colors[colorScheme].background,
             alignItems: "center",
             justifyContent: "center",
         },
         footerRow: {
             flexDirection: "row",
-            gap: 8,
+            gap: isTablet ? 12 : 8,
             justifyContent: "space-between",
         },
     });

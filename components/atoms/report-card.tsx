@@ -41,35 +41,41 @@ const ReportCardSkeleton = () => {
 };
 
 const useReportCardStyles = (colorScheme: "light" | "dark") => {
-  const { width } = useWindowDimensions();
+  const { width, height } = useWindowDimensions();
+  const isTablet = Math.min(width, height) >= 600;
 
   return React.useMemo(
     () =>
       StyleSheet.create({
         reportCard: {
-          width: width * 0.5 - 24,
-          minHeight: 90,
+          // phone: tetap 2 per layar, tablet: kira-kira 3 per layar
+          width: isTablet ? width / 3 - 32 : width * 0.5 - 40,
+          minHeight: isTablet ? 130 : 100,
           backgroundColor: Colors[colorScheme].background,
           borderRadius: 10,
           borderColor: Colors[colorScheme].border,
           borderWidth: 1,
-          padding: 10,
+          paddingTop: isTablet ? 16 : 10,
+          paddingBottom: isTablet ? 16 : 10,
+          paddingHorizontal: isTablet ? 18 : 10,
         },
         reportCardTitle: {
-          fontSize: 12,
+          fontSize: isTablet ? 18 : 12,
           fontWeight: "400",
+          marginBottom: isTablet ? 6 : 2,
         },
         amountText: {
-          fontSize: 14,
+          fontSize: isTablet ? 24 : 14,
           fontWeight: "bold",
+          marginBottom: isTablet ? 6 : 2,
         },
         mutedText: {
           color: Colors[colorScheme].icon,
-          marginTop: 4,
-          fontSize: 12,
+          marginTop: isTablet ? 4 : 8,
+          fontSize: isTablet ? 16 : 12,
         },
       }),
-    [colorScheme, width]
+    [colorScheme, width, height, isTablet]
   );
 };
 

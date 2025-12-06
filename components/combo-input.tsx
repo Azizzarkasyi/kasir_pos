@@ -1,5 +1,6 @@
 import { Colors } from "@/constants/theme";
 import { useColorScheme } from "@/hooks/use-color-scheme";
+import { useDropdown } from "@/hooks/use-dropdown";
 import { Ionicons } from "@expo/vector-icons";
 import React, { useEffect, useRef, useState } from "react";
 import {
@@ -11,6 +12,7 @@ import {
   TouchableOpacity,
   TouchableWithoutFeedback,
   View,
+  useWindowDimensions,
 } from "react-native";
 
 type ComboItem = {label: string; value: string};
@@ -35,9 +37,13 @@ const ComboInput: React.FC<ComboInputProps> = ({
   size = "base",
 }) => {
   const colorScheme = useColorScheme() ?? "light";
-  const styles = createStyles(colorScheme, !!error, size);
+  const hasError = !!error;
+  const {width: screenWidth, height: screenHeight} = useWindowDimensions();
+  const isTablet = Math.min(screenWidth, screenHeight) >= 600;
   const [isFocused, setIsFocused] = useState(false);
-  const [open, setOpen] = useState(false);
+  const styles = createStyles(colorScheme, hasError, size, isTablet, isFocused);
+  const idRef = useRef(`combo-${label}-${Math.random().toString(36).slice(2)}`);
+  const {open, setOpen, openDropdown, closeDropdown, toggleDropdown} = useDropdown(false, idRef.current);
 
   const focusAnim = useRef(new Animated.Value(value ? 1 : 0)).current;
 
@@ -53,7 +59,13 @@ const ComboInput: React.FC<ComboInputProps> = ({
     size === "sm" ? [12, -8] : size === "md" ? [14, -8] : [16, -8];
 
   const labelFontRange: [number, number] =
-    size === "sm" ? [14, 12] : size === "md" ? [15, 12] : [16, 12];
+    size === "sm"
+      ? isTablet ? [18, 14] : [14, 12]
+      : size === "md"
+      ? isTablet ? [19, 14] : [15, 12]
+      : isTablet
+      ? [20, 14]
+      : [16, 12];
 
   const labelStyle = {
     top: focusAnim.interpolate({
@@ -66,7 +78,10 @@ const ComboInput: React.FC<ComboInputProps> = ({
     }),
     color: focusAnim.interpolate({
       inputRange: [0, 1],
-      outputRange: [Colors[colorScheme].text, Colors[colorScheme].primary],
+      outputRange: [
+        hasError ? "red" : Colors[colorScheme].text,
+        hasError ? "red" : Colors[colorScheme].primary,
+      ],
     }),
     backgroundColor: Colors[colorScheme].background,
     paddingHorizontal: 4,
@@ -93,7 +108,7 @@ const ComboInput: React.FC<ComboInputProps> = ({
         ]}
         onPress={() => {
           if (!disableAutoComplete) return;
-          setOpen(true);
+          toggleDropdown();
         }}
         activeOpacity={1}
       >
@@ -108,19 +123,19 @@ const ComboInput: React.FC<ComboInputProps> = ({
           onChangeText={text => {
             if (disableAutoComplete) return;
             onChangeText(text);
-            if (!open) setOpen(true);
+            if (!open) openDropdown();
           }}
           onFocus={() => {
             if (disableAutoComplete) return;
             setIsFocused(true);
-            setOpen(true);
+            openDropdown();
           }}
           onBlur={() => setIsFocused(false)}
         />
         {items?.length ? (
           <TouchableOpacity
             style={styles.iconContainer}
-            onPress={() => setOpen(o => !o)}
+            onPress={toggleDropdown}
           >
             <Ionicons
               name={open ? "chevron-up" : "chevron-down"}
@@ -132,28 +147,41 @@ const ComboInput: React.FC<ComboInputProps> = ({
       </TouchableOpacity>
       {!!error && <Text style={styles.errorText}>{error}</Text>}
 
-      {open && filtered.length > 0 && (
-        <TouchableWithoutFeedback onPress={() => setOpen(false)}>
+      {open && (
+        <TouchableWithoutFeedback onPress={closeDropdown}>
           <View style={styles.dropdownOverlay}>
             <View style={styles.dropdown}>
-              <ScrollView keyboardShouldPersistTaps="handled">
-                {filtered.map(item => (
-                  <TouchableOpacity
-                    key={item.value}
-                    style={styles.item}
-                    onPress={() => {
-                      onChangeText(item.label);
-                      setOpen(false);
-                    }}
-                  >
-                    <Text
-                      style={[styles.itemText, { color: Colors[colorScheme].text }]}
+              {filtered.length === 0 ? (
+                <View style={styles.emptyContainer}>
+                  <Text style={styles.emptyText}>Belum ada data</Text>
+                </View>
+              ) : (
+                <ScrollView keyboardShouldPersistTaps="handled">
+                  {filtered.map(item => (
+                    <TouchableOpacity
+                      key={item.value}
+                      style={styles.item}
+                      onPress={() => {
+                        if (disableAutoComplete && item.value === "") {
+                          closeDropdown();
+                          return;
+                        }
+                        onChangeText(item.label);
+                        closeDropdown();
+                      }}
                     >
-                      {item.label}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </ScrollView>
+                      <Text
+                        style={[
+                          styles.itemText,
+                          {color: Colors[colorScheme].text},
+                        ]}
+                      >
+                        {item.label}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
+              )}
             </View>
           </View>
         </TouchableWithoutFeedback>
@@ -166,6 +194,8 @@ const createStyles = (
   colorScheme: "light" | "dark",
   hasError: boolean,
   size: "sm" | "base" | "md",
+  isTablet: boolean,
+  isFocused: boolean,
 ) =>
   StyleSheet.create({
     container: {
@@ -176,9 +206,27 @@ const createStyles = (
     inputContainer: {
       borderWidth: 1,
       borderRadius: 8,
-      paddingHorizontal: size === "sm" ? 10 : size === "md" ? 14 : 12,
-      borderColor: Colors[colorScheme].primary,
-      height: size === "sm" ? 48 : size === "md" ? 52 : 56,
+      paddingHorizontal:
+        size === "sm"
+          ? isTablet ? 14 : 10
+          : size === "md"
+          ? isTablet ? 18 : 14
+          : isTablet
+          ? 16
+          : 12,
+      borderColor: hasError
+        ? "red"
+        : isFocused
+        ? Colors[colorScheme].primary
+        : Colors[colorScheme].border,
+      height:
+        size === "sm"
+          ? isTablet ? 56 : 48
+          : size === "md"
+          ? isTablet ? 60 : 52
+          : isTablet
+          ? 64
+          : 56,
       flexDirection: "row",
       alignItems: "center",
       position: "relative",
@@ -190,9 +238,16 @@ const createStyles = (
     },
     input: {
       flex: 1,
-      fontSize: size === "sm" ? 14 : size === "md" ? 15 : 16,
+      fontSize:
+        size === "sm"
+          ? isTablet ? 18 : 14
+          : size === "md"
+          ? isTablet ? 19 : 15
+          : isTablet
+          ? 20
+          : 16,
       color: Colors[colorScheme].text,
-
+      paddingLeft: 4,
       borderRadius: 4,
       height: "100%",
     },
@@ -201,7 +256,7 @@ const createStyles = (
     },
     errorText: {
       color: "red",
-      fontSize: 12,
+      fontSize: isTablet ? 14 : 12,
       marginTop: 4,
       marginLeft: 12,
     },
@@ -210,7 +265,7 @@ const createStyles = (
       top: 0,
       left: 0,
       right: 0,
-      bottom: 0,
+      bottom: -1000,
       zIndex: 19,
     },
     dropdown: {
@@ -239,7 +294,31 @@ const createStyles = (
 
     },
     itemText: {
-      fontSize: 16,
+      fontSize:
+        size === "sm"
+          ? isTablet ? 18 : 14
+          : size === "md"
+          ? isTablet ? 19 : 15
+          : isTablet
+          ? 20
+          : 16,
+    },
+    emptyContainer: {
+      paddingVertical: 16,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    emptyText: {
+      fontSize:
+        size === "sm"
+          ? isTablet ? 18 : 14
+          : size === "md"
+          ? isTablet ? 19 : 15
+          : isTablet
+          ? 20
+          : 16,
+      color: Colors[colorScheme].text,
+      opacity: 0.6,
     },
   });
 

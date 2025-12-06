@@ -1,26 +1,31 @@
 import Header from "@/components/header";
 import OtpInput from "@/components/otp-input";
 import ChangePhoneModal from "@/components/popup";
-import {ThemedButton} from "@/components/themed-button";
-import {ThemedText} from "@/components/themed-text";
-import {Colors} from "@/constants/theme";
-import {useColorScheme} from "@/hooks/use-color-scheme";
-import {Ionicons} from "@expo/vector-icons";
-import React, {useEffect, useState} from "react";
+import { ThemedButton } from "@/components/themed-button";
+import { ThemedText } from "@/components/themed-text";
+import { Colors } from "@/constants/theme";
+import { useColorScheme } from "@/hooks/use-color-scheme";
+import { authApi } from "@/services";
+import { Ionicons } from "@expo/vector-icons";
+import { useLocalSearchParams, useRouter } from "expo-router";
+import React, { useEffect, useState } from "react";
 import {
-  StyleSheet,
-  TouchableOpacity,
-  View,
-  Alert,
-  ActivityIndicator,
+    ActivityIndicator,
+    Alert,
+    StyleSheet,
+    TouchableOpacity,
+    useWindowDimensions,
+    View,
 } from "react-native";
-import {KeyboardAwareScrollView} from "react-native-keyboard-aware-scroll-view";
-import {useLocalSearchParams, useRouter} from "expo-router";
-import {authApi} from "@/services";
+import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 
 const VerifyOtpScreen = () => {
   const colorScheme = useColorScheme() ?? "light";
-  const styles = createStyles(colorScheme);
+  const {width, height} = useWindowDimensions();
+  const isTablet = Math.min(width, height) >= 600;
+  const isLandscape = width > height;
+  const isTabletLandscape = isTablet && isLandscape;
+  const styles = createStyles(colorScheme, isTablet, isTabletLandscape);
   const router = useRouter();
   const params = useLocalSearchParams<{phone?: string}>();
 
@@ -147,10 +152,10 @@ const VerifyOtpScreen = () => {
   };
   // Modal ditampilkan melalui state isModalVisible
   return (
-    <View style={{flex: 1, backgroundColor: Colors[colorScheme].background}}>
+    <View style={styles.container}>
       <Header title="Daftar" />
       <KeyboardAwareScrollView
-        contentContainerStyle={{paddingHorizontal: 20}}
+        contentContainerStyle={styles.scrollContainer}
         enableOnAndroid
         keyboardOpeningTime={0}
         extraScrollHeight={24}
@@ -218,13 +223,26 @@ const VerifyOtpScreen = () => {
   );
 };
 
-const createStyles = (colorScheme: "light" | "dark") =>
+const createStyles = (
+  colorScheme: "light" | "dark",
+  isTablet: boolean,
+  isTabletLandscape: boolean,
+) =>
   StyleSheet.create({
     container: {
       flex: 1,
       backgroundColor: Colors[colorScheme].background,
+      paddingHorizontal: 0,
+      paddingTop: 0,
+    },
+    scrollContainer: {
+      flexGrow: 1,
       paddingHorizontal: 20,
       paddingTop: 20,
+      paddingBottom: 24,
+      width: "100%",
+      maxWidth: isTabletLandscape ? 640 : isTablet ? 480 : 400,
+      alignSelf: "center",
     },
     content: {
       flex: 1,
@@ -233,7 +251,7 @@ const createStyles = (colorScheme: "light" | "dark") =>
     },
     title: {
       marginTop: 20,
-      fontSize: 20,
+      fontSize: isTablet ? 22 : 20,
       textAlign: "center",
       fontWeight: "600",
     },
@@ -241,7 +259,7 @@ const createStyles = (colorScheme: "light" | "dark") =>
       marginTop: 8,
       color: Colors[colorScheme].icon,
       textAlign: "center",
-      fontSize: 16,
+      fontSize: isTablet ? 18 : 16,
     },
     phonePill: {
       justifyContent: "center",
@@ -258,7 +276,7 @@ const createStyles = (colorScheme: "light" | "dark") =>
     },
     phoneText: {
       color: Colors[colorScheme].background,
-      fontSize: 16,
+      fontSize: isTablet ? 18 : 16,
     },
     editButton: {
       width: 28,
@@ -272,6 +290,7 @@ const createStyles = (colorScheme: "light" | "dark") =>
     counterText: {
       textAlign: "center",
       color: Colors[colorScheme].icon,
+      marginTop: 12,
     },
   });
 

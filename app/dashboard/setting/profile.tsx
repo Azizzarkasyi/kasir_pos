@@ -1,22 +1,26 @@
 import ConfirmationDialog, {
-  ConfirmationDialogHandle,
+    ConfirmationDialogHandle,
 } from "@/components/drawers/confirmation-dialog";
 import Header from "@/components/header";
 import ImageUpload from "@/components/image-upload";
-import {ThemedButton} from "@/components/themed-button";
-import {ThemedInput} from "@/components/themed-input";
-import {ThemedText} from "@/components/themed-text";
-import {Colors} from "@/constants/theme";
-import {useColorScheme} from "@/hooks/use-color-scheme";
-import React, {useEffect, useState} from "react";
-import {StyleSheet, View, Alert, ActivityIndicator} from "react-native";
-import {ScrollView} from "react-native-gesture-handler";
-import {settingsApi, authApi, UserProfile} from "@/services";
-import {useRouter} from "expo-router";
+import { ThemedButton } from "@/components/themed-button";
+import { ThemedInput } from "@/components/themed-input";
+import { ThemedText } from "@/components/themed-text";
+import { Colors } from "@/constants/theme";
+import { useColorScheme } from "@/hooks/use-color-scheme";
+import { settingsApi, UserProfile } from "@/services";
+import { useRouter } from "expo-router";
+import React, { useEffect, useState } from "react";
+import { ActivityIndicator, Alert, StyleSheet, useWindowDimensions, View } from "react-native";
+import { ScrollView } from "react-native-gesture-handler";
 
 export default function ProfileSettingScreen() {
   const colorScheme = useColorScheme() ?? "light";
-  const styles = createStyles(colorScheme);
+  const {width, height} = useWindowDimensions();
+  const isTablet = Math.min(width, height) >= 600;
+  const isLandscape = width > height;
+  const isTabletLandscape = isTablet && isLandscape;
+  const styles = createStyles(colorScheme, isTablet, isTabletLandscape);
   const router = useRouter();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [photoUri, setPhotoUri] = useState<string | undefined>(undefined);
@@ -160,6 +164,7 @@ export default function ProfileSettingScreen() {
         contentContainerStyle={styles.scrollContainer}
         showsVerticalScrollIndicator={false}
       >
+        <View style={styles.contentWrapper}>
         <View style={styles.sectionCard1}>
           <ImageUpload uri={photoUri} onPress={() => {}} />
           {/* <View style={{marginTop: 16}}>
@@ -250,6 +255,7 @@ export default function ProfileSettingScreen() {
             />
           </View>
         </View>
+        </View>
       </ScrollView>
 
       <ConfirmationDialog ref={confirmationDialogRef} />
@@ -257,48 +263,54 @@ export default function ProfileSettingScreen() {
   );
 }
 
-const createStyles = (colorScheme: "light" | "dark") =>
+const createStyles = (colorScheme: "light" | "dark", isTablet: boolean, isTabletLandscape: boolean) =>
   StyleSheet.create({
     container: {
       flex: 1,
       backgroundColor: Colors[colorScheme].background,
     },
     scrollContainer: {
-      paddingHorizontal: 20,
-      paddingBottom: 20,
+      paddingHorizontal: isTablet ? 60 : 20,
+      paddingBottom: isTablet ? 32 : 20,
+    },
+    contentWrapper: {
+      width: "100%",
+      maxWidth: isTabletLandscape ? 960 : undefined,
+      alignSelf: "center",
     },
     sectionCard: {
-      marginTop: 12,
+      marginTop: isTablet ? 20 : 12,
       borderColor: Colors[colorScheme].icon,
-      borderRadius: 8,
+      borderRadius: isTablet ? 12 : 8,
       backgroundColor: Colors[colorScheme].background,
-      paddingHorizontal: 8,
-      paddingVertical: 8,
+      paddingHorizontal: isTablet ? 16 : 8,
+      paddingVertical: isTablet ? 16 : 8,
     },
     sectionCard1: {
-      marginTop: 12,
+      marginTop: isTablet ? 20 : 12,
       borderColor: Colors[colorScheme].icon,
-      borderRadius: 8,
+      borderRadius: isTablet ? 12 : 8,
       backgroundColor: Colors[colorScheme].background,
-      paddingHorizontal: 8,
-      paddingVertical: 8,
-      marginBottom: 12,
+      paddingHorizontal: isTablet ? 16 : 8,
+      paddingVertical: isTablet ? 16 : 8,
+      marginBottom: isTablet ? 20 : 12,
     },
     sectionTitle: {
-      marginBottom: 12,
+      marginBottom: isTablet ? 20 : 12,
+      fontSize: isTablet ? 20 : 16,
     },
     sectionButtonWrapper: {
-      marginTop: 12,
+      marginTop: isTablet ? 20 : 12,
     },
     pinHintText: {
-      fontSize: 14,
+      fontSize: isTablet ? 18 : 14,
       color: Colors[colorScheme].warning,
     },
     accountWarningText: {
       color: Colors[colorScheme].danger,
-      lineHeight: 20,
-      fontSize: 14,
+      lineHeight: isTablet ? 28 : 20,
+      fontSize: isTablet ? 18 : 14,
       fontWeight: "300",
-      marginVertical: 12,
+      marginVertical: isTablet ? 20 : 12,
     },
   });

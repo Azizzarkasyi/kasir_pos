@@ -1,7 +1,7 @@
 import { Colors } from "@/constants/theme";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import React from "react";
-import { StyleSheet, TouchableOpacity, View } from "react-native";
+import { StyleSheet, TouchableOpacity, View, useWindowDimensions } from "react-native";
 import { ThemedText } from "./themed-text";
 
 type Props = {
@@ -20,7 +20,9 @@ export default function ProductCard({
   onPress,
 }: Props) {
   const colorScheme = useColorScheme() ?? "light";
-  const styles = createStyles(colorScheme);
+  const {width, height} = useWindowDimensions();
+  const isTablet = Math.min(width, height) >= 600;
+  const styles = createStyles(colorScheme, isTablet);
 
   return (
     <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.8}>
@@ -39,22 +41,22 @@ export default function ProductCard({
   );
 }
 
-const createStyles = (colorScheme: "light" | "dark") =>
+const createStyles = (colorScheme: "light" | "dark", isTablet: boolean) =>
   StyleSheet.create({
     card: {
       flexDirection: "row",
       alignItems: "center",
-      gap: 12,
+      gap: isTablet ? 16 : 12,
       borderBottomWidth: 1,
       borderBottomColor: Colors[colorScheme].border,
-      borderRadius: 8,
-      paddingVertical: 12,
+      borderRadius: isTablet ? 10 : 8,
+      paddingVertical: isTablet ? 16 : 12,
       backgroundColor: Colors[colorScheme].background,
     },
     avatar: {
-      width: 48,
-      height: 48,
-      borderRadius: 8,
+      width: isTablet ? 60 : 40,
+      height: isTablet ? 60 : 40,
+      borderRadius: isTablet ? 10 : 8,
       backgroundColor: Colors[colorScheme].border,
       alignItems: "center",
       justifyContent: "center",
@@ -62,25 +64,26 @@ const createStyles = (colorScheme: "light" | "dark") =>
     avatarText: {
       color: Colors[colorScheme].background,
       fontWeight: "700",
+      fontSize: isTablet ? 20 : 14,
     },
     nameText: {
       color: Colors[colorScheme].text,
-      fontSize: 16,
-      lineHeight:20,
+      fontSize: isTablet ? 20 : 14,
+      lineHeight: isTablet ? 26 : 20,
       fontWeight: "700",
     },
     variantText: {
       color: Colors[colorScheme].icon,
-      fontSize: 14,
+      fontSize: isTablet ? 18 : 12,
+      marginTop: isTablet ? 4 : 0,
     },
     stockText: {
       color: Colors[colorScheme].icon,
-      fontSize: 14,
+      fontSize: isTablet ? 18 : 12,
       fontWeight: "700",
     },
     stockCountText: {
       color: Colors[colorScheme].icon,
-      fontSize: 14,
+      fontSize: isTablet ? 18 : 12,
     },
-
   });

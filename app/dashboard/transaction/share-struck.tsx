@@ -1,28 +1,31 @@
 "use client";
 
 import Header from "@/components/header";
-import {Colors} from "@/constants/theme";
-import {useColorScheme} from "@/hooks/use-color-scheme";
-import {Ionicons} from "@expo/vector-icons";
-import {useRouter, useLocalSearchParams} from "expo-router";
-import React, {useState, useEffect} from "react";
+import { Colors } from "@/constants/theme";
+import { useColorScheme } from "@/hooks/use-color-scheme";
+import { transactionApi } from "@/services/endpoints/transactions";
+import { useCartStore } from "@/stores/cart-store";
+import { Transaction } from "@/types/api";
+import { Ionicons } from "@expo/vector-icons";
+import { useLocalSearchParams, useRouter } from "expo-router";
+import React, { useEffect, useState } from "react";
 import {
+  ActivityIndicator,
+  Alert,
   ScrollView,
+  Share,
   StyleSheet,
   Text,
   TouchableOpacity,
+  useWindowDimensions,
   View,
-  Share,
-  ActivityIndicator,
-  Alert,
 } from "react-native";
-import {transactionApi} from "@/services/endpoints/transactions";
-import {Transaction} from "@/types/api";
-import {useCartStore} from "@/stores/cart-store";
 
 export default function ShareStruckPage() {
   const colorScheme = useColorScheme() ?? "light";
-  const styles = createStyles(colorScheme);
+  const { width, height } = useWindowDimensions();
+  const isTablet = Math.min(width, height) >= 600;
+  const styles = createStyles(colorScheme, isTablet);
   const router = useRouter();
   const params = useLocalSearchParams();
 
@@ -285,7 +288,7 @@ export default function ShareStruckPage() {
         >
           <Ionicons
             name="share-social-outline"
-            size={22}
+            size={isTablet ? 28 : 22}
             color={Colors[colorScheme].secondary}
           />
         </TouchableOpacity>
@@ -294,7 +297,7 @@ export default function ShareStruckPage() {
   );
 }
 
-const createStyles = (colorScheme: "light" | "dark") =>
+const createStyles = (colorScheme: "light" | "dark", isTablet: boolean) =>
   StyleSheet.create({
     container: {
       flex: 1,
@@ -306,65 +309,66 @@ const createStyles = (colorScheme: "light" | "dark") =>
       flex: 1,
     },
     scrollContent: {
-      paddingHorizontal: 24,
-      paddingVertical: 16,
-      paddingBottom: 32,
+      paddingHorizontal: isTablet ? 40 : 24,
+      paddingVertical: isTablet ? 24 : 16,
+      paddingBottom: isTablet ? 48 : 32,
       alignItems: "center",
     },
     receiptCard: {
       width: "100%",
-      borderRadius: 12,
+      maxWidth: isTablet ? 600 : undefined,
+      borderRadius: isTablet ? 16 : 12,
       backgroundColor: Colors[colorScheme].secondary,
-      paddingVertical: 18,
-      paddingHorizontal: 20,
+      paddingVertical: isTablet ? 24 : 18,
+      paddingHorizontal: isTablet ? 28 : 20,
     },
     storeHeaderWrapper: {
       alignItems: "center",
-      marginBottom: 12,
+      marginBottom: isTablet ? 16 : 12,
     },
     storeName: {
-      fontSize: 16,
+      fontSize: isTablet ? 24 : 16,
       fontWeight: "600",
       color: Colors[colorScheme].text,
     },
     storeBranch: {
-      marginTop: 2,
-      fontSize: 13,
+      marginTop: isTablet ? 4 : 2,
+      fontSize: isTablet ? 20 : 13,
       color: Colors[colorScheme].icon,
     },
     sectionDivider: {
       height: 1,
       backgroundColor: Colors[colorScheme].border,
-      marginVertical: 10,
+      marginVertical: isTablet ? 14 : 10,
     },
     infoGrid: {
-      rowGap: 6,
+      rowGap: isTablet ? 10 : 6,
     },
     infoGridRow: {
       flexDirection: "row",
       justifyContent: "space-between",
     },
     infoLabel: {
-      fontSize: 13,
+      fontSize: isTablet ? 20 : 13,
       color: Colors[colorScheme].icon,
     },
     infoValue: {
-      fontSize: 13,
+      fontSize: isTablet ? 20 : 13,
       color: Colors[colorScheme].text,
       fontWeight: "500",
     },
     copyBannerWrapper: {
       alignItems: "center",
-      marginVertical: 8,
+      marginVertical: isTablet ? 12 : 8,
     },
     copyBannerText: {
-      fontSize: 13,
+      fontSize: isTablet ? 20 : 13,
       fontWeight: "600",
       color: Colors[colorScheme].text,
     },
     itemsSection: {
-      marginTop: 4,
-      rowGap: 6,
+      marginTop: isTablet ? 8 : 4,
+      rowGap: isTablet ? 10 : 6,
     },
     itemRow: {
       flexDirection: "row",
@@ -373,25 +377,25 @@ const createStyles = (colorScheme: "light" | "dark") =>
     },
     itemLeft: {
       flexShrink: 1,
-      paddingRight: 12,
+      paddingRight: isTablet ? 16 : 12,
     },
     itemName: {
-      fontSize: 13,
+      fontSize: isTablet ? 20 : 13,
       color: Colors[colorScheme].text,
-      marginBottom: 2,
+      marginBottom: isTablet ? 4 : 2,
     },
     itemSubText: {
-      fontSize: 12,
+      fontSize: isTablet ? 18 : 12,
       color: Colors[colorScheme].icon,
     },
     itemAmount: {
-      fontSize: 13,
+      fontSize: isTablet ? 20 : 13,
       color: Colors[colorScheme].text,
       fontWeight: "500",
     },
     summarySection: {
-      marginTop: 10,
-      rowGap: 4,
+      marginTop: isTablet ? 14 : 10,
+      rowGap: isTablet ? 8 : 4,
     },
     summaryRow: {
       flexDirection: "row",
@@ -399,7 +403,7 @@ const createStyles = (colorScheme: "light" | "dark") =>
       alignItems: "center",
     },
     summaryLabel: {
-      fontSize: 13,
+      fontSize: isTablet ? 20 : 13,
       color: Colors[colorScheme].icon,
     },
     summaryLabelStrong: {
@@ -407,28 +411,28 @@ const createStyles = (colorScheme: "light" | "dark") =>
       color: Colors[colorScheme].text,
     },
     summaryValue: {
-      fontSize: 13,
+      fontSize: isTablet ? 20 : 13,
       color: Colors[colorScheme].text,
     },
     summaryValueStrong: {
       fontWeight: "600",
     },
     footerWrapper: {
-      marginTop: 16,
+      marginTop: isTablet ? 24 : 16,
       alignItems: "center",
-      rowGap: 2,
+      rowGap: isTablet ? 4 : 2,
     },
     footerText: {
-      fontSize: 11,
+      fontSize: isTablet ? 16 : 11,
       color: Colors[colorScheme].icon,
     },
     fabButton: {
       position: "absolute",
-      right: 24,
-      bottom: 24,
-      width: 52,
-      height: 52,
-      borderRadius: 26,
+      right: isTablet ? 32 : 24,
+      bottom: isTablet ? 32 : 24,
+      width: isTablet ? 64 : 52,
+      height: isTablet ? 64 : 52,
+      borderRadius: isTablet ? 32 : 26,
       alignItems: "center",
       justifyContent: "center",
       shadowColor: "#000",

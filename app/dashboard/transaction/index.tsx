@@ -1,36 +1,47 @@
 "use client";
 
+import CheckoutItem from "@/components/atoms/checkout-item";
 import ProductItem from "@/components/atoms/product-item";
 import AddCustomQuantityModal from "@/components/drawers/add-custom-quantity";
 import SelectVariantModal from "@/components/drawers/select-variant-modal";
 import Header from "@/components/header";
 import Sidebar from "@/components/layouts/dashboard/sidebar";
 import CalculatorInput from "@/components/mollecules/calculator-input";
-import {Colors} from "@/constants/theme";
-import {useColorScheme} from "@/hooks/use-color-scheme";
-import {AntDesign, Ionicons} from "@expo/vector-icons";
-import {useRouter} from "expo-router";
-import React, {useState, useEffect, useCallback} from "react";
+import { Colors } from "@/constants/theme";
+import { useColorScheme } from "@/hooks/use-color-scheme";
+import { categoryApi } from "@/services/endpoints/categories";
+import { productApi } from "@/services/endpoints/products";
+import { useCartStore } from "@/stores/cart-store";
+import { Category, Product } from "@/types/api";
+import { AntDesign, Ionicons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
+import React, { useCallback, useEffect, useState } from "react";
 import {
+  ActivityIndicator,
+  FlatList,
   Image,
+  RefreshControl,
+  ScrollView,
   StatusBar,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
+  useWindowDimensions,
   View,
-  ActivityIndicator,
-  FlatList,
-  RefreshControl,
 } from "react-native";
-import {productApi} from "@/services/endpoints/products";
-import {categoryApi} from "@/services/endpoints/categories";
-import {Product, Category} from "@/types/api";
-import {useCartStore} from "@/stores/cart-store";
 
 const STATUS_BAR_HEIGHT = StatusBar.currentHeight ?? 0;
 
-type CheckoutItem = {
+type ProductVariant = {
+  id: string;
+  name: string;
+  price: number;
+  stock?: number;
+};
+
+
+type CheckoutItemData = {
   productId: string;
   variantId?: string | null;
   quantity: number;
@@ -40,7 +51,11 @@ type CheckoutItem = {
 export default function PaymentPage() {
   const [amount, setAmount] = useState<string>("0");
   const colorScheme = useColorScheme() ?? "light";
-  const styles = createStyles(colorScheme);
+  const { width, height } = useWindowDimensions();
+  const isTablet = Math.min(width, height) >= 600;
+  const isLandscape = width > height;
+  const isTabletLandscape = isTablet && isLandscape;
+  const styles = createStyles(colorScheme, isTablet, isTabletLandscape);
   const router = useRouter();
 
   const [activeTab, setActiveTab] = useState<"manual" | "product" | "favorite">(
@@ -53,7 +68,7 @@ export default function PaymentPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
 
-  const [checkoutProducts, setCheckoutProducts] = useState<CheckoutItem[]>([]);
+  const [checkoutProducts, setCheckoutProducts] = useState<CheckoutItemData[]>([]);
   const [variantModalVisible, setVariantModalVisible] = useState(false);
   const [selectedProductForVariant, setSelectedProductForVariant] =
     useState<Product | null>(null);
@@ -175,11 +190,11 @@ export default function PaymentPage() {
       if (existing) {
         return prev.map(item =>
           item.productId === productId && !item.variantId
-            ? {...item, quantity: item.quantity + 1}
+            ? { ...item, quantity: item.quantity + 1 }
             : item
         );
       }
-      return [...prev, {productId, variantId: null, quantity: 1, note: ""}];
+      return [...prev, { productId, variantId: null, quantity: 1, note: "" }];
     });
   };
 
@@ -283,7 +298,7 @@ export default function PaymentPage() {
     quantity: number;
     note: string;
   }) => {
-    const {quantity, note} = payload;
+    const { quantity, note } = payload;
     if (!selectedProductForCustomQty) {
       setCustomQtyModalVisible(false);
       return;
@@ -331,7 +346,7 @@ export default function PaymentPage() {
     setSelectedProductForCustomQty(null);
   };
 
-  const getItemUnitPrice = (item: CheckoutItem) => {
+  const getItemUnitPrice = (item: CheckoutItemData) => {
     const product = products.find(p => p.id === item.productId);
     if (!product) return 0;
 
@@ -377,11 +392,29 @@ export default function PaymentPage() {
     return withDots;
   };
 
+  const getCheckoutItemName = (item: CheckoutItemData) => {
+    const product = products.find((p) => p.id === item.productId);
+    if (!product) return "";
+    if (item.variantId) {
+      const variant = product.variants?.find((v) => v.id === item.variantId);
+      return `${product.name} - ${variant?.name ?? ""}`;
+    }
+    return product.name;
+  };
+
+  const handleRemoveCheckoutItem = (productId: string, variantId?: string | null) => {
+    setCheckoutProducts((prev) =>
+      prev.filter(
+        (item) => !(item.productId === productId && item.variantId === variantId)
+      )
+    );
+  };
+
   return (
     <View
       style={[
         styles.container,
-        {backgroundColor: Colors[colorScheme].background},
+        { backgroundColor: Colors[colorScheme].background },
       ]}
     >
       <Header
@@ -404,26 +437,26 @@ export default function PaymentPage() {
             style={styles.headerIconBox}
             onPress={() => setIsSidebarOpen(true)}
           >
-            <AntDesign name="menu" size={18} color={Colors[colorScheme].icon} />
+            <AntDesign name="menu" size={isTablet ? 24 : 18} color={Colors[colorScheme].icon} />
           </TouchableOpacity>
 
           <View style={styles.searchWrapper}>
             <View
               style={[
                 styles.searchInner,
-                {backgroundColor: Colors[colorScheme].background},
+                { backgroundColor: Colors[colorScheme].background },
               ]}
             >
               <Ionicons
                 name="search-outline"
                 style={styles.searchIcon}
-                size={16}
+                size={isTablet ? 20 : 16}
                 color={Colors[colorScheme].icon}
               />
               <TextInput
                 placeholder="Cari Produk"
                 placeholderTextColor={Colors[colorScheme].icon}
-                style={[styles.searchInput, {color: Colors[colorScheme].text}]}
+                style={[styles.searchInput, { color: Colors[colorScheme].text }]}
                 value={searchQuery}
                 onChangeText={setSearchQuery}
               />
@@ -431,10 +464,10 @@ export default function PaymentPage() {
           </View>
 
           <View style={styles.headerIcons}>
-            <TouchableOpacity onPress={() => {}} style={styles.headerIconBox}>
+            <TouchableOpacity onPress={() => { }} style={styles.headerIconBox}>
               <Ionicons
                 name="barcode-outline"
-                size={24}
+                size={isTablet ? 28 : 24}
                 color={Colors[colorScheme].icon}
               />
             </TouchableOpacity>
@@ -444,7 +477,7 @@ export default function PaymentPage() {
             >
               <AntDesign
                 name="history"
-                size={20}
+                size={isTablet ? 24 : 20}
                 color={Colors[colorScheme].icon}
               />
             </TouchableOpacity>
@@ -455,7 +488,7 @@ export default function PaymentPage() {
         <View
           style={[
             styles.tabsContainer,
-            {backgroundColor: Colors[colorScheme].tabBackground},
+            { backgroundColor: Colors[colorScheme].tabBackground },
           ]}
         >
           <TouchableOpacity
@@ -465,8 +498,8 @@ export default function PaymentPage() {
             <Text
               style={
                 activeTab === "manual"
-                  ? [styles.tabActiveText, {color: Colors[colorScheme].text}]
-                  : [styles.tabText, {color: Colors[colorScheme].icon}]
+                  ? [styles.tabActiveText, { color: Colors[colorScheme].text }]
+                  : [styles.tabText, { color: Colors[colorScheme].icon }]
               }
             >
               Manual
@@ -477,7 +510,7 @@ export default function PaymentPage() {
               styles.tab,
               activeTab === "product" && [
                 styles.tabActive,
-                {backgroundColor: Colors[colorScheme].secondary},
+                { backgroundColor: Colors[colorScheme].secondary },
               ],
             ]}
             onPress={() => setActiveTab("product")}
@@ -485,8 +518,8 @@ export default function PaymentPage() {
             <Text
               style={
                 activeTab === "product"
-                  ? [styles.tabActiveText, {color: Colors[colorScheme].text}]
-                  : [styles.tabText, {color: Colors[colorScheme].icon}]
+                  ? [styles.tabActiveText, { color: Colors[colorScheme].text }]
+                  : [styles.tabText, { color: Colors[colorScheme].icon }]
               }
             >
               Produk
@@ -497,7 +530,7 @@ export default function PaymentPage() {
               styles.tab,
               activeTab === "favorite" && [
                 styles.tabActive,
-                {backgroundColor: Colors[colorScheme].secondary},
+                { backgroundColor: Colors[colorScheme].secondary },
               ],
             ]}
             onPress={() => setActiveTab("favorite")}
@@ -505,8 +538,8 @@ export default function PaymentPage() {
             <Text
               style={
                 activeTab === "favorite"
-                  ? [styles.tabActiveText, {color: Colors[colorScheme].text}]
-                  : [styles.tabText, {color: Colors[colorScheme].icon}]
+                  ? [styles.tabActiveText, { color: Colors[colorScheme].text }]
+                  : [styles.tabText, { color: Colors[colorScheme].icon }]
               }
             >
               Favorit
@@ -517,174 +550,269 @@ export default function PaymentPage() {
 
       {/* Main content area */}
       <View style={styles.main}>
-        {activeTab === "manual" ? (
-          <>
-            {/* Grey display area with amount on right */}
+        {/* Left side - Products */}
+        <View style={styles.leftPanel}>
+          {activeTab === "manual" ? (
+            <>
+              {/* Grey display area with amount on right */}
+              <View
+                style={[
+                  styles.displayWrapper,
+                  { backgroundColor: Colors[colorScheme].background },
+                ]}
+              >
+                <View style={styles.displayAmountRow}>
+                  <Text
+                    style={[
+                      styles.displayAmount,
+                      { color: Colors[colorScheme].text },
+                    ]}
+                  >
+                    {formatAmount(amount)}
+                  </Text>
+                </View>
+              </View>
+
+              {/* Calculator */}
+              <View style={styles.calculatorWrapper}>
+                <CalculatorInput value={amount} onChangeValue={setAmount} />
+              </View>
+            </>
+          ) : (
             <View
               style={[
-                styles.displayWrapper,
-                {backgroundColor: Colors[colorScheme].background},
+                styles.productWrapper,
+                { backgroundColor: Colors[colorScheme].secondary },
               ]}
             >
-              <View style={styles.displayAmountRow}>
-                <Text
-                  style={[
-                    styles.displayAmount,
-                    {color: Colors[colorScheme].text},
-                  ]}
-                >
-                  {formatAmount(amount)}
-                </Text>
-              </View>
-            </View>
-
-            {/* Calculator */}
-            <View style={styles.calculatorWrapper}>
-              <CalculatorInput value={amount} onChangeValue={setAmount} />
-            </View>
-          </>
-        ) : (
-          <View
-            style={[
-              styles.productWrapper,
-              {backgroundColor: Colors[colorScheme].secondary},
-            ]}
-          >
-            <View style={styles.badgeRow}>
-              <TouchableOpacity
-                style={[
-                  styles.badge,
-                  selectedCategoryId === "all" && styles.badgeActive,
-                ]}
-                onPress={() => setSelectedCategoryId("all")}
-              >
-                <Text
-                  style={[
-                    styles.badgeText,
-                    selectedCategoryId === "all" && styles.badgeTextActive,
-                  ]}
-                >
-                  All
-                </Text>
-              </TouchableOpacity>
-              {categories.map(category => (
+              <View style={styles.badgeRow}>
                 <TouchableOpacity
-                  key={category.id}
                   style={[
                     styles.badge,
-                    selectedCategoryId === category.id && styles.badgeActive,
+                    selectedCategoryId === "all" && styles.badgeActive,
                   ]}
-                  onPress={() => setSelectedCategoryId(category.id)}
+                  onPress={() => setSelectedCategoryId("all")}
                 >
                   <Text
                     style={[
                       styles.badgeText,
-                      selectedCategoryId === category.id &&
-                        styles.badgeTextActive,
+                      selectedCategoryId === "all" && styles.badgeTextActive,
                     ]}
                   >
-                    {category.name}
+                    All
                   </Text>
                 </TouchableOpacity>
-              ))}
-            </View>
+                {categories.map(category => (
+                  <TouchableOpacity
+                    key={category.id}
+                    style={[
+                      styles.badge,
+                      selectedCategoryId === category.id && styles.badgeActive,
+                    ]}
+                    onPress={() => setSelectedCategoryId(category.id)}
+                  >
+                    <Text
+                      style={[
+                        styles.badgeText,
+                        selectedCategoryId === category.id &&
+                        styles.badgeTextActive,
+                      ]}
+                    >
+                      {category.name}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
 
-            {isLoading ? (
-              <View style={styles.blankStateWrapper}>
-                <ActivityIndicator
-                  size="large"
-                  color={Colors[colorScheme].primary}
-                />
-                <Text
-                  style={[
-                    styles.blankStateText,
-                    {color: Colors[colorScheme].text, marginTop: 16},
-                  ]}
-                >
-                  Memuat produk...
-                </Text>
-              </View>
-            ) : isEmptyState ? (
-              <View style={styles.blankStateWrapper}>
-                <Image
-                  source={require("../../../assets/ilustrations/empty.jpg")}
-                  style={styles.blankStateImage}
-                  resizeMode="contain"
-                />
-                <Text
-                  style={[
-                    styles.blankStateText,
-                    {color: Colors[colorScheme].text},
-                  ]}
-                >
-                  {searchQuery ? "Produk tidak ditemukan" : "Belum Ada Produk"}
-                </Text>
-              </View>
-            ) : (
-              <FlatList
-                data={products}
-                renderItem={({item: product}) => (
-                  <ProductItem
-                    key={product.id}
-                    name={product.name}
-                    remaining={getProductStock(product.id)}
-                    price={
-                      product.variants && product.variants.length > 0
-                        ? product.variants[0].price
-                        : product.price || 0
-                    }
-                    quantity={getProductQuantity(product.id)}
-                    onPress={() => handleProductPress(product)}
-                    onLongPress={() => handleProductLongPress(product)}
+              {isLoading ? (
+                <View style={styles.blankStateWrapper}>
+                  <ActivityIndicator
+                    size="large"
+                    color={Colors[colorScheme].primary}
                   />
-                )}
-                keyExtractor={item => item.id}
-                contentContainerStyle={styles.productListWrapper}
-                refreshControl={
-                  <RefreshControl
-                    refreshing={refreshing}
-                    onRefresh={onRefresh}
-                    colors={[Colors[colorScheme].primary]}
-                    tintColor={Colors[colorScheme].primary}
+                  <Text
+                    style={[
+                      styles.blankStateText,
+                      { color: Colors[colorScheme].text, marginTop: 16 },
+                    ]}
+                  >
+                    Memuat produk...
+                  </Text>
+                </View>
+              ) : isEmptyState ? (
+                <View style={styles.blankStateWrapper}>
+                  <Image
+                    source={require("../../../assets/ilustrations/empty.jpg")}
+                    style={styles.blankStateImage}
+                    resizeMode="contain"
                   />
+                  <Text
+                    style={[
+                      styles.blankStateText,
+                      { color: Colors[colorScheme].text },
+                    ]}
+                  >
+                    {searchQuery ? "Produk tidak ditemukan" : "Belum Ada Produk"}
+                  </Text>
+                </View>
+              ) : (
+                <FlatList
+                  data={products}
+                  renderItem={({ item: product }) => (
+                    <ProductItem
+                      key={product.id}
+                      name={product.name}
+                      remaining={getProductStock(product.id)}
+                      price={
+                        product.variants && product.variants.length > 0
+                          ? product.variants[0].price
+                          : product.price || 0
+                      }
+                      quantity={getProductQuantity(product.id)}
+                      onPress={() => handleProductPress(product)}
+                      onLongPress={() => handleProductLongPress(product)}
+                    />
+                  )}
+                  keyExtractor={item => item.id}
+                  contentContainerStyle={styles.productListWrapper}
+                  refreshControl={
+                    <RefreshControl
+                      refreshing={refreshing}
+                      onRefresh={onRefresh}
+                      colors={[Colors[colorScheme].primary]}
+                      tintColor={Colors[colorScheme].primary}
+                    />
+                  }
+                />
+              )}
+            </View>
+          )}
+
+          {/* Bottom charge button - only show on phone/tablet portrait */}
+          {!isTabletLandscape && (
+            <View
+              style={[
+                styles.bottomWrapper,
+                { backgroundColor: Colors[colorScheme].secondary },
+              ]}
+            >
+              <View style={styles.bottomHandle} />
+              <TouchableOpacity
+                style={[
+                  styles.chargeButton,
+                  { backgroundColor: Colors[colorScheme].primary },
+                ]}
+                disabled={
+                  activeTab !== "manual" && checkoutItemsCount === 0
                 }
-              />
-            )}
+                onPress={() => {
+                  if (activeTab !== "manual" && checkoutItemsCount === 0) {
+                    return;
+                  }
+                  router.replace("/dashboard/transaction/summary");
+                }}
+              >
+                <Text
+                  style={[
+                    styles.chargeButtonText,
+                    { color: "white" },
+                  ]}
+                >
+                  {activeTab === "manual"
+                    ? `Tagih = Rp ${amount === "0" ? "0" : formatAmount(amount)}`
+                    : getTotalItems() === 0
+                      ? "Pilih produk terlebih dahulu"
+                      : `(${getTotalItems()} Produk)  Rp ${formatCurrency(
+                        getTotalAmount()
+                      )}`}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          )}
+        </View>
+
+        {/* Right side - Cart Panel (only for tablet landscape) */}
+        {isTabletLandscape && (
+          <View
+            style={[
+              styles.rightPanel,
+              { backgroundColor: Colors[colorScheme].secondary },
+            ]}
+          >
+            {/* Cart Items List */}
+            <ScrollView
+              style={styles.cartScrollView}
+              contentContainerStyle={styles.cartScrollContent}
+              showsVerticalScrollIndicator={false}
+            >
+              {checkoutProducts.length === 0 ? (
+                <View style={styles.emptyCartWrapper}>
+                  <Text style={[styles.emptyCartText, { color: Colors[colorScheme].icon }]}>
+                    Belum ada produk dipilih
+                  </Text>
+                </View>
+              ) : (
+                checkoutProducts.map((item, index) => (
+                  <View
+                    key={`${item.productId}-${item.variantId ?? "no-variant"}`}
+                    style={[
+                      styles.cartItemContainer,
+                      { borderBottomColor: Colors[colorScheme].border },
+                    ]}
+                  >
+                    <CheckoutItem
+                      index={index + 1}
+                      name={getCheckoutItemName(item)}
+                      quantity={item.quantity}
+                      unitPrice={getItemUnitPrice(item)}
+                      onRemove={() => handleRemoveCheckoutItem(item.productId, item.variantId)}
+                      hideIndex
+                      withSummary={false}
+                      isTablet={isTablet}
+                    />
+                  </View>
+                ))
+              )}
+            </ScrollView>
+
+            {/* Cart Footer with Total and Actions */}
+            <View
+              style={[
+                styles.cartFooter,
+                { borderTopColor: Colors[colorScheme].border },
+              ]}
+            >
+              <View style={styles.cartTotalRow}>
+                <Text style={[styles.cartTotalLabel, { color: Colors[colorScheme].text }]}>
+                  Total ({checkoutItemsCount})
+                </Text>
+                <Text style={[styles.cartTotalAmount, { color: Colors[colorScheme].primary }]}>
+                  Rp{formatCurrency(checkoutTotalAmount)}
+                </Text>
+              </View>
+
+              <View style={styles.cartActionsRow}>
+
+                <TouchableOpacity
+                  style={[
+                    styles.payButton,
+                    { backgroundColor: Colors[colorScheme].primary },
+                    (activeTab !== "manual" && checkoutItemsCount === 0) && styles.payButtonDisabled,
+                  ]}
+                  disabled={activeTab !== "manual" && checkoutItemsCount === 0}
+                  onPress={() => {
+                    if (activeTab !== "manual" && checkoutItemsCount === 0) {
+                      return;
+                    }
+                    router.push("/dashboard/transaction/summary");
+                  }}
+                >
+                  <Text style={styles.payButtonText}>Bayar</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
           </View>
         )}
-
-        {/* Bottom charge button */}
-        <View
-          style={[
-            styles.bottomWrapper,
-            {backgroundColor: Colors[colorScheme].secondary},
-          ]}
-        >
-          <View style={styles.bottomHandle} />
-          <TouchableOpacity
-            style={[
-              styles.chargeButton,
-              {backgroundColor: Colors[colorScheme].primary},
-            ]}
-            disabled={activeTab !== "manual" && getTotalItems() === 0}
-            onPress={() => {
-              if (activeTab !== "manual" && getTotalItems() === 0) {
-                return;
-              }
-              router.replace("/dashboard/transaction/summary");
-            }}
-          >
-            <Text style={[styles.chargeButtonText, {color: "white"}]}>
-              {activeTab === "manual"
-                ? `Tagih = Rp ${amount === "0" ? "0" : formatAmount(amount)}`
-                : getTotalItems() === 0
-                ? "Pilih produk terlebih dahulu"
-                : `(${getTotalItems()} Produk)  Rp ${formatCurrency(
-                    getTotalAmount()
-                  )}`}
-            </Text>
-          </TouchableOpacity>
-        </View>
       </View>
 
       <SelectVariantModal
@@ -732,16 +860,16 @@ export default function PaymentPage() {
   );
 }
 
-const createStyles = (colorScheme: "light" | "dark") =>
+const createStyles = (colorScheme: "light" | "dark", isTablet: boolean, isTabletLandscape: boolean) =>
   StyleSheet.create({
     container: {
       flex: 1,
       backgroundColor: Colors[colorScheme].background,
     },
     header: {
-      paddingHorizontal: 16,
-      paddingTop: 12,
-      paddingBottom: 8,
+      paddingHorizontal: isTablet ? 24 : 16,
+      paddingTop: isTablet ? 16 : 12,
+      paddingBottom: isTablet ? 12 : 8,
       backgroundColor: Colors[colorScheme].secondary,
       shadowColor: Colors[colorScheme].shadow,
       shadowOpacity: 0.05,
@@ -751,75 +879,74 @@ const createStyles = (colorScheme: "light" | "dark") =>
     headerRow: {
       flexDirection: "row",
       alignItems: "center",
-      marginBottom: 8,
-      columnGap: 12,
+      marginBottom: isTablet ? 12 : 8,
+      columnGap: isTablet ? 16 : 12,
     },
     menuButton: {
-      width: 32,
-      height: 32,
-      borderRadius: 8,
+      width: isTablet ? 48 : 32,
+      height: isTablet ? 48 : 32,
+      borderRadius: isTablet ? 10 : 8,
       borderColor: Colors[colorScheme].border,
       borderWidth: 1,
       alignItems: "center",
       justifyContent: "center",
     },
     menuButtonText: {
-      fontSize: 16,
+      fontSize: isTablet ? 20 : 16,
       color: Colors[colorScheme].text,
     },
     searchWrapper: {
       flex: 1,
       borderColor: Colors[colorScheme].border,
       borderWidth: 1,
-      borderRadius: 8,
+      borderRadius: isTablet ? 10 : 8,
     },
     searchInput: {
       flex: 1,
-      paddingVertical: 12,
-
-      fontSize: 14,
+      paddingVertical: isTablet ? 14 : 12,
+      fontSize: isTablet ? 18 : 14,
       color: Colors[colorScheme].text,
     },
     searchInner: {
       flexDirection: "row",
       alignItems: "center",
-      columnGap: 8,
-      borderRadius: 8,
+      columnGap: isTablet ? 12 : 8,
+      borderRadius: isTablet ? 10 : 8,
       backgroundColor: Colors[colorScheme].background,
-      paddingHorizontal: 12,
+      paddingHorizontal: isTablet ? 16 : 12,
     },
     searchIcon: {
-      fontSize: 16,
+      fontSize: isTablet ? 20 : 16,
       color: Colors[colorScheme].icon,
     },
     headerIcons: {
       flexDirection: "row",
-      columnGap: 8,
+      columnGap: isTablet ? 12 : 8,
     },
     headerIconBox: {
-      width: 40,
-      height: 40,
-      borderRadius: 8,
+      width: isTablet ? 52 : 40,
+      height: isTablet ? 52 : 40,
+      borderRadius: isTablet ? 10 : 8,
       borderColor: Colors[colorScheme].border,
       borderWidth: 1,
       alignItems: "center",
       justifyContent: "center",
     },
     headerIconText: {
-      fontSize: 12,
+      fontSize: isTablet ? 16 : 12,
       color: Colors[colorScheme].text,
     },
     tabsContainer: {
       flexDirection: "row",
-      marginTop: 8,
+      marginTop: isTablet ? 12 : 8,
       backgroundColor: Colors[colorScheme].tabBackground,
-      borderRadius: 8,
-      padding: 4,
+      borderRadius: isTablet ? 10 : 8,
+      padding: isTablet ? 6 : 4,
     },
     tab: {
       flex: 1,
-      paddingVertical: 8,
-      borderRadius: 8,
+      paddingVertical: isTablet ? 12 : 8,
+      borderRadius: isTablet ? 10 : 8,
       alignItems: "center",
       justifyContent: "center",
       backgroundColor: Colors[colorScheme].tabBackground,
@@ -828,16 +955,102 @@ const createStyles = (colorScheme: "light" | "dark") =>
       backgroundColor: Colors[colorScheme].tabActive,
     },
     tabText: {
-      fontSize: 14,
+      fontSize: isTablet ? 18 : 14,
       color: Colors[colorScheme].text,
     },
     tabActiveText: {
-      fontSize: 14,
+      fontSize: isTablet ? 18 : 14,
       color: Colors[colorScheme].text,
       fontWeight: "600",
     },
     main: {
       flex: 1,
+      flexDirection: isTabletLandscape ? "row" : "column",
+    },
+    leftPanel: {
+      flex: isTabletLandscape ? 1 : 1,
+    },
+    rightPanel: {
+      width: isTabletLandscape ? 360 : 0,
+      borderLeftWidth: isTabletLandscape ? 1 : 0,
+      borderLeftColor: Colors[colorScheme].border,
+    },
+    cartScrollView: {
+      flex: 1,
+    },
+    cartScrollContent: {
+      flexGrow: 1,
+    },
+    emptyCartWrapper: {
+      flex: 1,
+      alignItems: "center",
+      justifyContent: "center",
+      paddingVertical: 48,
+    },
+    emptyCartText: {
+      fontSize: 16,
+      color: Colors[colorScheme].icon,
+    },
+    cartItemContainer: {
+      borderBottomWidth: 1,
+      borderBottomColor: Colors[colorScheme].border,
+    },
+    cartFooter: {
+      borderTopWidth: 1,
+      borderTopColor: Colors[colorScheme].border,
+      paddingHorizontal: 16,
+      paddingVertical: 16,
+    },
+    cartTotalRow: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+      marginBottom: 16,
+    },
+    cartTotalLabel: {
+      fontSize: 16,
+      fontWeight: "500",
+      color: Colors[colorScheme].text,
+    },
+    cartTotalAmount: {
+      fontSize: 20,
+      fontWeight: "700",
+      color: Colors[colorScheme].primary,
+    },
+    cartActionsRow: {
+      flexDirection: "row",
+      columnGap: 12,
+    },
+    saveButton: {
+      flex: 1,
+      height: 48,
+      borderRadius: 8,
+      borderWidth: 1,
+      borderColor: Colors[colorScheme].border,
+      backgroundColor: Colors[colorScheme].secondary,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    saveButtonText: {
+      fontSize: 16,
+      fontWeight: "600",
+      color: Colors[colorScheme].text,
+    },
+    payButton: {
+      flex: 2,
+      height: 48,
+      borderRadius: 8,
+      backgroundColor: Colors[colorScheme].primary,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    payButtonDisabled: {
+      opacity: 0.5,
+    },
+    payButtonText: {
+      fontSize: 16,
+      fontWeight: "600",
+      color: "white",
     },
     displayWrapper: {
       flex: 1,
@@ -848,11 +1061,11 @@ const createStyles = (colorScheme: "light" | "dark") =>
       flexDirection: "row",
       justifyContent: "flex-end",
       alignItems: "center",
-      paddingHorizontal: 16,
-      paddingVertical: 12,
+      paddingHorizontal: isTablet ? 24 : 16,
+      paddingVertical: isTablet ? 16 : 12,
     },
     displayAmount: {
-      fontSize: 24,
+      fontSize: isTablet ? 32 : 24,
       fontWeight: "600",
       color: Colors[colorScheme].text,
     },
@@ -861,25 +1074,24 @@ const createStyles = (colorScheme: "light" | "dark") =>
       backgroundColor: Colors[colorScheme].secondary,
     },
     productTopBar: {
-      paddingHorizontal: 16,
-      paddingTop: 12,
-      paddingBottom: 4,
+      paddingHorizontal: isTablet ? 24 : 16,
+      paddingTop: isTablet ? 16 : 12,
+      paddingBottom: isTablet ? 8 : 4,
       backgroundColor: Colors[colorScheme].secondary,
     },
-
     categoryDropdownText: {
-      fontSize: 15,
+      fontSize: isTablet ? 18 : 15,
       color: Colors[colorScheme].text,
     },
     badgeRow: {
       flexDirection: "row",
-      columnGap: 8,
-      paddingHorizontal: 16,
-      paddingVertical: 8,
+      columnGap: isTablet ? 12 : 8,
+      paddingHorizontal: isTablet ? 24 : 16,
+      paddingVertical: isTablet ? 12 : 8,
     },
     badge: {
-      paddingHorizontal: 14,
-      paddingVertical: 6,
+      paddingHorizontal: isTablet ? 18 : 14,
+      paddingVertical: isTablet ? 10 : 6,
       borderRadius: 999,
       borderWidth: 1,
       borderColor: Colors[colorScheme].border,
@@ -890,7 +1102,7 @@ const createStyles = (colorScheme: "light" | "dark") =>
       color: Colors[colorScheme].secondary,
     },
     badgeText: {
-      fontSize: 14,
+      fontSize: isTablet ? 18 : 14,
       color: Colors[colorScheme].text,
     },
     badgeTextActive: {
@@ -901,21 +1113,21 @@ const createStyles = (colorScheme: "light" | "dark") =>
       flex: 1,
       alignItems: "center",
       justifyContent: "center",
-      paddingHorizontal: 32,
+      paddingHorizontal: isTablet ? 48 : 32,
     },
     blankStateImage: {
-      width: 160,
-      height: 160,
-      marginBottom: 16,
+      width: isTablet ? 220 : 160,
+      height: isTablet ? 220 : 160,
+      marginBottom: isTablet ? 24 : 16,
     },
     blankStateText: {
-      fontSize: 16,
+      fontSize: isTablet ? 20 : 16,
       color: Colors[colorScheme].text,
     },
     productListWrapper: {
-      paddingHorizontal: 16,
-      paddingVertical: 8,
-      rowGap: 8,
+      paddingHorizontal: isTablet ? 24 : 16,
+      paddingVertical: isTablet ? 12 : 8,
+      rowGap: isTablet ? 12 : 8,
     },
     calculatorWrapper: {
       backgroundColor: Colors[colorScheme].secondary,
@@ -924,22 +1136,22 @@ const createStyles = (colorScheme: "light" | "dark") =>
     },
     bottomWrapper: {
       backgroundColor: Colors[colorScheme].secondary,
-      paddingTop: 8,
-      paddingBottom: 16,
-      paddingHorizontal: 16,
+      paddingTop: isTablet ? 12 : 8,
+      paddingBottom: isTablet ? 20 : 16,
+      paddingHorizontal: isTablet ? 24 : 16,
       alignItems: "center",
-      rowGap: 8,
+      rowGap: isTablet ? 12 : 8,
     },
     bottomHandle: {
-      width: 40,
-      height: 4,
+      width: isTablet ? 50 : 40,
+      height: isTablet ? 5 : 4,
       borderRadius: 999,
       backgroundColor: Colors[colorScheme].border,
     },
     chargeButton: {
       width: "100%",
-      height: 50,
-      borderRadius: 8,
+      height: isTablet ? 60 : 50,
+      borderRadius: isTablet ? 10 : 8,
       backgroundColor: Colors[colorScheme].primary,
       alignItems: "center",
       justifyContent: "center",
@@ -947,6 +1159,6 @@ const createStyles = (colorScheme: "light" | "dark") =>
     chargeButtonText: {
       color: Colors[colorScheme].secondary,
       fontWeight: "600",
-      fontSize: 16,
+      fontSize: isTablet ? 20 : 16,
     },
   });

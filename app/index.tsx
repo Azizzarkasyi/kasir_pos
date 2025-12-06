@@ -1,30 +1,46 @@
-import {ThemedButton} from "@/components/themed-button";
-import {ThemedText} from "@/components/themed-text";
-import {Colors} from "@/constants/theme";
-import {useColorScheme} from "@/hooks/use-color-scheme";
-import {useNavigation} from "@react-navigation/native";
-import React, {useEffect, useRef, useState} from "react";
+import { ThemedButton } from "@/components/themed-button";
+import { ThemedText } from "@/components/themed-text";
+import { Colors } from "@/constants/theme";
+import { useColorScheme } from "@/hooks/use-color-scheme";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useNavigation } from "@react-navigation/native";
+import { useRouter } from "expo-router";
+import React, { useEffect, useRef, useState } from "react";
 import {
-  Dimensions,
+  ActivityIndicator,
   Image,
   NativeScrollEvent,
   NativeSyntheticEvent,
   ScrollView,
   StyleSheet,
-  View,
-  ActivityIndicator,
+  View, useWindowDimensions,
 } from "react-native";
-import {SafeAreaView} from "react-native-safe-area-context";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import {useRouter} from "expo-router";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function Index() {
   const colorScheme = useColorScheme() ?? "light";
   const navigation = useNavigation();
   const router = useRouter();
   const [activeSlide, setActiveSlide] = useState(0);
+  const [carouselWidth, setCarouselWidth] = useState(0);
   const scrollRef = useRef<ScrollView | null>(null);
-  const screenWidth = Dimensions.get("window").width;
+  const { width: screenWidth, height: screenHeight } = useWindowDimensions();
+  const isTablet = Math.min(screenWidth, screenHeight) >= 600;
+  const isLandscape = screenWidth > screenHeight;
+  const isTabletLandscape = isTablet && isLandscape;
+
+  const styles = createStyles({ deviceWidth: screenWidth, isTabletLandscape });
+
+  const getSlideSize = (width: number, height: number) => {
+    const scale = isTabletLandscape ? 1.8 : isTablet ? 1.4 : 1;
+    return { width: width * scale, height: height * scale };
+  };
+
+  const getSlideMarginBottom = (id: number) => {
+    return slides[id].marginBottom;
+  };
+
+  const widthForSlide = carouselWidth || screenWidth;
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
 
   const slides = [
@@ -33,28 +49,31 @@ export default function Index() {
       title: "Cukup 2 menit untuk registrasi",
       description:
         "Daftarin usahamu untuk catat transaksi dan pantau laporan penjualan.",
-      image: require("../assets/ilustrations/registration.webp"),
+      image: require("../assets/ilustrations/signup.png"),
 
-      width: 250,
-      height: 250,
+      width: 300,
+      height: 300,
+      marginBottom: -40,
     },
     {
       id: 1,
       title: "Satu akun untuk banyak cabang",
       description:
         "Kelola beberapa cabang usaha dalam satu aplikasi. Pantau performa tiap toko tanpa harus datang ke lokasi.",
-      image: require("../assets/ilustrations/multi-branch.png"),
+      image: require("../assets/ilustrations/multi-store.png"),
       width: 300,
       height: 300,
+      marginBottom: -40,
     },
     {
       id: 2,
       title: "Produk rapi, transaksi otomatis tercatat",
       description:
         "Atur katalog produk, harga, dan stok dengan mudah. Setiap transaksi langsung tercatat rapi di laporan.",
-      image: require("../assets/ilustrations/inventory-transaction.png"),
-      width: 200,
-      height: 200,
+      image: require("../assets/ilustrations/trx.png"),
+      width: 250,
+      height: 250,
+      marginBottom: -10,
     },
   ];
 
@@ -97,7 +116,7 @@ export default function Index() {
         const nextIndex = (prev + 1) % slides.length;
         if (scrollRef.current) {
           scrollRef.current.scrollTo({
-            x: nextIndex * screenWidth,
+            x: nextIndex * widthForSlide,
             animated: true,
           });
         }
@@ -106,7 +125,7 @@ export default function Index() {
     }, 4000);
 
     return () => clearInterval(interval);
-  }, [screenWidth, slides.length, isCheckingAuth]);
+  }, [widthForSlide, slides.length, isCheckingAuth]);
 
   // Show loading while checking authentication
   if (isCheckingAuth) {
@@ -129,10 +148,18 @@ export default function Index() {
     <SafeAreaView
       style={[
         styles.container,
+        isTablet && styles.containerLarge,
+        isTabletLandscape && styles.containerTabletLandscape,
         {backgroundColor: Colors[colorScheme].background},
       ]}
     >
-      <View style={styles.carouselContainer}>
+      <View
+        style={[styles.carouselContainer, isTablet && styles.carouselContainerLarge]}
+        onLayout={event => {
+          const { width } = event.nativeEvent.layout;
+          setCarouselWidth(width);
+        }}
+      >
         <ScrollView
           ref={scrollRef}
           horizontal
@@ -141,22 +168,51 @@ export default function Index() {
           onMomentumScrollEnd={handleMomentumScrollEnd}
         >
           {slides.map(slide => (
-            <View key={slide.id} style={[styles.slide, {width: screenWidth}]}>
-              <View style={styles.imageContainer}>
+            <View
+              key={slide.id}
+              style={[
+                styles.slide,
+                isTabletLandscape && styles.slideLarge,
+                { width: widthForSlide },
+              ]}
+            >
+              <View style={[styles.imageContainer, isTabletLandscape && styles.imageContainerLarge]}>
                 <Image
                   source={slide.image}
                   style={[
                     styles.ilustration,
-                    {width: slide.width, height: slide.height},
+                    getSlideSize(slide.width, slide.height),
+                    {
+                      marginBottom: isTabletLandscape
+                        ? 0
+                        : getSlideMarginBottom(slide.id),
+                    },
                   ]}
                 />
               </View>
-              <View style={styles.textContainer}>
-                <ThemedText type="subtitle-2" style={styles.title}>
+              <View
+                style={[
+                  styles.textContainer,
+                  isTabletLandscape && styles.textContainerLarge,
+                ]}
+              >
+                <ThemedText
+                  type="subtitle-2"
+                  style={[
+                    styles.title,
+                    isTablet && styles.titleLarge,
+                    isTabletLandscape && styles.titleTabletLandscape,
+                  ]}
+                >
                   {slide.title}
                 </ThemedText>
                 <ThemedText
-                  style={[styles.subtitle, {color: Colors[colorScheme].icon}]}
+                  style={[
+                    styles.subtitle,
+                    isTablet && styles.subtitleLarge,
+                    isTabletLandscape && styles.subtitleTabletLandscape,
+                    { color: Colors[colorScheme].icon },
+                  ]}
                 >
                   {slide.description}
                 </ThemedText>
@@ -164,7 +220,7 @@ export default function Index() {
             </View>
           ))}
         </ScrollView>
-        <View style={styles.dotsContainer}>
+        <View style={[styles.dotsContainer, isTablet && styles.dotsContainerLarge]}>
           {slides.map((slide, index) => (
             <View
               key={slide.id}
@@ -173,7 +229,13 @@ export default function Index() {
           ))}
         </View>
       </View>
-      <View style={styles.buttonContainer}>
+      <View
+        style={[
+          styles.buttonContainer,
+          isTablet && styles.buttonContainerLarge,
+          isTabletLandscape && styles.buttonContainerTabletLandscape,
+        ]}
+      >
         <ThemedButton
           title="Daftar Sekarang"
           variant="primary"
@@ -184,44 +246,70 @@ export default function Index() {
         <ThemedButton
           title="Masuk"
           variant="secondary"
-          style={{marginTop: 16}}
+          style={[
+            !isTabletLandscape && { marginTop: 16 },
+            isTabletLandscape && { marginLeft: 16 },
+          ]}
           onPress={() => navigation.navigate("auth/Login/login" as never)}
         />
       </View>
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
+const createStyles = ({ deviceWidth, isTabletLandscape }: { deviceWidth: number; isTabletLandscape: boolean }) => StyleSheet.create({
   container: {
     flex: 1,
     alignItems: "center",
     justifyContent: "space-between",
-    paddingVertical: 20,
+    paddingVertical: 20
+  },
+    containerLarge: {
+    paddingVertical: 40,
+    paddingHorizontal: 40,
+  },
+  containerTabletLandscape: {
+    paddingVertical: 24,
+    paddingHorizontal: 80,
+    justifyContent: "center",
   },
   carouselContainer: {
     width: "100%",
     flex: 1,
   },
+  carouselContainerLarge: {
+    maxWidth: deviceWidth,
+    alignSelf: "center",
+  },
   slide: {
     width: "100%",
     flexDirection: "column",
     justifyContent: "center",
-
     paddingHorizontal: 10,
     paddingVertical: 20,
+  },
+  slideLarge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 32,
   },
   imageContainer: {
     flexDirection: "column",
     borderRadius: 10,
     alignItems: "center",
   },
+  imageContainerLarge: {
+    flex: 1,
+  },
   ilustration: {
-    width: 250,
-    height: 250,
+    resizeMode: "contain",
   },
   textContainer: {
     marginTop: 50,
+  },
+  textContainerLarge: {
+    flex: 1,
+    marginTop: 0,
+    justifyContent: "center",
   },
   title: {
     textAlign: "center",
@@ -229,10 +317,29 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: "600",
   },
+  titleLarge: {
+    fontSize: 28,
+  },
+  titleTabletLandscape: {
+    textAlign: "left",
+    alignSelf: "flex-start",
+    fontSize: 30,
+  },
   subtitle: {
     textAlign: "center",
     fontSize: 16,
     lineHeight: 20,
+  },
+  subtitleLarge: {
+    fontSize: 20,
+    paddingHorizontal: 40,
+    lineHeight: 24,
+  },
+  subtitleTabletLandscape: {
+    textAlign: "left",
+    paddingHorizontal: 0,
+    fontSize: 18,
+    lineHeight: 24,
   },
   dotsContainer: {
     flexDirection: "row",
@@ -241,6 +348,9 @@ const styles = StyleSheet.create({
     marginTop: 8,
     gap: 8,
     paddingBottom: 20,
+  },
+  dotsContainerLarge: {
+    marginTop: 16,
   },
   dot: {
     width: 8,
@@ -255,5 +365,16 @@ const styles = StyleSheet.create({
     width: "100%",
     paddingHorizontal: 20,
     justifyContent: "center",
+  },
+  buttonContainerLarge: {
+    maxWidth: 900,
+    alignSelf: "center",
+    paddingHorizontal: 0,
+    marginBottom: 12,
+  },
+  buttonContainerTabletLandscape: {
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
   },
 });

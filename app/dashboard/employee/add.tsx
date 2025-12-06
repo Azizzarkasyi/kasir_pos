@@ -1,19 +1,27 @@
-import ComboInput from "@/components/combo-input";
+import SectionDivider from "@/components/atoms/section-divider";
+import SelectBranchModal from "@/components/drawers/select-branch-modal";
 import Header from "@/components/header";
-import {ThemedButton} from "@/components/themed-button";
-import {ThemedInput} from "@/components/themed-input";
-import {Colors} from "@/constants/theme";
-import {useColorScheme} from "@/hooks/use-color-scheme";
+import RadioButton from "@/components/radio-button";
+import { ThemedButton } from "@/components/themed-button";
+import { ThemedInput } from "@/components/themed-input";
+import { ThemedText } from "@/components/themed-text";
+import { Colors } from "@/constants/theme";
+import { useColorScheme } from "@/hooks/use-color-scheme";
+import { Branch } from "@/services";
 import employeeApi from "@/services/endpoints/employees";
-import {useRouter} from "expo-router";
-import React, {useState} from "react";
-import {Alert, StyleSheet, View} from "react-native";
-import {KeyboardAwareScrollView} from "react-native-keyboard-aware-scroll-view";
-import {useSafeAreaInsets} from "react-native-safe-area-context";
+import { useRouter } from "expo-router";
+import React, { useState } from "react";
+import { Alert, StyleSheet, TouchableOpacity, useWindowDimensions, View } from "react-native";
+import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function AddEmployeeScreen() {
   const colorScheme = useColorScheme() ?? "light";
-  const styles = createStyles(colorScheme);
+  const { width, height } = useWindowDimensions();
+  const isTablet = Math.min(width, height) >= 600;
+  const isLandscape = width > height;
+  const isTabletLandscape = isTablet && isLandscape;
+  const styles = createStyles(colorScheme, isTablet, isTabletLandscape);
   const insets = useSafeAreaInsets();
   const router = useRouter();
 
@@ -23,6 +31,8 @@ export default function AddEmployeeScreen() {
   const [role, setRole] = useState<"cashier" | "manager">("cashier");
   const [pin, setPin] = useState("");
   const [confirmPin, setConfirmPin] = useState("");
+  const [selectedBranches, setSelectedBranches] = useState<Branch[]>([]);
+  const [branchModalVisible, setBranchModalVisible] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
   const handleSave = async () => {
@@ -95,6 +105,11 @@ export default function AddEmployeeScreen() {
       return;
     }
 
+    if (selectedBranches.length === 0) {
+      Alert.alert("Error", "Mohon pilih minimal satu outlet");
+      return;
+    }
+
     // Validate role
     if (!role || (role !== "cashier" && role !== "manager")) {
       Alert.alert("Error", "Role harus dipilih (cashier atau manager)");
@@ -110,6 +125,7 @@ export default function AddEmployeeScreen() {
         email: email.trim().toLowerCase(),
         pin: pin,
         role: role,
+        branch_ids:[]
       };
 
       console.log("📦 Creating employee:");
@@ -142,114 +158,230 @@ export default function AddEmployeeScreen() {
     <View style={{flex: 1, backgroundColor: Colors[colorScheme].background}}>
       <Header title="Tambah Pegawai" showHelp={false} />
       <KeyboardAwareScrollView
-        contentContainerStyle={{padding: 20, gap: 8, paddingBottom: 100}}
+        contentContainerStyle={styles.scrollContent}
         enableOnAndroid
       >
-        <ThemedInput
-          label="Nama Pegawai"
-          size="md"
-          value={name}
-          onChangeText={setName}
-        />
-        <ThemedInput
-          label="No. Telepon"
-          size="md"
-          value={phone}
-          onChangeText={text => {
-            // Only allow numbers and + symbol
-            const filtered = text.replace(/[^0-9+]/g, "");
-            setPhone(filtered);
-          }}
-          keyboardType="phone-pad"
-        />
-        <ThemedInput
-          label="Email"
-          size="md"
-          value={email}
-          onChangeText={text => {
-            // Auto trim and lowercase
-            const filtered = text.trim().toLowerCase();
-            setEmail(filtered);
-          }}
-          keyboardType="email-address"
-          autoCapitalize="none"
-        />
-        <ComboInput
-          label="Role"
-          value={role === "cashier" ? "Kasir" : "Manager"}
-          onChangeText={label => {
-            const newRole = label === "Kasir" ? "cashier" : "manager";
-            console.log(
-              "🔄 Role changed from label:",
-              label,
-              "to value:",
-              newRole
-            );
-            setRole(newRole);
-          }}
-          items={[
-            {label: "Kasir", value: "cashier"},
-            {label: "Manager", value: "manager"},
-          ]}
-          disableAutoComplete
-        />
-        <ThemedInput
-          label="PIN"
-          size="md"
-          value={pin}
-          onChangeText={text => {
-            // Only allow numbers
-            const filtered = text.replace(/[^0-9]/g, "");
-            setPin(filtered);
-          }}
-          isPassword
-          keyboardType="numeric"
-          maxLength={6}
-        />
-        <ThemedInput
-          label="Konfirmasi PIN"
-          size="md"
-          value={confirmPin}
-          onChangeText={text => {
-            // Only allow numbers
-            const filtered = text.replace(/[^0-9]/g, "");
-            setConfirmPin(filtered);
-          }}
-          isPassword
-          keyboardType="numeric"
-          maxLength={6}
-        />
+        <View style={styles.contentWrapper}>
+          <View style={styles.sectionPadding}>
+            <ThemedInput
+              label="Nama Pegawai"
+              size="md"
+              value={name}
+              onChangeText={setName}
+            />
+            <ThemedInput
+              label="No. Telepon"
+              size="md"
+              value={phone}
+              onChangeText={setPhone}
+              keyboardType="phone-pad"
+            />
+            <ThemedInput
+              label="Email"
+              size="md"
+              value={email}
+              onChangeText={setEmail}
+              keyboardType="email-address"
+            />
+            <ThemedInput
+              label="PIN"
+              size="md"
+              value={pin}
+              onChangeText={setPin}
+              isPassword
+              keyboardType="numeric"
+              maxLength={6}
+            />
+            <ThemedInput
+              label="Konfirmasi PIN"
+              size="md"
+              value={confirmPin}
+              onChangeText={setConfirmPin}
+              isPassword
+              keyboardType="numeric"
+              maxLength={6}
+            />
+          </View>
+        </View>
 
-        <View style={{marginTop: 24}}>
-          <ThemedButton
-            title={isSaving ? "Menyimpan..." : "Simpan"}
-            onPress={handleSave}
-            size="medium"
-            disabled={isSaving}
-          />
+        <SectionDivider />
+
+        <View style={styles.contentWrapper}>
+          <View style={styles.sectionPadding}>
+            <ThemedText style={styles.sectionTitle}>Role</ThemedText>
+
+            <View style={styles.roleContainer}>
+              <TouchableOpacity
+                style={styles.roleOption}
+                activeOpacity={0.7}
+                onPress={() => setRole("cashier")}
+              >
+                <RadioButton selected={role === "cashier"} onPress={() => setRole("cashier")} />
+                <ThemedText style={styles.roleLabel}>Cashier</ThemedText>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.roleOption}
+                activeOpacity={0.7}
+                onPress={() => setRole("manager")}
+              >
+                <RadioButton selected={role === "manager"} onPress={() => setRole("manager")} />
+                <ThemedText style={styles.roleLabel}>Manager</ThemedText>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+
+        <SectionDivider />
+
+        <View style={styles.contentWrapper}>
+          <View style={styles.sectionPadding}>
+            <View style={styles.outletSection}>
+              <ThemedText style={styles.sectionTitle}>Outlet</ThemedText>
+              <TouchableOpacity
+                style={styles.outletButton}
+                onPress={() => setBranchModalVisible(true)}
+              >
+                <ThemedText style={styles.outletButtonText}>Pilih Outlet</ThemedText>
+              </TouchableOpacity>
+            </View>
+
+            {selectedBranches.length > 0 ? (
+              <View style={styles.selectedOutletsList}>
+                {selectedBranches.map((branch) => (
+                  <View key={branch.id} style={styles.selectedOutletItem}>
+                    <ThemedText style={styles.selectedOutletName}>{branch.name}</ThemedText>
+                    <ThemedText style={styles.selectedOutletAddress} numberOfLines={1}>
+                      {branch.address}
+                    </ThemedText>
+                  </View>
+                ))}
+              </View>
+            ) : (
+              <ThemedText style={styles.outletHint}>
+                Tekan Pilih Outlet untuk memilih tempat pegawai bekerja
+              </ThemedText>
+            )}
+
+            <View style={styles.buttonContainer}>
+              <ThemedButton title="Simpan" onPress={handleSave} size="medium" />
+            </View>
+          </View>
         </View>
       </KeyboardAwareScrollView>
+
+      <SelectBranchModal
+        visible={branchModalVisible}
+        selectedBranches={selectedBranches}
+        onSelect={setSelectedBranches}
+        onClose={() => setBranchModalVisible(false)}
+      />
     </View>
   );
 }
 
-const createStyles = (colorScheme: "light" | "dark") =>
+const createStyles = (colorScheme: "light" | "dark", isTablet: boolean, isTabletLandscape: boolean) =>
   StyleSheet.create({
+    scrollContent: {
+      paddingBottom: isTablet ? 120 : 100,
+    },
+    contentWrapper: {
+      width: "100%",
+      maxWidth: isTabletLandscape ? 960 : undefined,
+      alignSelf: "center",
+    },
+    sectionPadding: {
+      paddingHorizontal: isTablet ? 40 : 20,
+      paddingVertical: isTablet ? 28 : 16,
+      gap: isTablet ? 12 : 8,
+    },
+    buttonContainer: {
+      marginTop: isTablet ? 32 : 24,
+    },
     header: {
       flexDirection: "row",
       alignItems: "center",
       justifyContent: "space-between",
-      paddingHorizontal: 16,
-      paddingBottom: 12,
+      paddingHorizontal: isTablet ? 24 : 16,
+      paddingBottom: isTablet ? 16 : 12,
       borderBottomWidth: 1,
       borderBottomColor: Colors[colorScheme].border,
       backgroundColor: Colors[colorScheme].background,
     },
     backButton: {
-      padding: 8,
+      padding: isTablet ? 12 : 8,
     },
     headerTitle: {
-      fontSize: 18,
+      fontSize: isTablet ? 22 : 18,
       fontWeight: "bold",
+    },
+    divider: {
+      height: 1,
+      backgroundColor: Colors[colorScheme].border,
+      marginVertical: isTablet ? 28 : 20,
+    },
+    sectionTitle: {
+      fontSize: isTablet ? 20 : 16,
+      fontWeight: "600",
+      color: Colors[colorScheme].text,
+    },
+    roleContainer: {
+      flexDirection: "row",
+      gap: isTablet ? 32 : 24,
+      marginTop: isTablet ? 16 : 12,
+    },
+    roleOption: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: isTablet ? 12 : 8,
+    },
+    roleLabel: {
+      fontSize: isTablet ? 20 : 14,
+      color: Colors[colorScheme].text,
+    },
+    outletSection: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+    },
+    outletButton: {
+      paddingHorizontal: isTablet ? 20 : 16,
+      paddingVertical: isTablet ? 12 : 10,
+      borderRadius: 8,
+      borderWidth: 1,
+      borderColor: Colors[colorScheme].border,
+      backgroundColor: Colors[colorScheme].background,
+    },
+    outletButtonText: {
+      fontSize: isTablet ? 18 : 12,
+      fontWeight: "600",
+      color: Colors[colorScheme].text,
+    },
+    outletHint: {
+      fontSize: isTablet ? 18 : 12,
+      color: Colors[colorScheme].icon,
+      textAlign: "center",
+      marginTop: isTablet ? 16 : 12,
+    },
+    selectedOutletsList: {
+      marginTop: isTablet ? 16 : 12,
+      gap: isTablet ? 12 : 8,
+    },
+    selectedOutletItem: {
+      paddingVertical: isTablet ? 14 : 10,
+      paddingHorizontal: isTablet ? 16 : 12,
+      borderRadius: 8,
+      borderWidth: 1,
+      borderColor: Colors[colorScheme].border,
+      backgroundColor: Colors[colorScheme].background,
+    },
+    selectedOutletName: {
+      fontSize: isTablet ? 18 : 14,
+      fontWeight: "600",
+      color: Colors[colorScheme].text,
+      marginBottom: 4,
+    },
+    selectedOutletAddress: {
+      fontSize: isTablet ? 16 : 12,
+      color: Colors[colorScheme].icon,
     },
   });

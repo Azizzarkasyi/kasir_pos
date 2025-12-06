@@ -159,13 +159,22 @@ export interface Unit {
   updatedAt?: string;
 }
 
+export interface CreateUnitRequest {
+  name: string;
+}
+
+export interface UpdateUnitRequest {
+  name: string;
+}
+
 // Employee Types
 export interface Employee {
   id: number;
   name: string;
   phone: string;
-  email?: string;
-  role?: string;
+  email: string;
+  role: string;
+  branch_ids: string[];
   salary?: number;
   joinDate?: string;
   status?: "active" | "inactive";
@@ -176,8 +185,9 @@ export interface Employee {
 export interface CreateEmployeeRequest {
   name: string;
   phone: string;
-  email?: string;
-  role?: string;
+  email: string;
+  role: string;
+  branch_ids: string[];
   salary?: number;
   joinDate?: string;
 }

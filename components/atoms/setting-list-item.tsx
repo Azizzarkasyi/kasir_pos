@@ -2,7 +2,7 @@ import { Colors } from "@/constants/theme";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { Ionicons } from "@expo/vector-icons";
 import React from "react";
-import { StyleSheet, TouchableOpacity, View } from "react-native";
+import { StyleSheet, TouchableOpacity, useWindowDimensions, View } from "react-native";
 import { ThemedText } from "../themed-text";
 
 type SettingListItemProps = {
@@ -21,7 +21,9 @@ const SettingListItem: React.FC<SettingListItemProps> = ({
   showBottomBorder = true,
 }) => {
   const colorScheme = useColorScheme() ?? "light";
-  const styles = createStyles(colorScheme);
+  const {width, height} = useWindowDimensions();
+  const isTablet = Math.min(width, height) >= 600;
+  const styles = createStyles(colorScheme, isTablet);
   const top =
     typeof StyleSheet.hairlineWidth === "number" ? StyleSheet.hairlineWidth : 1;
   const bottom = 1;
@@ -41,7 +43,7 @@ const SettingListItem: React.FC<SettingListItemProps> = ({
       <View style={styles.titleRow}>
         <Ionicons
           name={leftIconName}
-          size={24}
+          size={isTablet ? 32 : 24}
           color={Colors[colorScheme].primary}
         />
         <ThemedText style={styles.rowTitle}>{title}</ThemedText>
@@ -50,24 +52,24 @@ const SettingListItem: React.FC<SettingListItemProps> = ({
   );
 };
 
-const createStyles = (colorScheme: "light" | "dark") =>
+const createStyles = (colorScheme: "light" | "dark", isTablet: boolean) =>
   StyleSheet.create({
     row: {
       flexDirection: "row",
       alignItems: "center",
-      paddingVertical: 14,
-      minHeight: 60,
+      paddingVertical: isTablet ? 20 : 14,
+      minHeight: isTablet ? 80 : 60,
       borderBottomWidth: 2,
       borderBottomColor: Colors[colorScheme].border2,
-      paddingHorizontal: 24,
+      paddingHorizontal: isTablet ? 32 : 24,
     },
     titleRow: {
       flexDirection: "row",
       alignItems: "center",
-      gap: 12,
+      gap: isTablet ? 20 : 12,
     },
     rowTitle: {
-      fontSize: 16,
+      fontSize: isTablet ? 20 : 14,
       fontWeight: "500",
       color: Colors[colorScheme].icon,
     },

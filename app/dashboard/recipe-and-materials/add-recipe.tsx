@@ -5,22 +5,26 @@ import ConfirmationDialog, {
 } from "@/components/drawers/confirmation-dialog";
 import Header from "@/components/header";
 import ImageUpload from "@/components/image-upload";
-import {ThemedButton} from "@/components/themed-button";
-import {ThemedInput} from "@/components/themed-input";
-import {ThemedText} from "@/components/themed-text";
-import {Colors} from "@/constants/theme";
-import {useColorScheme} from "@/hooks/use-color-scheme";
+import { ThemedButton } from "@/components/themed-button";
+import { ThemedInput } from "@/components/themed-input";
+import { ThemedText } from "@/components/themed-text";
+import { Colors } from "@/constants/theme";
+import { useColorScheme } from "@/hooks/use-color-scheme";
 import recipeApi from "@/services/endpoints/recipes";
-import {useRecipeFormStore} from "@/stores/recipe-form-store";
-import {useNavigation, useRouter} from "expo-router";
-import React, {useEffect, useRef, useState} from "react";
-import {Alert, StyleSheet, View} from "react-native";
-import {KeyboardAwareScrollView} from "react-native-keyboard-aware-scroll-view";
-import {useSafeAreaInsets} from "react-native-safe-area-context";
+import { useRecipeFormStore } from "@/stores/recipe-form-store";
+import { useNavigation, useRouter } from "expo-router";
+import React, { useEffect, useRef, useState } from "react";
+import { Alert, StyleSheet, useWindowDimensions, View } from "react-native";
+import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function AddProductScreen() {
   const colorScheme = useColorScheme() ?? "light";
-  const styles = createStyles(colorScheme);
+  const {width, height} = useWindowDimensions();
+  const isTablet = Math.min(width, height) >= 600;
+  const isLandscape = width > height;
+  const isTabletLandscape = isTablet && isLandscape;
+  const styles = createStyles(colorScheme, isTablet, isTabletLandscape);
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const navigation = useNavigation();
@@ -126,9 +130,8 @@ export default function AddProductScreen() {
       />
       <KeyboardAwareScrollView
         contentContainerStyle={{
-          paddingTop: 8,
-          paddingBottom: insets.bottom + 80,
-          paddingHorizontal: 20,
+          paddingTop: isTablet ? 16 : 8,
+          paddingBottom: insets.bottom + (isTablet ? 100 : 80),
         }}
         enableOnAndroid
         keyboardOpeningTime={0}
@@ -136,71 +139,79 @@ export default function AddProductScreen() {
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
-        <ImageUpload
-          uri={imageUri || undefined}
-          initials={(name || "NP").slice(0, 2).toUpperCase()}
-          onPress={() => {
-            // Integrasi picker bisa ditambahkan nanti
-            setImageUri(null);
-          }}
-        />
+        <View style={styles.contentSection}>
+          <View style={styles.contentWrapper}>
+            <ImageUpload
+              uri={imageUri || undefined}
+              initials={(name || "NP").slice(0, 2).toUpperCase()}
+              onPress={() => {
+                // Integrasi picker bisa ditambahkan nanti
+                setImageUri(null);
+              }}
+            />
 
-        <View style={{height: 24}} />
+            <View style={{height: 24}} />
 
-        <ThemedInput label="Nama Resep" value={name} onChangeText={setName} />
+            <ThemedInput label="Nama Resep" value={name} onChangeText={setName} />
 
-        <ComboInput
-          label="Pilih Kategori"
-          value={category}
-          onChangeText={setCategory}
-          items={[
-            {label: "Pilih Kategori", value: ""},
-            {label: "Umum", value: "umum"},
-            {label: "Minuman", value: "minuman"},
-            {label: "Makanan", value: "makanan"},
-          ]}
-        />
+            <ComboInput
+              label="Pilih Kategori"
+              value={category}
+              onChangeText={setCategory}
+              items={[
+                {label: "Pilih Kategori", value: ""},
+                {label: "Umum", value: "umum"},
+                {label: "Minuman", value: "minuman"},
+                {label: "Makanan", value: "makanan"},
+              ]}
+            />
 
-        <View style={styles.sectionDivider} />
-
-        <ThemedText type="subtitle-2">Bahan</ThemedText>
-
-        {ingredients.length > 0 ? (
-          <>
             <View style={styles.sectionDivider} />
-            {ingredients.map((v, idx) => (
-              <RecipeIngredientItem
-                key={idx}
-                initials={(v.ingredient.name || "VR").slice(0, 2).toUpperCase()}
-                name={v.ingredient.name}
-                variantName={v.ingredient.name}
-                count={v.amount}
-                unitName={v.unit?.name}
-                onPress={() => {}}
-              />
-            ))}
-          </>
-        ) : (
-          <View style={styles.emptyStateContainer}>
-            <ThemedText type="default">
-              Belum ada bahan, tap "Tambah Bahan" untuk menambahkan.
-            </ThemedText>
+
+            <ThemedText type="subtitle-2">Bahan</ThemedText>
+
+            {ingredients.length > 0 ? (
+              <>
+                <View style={styles.sectionDivider} />
+                {ingredients.map((v, idx) => (
+                  <RecipeIngredientItem
+                    key={idx}
+                    initials={(v.ingredient.name || "VR").slice(0, 2).toUpperCase()}
+                    name={v.ingredient.name}
+                    variantName={v.ingredient.name}
+                    count={v.amount}
+                    unitName={v.unit?.name}
+                    onPress={() => {}}
+                  />
+                ))}
+              </>
+            ) : (
+              <View style={styles.emptyStateContainer}>
+                <ThemedText type="default">
+                  Belum ada bahan, tap "Tambah Bahan" untuk menambahkan.
+                </ThemedText>
+              </View>
+            )}
+
+            <View style={styles.sectionDivider} />
+
+            <ThemedButton
+              title="Tambah Bahan"
+              variant="secondary"
+              onPress={() =>
+                router.push(
+                  "/dashboard/recipe-and-materials/ingredients" as never,
+                )
+              }
+            />
           </View>
-        )}
-
-        <View style={styles.sectionDivider} />
-
-        <ThemedButton
-          title="Tambah Bahan"
-          variant="secondary"
-          onPress={() =>
-            router.push("/dashboard/recipe-and-materials/ingredients" as never)
-          }
-        />
+        </View>
       </KeyboardAwareScrollView>
 
       <View style={styles.bottomBar}>
-        <ThemedButton title="Simpan" variant="primary" onPress={handleSave} />
+        <View style={styles.contentWrapper}>
+          <ThemedButton title="Simpan" variant="primary" onPress={handleSave} />
+        </View>
       </View>
 
       <ConfirmationDialog ref={confirmationRef} />
@@ -208,31 +219,42 @@ export default function AddProductScreen() {
   );
 }
 
-const createStyles = (colorScheme: "light" | "dark") =>
+const createStyles = (colorScheme: "light" | "dark", isTablet: boolean, isTabletLandscape: boolean) =>
   StyleSheet.create({
     inlineCard: {
-      marginTop: 8,
+      marginTop: isTablet ? 12 : 8,
+    },
+    contentSection: {
+      paddingHorizontal: isTablet ? 80 : 20,
+    },
+    contentWrapper: {
+      width: "100%",
+      maxWidth: isTabletLandscape ? 960 : undefined,
+      alignSelf: "center",
     },
     sectionDivider: {
       backgroundColor: Colors[colorScheme].tint,
-      marginVertical: 16,
+      marginVertical: isTablet ? 24 : 16,
     },
     emptyStateContainer: {
-      borderLeftWidth: 2,
+      borderLeftWidth: isTablet ? 3 : 2,
       borderColor: Colors[colorScheme].icon,
-      paddingVertical: 4,
-      paddingHorizontal: 8,
+      paddingVertical: isTablet ? 8 : 4,
+      paddingHorizontal: isTablet ? 12 : 8,
       backgroundColor: Colors[colorScheme].background,
-      marginTop: 12,
+      marginTop: isTablet ? 16 : 12,
+    },
+    emptyStateText: {
+      fontSize: isTablet ? 18 : 14,
     },
     bottomBar: {
       position: "absolute",
       left: 0,
       right: 0,
       bottom: 0,
-      paddingHorizontal: 20,
-      paddingBottom: 16,
-      paddingTop: 8,
+      paddingHorizontal: isTablet ? 80 : 20,
+      paddingBottom: isTablet ? 24 : 16,
+      paddingTop: isTablet ? 12 : 8,
       backgroundColor: Colors[colorScheme].background,
     },
   });

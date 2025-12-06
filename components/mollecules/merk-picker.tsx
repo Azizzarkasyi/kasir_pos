@@ -1,20 +1,22 @@
-import {Colors} from "@/constants/theme";
-import {useColorScheme} from "@/hooks/use-color-scheme";
-import {AntDesign, Ionicons} from "@expo/vector-icons";
-import React from "react";
+import { Colors } from "@/constants/theme";
+import { useColorScheme } from "@/hooks/use-color-scheme";
+import { merkApi } from "@/services";
+import { Merk } from "@/types/api";
+import { AntDesign, Ionicons } from "@expo/vector-icons";
+import React, { useEffect, useRef } from "react";
 import {
   ActivityIndicator,
+  Animated,
   Modal,
   ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
+  useWindowDimensions,
 } from "react-native";
 import AddMerkModal from "../drawers/add-merk-modal";
-import {ThemedButton} from "../themed-button";
-import {merkApi} from "@/services";
-import {Merk} from "@/types/api";
+import { ThemedButton } from "../themed-button";
 
 type MerkPickerProps = {
   label?: string;
@@ -30,8 +32,21 @@ const MerkPicker: React.FC<MerkPickerProps> = ({
   size = "md",
 }) => {
   const colorScheme = useColorScheme() ?? "light";
-  const styles = createStyles(colorScheme, size);
+  const {width, height} = useWindowDimensions();
+  const isTablet = Math.min(width, height) >= 600;
+  const styles = createStyles(colorScheme, size, isTablet);
   const [visible, setVisible] = React.useState(false);
+
+  // Animation for floating label
+  const focusAnim = useRef(new Animated.Value(value ? 1 : 0)).current;
+
+  useEffect(() => {
+    Animated.timing(focusAnim, {
+      toValue: value ? 1 : 0,
+      duration: 200,
+      useNativeDriver: false,
+    }).start();
+  }, [value, focusAnim]);
   const [loading, setLoading] = React.useState(false);
 
   const [isAdd, setIsAdd] = React.useState(false);
@@ -120,6 +135,38 @@ const MerkPicker: React.FC<MerkPickerProps> = ({
     return merk ? merk.name : "";
   }, [value, merkList]);
 
+  const labelTopRange: [number, number] =
+    size === "sm" ? [14, -8] : size === "md" ? [16, -8] : [18, -8];
+
+  const labelFontRange: [number, number] =
+    size === "sm"
+      ? isTablet ? [18, 14] : [14, 12]
+      : size === "md"
+      ? isTablet ? [20, 14] : [15, 12]
+      : isTablet
+      ? [22, 14]
+      : [16, 12];
+
+  const labelStyle = {
+    top: focusAnim.interpolate({
+      inputRange: [0, 1],
+      outputRange: labelTopRange,
+    }),
+    fontSize: focusAnim.interpolate({
+      inputRange: [0, 1],
+      outputRange: labelFontRange,
+    }),
+    color: focusAnim.interpolate({
+      inputRange: [0, 1],
+      outputRange: [
+        Colors[colorScheme].icon,
+        Colors[colorScheme].primary,
+      ],
+    }),
+    backgroundColor: Colors[colorScheme].background,
+    paddingHorizontal: 4,
+  };
+
   return (
     <View style={styles.container}>
       <TouchableOpacity
@@ -127,13 +174,16 @@ const MerkPicker: React.FC<MerkPickerProps> = ({
         activeOpacity={0.7}
         onPress={openModal}
       >
+        <Animated.Text style={[styles.floatingLabel, labelStyle]}>
+          {label}
+        </Animated.Text>
         <Text
           style={[
             styles.inputText,
             {
               color: value
                 ? Colors[colorScheme].text
-                : Colors[colorScheme].icon,
+                : "transparent",
             },
           ]}
         >
@@ -141,7 +191,7 @@ const MerkPicker: React.FC<MerkPickerProps> = ({
         </Text>
         <Ionicons
           name="chevron-down"
-          size={18}
+          size={isTablet ? 24 : 18}
           color={Colors[colorScheme].icon}
         />
       </TouchableOpacity>
@@ -222,7 +272,7 @@ const MerkPicker: React.FC<MerkPickerProps> = ({
                     >
                       <AntDesign
                         name="edit"
-                        size={20}
+                        size={isTablet ? 26 : 20}
                         color={Colors[colorScheme].primary}
                       />
                     </TouchableOpacity>
@@ -256,36 +306,40 @@ const MerkPicker: React.FC<MerkPickerProps> = ({
 
 const createStyles = (
   colorScheme: "light" | "dark",
-  size: "sm" | "md" | "base"
+  size: "sm" | "md" | "base",
+  isTablet: boolean
 ) =>
   StyleSheet.create({
     container: {
       width: "100%",
-      marginVertical: size === "sm" ? 6 : size === "md" ? 8 : 10,
+      marginVertical: isTablet
+        ? (size === "sm" ? 10 : size === "md" ? 12 : 14)
+        : (size === "sm" ? 6 : size === "md" ? 8 : 10),
     },
-    label: {
+    floatingLabel: {
       position: "absolute",
-      top: size === "sm" ? 12 : size === "md" ? 12 : 16,
-      left: 12,
-      backgroundColor: Colors[colorScheme].background,
-      paddingHorizontal: 4,
+      left: isTablet ? 16 : 12,
       zIndex: 2,
-      color: Colors[colorScheme].primary,
-      fontSize: size === "sm" ? 14 : size === "md" ? 14 : 16,
     },
     inputLike: {
       borderWidth: 1,
-      borderRadius: 8,
+      borderRadius: isTablet ? 10 : 8,
       borderColor: Colors[colorScheme].border,
-      paddingHorizontal: size === "sm" ? 10 : size === "md" ? 14 : 12,
-      height: size === "sm" ? 48 : size === "md" ? 52 : 56,
+      paddingHorizontal: isTablet
+        ? (size === "sm" ? 14 : size === "md" ? 18 : 16)
+        : (size === "sm" ? 10 : size === "md" ? 14 : 12),
+      height: isTablet
+        ? (size === "sm" ? 56 : size === "md" ? 62 : 68)
+        : (size === "sm" ? 48 : size === "md" ? 52 : 56),
       flexDirection: "row",
       alignItems: "center",
       justifyContent: "space-between",
       backgroundColor: Colors[colorScheme].background,
     },
     inputText: {
-      fontSize: size === "sm" ? 14 : size === "md" ? 15 : 16,
+      fontSize: isTablet
+        ? (size === "sm" ? 18 : size === "md" ? 20 : 22)
+        : (size === "sm" ? 14 : size === "md" ? 15 : 16),
     },
     modalRoot: {
       flex: 1,
@@ -297,38 +351,38 @@ const createStyles = (
       ...StyleSheet.absoluteFillObject,
     },
     modalCard: {
-      width: "86%",
-      maxWidth: 420,
-      borderRadius: 12,
-      paddingTop: 8,
-      paddingHorizontal: 16,
-      paddingBottom: 12,
+      width: isTablet ? "70%" : "86%",
+      maxWidth: isTablet ? 520 : 420,
+      borderRadius: isTablet ? 16 : 12,
+      paddingTop: isTablet ? 12 : 8,
+      paddingHorizontal: isTablet ? 24 : 16,
+      paddingBottom: isTablet ? 18 : 12,
       backgroundColor: Colors[colorScheme].background,
     },
     modalHeader: {
-      paddingVertical: 12,
+      paddingVertical: isTablet ? 16 : 12,
       borderBottomWidth: StyleSheet.hairlineWidth,
       borderColor: Colors[colorScheme].border,
       alignItems: "center",
     },
     modalFooter: {
-      marginTop: 12,
+      marginTop: isTablet ? 16 : 12,
       borderTopWidth: StyleSheet.hairlineWidth,
       borderColor: Colors[colorScheme].border,
-      paddingVertical: 12,
+      paddingVertical: isTablet ? 16 : 12,
       flexDirection: "row",
       alignItems: "center",
       justifyContent: "flex-end",
     },
     modalTitle: {
-      fontSize: 16,
+      fontSize: isTablet ? 24 : 16,
       fontWeight: "600",
       color: Colors[colorScheme].text,
     },
     listContainer: {
-      maxHeight: 260,
-      marginTop: 4,
-      marginBottom: 8,
+      maxHeight: isTablet ? 340 : 260,
+      marginTop: isTablet ? 8 : 4,
+      marginBottom: isTablet ? 12 : 8,
     },
     loadingContainer: {
       paddingVertical: 20,
@@ -338,35 +392,35 @@ const createStyles = (
     listItemRow: {
       flexDirection: "row",
       alignItems: "center",
-      paddingVertical: 2,
+      paddingVertical: isTablet ? 4 : 2,
       borderBottomWidth: StyleSheet.hairlineWidth,
       borderColor: Colors[colorScheme].border,
       justifyContent: "space-between",
     },
     listItem: {
-      paddingVertical: 10,
+      paddingVertical: isTablet ? 14 : 10,
     },
     listItemText: {
-      fontSize: 16,
+      fontSize: isTablet ? 22 : 16,
       color: Colors[colorScheme].text,
     },
     editButton: {
-      paddingHorizontal: 8,
-      paddingVertical: 6,
+      paddingHorizontal: isTablet ? 12 : 8,
+      paddingVertical: isTablet ? 10 : 6,
     },
     addButtonText: {
-      fontSize: 14,
+      fontSize: isTablet ? 20 : 14,
       color: Colors[colorScheme].primary,
       fontWeight: "500",
     },
     cancelButton: {
-      marginTop: 4,
+      marginTop: isTablet ? 6 : 4,
       alignSelf: "flex-end",
-      paddingHorizontal: 8,
-      paddingVertical: 4,
+      paddingHorizontal: isTablet ? 12 : 8,
+      paddingVertical: isTablet ? 6 : 4,
     },
     cancelText: {
-      fontSize: 14,
+      fontSize: isTablet ? 20 : 14,
       color: Colors[colorScheme].primary,
     },
   });

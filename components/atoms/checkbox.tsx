@@ -3,7 +3,7 @@ import { Colors } from "@/constants/theme";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { Ionicons } from "@expo/vector-icons";
 import React from "react";
-import { StyleSheet, TouchableOpacity, View, ViewStyle } from "react-native";
+import { StyleSheet, TouchableOpacity, View, ViewStyle, useWindowDimensions } from "react-native";
 
 export type CheckboxProps = {
   checked: boolean;
@@ -19,7 +19,10 @@ const Checkbox: React.FC<CheckboxProps> = ({
   containerStyle,
 }) => {
   const colorScheme = useColorScheme() ?? "light";
-  const styles = createStyles(colorScheme);
+  const {width, height} = useWindowDimensions();
+  const isTablet = Math.min(width, height) >= 600;
+  const isLandscape = width > height;
+  const styles = createStyles(colorScheme, isTablet, isLandscape);
 
   return (
     <TouchableOpacity
@@ -39,7 +42,7 @@ const Checkbox: React.FC<CheckboxProps> = ({
         {checked && (
           <Ionicons
             name="checkmark"
-            size={14}
+            size={isTablet ? 18 : 14}
             color={Colors[colorScheme].secondary}
           />
         )}
@@ -52,25 +55,25 @@ const Checkbox: React.FC<CheckboxProps> = ({
   );
 };
 
-const createStyles = (colorScheme: "light" | "dark") =>
+const createStyles = (colorScheme: "light" | "dark", isTablet: boolean, isLandscape: boolean) =>
   StyleSheet.create({
     row: {
       flexDirection: "row",
       alignItems: "center",
     },
     box: {
-      width: 22,
-      height: 22,
-      borderRadius: 4,
+      width: isTablet && isLandscape ? 28 : 22,
+      height: isTablet && isLandscape ? 28 : 22,
+      borderRadius: isTablet && !isLandscape ? 6 : 4,
       borderWidth: 1,
       borderColor: Colors[colorScheme].border,
-      marginRight: 12,
+      marginRight: isTablet && !isLandscape ? 16 : 12,
       backgroundColor: Colors[colorScheme].background,
       alignItems: "center",
       justifyContent: "center",
     },
     label: {
-      fontSize: 14,
+      fontSize: isTablet ? 18 : 14,
       color: Colors[colorScheme].text,
     },
   });

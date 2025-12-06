@@ -2,7 +2,7 @@ import { Colors } from "@/constants/theme";
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import React from "react";
-import { StyleSheet, TouchableOpacity, useColorScheme, View } from "react-native";
+import { StyleSheet, TouchableOpacity, useColorScheme, useWindowDimensions, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { ThemedText } from "./themed-text";
 
@@ -33,7 +33,9 @@ const Header: React.FC<HeaderProps> = ({
 }) => {
   const navigation = useNavigation();
   const colorScheme = useColorScheme() ?? "light";
-  const styles = createStyles(colorScheme, withShadow);
+  const { width, height } = useWindowDimensions();
+  const isTablet = Math.min(width, height) >= 600;
+  const styles = createStyles(colorScheme, withShadow, isTablet);
   const insets = useSafeAreaInsets();
 
   const handleBack = () => {
@@ -51,8 +53,8 @@ const Header: React.FC<HeaderProps> = ({
           <TouchableOpacity onPress={handleBack}>
             <Ionicons
               name="arrow-back"
-              size={24}
-              color={Colors[colorScheme].text}
+              size={isTablet ? 30 : 24}
+              color={Colors[colorScheme].secondary}
             />
           </TouchableOpacity>
         ) : null}
@@ -70,8 +72,8 @@ const Header: React.FC<HeaderProps> = ({
             <ThemedText style={styles.helpButtonText}>Bantuan</ThemedText>
             <Ionicons
               name="help-circle-outline"
-              size={20}
-              color={Colors[colorScheme].icon}
+              size={isTablet ? 26 : 20}
+              color={Colors[colorScheme].secondary}
             />
           </TouchableOpacity>
         ) : null}
@@ -81,16 +83,21 @@ const Header: React.FC<HeaderProps> = ({
   );
 };
 
-const createStyles = (colorScheme: "light" | "dark", withShadow: boolean) =>
+const createStyles = (
+  colorScheme: "light" | "dark",
+  withShadow: boolean,
+  isTablet: boolean,
+) =>
   StyleSheet.create({
     headerContainer: {
+      
       flexDirection: "row",
       justifyContent: "space-between",
       alignItems: "center",
       width: "100%",
-      paddingVertical: 16,
-      paddingHorizontal: 16,
-      backgroundColor: Colors[colorScheme].background,
+      paddingVertical: isTablet ? 20 : 16,
+      paddingHorizontal: isTablet ? 24 : 16,
+      backgroundColor: Colors[colorScheme].primary,
       position: "relative",
       ...(withShadow ? {
         shadowColor: Colors[colorScheme].shadow,
@@ -106,7 +113,7 @@ const createStyles = (colorScheme: "light" | "dark", withShadow: boolean) =>
     headerContent: {
       flexDirection: "row",
       alignItems: "center",
-      gap: 32,
+      gap: isTablet ? 40 : 32,
     },
     leftArea: {
       flexDirection: "row",
@@ -122,21 +129,22 @@ const createStyles = (colorScheme: "light" | "dark", withShadow: boolean) =>
     helpButton: {
       flexDirection: "row",
       alignItems: "center",
-      paddingHorizontal: 12,
-      paddingVertical: 4,
+      paddingHorizontal: isTablet ? 16 : 12,
+      paddingVertical: isTablet ? 8 : 4,
       borderRadius: 20,
       borderWidth: 1,
-      borderColor: Colors[colorScheme].border,
-      backgroundColor: Colors[colorScheme].background,
+      borderColor: Colors[colorScheme].secondary,
+      backgroundColor: "transparent",
     },
     helpButtonText: {
       marginRight: 4,
-      color: Colors[colorScheme].text,
-      fontSize: 14,
+      color: Colors[colorScheme].secondary,
+      fontSize: isTablet ? 20 : 14,
       fontWeight: "500",
     },
     titleText: {
-      fontSize: 18,
+      fontSize: isTablet ? 26 : 18,
+      color: Colors[colorScheme].secondary,
       fontWeight: "700",
       textAlign: "center",
     },

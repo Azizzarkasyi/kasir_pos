@@ -1,19 +1,23 @@
 import { Colors } from "@/constants/theme";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import React from "react";
-import { StyleSheet, Text, View } from "react-native";
+import { StyleSheet, Text, useWindowDimensions, View } from "react-native";
 
 interface TransactionHistoryGroupHeaderProps {
   dateLabel: string;
   totalAmount: number;
+  isTablet?: boolean;
 }
 
 const TransactionHistoryGroupHeader: React.FC<TransactionHistoryGroupHeaderProps> = ({
   dateLabel,
   totalAmount,
+  isTablet: isTabletProp,
 }) => {
   const colorScheme = useColorScheme() ?? "light";
-  const styles = createStyles(colorScheme);
+  const { width, height } = useWindowDimensions();
+  const isTablet = isTabletProp ?? Math.min(width, height) >= 600;
+  const styles = createStyles(colorScheme, isTablet);
 
   const formatCurrency = (value: number) => {
     if (!value) return "0";
@@ -34,23 +38,23 @@ const TransactionHistoryGroupHeader: React.FC<TransactionHistoryGroupHeaderProps
   );
 };
 
-const createStyles = (colorScheme: "light" | "dark") =>
+const createStyles = (colorScheme: "light" | "dark", isTablet: boolean) =>
   StyleSheet.create({
     container: {
       flexDirection: "row",
       justifyContent: "space-between",
       alignItems: "center",
-      paddingVertical: 12,
-      paddingHorizontal: 12,
+      paddingVertical: isTablet ? 16 : 12,
+      paddingHorizontal: isTablet ? 20 : 12,
       backgroundColor: Colors[colorScheme].tabBackground,
-      marginBottom: 8,
+      marginBottom: isTablet ? 12 : 8,
     },
     dateText: {
-      fontSize: 13,
+      fontSize: isTablet ? 20 : 13,
       fontWeight: "500",
     },
     amountText: {
-      fontSize: 13,
+      fontSize: isTablet ? 20 : 13,
       fontWeight: "600",
     },
   });

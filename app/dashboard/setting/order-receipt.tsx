@@ -1,18 +1,22 @@
 import Header from "@/components/header";
-import {ThemedButton} from "@/components/themed-button";
-import {ThemedInput} from "@/components/themed-input";
-import {ThemedText} from "@/components/themed-text";
-import {Colors} from "@/constants/theme";
-import {useColorScheme} from "@/hooks/use-color-scheme";
-import React, {useEffect, useState} from "react";
-import {StyleSheet, Switch, View, Alert, ActivityIndicator} from "react-native";
-import {ScrollView} from "react-native-gesture-handler";
-import {settingsApi, StruckConfig} from "@/services";
+import { ThemedButton } from "@/components/themed-button";
+import { ThemedInput } from "@/components/themed-input";
+import { ThemedText } from "@/components/themed-text";
+import { Colors } from "@/constants/theme";
+import { useColorScheme } from "@/hooks/use-color-scheme";
+import { settingsApi, StruckConfig } from "@/services";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import React, { useEffect, useState } from "react";
+import { ActivityIndicator, Alert, StyleSheet, Switch, useWindowDimensions, View } from "react-native";
+import { ScrollView } from "react-native-gesture-handler";
 
 export default function OrderReceiptSettingScreen() {
   const colorScheme = useColorScheme() ?? "light";
-  const styles = createStyles(colorScheme);
+  const {width, height} = useWindowDimensions();
+  const isTablet = Math.min(width, height) >= 600;
+  const isLandscape = width > height;
+  const isTabletLandscape = isTablet && isLandscape;
+  const styles = createStyles(colorScheme, isTablet, isTabletLandscape);
 
   const [struckConfig, setStruckConfig] = useState<StruckConfig | null>(null);
   const [displayRunningNumbers, setDisplayRunningNumbers] = useState(true);
@@ -125,6 +129,7 @@ export default function OrderReceiptSettingScreen() {
         contentContainerStyle={styles.scrollContainer}
         showsVerticalScrollIndicator={false}
       >
+        <View style={styles.contentWrapper}>
         <View style={styles.sectionCard}>
           <SettingRow
             label="Tampilkan penomoran"
@@ -176,6 +181,7 @@ export default function OrderReceiptSettingScreen() {
             disabled={isSaving}
           />
         </View>
+        </View>
       </ScrollView>
     </View>
   );
@@ -189,16 +195,18 @@ type RowProps = {
 
 const SettingRow: React.FC<RowProps> = ({label, value, onValueChange}) => {
   const colorScheme = useColorScheme() ?? "light";
+  const {width, height} = useWindowDimensions();
+  const isTablet = Math.min(width, height) >= 600;
   return (
     <View
       style={{
         flexDirection: "row",
         alignItems: "center",
         justifyContent: "space-between",
-        paddingVertical: 12,
+        paddingVertical: isTablet ? 16 : 12,
       }}
     >
-      <ThemedText>{label}</ThemedText>
+      <ThemedText style={{fontSize: isTablet ? 18 : 14}}>{label}</ThemedText>
       <Switch
         value={value}
         onValueChange={onValueChange}
@@ -207,33 +215,39 @@ const SettingRow: React.FC<RowProps> = ({label, value, onValueChange}) => {
           true: Colors[colorScheme].primary,
         }}
         thumbColor={Colors[colorScheme].secondary}
+        style={isTablet ? {transform: [{scaleX: 1.2}, {scaleY: 1.2}]} : undefined}
       />
     </View>
   );
 };
 
-const createStyles = (colorScheme: "light" | "dark") =>
+const createStyles = (colorScheme: "light" | "dark", isTablet: boolean, isTabletLandscape: boolean) =>
   StyleSheet.create({
     container: {
       flex: 1,
       backgroundColor: Colors[colorScheme].background,
     },
     scrollContainer: {
-      paddingHorizontal: 20,
-      paddingBottom: 80,
+      paddingHorizontal: isTablet ? 60 : 20,
+      paddingBottom: isTablet ? 100 : 80,
+    },
+    contentWrapper: {
+      width: "100%",
+      maxWidth: isTabletLandscape ? 960 : undefined,
+      alignSelf: "center",
     },
     sectionCard: {
-      marginTop: 12,
+      marginTop: isTablet ? 20 : 12,
       borderColor: Colors[colorScheme].icon,
-      borderRadius: 8,
+      borderRadius: isTablet ? 12 : 8,
       backgroundColor: Colors[colorScheme].background,
-      paddingHorizontal: 8,
-      paddingVertical: 8,
+      paddingHorizontal: isTablet ? 16 : 8,
+      paddingVertical: isTablet ? 16 : 8,
     },
     bottomButtonWrapper: {
       position: "absolute",
-      left: 16,
-      right: 16,
-      bottom: 16,
+      left: isTablet ? 60 : 16,
+      right: isTablet ? 60 : 16,
+      bottom: isTablet ? 24 : 16,
     },
   });

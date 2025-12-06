@@ -14,6 +14,7 @@ import {
     StyleSheet,
     TouchableOpacity,
     TouchableWithoutFeedback,
+    useWindowDimensions,
     View,
 } from "react-native";
 
@@ -41,7 +42,9 @@ const EditStockModal: React.FC<EditStockModalProps> = ({
   onSubmit,
 }) => {
   const colorScheme = useColorScheme() ?? "light";
-  const styles = createStyles(colorScheme);
+  const { width, height } = useWindowDimensions();
+  const isTablet = Math.min(width, height) >= 600;
+  const styles = createStyles(colorScheme, isTablet);
 
   const [internalVisible, setInternalVisible] = useState(visible);
   const [quantity, setQuantity] = useState(initialQuantity);
@@ -104,8 +107,8 @@ const EditStockModal: React.FC<EditStockModalProps> = ({
               />
             </View>
 
-            <View style={{ marginTop: 20 }}>
-              <ThemedText type="defaultSemiBold">Stok saat ini</ThemedText>
+            <View style={{ marginTop: isTablet ? 28 : 20 }}>
+              <ThemedText type="defaultSemiBold" style={styles.labelText}>Stok saat ini</ThemedText>
 
               <View style={styles.qtyRow}>
                 <TouchableOpacity
@@ -161,7 +164,7 @@ const EditStockModal: React.FC<EditStockModalProps> = ({
   );
 };
 
-const createStyles = (colorScheme: "light" | "dark") =>
+const createStyles = (colorScheme: "light" | "dark", isTablet: boolean) =>
   StyleSheet.create({
     root: {
       ...StyleSheet.absoluteFillObject,
@@ -180,11 +183,11 @@ const createStyles = (colorScheme: "light" | "dark") =>
       alignItems: "center",
     },
     card: {
-      width: "90%",
-      maxWidth: 420,
-      paddingHorizontal: 20,
-      paddingVertical: 24,
-      borderRadius: 12,
+      width: isTablet ? "80%" : "90%",
+      maxWidth: isTablet ? 520 : 420,
+      paddingHorizontal: isTablet ? 32 : 20,
+      paddingVertical: isTablet ? 32 : 24,
+      borderRadius: isTablet ? 16 : 12,
       backgroundColor: Colors[colorScheme].background,
       shadowColor: "#000",
       shadowOffset: { width: 0, height: 4 },
@@ -193,31 +196,35 @@ const createStyles = (colorScheme: "light" | "dark") =>
       elevation: 8,
     },
     title: {
-      marginBottom: 4,
+      marginBottom: isTablet ? 8 : 4,
+      fontSize: isTablet ? 22 : 18,
+    },
+    labelText: {
+      fontSize: isTablet ? 20 : 16,
     },
     qtyRow: {
       flexDirection: "row",
       alignItems: "center",
-      marginTop: 12,
+      marginTop: isTablet ? 16 : 12,
       borderWidth: 1,
       borderColor: Colors[colorScheme].border,
-      borderRadius: 8,
+      borderRadius: isTablet ? 12 : 8,
       overflow: "hidden",
     },
     qtyButton: {
-      width: 48,
-      height: 40,
+      width: isTablet ? 64 : 48,
+      height: isTablet ? 56 : 40,
       backgroundColor: Colors[colorScheme].border,
       alignItems: "center",
       justifyContent: "center",
     },
     qtyButtonText: {
-      fontSize: 20,
+      fontSize: isTablet ? 28 : 20,
       fontWeight: "600",
       color: Colors[colorScheme].text,
     },
     qtyValue: {
-      fontSize: 18,
+      fontSize: isTablet ? 24 : 18,
       fontWeight: "600",
       color: Colors[colorScheme].text,
     },
@@ -228,23 +235,23 @@ const createStyles = (colorScheme: "light" | "dark") =>
       backgroundColor: Colors[colorScheme].background,
     },
     previousRow: {
-      marginTop: 12,
+      marginTop: isTablet ? 16 : 12,
       flexDirection: "row",
       justifyContent: "space-between",
       alignItems: "center",
     },
     previousLabel: {
       color: Colors[colorScheme].icon,
-      fontSize: 14,
+      fontSize: isTablet ? 18 : 14,
       fontWeight: "500",
     },
-
     previousValue: {
       color: Colors[colorScheme].icon,
+      fontSize: isTablet ? 18 : 14,
       fontWeight: "500",
     },
     actionsRow: {
-      marginTop: 24,
+      marginTop: isTablet ? 32 : 24,
       flexDirection: "row",
       justifyContent: "space-between",
     },

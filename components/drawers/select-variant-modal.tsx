@@ -3,12 +3,13 @@ import { useColorScheme } from "@/hooks/use-color-scheme";
 import { Ionicons } from "@expo/vector-icons";
 import React from "react";
 import {
-    Modal,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  Modal,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  useWindowDimensions,
+  View,
 } from "react-native";
 
 type Variant = {
@@ -41,7 +42,9 @@ const SelectVariantModal: React.FC<SelectVariantModalProps> = ({
   productId,
 }) => {
   const colorScheme = useColorScheme() ?? "light";
-  const styles = createStyles(colorScheme);
+  const { width, height } = useWindowDimensions();
+  const isTablet = Math.min(width, height) >= 600;
+  const styles = createStyles(colorScheme, isTablet);
 
   const [step, setStep] = React.useState<1 | 2>(1);
   const [selectedVariant, setSelectedVariant] = React.useState<Variant | null>(
@@ -100,7 +103,7 @@ const SelectVariantModal: React.FC<SelectVariantModalProps> = ({
                 </Text>
               </View>
             </View>
-            <Ionicons name="chevron-forward" style={styles.chevron} size={16} color={Colors[colorScheme].icon} />
+            <Ionicons name="chevron-forward" style={styles.chevron} size={isTablet ? 20 : 16} color={Colors[colorScheme].icon} />
           </TouchableOpacity>
         ))}
 
@@ -184,65 +187,66 @@ const SelectVariantModal: React.FC<SelectVariantModalProps> = ({
     </Modal>
   );
 };
-const createStyles = (colorScheme: "light" | "dark") =>
+const createStyles = (colorScheme: "light" | "dark", isTablet: boolean) =>
   StyleSheet.create({
     backdrop: {
       flex: 1,
       backgroundColor: "rgba(0,0,0,0.45)",
       justifyContent: "center",
       alignItems: "center",
-      paddingHorizontal: 24,
+      paddingHorizontal: isTablet ? 48 : 24,
     },
     card: {
       width: "100%",
-      borderRadius: 16,
+      maxWidth: isTablet ? 500 : undefined,
+      borderRadius: isTablet ? 20 : 16,
       backgroundColor: Colors[colorScheme].secondary,
       overflow: "hidden",
     },
     cardContent: {
-      paddingHorizontal: 20,
-      paddingVertical: 16,
-      rowGap: 12,
+      paddingHorizontal: isTablet ? 28 : 20,
+      paddingVertical: isTablet ? 24 : 16,
+      rowGap: isTablet ? 16 : 12,
     },
     title: {
       textAlign: "center",
-      fontSize: 20,
+      fontSize: isTablet ? 24 : 20,
       fontWeight: "600",
-      marginBottom: 8,
+      marginBottom: isTablet ? 12 : 8,
       color: Colors[colorScheme].text,
     },
     variantRow: {
       flexDirection: "row",
       alignItems: "center",
-      paddingVertical: 10,
+      paddingVertical: isTablet ? 14 : 10,
       borderBottomWidth: 1,
       borderBottomColor: Colors[colorScheme].border,
     },
     variantName: {
-      fontSize: 16,
+      fontSize: isTablet ? 20 : 16,
       color: Colors[colorScheme].text,
       fontWeight: "500",
     },
     variantSubtitlePill: {
-      marginTop: 4,
+      marginTop: isTablet ? 6 : 4,
       alignSelf: "flex-start",
-      paddingHorizontal: 10,
-      paddingVertical: 4,
+      paddingHorizontal: isTablet ? 14 : 10,
+      paddingVertical: isTablet ? 6 : 4,
       borderRadius: 999,
       backgroundColor: Colors[colorScheme].background,
     },
     variantSubtitleText: {
-      fontSize: 13,
+      fontSize: isTablet ? 16 : 13,
       color: Colors[colorScheme].icon,
     },
     chevron: {
-      fontSize: 18,
+      fontSize: isTablet ? 22 : 18,
       color: Colors[colorScheme].icon,
-      marginLeft: 8,
+      marginLeft: isTablet ? 12 : 8,
     },
     cancelButton: {
-      marginTop: 12,
-      height: 44,
+      marginTop: isTablet ? 16 : 12,
+      height: isTablet ? 56 : 44,
       borderRadius: 999,
       backgroundColor: Colors[colorScheme].primary,
       alignItems: "center",
@@ -251,46 +255,46 @@ const createStyles = (colorScheme: "light" | "dark") =>
     cancelButtonText: {
       color: Colors[colorScheme].secondary,
       fontWeight: "600",
-      fontSize: 16,
+      fontSize: isTablet ? 20 : 16,
     },
     headerRow: {
       flexDirection: "row",
       alignItems: "center",
       justifyContent: "space-between",
-      marginBottom: 12,
+      marginBottom: isTablet ? 16 : 12,
     },
     variantProductName: {
-      fontSize: 14,
+      fontSize: isTablet ? 18 : 14,
       color: Colors[colorScheme].icon,
-      marginTop: 2,
+      marginTop: isTablet ? 4 : 2,
     },
     priceText: {
-      fontSize: 18,
+      fontSize: isTablet ? 22 : 18,
       color: Colors[colorScheme].text,
       fontWeight: "600",
     },
     quantityWrapper: {
-      marginBottom: 16,
-      borderRadius: 8,
+      marginBottom: isTablet ? 20 : 16,
+      borderRadius: isTablet ? 10 : 8,
     },
     quantityRow: {
       flexDirection: "row",
       alignItems: "center",
-      marginTop: 4,
+      marginTop: isTablet ? 6 : 4,
       borderWidth: 1,
       borderColor: Colors[colorScheme].border,
-      borderRadius: 8,
+      borderRadius: isTablet ? 10 : 8,
       overflow: "hidden",
     },
     qtyButton: {
-      width: 50,
-      height: 50,
+      width: isTablet ? 64 : 50,
+      height: isTablet ? 64 : 50,
       backgroundColor: Colors[colorScheme].border,
       alignItems: "center",
       justifyContent: "center",
     },
     qtyButtonText: {
-      fontSize: 20,
+      fontSize: isTablet ? 26 : 20,
       color: Colors[colorScheme].text,
       fontWeight: "500",
     },
@@ -301,37 +305,37 @@ const createStyles = (colorScheme: "light" | "dark") =>
       backgroundColor: Colors[colorScheme].secondary,
     },
     qtyValue: {
-      fontSize: 20,
+      fontSize: isTablet ? 26 : 20,
       fontWeight: "600",
       color: Colors[colorScheme].text,
     },
     section: {
-      marginBottom: 16,
+      marginBottom: isTablet ? 20 : 16,
     },
     sectionLabel: {
-      fontSize: 14,
+      fontSize: isTablet ? 18 : 14,
       color: Colors[colorScheme].icon,
-      marginBottom: 6,
+      marginBottom: isTablet ? 10 : 6,
     },
     noteInput: {
-      minHeight: 100,
+      minHeight: isTablet ? 120 : 100,
       borderWidth: 1,
       borderColor: Colors[colorScheme].border,
-      borderRadius: 8,
-      paddingHorizontal: 10,
-      paddingVertical: 8,
-      fontSize: 15,
+      borderRadius: isTablet ? 10 : 8,
+      paddingHorizontal: isTablet ? 14 : 10,
+      paddingVertical: isTablet ? 12 : 8,
+      fontSize: isTablet ? 18 : 15,
       textAlignVertical: "top",
       color: Colors[colorScheme].text,
     },
     footerRow: {
       flexDirection: "row",
-      columnGap: 8,
+      columnGap: isTablet ? 12 : 8,
     },
     footerButton: {
       flex: 1,
-      height: 44,
-      borderRadius: 8,
+      height: isTablet ? 56 : 44,
+      borderRadius: isTablet ? 10 : 8,
       alignItems: "center",
       justifyContent: "center",
     },
@@ -343,7 +347,7 @@ const createStyles = (colorScheme: "light" | "dark") =>
     footerButtonSecondaryText: {
       color: Colors[colorScheme].text,
       fontWeight: "500",
-      fontSize: 14,
+      fontSize: isTablet ? 18 : 14,
     },
     footerButtonPrimary: {
       backgroundColor: Colors[colorScheme].primary,
@@ -351,7 +355,7 @@ const createStyles = (colorScheme: "light" | "dark") =>
     footerButtonPrimaryText: {
       color: Colors[colorScheme].secondary,
       fontWeight: "600",
-      fontSize: 16,
+      fontSize: isTablet ? 20 : 16,
     },
   });
 

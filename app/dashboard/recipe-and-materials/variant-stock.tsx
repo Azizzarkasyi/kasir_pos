@@ -1,23 +1,27 @@
 import Checkbox from "@/components/checkbox";
 import ComboInput from "@/components/combo-input";
 import ConfirmationDialog, {
-  ConfirmationDialogHandle,
+    ConfirmationDialogHandle,
 } from "@/components/drawers/confirmation-dialog";
 import Header from "@/components/header";
-import {ThemedButton} from "@/components/themed-button";
-import {ThemedInput} from "@/components/themed-input";
-import {ThemedText} from "@/components/themed-text";
-import {Colors} from "@/constants/theme";
-import {useColorScheme} from "@/hooks/use-color-scheme";
-import {useLocalSearchParams, useNavigation, useRouter} from "expo-router";
-import React, {useEffect, useRef, useState} from "react";
-import {StyleSheet, View} from "react-native";
-import {KeyboardAwareScrollView} from "react-native-keyboard-aware-scroll-view";
-import {useSafeAreaInsets} from "react-native-safe-area-context";
+import { ThemedButton } from "@/components/themed-button";
+import { ThemedInput } from "@/components/themed-input";
+import { ThemedText } from "@/components/themed-text";
+import { Colors } from "@/constants/theme";
+import { useColorScheme } from "@/hooks/use-color-scheme";
+import { useLocalSearchParams, useNavigation, useRouter } from "expo-router";
+import React, { useEffect, useRef, useState } from "react";
+import { StyleSheet, useWindowDimensions, View } from "react-native";
+import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function MaterialVariantStockScreen() {
   const colorScheme = useColorScheme() ?? "light";
-  const styles = createStyles(colorScheme);
+  const {width, height} = useWindowDimensions();
+  const isTablet = Math.min(width, height) >= 600;
+  const isLandscape = width > height;
+  const isTabletLandscape = isTablet && isLandscape;
+  const styles = createStyles(colorScheme, isTablet, isTabletLandscape);
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const navigation = useNavigation();
@@ -130,9 +134,9 @@ export default function MaterialVariantStockScreen() {
       />
       <KeyboardAwareScrollView
         contentContainerStyle={{
-          paddingHorizontal: 20,
-          paddingVertical: 40,
-          paddingBottom: insets.bottom + 80,
+          paddingHorizontal: isTablet ? 80 : 20,
+          paddingVertical: isTablet ? 48 : 40,
+          paddingBottom: insets.bottom + (isTablet ? 100 : 80),
         }}
         enableOnAndroid
         keyboardOpeningTime={0}
@@ -140,42 +144,46 @@ export default function MaterialVariantStockScreen() {
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
-        <ThemedInput
-          label="Stok Toko Offline"
-          value={String(offlineStock)}
-          onChangeText={v => setOfflineStock(Number(v))}
-          numericOnly
-        />
+        <View style={styles.contentWrapper}>
+          <ThemedInput
+            label="Stok Toko Offline"
+            value={String(offlineStock)}
+            onChangeText={v => setOfflineStock(Number(v))}
+            numericOnly
+          />
 
-        <ComboInput
-          label="Pilih Satuan Unit"
-          value={unit}
-          onChangeText={setUnit}
-          items={unitItems}
-        />
+          <ComboInput
+            label="Pilih Satuan Unit"
+            value={unit}
+            onChangeText={setUnit}
+            items={unitItems}
+          />
 
-        <ThemedInput
-          label="Minimum Stok"
-          value={String(minStock)}
-          onChangeText={v => setMinStock(Number(v))}
-          numericOnly
-        />
+          <ThemedInput
+            label="Minimum Stok"
+            value={String(minStock)}
+            onChangeText={v => setMinStock(Number(v))}
+            numericOnly
+          />
 
-        <View style={styles.row}>
-          <Checkbox checked={notifyMin} onChange={setNotifyMin} />
-          <ThemedText style={styles.rowText}>
-            Kirimkan notifikasi saat stok mencapai batas minimum
-          </ThemedText>
+          <View style={styles.row}>
+            <Checkbox checked={notifyMin} onChange={setNotifyMin} />
+            <ThemedText style={styles.rowText}>
+              Kirimkan notifikasi saat stok mencapai batas minimum
+            </ThemedText>
+          </View>
         </View>
       </KeyboardAwareScrollView>
 
       <View style={styles.bottomBar}>
-        <ThemedButton
-          title="Simpan"
-          variant="primary"
-          onPress={handleSave}
-          disabled={isSubmit}
-        />
+        <View style={styles.contentWrapper}>
+          <ThemedButton
+            title="Simpan"
+            variant="primary"
+            onPress={handleSave}
+            disabled={isSubmit}
+          />
+        </View>
       </View>
 
       <ConfirmationDialog ref={confirmationRef} />
@@ -183,28 +191,33 @@ export default function MaterialVariantStockScreen() {
   );
 }
 
-const createStyles = (colorScheme: "light" | "dark") =>
+const createStyles = (colorScheme: "light" | "dark", isTablet: boolean, isTabletLandscape: boolean) =>
   StyleSheet.create({
+    contentWrapper: {
+      width: "100%",
+      maxWidth: isTabletLandscape ? 960 : undefined,
+      alignSelf: "center",
+    },
     row: {
       flexDirection: "row",
       alignItems: "center",
-      gap: 10,
-      marginTop: 8,
+      gap: isTablet ? 14 : 10,
+      marginTop: isTablet ? 12 : 8,
     },
     rowText: {
       flex: 1,
       color: Colors[colorScheme].text,
-      lineHeight: 20,
-      fontSize: 14,
+      lineHeight: isTablet ? 28 : 20,
+      fontSize: isTablet ? 18 : 14,
     },
     bottomBar: {
       position: "absolute",
       left: 0,
       right: 0,
       bottom: 0,
-      paddingHorizontal: 20,
-      paddingBottom: 16,
-      paddingTop: 8,
+      paddingHorizontal: isTablet ? 80 : 20,
+      paddingBottom: isTablet ? 24 : 16,
+      paddingTop: isTablet ? 12 : 8,
       backgroundColor: Colors[colorScheme].background,
     },
   });

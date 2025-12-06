@@ -1,29 +1,34 @@
 import HelpPopup from "@/components/atoms/help-popup";
 import Header from "@/components/header";
 import ImageUpload from "@/components/image-upload";
-import {ThemedButton} from "@/components/themed-button";
-import {ThemedInput} from "@/components/themed-input";
-import {ThemedText} from "@/components/themed-text";
-import {Colors} from "@/constants/theme";
-import {useColorScheme} from "@/hooks/use-color-scheme";
-import {Ionicons} from "@expo/vector-icons";
-import {useNavigation} from "@react-navigation/native";
-import {useRouter} from "expo-router";
-import React, {useEffect, useState} from "react";
+import { ThemedButton } from "@/components/themed-button";
+import { ThemedInput } from "@/components/themed-input";
+import { ThemedText } from "@/components/themed-text";
+import { Colors } from "@/constants/theme";
+import { useColorScheme } from "@/hooks/use-color-scheme";
+import { settingsApi, StruckConfig } from "@/services";
+import { Ionicons } from "@expo/vector-icons";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useNavigation } from "@react-navigation/native";
+import { useRouter } from "expo-router";
+import React, { useEffect, useState } from "react";
 import {
+  ActivityIndicator,
+  Alert,
   StyleSheet,
   TouchableOpacity,
+  useWindowDimensions,
   View,
-  Alert,
-  ActivityIndicator,
 } from "react-native";
-import {ScrollView} from "react-native-gesture-handler";
-import {settingsApi, StruckConfig} from "@/services";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import { ScrollView } from "react-native-gesture-handler";
 
 export default function ReceiptSettingScreen() {
   const colorScheme = useColorScheme() ?? "light";
-  const styles = createStyles(colorScheme);
+  const {width, height} = useWindowDimensions();
+  const isTablet = Math.min(width, height) >= 600;
+  const isLandscape = width > height;
+  const isTabletLandscape = isTablet && isLandscape;
+  const styles = createStyles(colorScheme, isTablet, isTabletLandscape);
   const navigation = useNavigation();
   const router = useRouter();
   const [struckConfig, setStruckConfig] = useState<StruckConfig | null>(null);
@@ -139,17 +144,22 @@ export default function ReceiptSettingScreen() {
         contentContainerStyle={styles.scrollContainer}
         showsVerticalScrollIndicator={false}
       >
-        <View style={styles.sectionCard}>
-          <ImageUpload uri={logoUri} onPress={() => setLogoUri(undefined)} />
+        <View style={styles.contentWrapper}>
+          <View style={styles.sectionCard}>
+            <ImageUpload uri={logoUri} onPress={() => setLogoUri(undefined)} />
+          </View>
         </View>
 
         <View style={styles.sectionDivider} />
+
+        <View style={styles.contentWrapper}>
 
         <View style={styles.sectionCard}>
           <ThemedText type="subtitle-2">Pengaturan Dasar</ThemedText>
           <ThemedInput
             label="Keterangan Tambahan (Opsional)"
             value={extraNotes}
+            size="md"
             onChangeText={setExtraNotes}
             multiline
             maxLength={100}
@@ -157,20 +167,20 @@ export default function ReceiptSettingScreen() {
               <TouchableOpacity onPress={() => setShowHelpExtra(true)}>
                 <Ionicons
                   name="help-circle-outline"
-                  size={20}
+                  size={isTablet ? 28 : 20}
                   color={Colors[colorScheme].primary}
                 />
               </TouchableOpacity>
             }
             inputContainerStyle={{
-              height: 100,
+              height: isTablet ? 120 : 100,
               alignItems: "center",
-              paddingVertical: 12,
+              paddingVertical: isTablet ? 16 : 12,
             }}
           />
           <View style={styles.counterRow}>
             <ThemedText
-              style={{color: Colors[colorScheme].icon}}
+              style={{color: Colors[colorScheme].icon, fontSize: isTablet ? 16 : 14}}
             >{`${extraNotes.length}/100`}</ThemedText>
           </View>
           <ThemedInput
@@ -178,25 +188,26 @@ export default function ReceiptSettingScreen() {
             value={message}
             onChangeText={setMessage}
             multiline
+            size="md"
             maxLength={100}
             rightIcon={
               <TouchableOpacity onPress={() => setShowHelpMessage(true)}>
                 <Ionicons
                   name="help-circle-outline"
-                  size={20}
+                  size={isTablet ? 28 : 20}
                   color={Colors[colorScheme].primary}
                 />
               </TouchableOpacity>
             }
             inputContainerStyle={{
-              height: 100,
+              height: isTablet ? 120 : 100,
               alignItems: "center",
-              paddingVertical: 12,
+              paddingVertical: isTablet ? 16 : 12,
             }}
           />
           <View style={styles.counterRow}>
             <ThemedText
-              style={{color: Colors[colorScheme].icon}}
+              style={{color: Colors[colorScheme].icon, fontSize: isTablet ? 16 : 14}}
             >{`${message.length}/100`}</ThemedText>
           </View>
         </View>
@@ -208,7 +219,7 @@ export default function ReceiptSettingScreen() {
           }
         >
           <View style={{flex: 1}}>
-            <ThemedText style={{fontWeight: "600", fontSize: 16}}>
+            <ThemedText style={{fontWeight: "600", fontSize: isTablet ? 20 : 16}}>
               Ingin Pengaturan Tambahan?
             </ThemedText>
             <ThemedText style={styles.extraDescription}>
@@ -218,7 +229,7 @@ export default function ReceiptSettingScreen() {
           <View style={styles.rightChevron}>
             <Ionicons
               name="chevron-forward-outline"
-              size={18}
+              size={isTablet ? 24 : 18}
               color={Colors[colorScheme].primary}
             />
           </View>
@@ -230,6 +241,7 @@ export default function ReceiptSettingScreen() {
             onPress={handleSave}
             disabled={isSaving}
           />
+        </View>
         </View>
         <HelpPopup
           visible={showHelpExtra}
@@ -248,71 +260,74 @@ export default function ReceiptSettingScreen() {
   );
 }
 
-const createStyles = (colorScheme: "light" | "dark") =>
+const createStyles = (colorScheme: "light" | "dark", isTablet: boolean, isTabletLandscape: boolean) =>
   StyleSheet.create({
     container: {
       flex: 1,
       backgroundColor: Colors[colorScheme].background,
     },
     scrollContainer: {
-      paddingHorizontal: 20,
-      paddingBottom: 100,
+      paddingHorizontal: isTablet ? 60 : 20,
+      paddingBottom: isTablet ? 120 : 100,
+    },
+    contentWrapper: {
+      width: "100%",
+      maxWidth: isTabletLandscape ? 960 : undefined,
+      alignSelf: "center",
     },
     sectionCard: {
-      marginTop: 12,
+      marginTop: isTablet ? 20 : 12,
       borderColor: Colors[colorScheme].icon,
-      borderRadius: 8,
+      borderRadius: isTablet ? 12 : 8,
       backgroundColor: Colors[colorScheme].background,
-      paddingHorizontal: 8,
-      paddingVertical: 8,
+      paddingHorizontal: isTablet ? 16 : 8,
+      paddingVertical: isTablet ? 16 : 8,
     },
     sectionDivider: {
-      marginTop: 12,
-      height: 8,
+      marginTop: isTablet ? 20 : 12,
+      height: isTablet ? 12 : 8,
       backgroundColor: Colors[colorScheme].secondary,
-      borderRadius: 8,
+      borderRadius: isTablet ? 12 : 8,
     },
     logoRow: {
       flexDirection: "row",
       alignItems: "center",
     },
     helperText: {
-      marginTop: 6,
+      marginTop: isTablet ? 10 : 6,
       color: Colors[colorScheme].icon,
+      fontSize: isTablet ? 18 : 14,
     },
     counterRow: {
       alignItems: "flex-end",
-      marginTop: -8,
-      marginBottom: 8,
+      marginTop: isTablet ? -12 : -8,
+      marginBottom: isTablet ? 12 : 8,
     },
     sectionCardHighlight: {
-      marginTop: 12,
+      marginTop: isTablet ? 20 : 12,
       borderWidth: 1,
       borderColor: "#FFA000",
-      borderRadius: 8,
+      borderRadius: isTablet ? 12 : 8,
       backgroundColor: Colors[colorScheme].background,
-      paddingHorizontal: 12,
-      paddingVertical: 12,
+      paddingHorizontal: isTablet ? 20 : 12,
+      paddingVertical: isTablet ? 20 : 12,
       flexDirection: "row",
       alignItems: "center",
-      gap: 8,
+      gap: isTablet ? 16 : 8,
     },
     rightChevron: {
-      width: 24,
-      height: 24,
+      width: isTablet ? 32 : 24,
+      height: isTablet ? 32 : 24,
       alignItems: "center",
       justifyContent: "center",
     },
     extraDescription: {
       color: Colors[colorScheme].icon,
-      marginTop: 4,
-      fontSize: 12,
-      lineHeight: 16,
+      marginTop: isTablet ? 8 : 4,
+      fontSize: isTablet ? 18 : 12,
+      lineHeight: isTablet ? 24 : 16,
     },
     bottomButtonWrapper: {
-      position: "absolute",
-      left: 16,
-      right: 16,
-      bottom: 16,
+      marginTop: isTablet ? 32 : 16,
     },
   });

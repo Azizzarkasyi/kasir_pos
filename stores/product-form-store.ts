@@ -1,4 +1,4 @@
-import {create} from "zustand";
+import { create } from "zustand";
 
 interface StockInfo {
   offlineStock: number;
@@ -11,12 +11,14 @@ interface VariantItem {
   id?: string;
   name: string;
   price: number;
-  stock?: {
-    count: number;
-    unit: string;
-    minStock?: number;
-    notifyMin?: boolean;
-  };
+  stock?: number;
+  unit_id?: string;
+  notify_on_stock_ronouts?: boolean;
+  is_stock_active?: boolean;
+  min_stock?: number;
+  recipe_id?: string;
+  barcode?: string;
+  capital_price?: number;
 }
 
 interface ProductFormState {
@@ -32,6 +34,7 @@ interface ProductFormState {
   barcode: string;
   variants: VariantItem[];
   stock: StockInfo | null;
+  pendingVariant: VariantItem | null;
 
   setName: (value: string) => void;
   setPrice: (value: string) => void;
@@ -47,6 +50,7 @@ interface ProductFormState {
     variants: VariantItem[] | ((prev: VariantItem[]) => VariantItem[])
   ) => void;
   setStock: (value: StockInfo | null) => void;
+  setPendingVariant: (value: VariantItem | null) => void;
   reset: () => void;
 }
 
@@ -64,6 +68,7 @@ const initialState: Omit<
   | "setBarcode"
   | "setVariants"
   | "setStock"
+  | "setPendingVariant"
   | "reset"
 > = {
   name: "",
@@ -78,6 +83,7 @@ const initialState: Omit<
   barcode: "",
   variants: [],
   stock: null,
+  pendingVariant: null,
 };
 
 export const useProductFormStore = create<ProductFormState>(set => ({
@@ -98,5 +104,6 @@ export const useProductFormStore = create<ProductFormState>(set => ({
         typeof variants === "function" ? variants(state.variants) : variants,
     })),
   setStock: value => set({stock: value}),
+  setPendingVariant: value => set({pendingVariant: value}),
   reset: () => set(initialState),
 }));

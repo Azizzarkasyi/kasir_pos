@@ -2,12 +2,13 @@ import { Colors } from "@/constants/theme";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import React from "react";
 import {
-    Modal,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  Modal,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+  useWindowDimensions,
 } from "react-native";
 
 type AddAdditionalCostModalProps = {
@@ -22,7 +23,9 @@ const AddAdditionalCostModal: React.FC<AddAdditionalCostModalProps> = ({
   onConfirm,
 }) => {
   const colorScheme = useColorScheme() ?? "light";
-  const styles = createStyles(colorScheme);
+  const { width, height } = useWindowDimensions();
+  const isTablet = Math.min(width, height) >= 600;
+  const styles = createStyles(colorScheme, isTablet);
 
   const [name, setName] = React.useState<string>("");
   const [nominal, setNominal] = React.useState<string>("0");
@@ -102,64 +105,65 @@ const AddAdditionalCostModal: React.FC<AddAdditionalCostModalProps> = ({
   );
 };
 
-const createStyles = (colorScheme: "light" | "dark") =>
+const createStyles = (colorScheme: "light" | "dark", isTablet: boolean) =>
   StyleSheet.create({
     backdrop: {
       flex: 1,
       backgroundColor: "rgba(0,0,0,0.45)",
       justifyContent: "center",
       alignItems: "center",
-      paddingHorizontal: 24,
+      paddingHorizontal: isTablet ? 48 : 24,
     },
     card: {
-      width: "100%",
-      borderRadius: 16,
+      width: isTablet ? "70%" : "100%",
+      maxWidth: isTablet ? 640 : undefined,
+      borderRadius: isTablet ? 24 : 16,
       backgroundColor: Colors[colorScheme].secondary,
       overflow: "hidden",
     },
     cardContent: {
-      paddingHorizontal: 20,
-      paddingVertical: 16,
-      rowGap: 12,
+      paddingHorizontal: isTablet ? 28 : 20,
+      paddingVertical: isTablet ? 24 : 16,
+      rowGap: isTablet ? 18 : 12,
     },
     title: {
       textAlign: "center",
-      fontSize: 20,
+      fontSize: isTablet ? 24 : 20,
       fontWeight: "600",
-      marginBottom: 8,
+      marginBottom: isTablet ? 12 : 8,
       color: Colors[colorScheme].text,
     },
     section: {
-      marginTop: 4,
+      marginTop: isTablet ? 8 : 4,
     },
     label: {
-      fontSize: 14,
+      fontSize: isTablet ? 18 : 14,
       color: Colors[colorScheme].icon,
-      marginBottom: 6,
+      marginBottom: isTablet ? 10 : 6,
     },
     input: {
-      minHeight: 44,
+      minHeight: isTablet ? 52 : 44,
       borderWidth: 1,
       borderColor: Colors[colorScheme].border,
       borderRadius: 8,
-      paddingHorizontal: 10,
-      paddingVertical: 8,
-      fontSize: 15,
+      paddingHorizontal: isTablet ? 14 : 10,
+      paddingVertical: isTablet ? 10 : 8,
+      fontSize: isTablet ? 18 : 15,
       color: Colors[colorScheme].text,
       backgroundColor: Colors[colorScheme].background,
     },
     nominalRow: {
       flexDirection: "row",
       alignItems: "center",
-      gap: 8,
+      gap: isTablet ? 12 : 8,
     },
     nominalInput: {
       flex: 1,
     },
     currencyPill: {
-      paddingHorizontal: 14,
-      paddingVertical: 10,
-      borderRadius: 8,
+      paddingHorizontal: isTablet ? 18 : 14,
+      paddingVertical: isTablet ? 12 : 10,
+      borderRadius: isTablet ? 10 : 8,
       backgroundColor: Colors[colorScheme].primary,
       alignItems: "center",
       justifyContent: "center",
@@ -167,16 +171,17 @@ const createStyles = (colorScheme: "light" | "dark") =>
     currencyText: {
       color: Colors[colorScheme].secondary,
       fontWeight: "600",
+      fontSize: isTablet ? 18 : 16,
     },
     footerRow: {
       flexDirection: "row",
       columnGap: 8,
-      marginTop: 16,
+      marginTop: isTablet ? 20 : 16,
     },
     footerButton: {
       flex: 1,
-      height: 44,
-      borderRadius: 8,
+      height: isTablet ? 52 : 44,
+      borderRadius: isTablet ? 10 : 8,
       alignItems: "center",
       justifyContent: "center",
     },
@@ -188,7 +193,7 @@ const createStyles = (colorScheme: "light" | "dark") =>
     footerButtonSecondaryText: {
       color: Colors[colorScheme].text,
       fontWeight: "500",
-      fontSize: 14,
+      fontSize: isTablet ? 18 : 14,
     },
     footerButtonPrimary: {
       backgroundColor: Colors[colorScheme].primary,
@@ -196,7 +201,7 @@ const createStyles = (colorScheme: "light" | "dark") =>
     footerButtonPrimaryText: {
       color: Colors[colorScheme].secondary,
       fontWeight: "600",
-      fontSize: 16,
+      fontSize: isTablet ? 20 : 16,
     },
   });
 

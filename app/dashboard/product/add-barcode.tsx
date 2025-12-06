@@ -5,11 +5,15 @@ import { useProductFormStore } from "@/stores/product-form-store";
 import { CameraView, useCameraPermissions } from "expo-camera";
 import { useRouter } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
-import { Animated, StyleSheet, View } from "react-native";
+import { Animated, StyleSheet, View, useWindowDimensions } from "react-native";
 
 export default function AddBarcodeScreen() {
   const colorScheme = useColorScheme() ?? "light";
-  const styles = createStyles(colorScheme);
+  const {width, height} = useWindowDimensions();
+  const isTablet = Math.min(width, height) >= 600;
+  const isLandscape = width > height;
+  const isTabletLandscape = isTablet && isLandscape;
+  const styles = createStyles(colorScheme, isTablet, isTabletLandscape);
   const router = useRouter();
   const setBarcode = useProductFormStore(state => state.setBarcode);
 
@@ -118,11 +122,16 @@ export default function AddBarcodeScreen() {
   );
 }
 
-const createStyles = (colorScheme: "light" | "dark") =>
+const createStyles = (colorScheme: "light" | "dark", isTablet: boolean, isTabletLandscape: boolean) =>
   StyleSheet.create({
     container: {
       flex: 1,
       backgroundColor: Colors[colorScheme].background,
+    },
+    contentWrapper: {
+      width: "100%",
+      maxWidth: isTabletLandscape ? 960 : undefined,
+      alignSelf: "center",
     },
     scannerContainer: {
       flex: 1,
@@ -148,18 +157,18 @@ const createStyles = (colorScheme: "light" | "dark") =>
       backgroundColor: "rgba(0, 0, 0, 0.52)",
     },
     scanBox: {
-      width: 300,
-      height: 300,
-      borderRadius: 12,
+      width: isTablet ? 400 : 300,
+      height: isTablet ? 400 : 300,
+      borderRadius: isTablet ? 16 : 12,
       overflow: "hidden",
       backgroundColor: "transparent",
     },
     scanLine: {
       position: "absolute",
-      left: 12,
-      right: 12,
-      top: 12,
-      height: 1,
+      left: isTablet ? 16 : 12,
+      right: isTablet ? 16 : 12,
+      top: isTablet ? 16 : 12,
+      height: isTablet ? 2 : 1,
       backgroundColor: "#ff0000ff",
       borderRadius: 999,
     },
