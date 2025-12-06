@@ -35,7 +35,7 @@ export interface RegisterRequest {
   country: string;
   bussiness_name: string;
   business_type: string;
-  bussiness_regency: {
+  bussiness_village: {
     id: string;
     name: string;
   };
@@ -53,6 +53,7 @@ export interface User {
   phone: string;
   email?: string;
   role?: string;
+  is_verified?: boolean
 }
 
 // Product Types
@@ -201,6 +202,8 @@ export interface Transaction {
   id: number;
   invoiceNumber: string;
   totalAmount: number;
+  paidAmount: number;
+  changeAmount: number;
   paymentMethod: "cash" | "card" | "transfer" | "qris";
   paymentStatus: "paid" | "pending" | "cancelled";
   items: TransactionItem[];

@@ -1,5 +1,5 @@
+import { ApiResponse } from "../../types/api";
 import apiService from "../api";
-import {ApiResponse} from "../../types/api";
 
 /**
  * Settings API Types
@@ -22,7 +22,7 @@ export interface UpdateProfileRequest {
 export interface ChangePinRequest {
   old_pin: string;
   new_pin: string;
-  confirm_pin: string;
+  new_pin_confirmation: string;
 }
 
 export interface StoreInfo {
@@ -75,9 +75,8 @@ export interface UpdateStruckConfigRequest {
   header_description?: string;
   display_transaction_note?: boolean;
   hide_tax_percentage?: boolean;
-  display_running_numbers?: boolean;
+  display_running_number?: boolean;
   display_unit_next_to_qty?: boolean;
-  display_quantity_total?: boolean;
 }
 
 /**
@@ -139,9 +138,9 @@ export const settingsApi = {
    */
   async uploadProfilePhoto(
     file: FormData
-  ): Promise<ApiResponse<{url: string}>> {
+  ): Promise<ApiResponse<{ url: string }>> {
     const instance = apiService.getInstance();
-    const response = await instance.post<ApiResponse<{url: string}>>(
+    const response = await instance.post<ApiResponse<{ url: string }>>(
       "/auth/upload-photo",
       file,
       {
@@ -159,9 +158,9 @@ export const settingsApi = {
   async uploadStorePhoto(
     storeId: string,
     file: FormData
-  ): Promise<ApiResponse<{url: string}>> {
+  ): Promise<ApiResponse<{ url: string }>> {
     const instance = apiService.getInstance();
-    const response = await instance.post<ApiResponse<{url: string}>>(
+    const response = await instance.post<ApiResponse<{ url: string }>>(
       `/stores/${storeId}/upload-photo`,
       file,
       {
@@ -176,16 +175,16 @@ export const settingsApi = {
   /**
    * Sync data from server
    */
-  async syncData(): Promise<ApiResponse<{last_sync: string}>> {
-    const response = await apiService.post<{last_sync: string}>("/sync/data");
+  async syncData(): Promise<ApiResponse<{ last_sync: string }>> {
+    const response = await apiService.post<{ last_sync: string }>("/sync/data");
     return response;
   },
 
   /**
    * Get last sync time
    */
-  async getLastSyncTime(): Promise<ApiResponse<{last_sync: string}>> {
-    const response = await apiService.get<{last_sync: string}>("/sync/last");
+  async getLastSyncTime(): Promise<ApiResponse<{ last_sync: string }>> {
+    const response = await apiService.get<{ last_sync: string }>("/sync/last");
     return response;
   },
 

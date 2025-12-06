@@ -313,6 +313,13 @@ export default function TransactionHistoryPage() {
                       paymentMethod={displayPaymentMethod}
                       amount={txn.totalAmount}
                       time={time}
+                      isTablet={isTablet}
+                      onPress={() =>
+                        router.push({
+                          pathname: "/dashboard/transaction/show",
+                          params: {id: String(txn.id)},
+                        })
+                      }
                     />
                   );
                 })}

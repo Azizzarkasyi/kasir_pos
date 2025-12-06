@@ -9,13 +9,13 @@ import { useColorScheme } from "@/hooks/use-color-scheme";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
-  Image,
-  Keyboard,
-  Platform,
-  StyleSheet,
-  TouchableOpacity,
-  View,
-  useWindowDimensions,
+    Image,
+    Keyboard,
+    Platform,
+    StyleSheet,
+    TouchableOpacity,
+    View,
+    useWindowDimensions,
 } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -107,6 +107,17 @@ export default function LoginScreen() {
         console.log("✅ Login success:", result);
         console.log("🔑 Token saved:", result.access_token ? "Yes" : "No");
 
+        // Jika user belum verifikasi, arahkan ke halaman Verify OTP
+        const isVerifiedFlag = (result.user as any)?.is_verified;
+        if (isVerifiedFlag === 0 || isVerifiedFlag === false) {
+          setIsLoggingIn(false);
+          router.push({
+            pathname: "/auth/Register/verify-otp",
+            params: {phone: result.user?.phone || ""},
+          } as never);
+          return;
+        }
+
         // Save branch ID and name to AsyncStorage
         if (result.branch?.id) {
           const AsyncStorage = await import(
@@ -124,7 +135,7 @@ export default function LoginScreen() {
           }
         }
 
-        // D. Navigate ke dashboard jika berhasil
+        // D. Navigate ke dashboard jika berhasil dan sudah terverifikasi
         setIsLoggingIn(false);
         router.replace("/dashboard/home" as never);
       } catch (error: any) {

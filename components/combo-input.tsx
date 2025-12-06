@@ -18,6 +18,7 @@ import {
 type ComboItem = {label: string; value: string};
 
 type ComboInputProps = {
+  onChange?: (item: ComboItem) => void;
   label: string;
   value: string;
   onChangeText: (text: string) => void;
@@ -28,6 +29,7 @@ type ComboInputProps = {
 };
 
 const ComboInput: React.FC<ComboInputProps> = ({
+  onChange,
   label,
   value,
   onChangeText,
@@ -156,7 +158,11 @@ const ComboInput: React.FC<ComboInputProps> = ({
                   <Text style={styles.emptyText}>Belum ada data</Text>
                 </View>
               ) : (
-                <ScrollView keyboardShouldPersistTaps="handled">
+                <ScrollView
+                  keyboardShouldPersistTaps="handled"
+                  nestedScrollEnabled
+                  showsVerticalScrollIndicator
+                >
                   {filtered.map(item => (
                     <TouchableOpacity
                       key={item.value}
@@ -166,6 +172,7 @@ const ComboInput: React.FC<ComboInputProps> = ({
                           closeDropdown();
                           return;
                         }
+                        onChange?.(item);
                         onChangeText(item.label);
                         closeDropdown();
                       }}

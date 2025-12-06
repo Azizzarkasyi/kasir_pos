@@ -4,7 +4,7 @@ import axios, {
   AxiosInstance,
   InternalAxiosRequestConfig,
 } from "axios";
-import {ApiError, ApiResponse} from "../types/api";
+import { ApiError, ApiResponse } from "../types/api";
 
 // Baca dari environment variable, fallback ke localhost jika tidak ada
 const API_URL = process.env.API_URL || "http://10.0.2.2:3001";

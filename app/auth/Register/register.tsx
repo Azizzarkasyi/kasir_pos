@@ -8,10 +8,12 @@ import { Colors } from "@/constants/theme";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { authApi } from "@/services";
 import { useRouter } from "expo-router";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { ActivityIndicator, Alert, StyleSheet, TouchableOpacity, useWindowDimensions, View } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+
+type LocationOption = {label: string; value: string};
 
 const businessTypes = [
   {label: "Pilih Tipe Bisnis", value: ""},
@@ -20,12 +22,7 @@ const businessTypes = [
   {label: "Lainnya", value: "lainnya"},
 ];
 
-const kelurahanData = [
-  {label: "Pilih Kelurahan", value: ""},
-  {label: "Menteng", value: "menteng"},
-  {label: "Gambir", value: "gambir"},
-  {label: "Senen", value: "senen"},
-];
+const WILAYAH_API_BASE = "https://wilayah.id/api";
 
 const RegisterScreen = () => {
   const colorScheme = useColorScheme() ?? "light";
@@ -40,7 +37,14 @@ const RegisterScreen = () => {
   // State for form fields
   const [businessName, setBusinessName] = useState("");
   const [businessType, setBusinessType] = useState("");
-  const [outletKelurahan, setOutletKelurahan] = useState("");
+  const [selectedProvince, setSelectedProvince] = useState<LocationOption | null>(null);
+  const [selectedCity, setSelectedCity] = useState<LocationOption | null>(null);
+  const [selectedSubDistrict, setSelectedSubDistrict] = useState<LocationOption | null>(null);
+  const [selectedVillage, setSelectedVillage] = useState<LocationOption | null>(null);
+  const [provinceQuery, setProvinceQuery] = useState("");
+  const [cityQuery, setCityQuery] = useState("");
+  const [subDistrictQuery, setSubDistrictQuery] = useState("");
+  const [villageQuery, setVillageQuery] = useState("");
   const [outletAddress, setOutletAddress] = useState("");
   const [ownerName, setOwnerName] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
@@ -51,6 +55,153 @@ const RegisterScreen = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
+  const [provinceOptions, setProvinceOptions] = useState<LocationOption[]>([
+    {label: "Pilih Provinsi", value: ""},
+  ]);
+  const [regencyOptions, setRegencyOptions] = useState<LocationOption[]>([
+    {label: "Pilih Kabupaten / Kota", value: ""},
+  ]);
+  const [districtOptions, setDistrictOptions] = useState<LocationOption[]>([
+    {label: "Pilih Kecamatan", value: ""},
+  ]);
+  const [villageOptions, setVillageOptions] = useState<LocationOption[]>([
+    {label: "Pilih Kelurahan", value: ""},
+  ]);
+
+  useEffect(() => {
+    const fetchProvinces = async () => {
+      try {
+        const res = await fetch(`${WILAYAH_API_BASE}/provinces.json`);
+        const json = await res.json();
+        const data = Array.isArray(json.data) ? json.data : [];
+        setProvinceOptions([
+          {label: "Pilih Provinsi", value: ""},
+          ...data.map((item: {code: string; name: string}) => ({
+            label: item.name,
+            value: item.code,
+          })),
+        ]);
+      } catch (e) {
+        console.error("Gagal memuat data provinsi", e);
+      }
+    };
+
+    fetchProvinces();
+  }, []);
+
+  useEffect(() => {
+    if (!selectedProvince) {
+      setRegencyOptions([{label: "Pilih Kabupaten / Kota", value: ""}]);
+      setSelectedCity(null);
+      setSelectedSubDistrict(null);
+      setSelectedVillage(null);
+      setCityQuery("");
+      setSubDistrictQuery("");
+      setVillageQuery("");
+      return;
+    }
+
+    const fetchRegencies = async () => {
+      try {
+        const res = await fetch(
+          `${WILAYAH_API_BASE}/regencies/${selectedProvince.value}.json`,
+        );
+        const json = await res.json();
+        const data = Array.isArray(json.data) ? json.data : [];
+        setRegencyOptions([
+          {label: "Pilih Kabupaten / Kota", value: ""},
+          ...data.map((item: {code: string; name: string}) => ({
+            label: item.name,
+            value: item.code,
+          })),
+        ]);
+      } catch (e) {
+        console.error("Gagal memuat data kabupaten/kota", e);
+      }
+    };
+
+    setSelectedCity(null);
+    setSelectedSubDistrict(null);
+    setSelectedVillage(null);
+    setCityQuery("");
+    setSubDistrictQuery("");
+    setVillageQuery("");
+    setDistrictOptions([{label: "Pilih Kecamatan", value: ""}]);
+    setVillageOptions([{label: "Pilih Kelurahan", value: ""}]);
+
+    fetchRegencies();
+  }, [selectedProvince?.value]);
+
+  useEffect(() => {
+    if (!selectedCity) {
+      setDistrictOptions([{label: "Pilih Kecamatan", value: ""}]);
+      setSelectedSubDistrict(null);
+      setSelectedVillage(null);
+      setSubDistrictQuery("");
+      setVillageQuery("");
+      return;
+    }
+
+    const fetchDistricts = async () => {
+      try {
+        const res = await fetch(
+          `${WILAYAH_API_BASE}/districts/${selectedCity.value}.json`,
+        );
+        const json = await res.json();
+        const data = Array.isArray(json.data) ? json.data : [];
+        setDistrictOptions([
+          {label: "Pilih Kecamatan", value: ""},
+          ...data.map((item: {code: string; name: string}) => ({
+            label: item.name,
+            value: item.code,
+          })),
+        ]);
+      } catch (e) {
+        console.error("Gagal memuat data kecamatan", e);
+      }
+    };
+
+    setSelectedSubDistrict(null);
+    setSelectedVillage(null);
+    setVillageOptions([{label: "Pilih Kelurahan", value: ""}]);
+    setSubDistrictQuery("");
+    setVillageQuery("");
+
+    fetchDistricts();
+  }, [selectedCity?.value]);
+
+  useEffect(() => {
+    if (!selectedSubDistrict) {
+      setVillageOptions([{label: "Pilih Kelurahan", value: ""}]);
+      setSelectedVillage(null);
+      setVillageQuery("");
+      return;
+    }
+
+    const fetchVillages = async () => {
+      try {
+        const res = await fetch(
+          `${WILAYAH_API_BASE}/villages/${selectedSubDistrict.value}.json`,
+        );
+        const json = await res.json();
+        const data = Array.isArray(json.data) ? json.data : [];
+        setVillageOptions([
+          {label: "Pilih Kelurahan", value: ""},
+          ...data.map((item: {code: string; name: string}) => ({
+            label: item.name,
+            value: item.code,
+          })),
+        ]);
+      } catch (e) {
+        console.error("Gagal memuat data kelurahan", e);
+      }
+    };
+
+    setSelectedVillage(null);
+
+    fetchVillages();
+  }, [selectedSubDistrict?.value]);
+
   const handleRegister = async () => {
     // Reset errors
     setErrors({});
@@ -60,7 +211,7 @@ const RegisterScreen = () => {
 
     if (!businessName.trim()) newErrors.businessName = "Nama usaha wajib diisi";
     if (!businessType) newErrors.businessType = "Tipe bisnis wajib dipilih";
-    if (!outletKelurahan) newErrors.outletKelurahan = "Kelurahan wajib dipilih";
+    if (!selectedVillage) newErrors.outletKelurahan = "Kelurahan wajib dipilih";
     if (!outletAddress.trim())
       newErrors.outletAddress = "Alamat outlet wajib diisi";
     if (!ownerName.trim()) newErrors.ownerName = "Nama pemilik wajib diisi";
@@ -91,19 +242,22 @@ const RegisterScreen = () => {
     setIsLoading(true);
 
     try {
-      // Parse kelurahan (format: "value")
-      const regencyData = {
-        id: outletKelurahan,
-        name:
-          kelurahanData.find(k => k.value === outletKelurahan)?.label ||
-          outletKelurahan,
-      };
-
       const registerData = {
         country: "Indonesia",
         bussiness_name: businessName,
         business_type: businessType,
-        bussiness_regency: regencyData,
+        bussiness_province: selectedProvince
+          ? {id: selectedProvince.value, name: selectedProvince.label}
+          : {id: "", name: ""},
+        bussiness_city: selectedCity
+          ? {id: selectedCity.value, name: selectedCity.label}
+          : {id: "", name: ""},
+        bussiness_subdistrict: selectedSubDistrict
+          ? {id: selectedSubDistrict.value, name: selectedSubDistrict.label}
+          : {id: "", name: ""},
+        bussiness_village: selectedVillage
+          ? {id: selectedVillage.value, name: selectedVillage.label}
+          : {id: "", name: ""},
         bussiness_address: outletAddress,
         owner_name: ownerName,
         owner_phone: phoneNumber,
@@ -150,7 +304,7 @@ const RegisterScreen = () => {
       <KeyboardAwareScrollView
         contentContainerStyle={[
           styles.scrollContainer,
-          {paddingBottom:  insets.bottom + 80},
+          {paddingBottom: isTablet ? insets.bottom + 120 : insets.bottom + 80},
         ]}
         enableOnAndroid
         keyboardOpeningTime={0}
@@ -167,7 +321,7 @@ const RegisterScreen = () => {
             Halo Usahawan, lengkapi data dibawah ini.
           </ThemedText>
 
-          <View style={styles.section}>
+        <View style={styles.section}>
           <ThemedInput
             label="Nama Usaha"
             value={businessName}
@@ -192,15 +346,59 @@ const RegisterScreen = () => {
             error={errors.businessType}
           />
           <ComboInput
-            label="Kelurahan Outlet Utama"
-            value={outletKelurahan}
+            label="Provinsi Outlet Utama"
+            value={provinceQuery}
+            onChange={item => {
+              setSelectedProvince(item.value ? item : null);
+              setProvinceQuery(item.label);
+            }}
             onChangeText={text => {
-              setOutletKelurahan(text);
+              setProvinceQuery(text);
+              if (!text) setSelectedProvince(null);
+            }}
+            items={provinceOptions}
+          />
+          <ComboInput
+            label="Kabupaten / Kota Outlet Utama"
+            value={cityQuery}
+            onChange={item => {
+              setSelectedCity(item.value ? item : null);
+              setCityQuery(item.label);
+            }}
+            onChangeText={text => {
+              setCityQuery(text);
+              if (!text) setSelectedCity(null);
+            }}
+            items={regencyOptions}
+          />
+          <ComboInput
+            label="Kecamatan Outlet Utama"
+            value={subDistrictQuery}
+            onChange={item => {
+              setSelectedSubDistrict(item.value ? item : null);
+              setSubDistrictQuery(item.label);
+            }}
+            onChangeText={text => {
+              setSubDistrictQuery(text);
+              if (!text) setSelectedSubDistrict(null);
+            }}
+            items={districtOptions}
+          />
+          <ComboInput
+            label="Kelurahan Outlet Utama"
+            value={villageQuery}
+            onChange={item => {
+              setSelectedVillage(item.value ? item : null);
+              setVillageQuery(item.label);
               if (errors.outletKelurahan) {
                 setErrors({...errors, outletKelurahan: ""});
               }
             }}
-            items={kelurahanData}
+            onChangeText={text => {
+              setVillageQuery(text);
+              if (!text) setSelectedVillage(null);
+            }}
+            items={villageOptions}
             error={errors.outletKelurahan}
           />
           <ThemedInput
@@ -340,6 +538,7 @@ const createStyles = (
       maxWidth: isTabletLandscape ? 960 : undefined,
       alignSelf: "center",
       paddingHorizontal: isTablet ? 56 : 4,
+      paddingBottom: isTablet ? 80 : 40,
     },
     title: {
       marginTop: 20,

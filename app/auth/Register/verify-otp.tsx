@@ -6,16 +6,14 @@ import { ThemedText } from "@/components/themed-text";
 import { Colors } from "@/constants/theme";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { authApi } from "@/services";
-import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
-    ActivityIndicator,
-    Alert,
-    StyleSheet,
-    TouchableOpacity,
-    useWindowDimensions,
-    View,
+  ActivityIndicator,
+  Alert,
+  StyleSheet,
+  useWindowDimensions,
+  View
 } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 
@@ -54,29 +52,19 @@ const VerifyOtpScreen = () => {
       setIsResending(true);
       console.log("📤 Requesting OTP for:", phoneNumber);
 
-      // Panggil API request OTP
-      const response = await fetch(
-        `http://10.0.2.2:3001/api/v1/auth/otp/request`,
-        {
-          method: "POST",
-          headers: {"Content-Type": "application/json"},
-          body: JSON.stringify({phone: phoneNumber}),
-        }
-      );
+      const response = await authApi.requestOtp({phone: phoneNumber});
 
-      const result = await response.json();
-
-      if (response.ok) {
+      if (response.success) {
         console.log("✅ OTP sent successfully");
-        // Jika development mode, tampilkan OTP
-        if (result.data?.otp) {
+        // Jika development mode, tampilkan OTP jika tersedia
+        if ((response.data as any)?.otp) {
           Alert.alert(
             "OTP Dikirim",
-            `Kode OTP: ${result.data.otp}\n\n(Hanya di development mode)`
+            `Kode OTP: ${(response.data as any).otp}\n\n(Hanya di development mode)`
           );
         }
       } else {
-        throw new Error(result.message || "Gagal mengirim OTP");
+        throw new Error(response.message || "Gagal mengirim OTP");
       }
     } catch (error: any) {
       console.error("❌ Request OTP failed:", error);
@@ -111,25 +99,16 @@ const VerifyOtpScreen = () => {
     try {
       console.log("📤 Validating OTP:", code);
 
-      const response = await fetch(
-        `http://10.0.2.2:3001/api/v1/auth/otp/validate`,
-        {
-          method: "POST",
-          headers: {"Content-Type": "application/json"},
-          body: JSON.stringify({
-            phone: phone,
-            otp: code,
-          }),
-        }
-      );
+      const response = await authApi.validateOtp({
+        phone,
+        otp: code,
+      });
 
-      const result = await response.json();
-
-      if (response.ok && result.data?.access_token) {
+      if (response.success && response.data?.access_token) {
         console.log("✅ OTP verified successfully");
 
         // Simpan token
-        await authApi.setToken?.(result.data.access_token);
+        await authApi.setToken?.(response.data.access_token);
 
         Alert.alert("Berhasil!", "Akun Anda berhasil terdaftar", [
           {
@@ -138,7 +117,7 @@ const VerifyOtpScreen = () => {
           },
         ]);
       } else {
-        throw new Error(result.message || "Kode OTP tidak valid");
+        throw new Error(response.message || "Kode OTP tidak valid");
       }
     } catch (error: any) {
       console.error("❌ Validate OTP failed:", error);
@@ -177,7 +156,7 @@ const VerifyOtpScreen = () => {
           <View style={{flexDirection: "column", width: "100%"}}>
             <View style={styles.phonePill}>
               <ThemedText style={styles.phoneText}>{phone}</ThemedText>
-              <TouchableOpacity
+              {/* <TouchableOpacity
                 onPress={() => setModalVisible(true)}
                 style={styles.editButton}
               >
@@ -186,7 +165,7 @@ const VerifyOtpScreen = () => {
                   size={18}
                   color={Colors[colorScheme].background}
                 />
-              </TouchableOpacity>
+              </TouchableOpacity> */}
             </View>
 
             <OtpInput length={6} onComplete={setCode} />

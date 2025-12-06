@@ -135,6 +135,7 @@ export default function StoreSettingScreen() {
               {label: "Jasa/Service Lainnya", value: "services_other"},
               {label: "Makanan/Minuman", value: "food_beverage"},
               {label: "Retail", value: "retail"},
+              {label: "Restoran", value: "restoran"},
             ]}
           />
           <ThemedInput

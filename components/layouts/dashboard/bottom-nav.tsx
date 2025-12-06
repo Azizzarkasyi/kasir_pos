@@ -18,6 +18,7 @@ const DashboardBottomNav: React.FC = () => {
 
   if (!isPhone) return null;
   if (!pathname?.startsWith("/dashboard")) return null;
+  if (pathname.startsWith("/dashboard/transaction")) return null;
 
   const PRIMARY_MENU_KEYS: DashboardMenuKey[] = [
     "home",

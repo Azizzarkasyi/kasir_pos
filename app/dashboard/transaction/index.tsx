@@ -76,6 +76,13 @@ export default function PaymentPage() {
   const [selectedProductForCustomQty, setSelectedProductForCustomQty] =
     useState<Product | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+    const {
+      clearCart,
+    } = useCartStore();
+
+  useEffect(() => {
+    clearCart();
+  }, [])
 
   // Cart store
   const {

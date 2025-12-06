@@ -37,10 +37,12 @@ export default function TransactionDetailPage() {
     const fetchTransaction = async () => {
       const txnId = params.id as string;
 
+
       if (txnId) {
         try {
           setIsLoading(true);
-          const response = await transactionApi.getTransaction(Number(txnId));
+          const response = await transactionApi.getTransaction(txnId);
+          console.log("Transaction data:", response.data);
           if (response.data) {
             setTransaction(response.data);
           }
@@ -67,8 +69,8 @@ export default function TransactionDetailPage() {
 
   const subtotal = transaction?.totalAmount || 0;
   const totalProduk = items.reduce((sum, item) => sum + item.quantity, 0);
-  const dibayar = transaction?.totalAmount || 0;
-  const kembalian = 0;
+  const dibayar = transaction?.paidAmount || 0;
+  const kembalian = transaction?.changeAmount || 0;
 
   const transactionDate = transaction?.createdAt
     ? new Date(transaction.createdAt).toLocaleString("id-ID", {
@@ -178,7 +180,7 @@ export default function TransactionDetailPage() {
             <View style={styles.infoRow}>
               <Text style={styles.infoLabel}>Status</Text>
               <Text style={styles.infoValue}>
-                {transaction.paymentStatus === "paid" ? "Dibayar" : "Pending"}
+                {transaction.paymentStatus }
               </Text>
             </View>
             <View style={styles.infoRow}>
