@@ -1,5 +1,4 @@
 import SectionDivider from "@/components/atoms/section-divider";
-import ComboInput from "@/components/combo-input";
 import SelectBranchModal from "@/components/drawers/select-branch-modal";
 import Header from "@/components/header";
 import RadioButton from "@/components/radio-button";
@@ -18,14 +17,14 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function EditEmployeeScreen() {
   const colorScheme = useColorScheme() ?? "light";
-  const {width, height} = useWindowDimensions();
+  const { width, height } = useWindowDimensions();
   const isTablet = Math.min(width, height) >= 600;
   const isLandscape = width > height;
   const isTabletLandscape = isTablet && isLandscape;
   const styles = createStyles(colorScheme, isTablet, isTabletLandscape);
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const params = useLocalSearchParams<{id?: string}>();
+  const params = useLocalSearchParams<{ id?: string }>();
 
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
@@ -42,6 +41,8 @@ export default function EditEmployeeScreen() {
     loadEmployee();
   }, []);
 
+  console.log(params.id)
+
   const loadEmployee = async () => {
     if (!params.id) {
       Alert.alert("Error", "ID pegawai tidak ditemukan");
@@ -51,7 +52,7 @@ export default function EditEmployeeScreen() {
 
     try {
       setIsLoading(true);
-      const response = await employeeApi.getEmployee(Number(params.id));
+      const response = await employeeApi.getEmployee(params.id);
 
       if (response.data) {
         const employee = response.data;
@@ -174,16 +175,15 @@ export default function EditEmployeeScreen() {
       "Hapus Pegawai",
       "Apakah Anda yakin ingin menghapus pegawai ini?",
       [
-        {text: "Batal", style: "cancel"},
+        { text: "Batal", style: "cancel" },
         {
           text: "Hapus",
           style: "destructive",
           onPress: async () => {
             try {
               setIsSaving(true);
-              console.log("🗑️ Deleting employee:", params.id);
 
-              await employeeApi.deleteEmployee(Number(params.id));
+              await employeeApi.deleteEmployee(params.id as string);
 
               console.log("✅ Employee deleted successfully");
               Alert.alert("Sukses", "Pegawai berhasil dihapus", [
@@ -206,11 +206,11 @@ export default function EditEmployeeScreen() {
 
   if (isLoading) {
     return (
-      <View style={{flex: 1, backgroundColor: Colors[colorScheme].background}}>
+      <View style={{ flex: 1, backgroundColor: Colors[colorScheme].background }}>
         <Header title="Edit Pegawai" showHelp={false} />
-        <View style={{flex: 1, justifyContent: "center", alignItems: "center"}}>
+        <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
           <ActivityIndicator size="large" color={Colors[colorScheme].primary} />
-          <ThemedText style={{marginTop: 16, color: Colors[colorScheme].icon}}>
+          <ThemedText style={{ marginTop: 16, color: Colors[colorScheme].icon }}>
             Memuat data pegawai...
           </ThemedText>
         </View>
@@ -219,7 +219,7 @@ export default function EditEmployeeScreen() {
   }
 
   return (
-    <View style={{flex: 1, backgroundColor: Colors[colorScheme].background}}>
+    <View style={{ flex: 1, backgroundColor: Colors[colorScheme].background }}>
       <Header title="Edit Pegawai" showHelp={false} />
       <KeyboardAwareScrollView
         contentContainerStyle={styles.scrollContent}
@@ -238,10 +238,10 @@ export default function EditEmployeeScreen() {
               value={phone}
               size="md"
               onChangeText={text => {
-            // Only allow numbers and + symbol
-            const filtered = text.replace(/[^0-9+]/g, "");
-            setPhone(filtered);
-          }}
+                // Only allow numbers and + symbol
+                const filtered = text.replace(/[^0-9+]/g, "");
+                setPhone(filtered);
+              }}
               keyboardType="phone-pad"
             />
             <ThemedInput
@@ -249,32 +249,14 @@ export default function EditEmployeeScreen() {
               value={email}
               size="md"
               onChangeText={text => {
-            // Auto trim and lowercase
-            const filtered = text.trim().toLowerCase();
-            setEmail(filtered);
-          }}
+                // Auto trim and lowercase
+                const filtered = text.trim().toLowerCase();
+                setEmail(filtered);
+              }}
               keyboardType="email-address"
               autoCapitalize="none"
-        />
-        <ComboInput
-          label="Role"
-          value={role === "cashier" ? "Kasir" : "Manager"}
-          onChangeText={label => {
-            const newRole = label === "Kasir" ? "cashier" : "manager";
-            console.log(
-              "🔄 Role changed from label:",
-              label,
-              "to value:",
-              newRole
-            );
-            setRole(newRole);
-          }}
-          items={[
-            {label: "Kasir", value: "cashier"},
-            {label: "Manager", value: "manager"},
-          ]}
-          disableAutoComplete
-        />
+            />
+
           </View>
         </View>
 
@@ -289,10 +271,10 @@ export default function EditEmployeeScreen() {
               value={pin}
               size="md"
               onChangeText={text => {
-            // Only allow numbers
-            const filtered = text.replace(/[^0-9]/g, "");
-            setPin(filtered);
-          }}
+                // Only allow numbers
+                const filtered = text.replace(/[^0-9]/g, "");
+                setPin(filtered);
+              }}
               isPassword
               keyboardType="numeric"
               maxLength={6}
@@ -302,10 +284,10 @@ export default function EditEmployeeScreen() {
               value={confirmPin}
               size="md"
               onChangeText={text => {
-            // Only allow numbers
-            const filtered = text.replace(/[^0-9]/g, "");
-            setConfirmPin(filtered);
-          }}
+                // Only allow numbers
+                const filtered = text.replace(/[^0-9]/g, "");
+                setConfirmPin(filtered);
+              }}
               isPassword
               keyboardType="numeric"
               maxLength={6}
@@ -377,14 +359,14 @@ export default function EditEmployeeScreen() {
                 onPress={handleSave}
                 size="medium"
                 disabled={isSaving}
-          />
+              />
               <ThemedButton
                 title="Hapus Pegawai"
                 variant="danger"
                 size="medium"
                 onPress={handleDelete}
                 disabled={isSaving}
-          />
+              />
             </View>
           </View>
         </View>
@@ -399,6 +381,8 @@ export default function EditEmployeeScreen() {
     </View>
   );
 }
+
+
 
 const createStyles = (colorScheme: "light" | "dark", isTablet: boolean, isTabletLandscape: boolean) =>
   StyleSheet.create({

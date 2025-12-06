@@ -96,7 +96,7 @@ export default function EmployeeScreen() {
               />
             </View>
           </View>
-        </View>
+  
         {loading && !refreshing ? (
           <View
             style={{ flex: 1, justifyContent: "center", alignItems: "center" }}
@@ -110,7 +110,6 @@ export default function EmployeeScreen() {
           <FlatList
             data={employees}
             keyExtractor={item => String(item.id)}
-            contentContainerStyle={{ paddingBottom: 100, marginTop: 16 }}
             refreshing={refreshing}
             onRefresh={() => loadEmployees(true)}
             renderItem={({ item }) => (
@@ -140,6 +139,7 @@ export default function EmployeeScreen() {
             }
           />
         )}
+        </View>
       </View>
 
       <TouchableOpacity

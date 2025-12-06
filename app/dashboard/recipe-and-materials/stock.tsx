@@ -1,9 +1,9 @@
 import Checkbox from "@/components/checkbox";
-import ComboInput from "@/components/combo-input";
 import ConfirmationDialog, {
   ConfirmationDialogHandle,
 } from "@/components/drawers/confirmation-dialog";
 import Header from "@/components/header";
+import UnitPicker from "@/components/mollecules/unit-picker";
 import { ThemedButton } from "@/components/themed-button";
 import { ThemedInput } from "@/components/themed-input";
 import { ThemedText } from "@/components/themed-text";
@@ -12,7 +12,7 @@ import { useColorScheme } from "@/hooks/use-color-scheme";
 import { useProductFormStore } from "@/stores/product-form-store";
 import { useNavigation, useRouter } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
-import { StyleSheet, useWindowDimensions, View } from "react-native";
+import { StyleSheet, View, useWindowDimensions } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -27,46 +27,50 @@ export default function StockSettingsScreen() {
   const router = useRouter();
   const navigation = useNavigation();
 
-  const confirmationRef = useRef<ConfirmationDialogHandle | null>(null);
-
-  const [offlineStock, setOfflineStock] = useState(0);
-  const [unit, setUnit] = useState("pcs");
-  const [minStock, setMinStock] = useState(0);
-  const [notifyMin, setNotifyMin] = useState(false);
-
-  const unitItems = [
-    {label: "Pcs", value: "pcs"},
-    {label: "Box", value: "box"},
-    {label: "Kg", value: "kg"},
-    {label: "L", value: "l"},
-  ];
-
+  const stockFromStore = useProductFormStore(state => state.stock);
   const setStockInStore = useProductFormStore(state => state.setStock);
 
-  const handleSave = () => {
-    const payload = {offlineStock, unit, minStock, notifyMin};
-    console.log("✅ Stock saved to store:", payload);
+  const confirmationRef = useRef<ConfirmationDialogHandle | null>(null);
 
-    setStockInStore({
-      offlineStock,
-      unit,
-      minStock,
-      notifyMin,
-    });
+  const [offlineStock, setOfflineStock] = useState(
+    stockFromStore?.offlineStock ?? 0
+  );
+  const [unit, setUnit] = useState(stockFromStore?.unit ?? "");
+  const [minStock, setMinStock] = useState(stockFromStore?.minStock ?? 0);
+  const [notifyMin, setNotifyMin] = useState(
+    stockFromStore?.notifyMin ?? true
+  );
+  const [isSubmit, setIsSubmit] = useState(false);
 
-    router.back();
+  const handleSave = async () => {
+    try {
+      setIsSubmit(true);
+
+      // Save to store first for UI state
+      setStockInStore({
+        offlineStock,
+        unit,
+        minStock,
+        notifyMin,
+      });
+
+      console.log("✅ Stock saved to store");
+      router.back();
+    } catch (error: any) {
+      console.error("❌ Failed to save stock:", error);
+      setIsSubmit(false);
+    }
   };
 
   const isDirty =
-    offlineStock !== 0 || unit !== "pcs" || minStock !== 0 || notifyMin;
+    offlineStock !== 0 || unit !== "" || minStock !== 0 || notifyMin;
 
   useEffect(() => {
     const sub = navigation.addListener("beforeRemove", e => {
-      if (!isDirty) {
+      const action = e.data.action;
+      if (!isDirty || isSubmit || action.type === "REPLACE") {
         return;
       }
-
-      const action = e.data.action;
       e.preventDefault();
 
       confirmationRef.current?.showConfirmationDialog({
@@ -82,20 +86,16 @@ export default function StockSettingsScreen() {
     });
 
     return sub;
-  }, [navigation, isDirty]);
+  }, [navigation, isDirty, isSubmit]);
 
   return (
     <View style={{flex: 1, backgroundColor: Colors[colorScheme].background}}>
-      <Header
-        showHelp={false}
-        title="Pengaturan Stok Bahan"
-        withNotificationButton={false}
-      />
+      <Header title="Kelola Stok" showHelp={false} />
+
       <KeyboardAwareScrollView
         contentContainerStyle={{
-          paddingHorizontal: isTablet ? 80 : 20,
-          paddingVertical: isTablet ? 40 : 32,
-          paddingBottom: insets.bottom + (isTablet ? 100 : 80),
+          paddingVertical: isTablet ? 44 : 40,
+          paddingBottom: insets.bottom + (isTablet ? 96 : 80),
         }}
         enableOnAndroid
         keyboardOpeningTime={0}
@@ -105,25 +105,24 @@ export default function StockSettingsScreen() {
       >
         <View style={styles.contentWrapper}>
           <ThemedInput
-            label="Stok "
-            value={String(offlineStock)}
-            onChangeText={v => setOfflineStock(Number(v))}
-            numericOnly
-          />
+          label="Stok Toko Offline"
+          value={String(offlineStock)}
+          onChangeText={v => setOfflineStock(Number(v))}
+          numericOnly
+        />
 
-          <ComboInput
-            label="Pilih Satuan Unit"
-            value={unit}
-            onChangeText={setUnit}
-            items={unitItems}
-          />
+        <UnitPicker
+          label="Pilih Satuan Unit"
+          value={unit}
+          onChange={setUnit}
+        />
 
-          <ThemedInput
-            label="Minimum Stok"
-            value={String(minStock)}
-            onChangeText={v => setMinStock(Number(v))}
-            numericOnly
-          />
+        <ThemedInput
+          label="Minimum Stok"
+          value={String(minStock)}
+          onChangeText={v => setMinStock(Number(v))}
+          numericOnly
+        />
 
           <View style={styles.row}>
             <Checkbox checked={notifyMin} onChange={setNotifyMin} />
@@ -135,9 +134,12 @@ export default function StockSettingsScreen() {
       </KeyboardAwareScrollView>
 
       <View style={styles.bottomBar}>
-        <View style={styles.contentWrapper}>
-          <ThemedButton title="Simpan" variant="primary" onPress={handleSave} />
-        </View>
+        <ThemedButton
+          title="Simpan"
+          variant="primary"
+          onPress={handleSave}
+          disabled={isSubmit}
+        />
       </View>
 
       <ConfirmationDialog ref={confirmationRef} />
@@ -151,6 +153,7 @@ const createStyles = (colorScheme: "light" | "dark", isTablet: boolean, isTablet
       width: "100%",
       maxWidth: isTabletLandscape ? 960 : undefined,
       alignSelf: "center",
+      paddingHorizontal: isTablet ? 28 : 20,
     },
     sectionHeader: {
       marginTop: isTablet ? 16 : 12,
@@ -164,22 +167,22 @@ const createStyles = (colorScheme: "light" | "dark", isTablet: boolean, isTablet
     },
     rowText: {
       flex: 1,
-      fontSize: isTablet ? 18 : 14,
-      lineHeight: isTablet ? 24 : 16,
       color: Colors[colorScheme].text,
+      lineHeight: isTablet ? 26 : 20,
+      fontSize: isTablet ? 18 : 14,
     },
     sectionDivider: {
       height: 1,
       backgroundColor: Colors[colorScheme].icon,
-      marginVertical: isTablet ? 24 : 16,
+      marginVertical: isTablet ? 20 : 16,
     },
     bottomBar: {
       position: "absolute",
       left: 0,
       right: 0,
       bottom: 0,
-      paddingHorizontal: isTablet ? 80 : 20,
-      paddingBottom: isTablet ? 24 : 16,
+      paddingHorizontal: isTablet ? 28 : 20,
+      paddingBottom: isTablet ? 22 : 16,
       paddingTop: isTablet ? 12 : 8,
       backgroundColor: Colors[colorScheme].background,
     },

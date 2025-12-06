@@ -1,21 +1,22 @@
 import Checkbox from "@/components/checkbox";
-import ComboInput from "@/components/combo-input";
 import ConfirmationDialog, {
-    ConfirmationDialogHandle,
+  ConfirmationDialogHandle,
 } from "@/components/drawers/confirmation-dialog";
 import Header from "@/components/header";
+import UnitPicker from "@/components/mollecules/unit-picker";
 import { ThemedButton } from "@/components/themed-button";
 import { ThemedInput } from "@/components/themed-input";
 import { ThemedText } from "@/components/themed-text";
 import { Colors } from "@/constants/theme";
 import { useColorScheme } from "@/hooks/use-color-scheme";
+import { useProductFormStore } from "@/stores/product-form-store";
 import { useLocalSearchParams, useNavigation, useRouter } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
-import { StyleSheet, useWindowDimensions, View } from "react-native";
+import { StyleSheet, View, useWindowDimensions } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-export default function MaterialVariantStockScreen() {
+export default function StockSettingsScreen() {
   const colorScheme = useColorScheme() ?? "light";
   const {width, height} = useWindowDimensions();
   const isTablet = Math.min(width, height) >= 600;
@@ -26,84 +27,105 @@ export default function MaterialVariantStockScreen() {
   const router = useRouter();
   const navigation = useNavigation();
   const {
-    name,
-    price,
-    capitalPrice,
-    barcode,
-    offlineStock: qsOfflineStock,
-    unit: qsUnit,
-    minStock: qsMinStock,
-    notifyMin: qsNotifyMin,
+    variantId,
+    from,
   } = useLocalSearchParams<{
-    name?: string;
-    price?: string;
-    capitalPrice?: string;
-    barcode?: string;
-    offlineStock?: string;
-    unit?: string;
-    minStock?: string;
-    notifyMin?: string;
+    variantId?: string;
+    from?: string;
   }>();
 
   const confirmationRef = useRef<ConfirmationDialogHandle | null>(null);
+  const variants = useProductFormStore(state => state.variants);
+  const setVariants = useProductFormStore(state => state.setVariants);
+  const pendingVariant = useProductFormStore(state => state.pendingVariant);
+  const setPendingVariant = useProductFormStore(state => state.setPendingVariant);
 
   const [offlineStock, setOfflineStock] = useState(0);
-  const [unit, setUnit] = useState("pcs");
+  const [unit, setUnit] = useState("");
   const [minStock, setMinStock] = useState(0);
-  const [notifyMin, setNotifyMin] = useState(false);
+  const [notifyMin, setNotifyMin] = useState(true);
   const [isSubmit, setIsSubmit] = useState(false);
 
-  const unitItems = [
-    {label: "Pcs", value: "pcs"},
-    {label: "Box", value: "box"},
-    {label: "Kg", value: "kg"},
-    {label: "L", value: "l"},
-  ];
 
-  const handleSave = () => {
-    setIsSubmit(true);
-    const payload = {offlineStock, unit, minStock, notifyMin};
-    console.log("Kelola stok varian bahan", payload);
-    router.replace({
-      pathname: "/dashboard/recipe-and-materials/variant",
-      params: {
-        offlineStock: String(offlineStock),
-        unit,
-        minStock: String(minStock),
-        notifyMin: notifyMin ? "1" : "0",
-        ...(name ? {name: String(name)} : {}),
-        ...(price ? {price: String(price)} : {}),
-        ...(capitalPrice ? {capitalPrice: String(capitalPrice)} : {}),
-        ...(barcode ? {barcode: String(barcode)} : {}),
-      },
-    } as never);
+
+  const handleSave = async () => {
+    try {
+      setIsSubmit(true);
+
+      const buildStockFields = () => ({
+        stock: offlineStock,
+        is_stock_active: true,
+        min_stock: minStock,
+        notify_on_stock_ronouts: notifyMin,
+        unit_id: unit,
+      });
+
+
+      if (variantId) {
+        if (from === "add") {
+          const base =
+            pendingVariant && pendingVariant.id === variantId
+              ? pendingVariant
+              : ({id: String(variantId)} as any);
+
+          setPendingVariant({
+            ...base,
+            ...buildStockFields(),
+          } as any);
+        } else {
+          setVariants(prev =>
+            prev.map(v =>
+              v.id === variantId
+                ? {
+                    ...v,
+                    ...buildStockFields(),
+                  }
+                : v,
+            ),
+          );
+        }
+      }
+
+      router.back();
+    } catch (error: any) {
+      console.error("❌ Failed to save variant stock:", error);
+      setIsSubmit(false);
+    }
   };
 
   useEffect(() => {
-    if (qsOfflineStock || qsUnit || qsMinStock || qsNotifyMin) {
-      if (qsOfflineStock) {
-        setOfflineStock(
-          Number(String(qsOfflineStock).replace(/[^0-9]/g, "")) || 0
-        );
-      }
-      if (qsUnit) {
-        setUnit(String(qsUnit));
-      }
-      if (qsMinStock) {
-        setMinStock(Number(String(qsMinStock).replace(/[^0-9]/g, "")) || 0);
-      }
-      if (qsNotifyMin) {
-        setNotifyMin(qsNotifyMin === "1" || qsNotifyMin === "true");
-      }
+    if (!variantId) return;
+
+    const current =
+      from === "add"
+        ? pendingVariant && pendingVariant.id === variantId
+          ? pendingVariant
+          : null
+        : variants.find(v => v.id === variantId) || null;
+
+    if (!current) return;
+
+    if (typeof current.stock === "number") {
+      setOfflineStock(current.stock);
     }
-  }, [qsOfflineStock, qsUnit, qsMinStock, qsNotifyMin]);
+    if (current.unit_id) {
+      setUnit(current.unit_id);
+    }
+    if (typeof current.min_stock === "number") {
+      setMinStock(current.min_stock);
+    }
+    if (typeof current.notify_on_stock_ronouts === "boolean") {
+      setNotifyMin(current.notify_on_stock_ronouts);
+    }
+  }, [variantId, variants, from, pendingVariant]);
 
   const isDirty =
-    offlineStock !== 0 || unit !== "pcs" || minStock !== 0 || notifyMin;
+    offlineStock !== 0 || unit !== "" || minStock !== 0 || notifyMin;
 
   useEffect(() => {
     const sub = navigation.addListener("beforeRemove", e => {
       const action = e.data.action;
+      // Jangan tampilkan modal ketika navigasi berasal dari router.replace (submit)
       if (action.type === "REPLACE" || !isDirty || isSubmit) {
         return;
       }
@@ -127,16 +149,12 @@ export default function MaterialVariantStockScreen() {
 
   return (
     <View style={{flex: 1, backgroundColor: Colors[colorScheme].background}}>
-      <Header
-        showHelp={false}
-        title="Stok Varian Bahan"
-        withNotificationButton={false}
-      />
+      <Header title="Kelola Stok Varian Bahan" showHelp={false} />
+
       <KeyboardAwareScrollView
         contentContainerStyle={{
-          paddingHorizontal: isTablet ? 80 : 20,
-          paddingVertical: isTablet ? 48 : 40,
-          paddingBottom: insets.bottom + (isTablet ? 100 : 80),
+          paddingVertical: isTablet ? 44 : 40,
+          paddingBottom: insets.bottom + (isTablet ? 96 : 80),
         }}
         enableOnAndroid
         keyboardOpeningTime={0}
@@ -146,25 +164,24 @@ export default function MaterialVariantStockScreen() {
       >
         <View style={styles.contentWrapper}>
           <ThemedInput
-            label="Stok Toko Offline"
-            value={String(offlineStock)}
-            onChangeText={v => setOfflineStock(Number(v))}
-            numericOnly
-          />
+          label="Stok Toko Offline"
+          value={String(offlineStock)}
+          onChangeText={v => setOfflineStock(Number(v))}
+          numericOnly
+        />
 
-          <ComboInput
-            label="Pilih Satuan Unit"
-            value={unit}
-            onChangeText={setUnit}
-            items={unitItems}
-          />
+        <UnitPicker
+          label="Pilih Satuan Unit"
+          value={unit}
+          onChange={setUnit}
+        />
 
-          <ThemedInput
-            label="Minimum Stok"
-            value={String(minStock)}
-            onChangeText={v => setMinStock(Number(v))}
-            numericOnly
-          />
+        <ThemedInput
+          label="Minimum Stok"
+          value={String(minStock)}
+          onChangeText={v => setMinStock(Number(v))}
+          numericOnly
+        />
 
           <View style={styles.row}>
             <Checkbox checked={notifyMin} onChange={setNotifyMin} />
@@ -176,14 +193,12 @@ export default function MaterialVariantStockScreen() {
       </KeyboardAwareScrollView>
 
       <View style={styles.bottomBar}>
-        <View style={styles.contentWrapper}>
-          <ThemedButton
-            title="Simpan"
-            variant="primary"
-            onPress={handleSave}
-            disabled={isSubmit}
-          />
-        </View>
+        <ThemedButton
+          title="Simpan"
+          variant="primary"
+          onPress={handleSave}
+          disabled={isSubmit}
+        />
       </View>
 
       <ConfirmationDialog ref={confirmationRef} />
@@ -197,6 +212,11 @@ const createStyles = (colorScheme: "light" | "dark", isTablet: boolean, isTablet
       width: "100%",
       maxWidth: isTabletLandscape ? 960 : undefined,
       alignSelf: "center",
+      paddingHorizontal: isTablet ? 28 : 20,
+    },
+    sectionHeader: {
+      marginTop: 12,
+      marginBottom: 8,
     },
     row: {
       flexDirection: "row",
@@ -207,16 +227,21 @@ const createStyles = (colorScheme: "light" | "dark", isTablet: boolean, isTablet
     rowText: {
       flex: 1,
       color: Colors[colorScheme].text,
-      lineHeight: isTablet ? 28 : 20,
+      lineHeight: isTablet ? 26 : 20,
       fontSize: isTablet ? 18 : 14,
+    },
+    sectionDivider: {
+      height: 1,
+      backgroundColor: Colors[colorScheme].icon,
+      marginVertical: 16,
     },
     bottomBar: {
       position: "absolute",
       left: 0,
       right: 0,
       bottom: 0,
-      paddingHorizontal: isTablet ? 80 : 20,
-      paddingBottom: isTablet ? 24 : 16,
+      paddingHorizontal: isTablet ? 28 : 20,
+      paddingBottom: isTablet ? 22 : 16,
       paddingTop: isTablet ? 12 : 8,
       backgroundColor: Colors[colorScheme].background,
     },

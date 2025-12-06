@@ -1,10 +1,10 @@
-import apiService from '../api';
 import {
-  Employee,
-  CreateEmployeeRequest,
-  UpdateEmployeeRequest,
   ApiResponse,
+  CreateEmployeeRequest,
+  Employee,
+  UpdateEmployeeRequest,
 } from '../../types/api';
+import apiService from '../api';
 
 /**
  * Employee API Endpoints
@@ -26,7 +26,7 @@ export const employeeApi = {
   /**
    * Get employee by ID
    */
-  async getEmployee(id: number): Promise<ApiResponse<Employee>> {
+  async getEmployee(id: string): Promise<ApiResponse<Employee>> {
     const response = await apiService.get<Employee>(`/employees/${id}`);
     return response;
   },
@@ -53,7 +53,7 @@ export const employeeApi = {
   /**
    * Delete employee
    */
-  async deleteEmployee(id: number): Promise<ApiResponse<void>> {
+  async deleteEmployee(id: string): Promise<ApiResponse<void>> {
     const response = await apiService.delete<void>(`/employees/${id}`);
     return response;
   },

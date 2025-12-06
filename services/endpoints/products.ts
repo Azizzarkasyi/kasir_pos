@@ -1,10 +1,10 @@
-import apiService from "../api";
 import {
-  Product,
-  CreateProductRequest,
-  UpdateProductRequest,
   ApiResponse,
+  CreateProductRequest,
+  Product,
+  UpdateProductRequest,
 } from "../../types/api";
+import apiService from "../api";
 
 /**
  * Product API Endpoints
@@ -19,7 +19,18 @@ export const productApi = {
     merk_id?: string;
     is_favorite?: boolean;
   }): Promise<ApiResponse<Product[]>> {
-    const response = await apiService.get<Product[]>("/products", params);
+    const response = await apiService.get<Product[]>("/products?is_product=true", params);
+    return response;
+  },
+
+
+  async getIngredients(params?: {
+    search?: string;
+    category_id?: string;
+    merk_id?: string;
+    is_favorite?: boolean;
+  }): Promise<ApiResponse<Product[]>> {
+    const response = await apiService.get<Product[]>("/products?is_ingredient=true", params);
     return response;
   },
 
@@ -98,13 +109,7 @@ export const productApi = {
     return response;
   },
 
-  /**
-   * Delete product
-   */
-  async deleteProduct(productId: string): Promise<ApiResponse<any>> {
-    const response = await apiService.delete<any>(`/products/${productId}`);
-    return response;
-  },
+
 };
 
 export default productApi;

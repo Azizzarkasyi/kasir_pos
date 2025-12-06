@@ -75,8 +75,8 @@ const createStyles = (colorScheme: "light" | "dark", isTablet: boolean) =>
       backgroundColor: Colors[colorScheme].background,
     },
     leftBox: {
-      width: isTablet ? 64 : 48,
-      height: isTablet ? 64 : 48,
+      width: isTablet ? 64 : 40,
+      height: isTablet ? 64 : 40,
       borderRadius: isTablet ? 12 : 8,
       backgroundColor: Colors[colorScheme].border,
       alignItems: "center",
@@ -85,7 +85,7 @@ const createStyles = (colorScheme: "light" | "dark", isTablet: boolean) =>
     },
     initials: {
       fontWeight: "700",
-      fontSize: isTablet ? 24 : 18,
+      fontSize: isTablet ? 24 : 14,
       color: Colors[colorScheme].icon,
     },
     middleColumn: {
@@ -93,15 +93,15 @@ const createStyles = (colorScheme: "light" | "dark", isTablet: boolean) =>
       justifyContent: "center",
     },
     nameText: {
-      fontSize: isTablet ? 20 : 16,
+      fontSize: isTablet ? 20 : 14,
     },
     variantText: {
-      fontSize: isTablet ? 18 : 13,
+      fontSize: isTablet ? 18 : 12,
       color: Colors[colorScheme].icon,
       marginTop: isTablet ? 4 : 2,
     },
     qtyBox: {
-      minWidth: isTablet ? 80 : 60,
+      minWidth: isTablet ? 80 : 40,
       paddingHorizontal: isTablet ? 20 : 16,
       paddingVertical: isTablet ? 12 : 8,
       borderRadius: isTablet ? 10 : 6,
@@ -112,7 +112,7 @@ const createStyles = (colorScheme: "light" | "dark", isTablet: boolean) =>
     },
     qtyText: {
       fontWeight: "600",
-      fontSize: isTablet ? 20 : 14,
+      fontSize: isTablet ? 20 : 12,
       color: Colors[colorScheme].text,
     },
   });

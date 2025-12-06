@@ -5,23 +5,27 @@ import ConfirmationDialog, {
 import Header from "@/components/header";
 import ImageUpload from "@/components/image-upload";
 import MenuRow from "@/components/menu-row";
+import CategoryPicker from "@/components/mollecules/category-picker";
 import MerkPicker from "@/components/mollecules/merk-picker";
 import { ThemedButton } from "@/components/themed-button";
 import { ThemedInput } from "@/components/themed-input";
 import { ThemedText } from "@/components/themed-text";
 import { Colors } from "@/constants/theme";
 import { useColorScheme } from "@/hooks/use-color-scheme";
+import { recipeApi } from "@/services";
+import merkApi from "@/services/endpoints/merks";
 import productApi from "@/services/endpoints/products";
 import { useProductFormStore } from "@/stores/product-form-store";
-import { useLocalSearchParams, useNavigation, useRouter } from "expo-router";
+import { Merk } from "@/types/api";
+import { useNavigation, useRouter } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
 import { Alert, StyleSheet, useWindowDimensions, View } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-export default function AddMaterialScreen() {
+export default function AddProductScreen() {
   const colorScheme = useColorScheme() ?? "light";
-  const {width, height} = useWindowDimensions();
+  const { width, height } = useWindowDimensions();
   const isTablet = Math.min(width, height) >= 600;
   const isLandscape = width > height;
   const isTabletLandscape = isTablet && isLandscape;
@@ -31,12 +35,47 @@ export default function AddMaterialScreen() {
   const navigation = useNavigation();
 
   const confirmationRef = useRef<ConfirmationDialogHandle | null>(null);
+
+  const [merks, setMerks] = useState<Merk[]>([]);
+  const [recipes, setRecipes] = useState<{ id: string; name: string }[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+
+  useEffect(() => {
+    loadMerks();
+    loadRecipes();
+  }, []);
+
+  const loadMerks = async () => {
+    try {
+      const response = await merkApi.getMerks();
+      if (response.data) {
+        setMerks(response.data);
+      }
+    } catch (error) {
+      console.error("Failed to load merks:", error);
+    }
+  };
+
+  const loadRecipes = async () => {
+    try {
+      const response = await recipeApi.getRecipes();
+      if (response.data) {
+        setRecipes(response.data.map(r => ({ id: r.id, name: r.name })));
+      }
+    } catch (error) {
+      console.error("Failed to load recipes:", error);
+    }
+  };
 
   const {
     name,
     price,
     brand,
+    category,
+    recipe,
+    favorite,
+    enableCostBarcode,
     imageUri,
     capitalPrice,
     barcode,
@@ -45,50 +84,43 @@ export default function AddMaterialScreen() {
     setName,
     setPrice,
     setBrand,
+    setCategory,
+    setRecipe,
+    setFavorite,
+    setEnableCostBarcode,
     setImageUri,
     setCapitalPrice,
     setBarcode,
-    setVariants,
-    setStock,
   } = useProductFormStore(state => state);
-  const {variant_name, variant_price} = useLocalSearchParams<{
-    variant_name?: string;
-    variant_price?: string;
-  }>();
 
-  React.useEffect(() => {
-    if (variant_name && variant_price) {
-      const priceNum = Number(String(variant_price).replace(/[^0-9]/g, ""));
-      setVariants(prev => [
-        ...prev,
-        {name: String(variant_name), price: priceNum},
-      ]);
-      router.replace("/dashboard/recipe-and-materials/add-material" as never);
+  const isDirty = Object.values({
+    name,
+    price,
+    brand,
+    category,
+    recipe,
+    favorite,
+    enableCostBarcode,
+    imageUri,
+    capitalPrice,
+    barcode,
+    variants,
+    stock,
+  }).some(value => {
+    if (typeof value === "string") {
+      return value.trim() !== "";
     }
-  }, [variant_name, variant_price, router]);
 
-  // Barcode sekarang dikelola via Zustand store dan diisi langsung dari layar scan,
-  // jadi tidak lagi diambil dari query param.
+    if (typeof value === "number") {
+      return value > 0;
+    }
 
-  const isDirty =
-    Object.values({
-      name,
-      price,
-      brand,
-      imageUri: imageUri || "",
-      capitalPrice,
-      barcode,
-    }).some(value => {
-      if (typeof value === "string") {
-        return value.trim() !== "";
-      }
+    if (Array.isArray(value)) {
+      return value.length > 0;
+    }
 
-      if (typeof value === "number") {
-        return value > 0;
-      }
-
-      return false;
-    }) || variants.length > 0;
+    return false;
+  });
 
   useEffect(() => {
     const sub = navigation.addListener("beforeRemove", e => {
@@ -123,87 +155,90 @@ export default function AddMaterialScreen() {
       return;
     }
 
+    // Clean and parse price
     const cleanPrice = String(price).replace(/[^0-9]/g, "");
     const numericPrice = Number(cleanPrice);
-
-    if (!cleanPrice || numericPrice <= 0) {
-      Alert.alert("Error", "Harga jual harus lebih dari 0");
-      return;
-    }
-
-    // Validate merk_id (optional)
-    if (brand && brand.length < 10) {
-      Alert.alert("Error", "Merk tidak valid");
-      return;
-    }
 
     try {
       setIsSaving(true);
 
+      // Build payload sesuai CreateProductDto
       const payload: any = {
         name: name.trim(),
         price: numericPrice,
-        is_ingredient: true, // Flag untuk bahan baku
+        is_ingredient: true,
       };
 
-      if (brand) payload.merk_id = brand;
+      // Optional fields - tambahkan hanya jika ada nilai
+      if (brand && brand.length > 10 && brand.startsWith("cm")) {
+        payload.merk_id = brand;
+      }
 
-      if (imageUri) payload.photo_url = imageUri;
-      if (capitalPrice > 0) payload.capital_price = capitalPrice;
-      if (barcode) payload.barcode = barcode;
+      if (category && category.length > 10 && category.startsWith("cm")) {
+        payload.category_id = category;
+      }
 
-      // Add stock if configured - Backend expects flat structure
+      if (recipe && recipe.length > 10 && recipe.startsWith("cm")) {
+        payload.recipe_id = recipe;
+      }
+
+      if (imageUri) {
+        payload.photo_url = imageUri;
+      }
+
+      if (favorite !== undefined) {
+        payload.is_favorite = favorite;
+      }
+
+      // Cost & Barcode fields
+      if (enableCostBarcode) {
+        if (barcode) {
+          payload.barcode = barcode;
+        }
+        if (capitalPrice !== undefined && capitalPrice > 0) {
+          payload.capital_price = capitalPrice;
+        }
+      }
+
+
+      // Stock fields
       if (stock) {
-        payload.stock = stock.offlineStock;
         payload.is_stock_active = true;
+        payload.stock = stock.offlineStock;
         payload.min_stock = stock.minStock;
         payload.notify_on_stock_ronouts = stock.notifyMin;
-        // Note: unit adalah string (pcs, kg, etc), tapi backend expect unit_id
-        // Untuk sekarang kita skip unit_id, atau bisa fetch units API dulu
+
+        if (
+          stock.unit &&
+          stock.unit.length > 10 &&
+          stock.unit.startsWith("cm")
+        ) {
+          payload.unit_id = stock.unit;
+        }
       }
 
-      // Add variants if any - Backend expects flat structure per variant
-      if (variants.length > 0) {
-        payload.variants = variants.map(v => ({
-          name: v.name,
-          price: v.price,
-          ...(v.stock
-            ? {
-                stock: v.stock.count,
-                is_stock_active: true,
-                min_stock: v.stock.minStock,
-                notify_on_stock_ronouts: v.stock.notifyMin,
-              }
-            : {}),
-        }));
-      }
-
-      console.log("📦 Creating material:", payload);
+      // Variants - structure sudah sama dengan CreateProductVariantPayload,
+      // jadi bisa langsung dilempar ke payload tanpa mapping tambahan
+      payload.variants = variants.map((v) => {
+        const { id, ...rest } = v;
+        return rest;
+      });
 
       const response = await productApi.createProduct(payload);
 
       if (response.data) {
-        console.log("✅ Material created successfully:", response.data);
         Alert.alert("Sukses", "Bahan berhasil ditambahkan", [
           {
             text: "OK",
             onPress: () => {
-              // Reset form
-              setName("");
-              setPrice("");
-              setBrand("");
-              setImageUri(null);
-              setCapitalPrice(0);
-              setBarcode("");
-              setVariants([]);
-              setStock(null);
+              useProductFormStore.getState().reset();
               router.back();
             },
           },
         ]);
       }
     } catch (error: any) {
-      console.error("❌ Failed to create material:", error);
+      console.error("Failed to create product:", error);
       Alert.alert("Error", error.message || "Gagal menambahkan bahan");
     } finally {
       setIsSaving(false);
@@ -211,16 +246,12 @@ export default function AddMaterialScreen() {
   };
 
   return (
-    <View style={{flex: 1, backgroundColor: Colors[colorScheme].background}}>
-      <Header
-        showHelp={false}
-        title="Tambah Bahan"
-        withNotificationButton={false}
-      />
+    <View style={{ flex: 1, backgroundColor: Colors[colorScheme].background }}>
+      <Header title="Tambah Bahan" showHelp={false} />
       <KeyboardAwareScrollView
         contentContainerStyle={{
-          paddingTop: 8,
-          paddingBottom: insets.bottom + 80,
+          paddingTop: 18,
+          // paddingBottom: insets.bottom + 80,
         }}
         enableOnAndroid
         keyboardOpeningTime={0}
@@ -233,105 +264,159 @@ export default function AddMaterialScreen() {
             uri={imageUri || undefined}
             initials={(name || "NP").slice(0, 2).toUpperCase()}
             onPress={() => {
+              // Integrasi picker bisa ditambahkan nanti
               setImageUri(null);
             }}
           />
-        </View>
 
-        <View style={{height: 24}} />
+          <View style={styles.contentSection}>
+            <ThemedInput
+              label="Nama Produk"
+              size="md"
+              value={name}
+              onChangeText={setName}
+            />
 
-        <View style={styles.rowSection}>
-          <View style={styles.contentWrapper}>
-          <ThemedInput
-            label="Nama Produk"
-            value={name}
-            onChangeText={setName}
-          />
-          <ThemedInput
-            label="Harga Jual"
-            value={price}
-            onChangeText={setPrice}
-            numericOnly
-          />
-          <MerkPicker
-            label="Pilih Merk"
-            value={brand}
-            size="md"
-            onChange={setBrand}
-          />
+
+            <MerkPicker
+              label="Pilih Merk"
+              value={brand}
+              size="md"
+              onChange={setBrand}
+            />
+            <CategoryPicker
+              label="Pilih Kategori"
+              value={category}
+              size="md"
+              onChange={setCategory}
+            />
             <ThemedInput
               label="Harga Modal"
-              value={capitalPrice > 0 ? String(capitalPrice) : ""}
-              onChangeText={v => {
-              const num = Number(v.replace(/[^0-9]/g, ""));
-              setCapitalPrice(num);
-            }}
+              value={capitalPrice ? String(capitalPrice) : ""}
+              size="md"
+              onChangeText={v => setCapitalPrice(v ? Number(v) : 0)}
               numericOnly
-              placeholder="Harga Modal"
-              placeholderTextColor={Colors[colorScheme].icon}
-              inputContainerStyle={{
-                backgroundColor: colorScheme === "dark" ? "#1F1F1F" : "#FFFFFF",
-              }}
             />
           </View>
         </View>
 
         <View style={styles.sectionDivider} />
 
-        <View style={styles.rowContent}>
-          <View style={styles.contentWrapper}>
+
+
+        <View style={styles.sectionDivider} />   
+
+        <View style={styles.sectionDivider} />
+
+        <View style={styles.contentWrapper}>
+          <View style={styles.rowSection}>
             <MenuRow
               title="Kelola Stok"
+              showBottomBorder={false}
               rightText={
-              stock
-                ? `Stok Aktif (${stock.offlineStock} ${stock.unit})`
-                : "Stok Tidak Aktif"
+                stock
+                  ? `Stok Aktif (${stock.offlineStock})`
+                  : "Stok Tidak Aktif"
               }
-            showBottomBorder={false}
               variant="link"
               onPress={() =>
-                router.push("/dashboard/recipe-and-materials/stock" as never)
+                router.push({
+                  pathname: "/dashboard/product/stock",
+                  params: {
+                    from: "add",
+                    ...(name ? { name } : {}),
+                    ...(price ? { price } : {}),
+                    ...(brand ? { brand } : {}),
+                    ...(category ? { category } : {}),
+                    ...(favorite ? { favorite: String(favorite) } : {}),
+                    ...(enableCostBarcode
+                      ? { enableCostBarcode: String(enableCostBarcode) }
+                      : {}),
+                    ...(imageUri ? { imageUri } : {}),
+                    ...(capitalPrice ? { capitalPrice: String(capitalPrice) } : {}),
+                    ...(barcode ? { barcode } : {}),
+                    ...(variants.length
+                      ? { variants: JSON.stringify(variants) }
+                      : {}),
+                    ...(stock
+                      ? {
+                        offlineStock: String(stock.offlineStock),
+                        unit: stock.unit,
+                        minStock: String(stock.minStock),
+                        notifyMin: stock.notifyMin ? "1" : "0",
+                      }
+                      : {}),
+                  },
+                } as never)
               }
             />
           </View>
         </View>
 
         <View style={styles.sectionDivider} />
-
-        <View style={styles.variantsSection}>
-          <View style={styles.contentWrapper}>
-          {variants.length > 0 ? (
-            <>
-              <ThemedText type="subtitle-2">Varian</ThemedText>
-              {variants.map((v, idx) => (
-                <VariantItem
-                  key={idx}
-                  initials={(v.name || "VR").slice(0, 2).toUpperCase()}
-                  name={v.name}
-                  price={v.price}
-                  stock={v.stock}
-                  onPress={() => {}}
-                />
-              ))}
-            </>
-          ) : null}
+        <View style={styles.contentWrapper}>
+          <View style={styles.variantsSection}>
+            {variants.length > 0 ? (
+              <>
+                <ThemedText type="subtitle-2">Varian</ThemedText>
+                {variants.map((v, idx) => (
+                  <VariantItem
+                    key={idx}
+                    initials={(v.name || "VR").slice(0, 2).toUpperCase()}
+                    name={v.name}
+                    price={v.price}
+                    stock={
+                      v.is_stock_active && typeof v.stock === "number"
+                        ? { count: v.stock, unit: v.unit_id || "pcs" }
+                        : undefined
+                    }
+                    onPress={() =>
+                      router.push({
+                        pathname: "/dashboard/recipe-and-materials/variant",
+                        params: {
+                          from: "edit",
+                          name: v.name,
+                          price: String(v.price),
+                          ...(typeof v.stock === "number"
+                            ? {
+                              offlineStock: String(v.stock),
+                              unit: v.unit_id || "pcs",
+                              minStock: String(v.min_stock || 0),
+                              notifyMin: v.notify_on_stock_ronouts ? "1" : "0",
+                            }
+                            : {}),
+                          ...(v.id ? { variantId: v.id } : {}),
+                        },
+                      } as never)
+                    }
+                  />
+                ))}
+              </>
+            ) : null}
 
             <ThemedButton
               title="Tambah Varian"
               variant="secondary"
               onPress={() =>
-                router.push("/dashboard/recipe-and-materials/variant" as never)
+                router.push({
+                  pathname: "/dashboard/recipe-and-materials/variant",
+                  params: {
+                    from: "add",
+                  },
+                } as never)
               }
             />
+            <View style={styles.bottomBar}>
+              <ThemedButton
+                title={isSaving ? "Menyimpan..." : "Simpan"}
+                variant="primary"
+                onPress={handleSave}
+                disabled={isSaving}
+              />
+            </View>
           </View>
         </View>
       </KeyboardAwareScrollView>
-
-      <View style={styles.bottomBar}>
-        <View style={styles.contentWrapper}>
-          <ThemedButton title="Simpan" variant="primary" onPress={handleSave} />
-        </View>
-      </View>
 
       <ConfirmationDialog ref={confirmationRef} />
     </View>
@@ -340,39 +425,37 @@ export default function AddMaterialScreen() {
 
 const createStyles = (colorScheme: "light" | "dark", isTablet: boolean, isTabletLandscape: boolean) =>
   StyleSheet.create({
-    inlineCard: {
-      marginTop: isTablet ? 12 : 8,
-    },
-    sectionDivider: {
-      backgroundColor: Colors[colorScheme].border2,
-      height: isTablet ? 16 : 12,
-    },
     contentWrapper: {
       width: "100%",
       maxWidth: isTabletLandscape ? 960 : undefined,
       alignSelf: "center",
     },
-    rowSection: {
-      paddingHorizontal: isTablet ? 80 : 20,
-      paddingVertical: isTablet ? 32 : 24,
+    inlineCard: {
+      marginTop: 8,
     },
-    rowContent: {
-      paddingHorizontal: isTablet ? 80 : 20,
+    sectionDivider: {
+      backgroundColor: Colors[colorScheme].border2,
+      height: isTablet ? 10 : 6,
+    },
+    contentSection: {
+      paddingHorizontal: isTablet ? 28 : 20,
+      paddingVertical: isTablet ? 28 : 24,
+    },
+    rowSection: {
+      paddingHorizontal: isTablet ? 28 : 20,
       paddingVertical: isTablet ? 10 : 6,
     },
     variantsSection: {
-      paddingHorizontal: isTablet ? 80 : 20,
-      paddingVertical: isTablet ? 24 : 18,
+      paddingHorizontal: isTablet ? 28 : 20,
+      paddingVertical: isTablet ? 22 : 18,
       gap: isTablet ? 16 : 12,
       flexDirection: "column",
     },
     bottomBar: {
-      position: "absolute",
       left: 0,
       right: 0,
       bottom: 0,
-      paddingHorizontal: isTablet ? 80 : 20,
-      paddingBottom: isTablet ? 24 : 16,
+      paddingBottom: isTablet ? 22 : 16,
       paddingTop: isTablet ? 12 : 8,
       backgroundColor: Colors[colorScheme].background,
     },

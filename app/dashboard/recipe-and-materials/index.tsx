@@ -46,14 +46,11 @@ export default function ProductsScreen() {
   // Load ingredients (products with is_ingredient=true)
   const loadIngredients = async () => {
     try {
-      const response = await productApi.getProducts();
+      const response = await productApi.getIngredients();
       if (response.data) {
-        // Filter hanya produk yang is_ingredient = true
-        const ingredientProducts = response.data.filter(
-          (p: Product) => p.is_ingredient === true
-        );
-        setIngredients(ingredientProducts);
-        console.log("✅ Loaded", ingredientProducts.length, "ingredients");
+       
+        setIngredients(response.data);
+        console.log("✅ Loaded", response.data.length, "ingredients");
       }
     } catch (error: any) {
       console.error("❌ Failed to load ingredients:", error);
