@@ -1,7 +1,6 @@
 import { Colors } from "@/constants/theme";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { Ionicons, MaterialIcons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
 import React from "react";
 import { StyleSheet, Text, TouchableOpacity, useWindowDimensions, View } from "react-native";
 
@@ -26,7 +25,6 @@ const TransactionHistoryItem: React.FC<TransactionHistoryItemProps> = ({
   const { width, height } = useWindowDimensions();
   const isTablet = isTabletProp ?? Math.min(width, height) >= 600;
   const styles = createStyles(colorScheme, isTablet);
-  const router = useRouter();
 
   const formatCurrency = (value: number) => {
     if (!value) return "0";
@@ -40,7 +38,7 @@ const TransactionHistoryItem: React.FC<TransactionHistoryItemProps> = ({
       onPress();
       return;
     }
-    router.push("/dashboard/transaction/show" as never);
+    // router.push("/dashboard/transaction/show" as never);
   };
 
   return (

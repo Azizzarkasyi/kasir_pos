@@ -25,6 +25,9 @@ interface RegisterPayload {
   country: string;
   bussiness_name: string;
   business_type: string;
+  bussiness_province:RegencyPayload;
+  bussiness_city:RegencyPayload;
+  bussiness_subdistrict:RegencyPayload;
   bussiness_regency: RegencyPayload;
   bussiness_address: string;
   owner_name: string;
@@ -305,6 +308,8 @@ interface UpdateStruckConfigPayload {
   footer_description?: string;
   header_description?: string;
   display_transaction_note?: boolean;
+  display_running_number?: boolean;
+  display_unit_next_to_qty?: boolean;
   hide_tax_percentage?: boolean;
 }
 

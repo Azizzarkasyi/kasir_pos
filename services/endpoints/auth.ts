@@ -1,11 +1,11 @@
-import apiService from "../api";
 import {
+  ApiResponse,
   LoginRequest,
   LoginResponse,
   RegisterRequest,
-  ApiResponse,
   User,
 } from "../../types/api";
+import apiService from "../api";
 
 /**
  * Authentication API Endpoints
@@ -120,6 +120,27 @@ export const authApi = {
    */
   async setToken(token: string): Promise<void> {
     await apiService.setToken(token);
+  },
+
+  /**
+   * Request OTP for registration/login verification
+   */
+  async requestOtp(data: RequestOtpPayload): Promise<ApiResponse<any>> {
+    const response = await apiService.post<any>("/auth/otp/request", data);
+    return response;
+  },
+
+  /**
+   * Validate OTP and get access token
+   */
+  async validateOtp(
+    data: ValidateOtpPayload
+  ): Promise<ApiResponse<LoginResponse>> {
+    const response = await apiService.post<LoginResponse>(
+      "/auth/otp/validate",
+      data
+    );
+    return response;
   },
 
   /**

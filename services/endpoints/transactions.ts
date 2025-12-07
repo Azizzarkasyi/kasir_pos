@@ -1,9 +1,9 @@
-import apiService from "../api";
 import {
-  Transaction,
-  CreateTransactionRequest,
   ApiResponse,
+  CreateTransactionRequest,
+  Transaction,
 } from "../../types/api";
+import apiService from "../api";
 
 /**
  * Transform transaction from snake_case to camelCase
@@ -17,12 +17,13 @@ const transformTransaction = (data: any): Transaction => {
     id: data.id,
     invoiceNumber: invoiceNumber,
     totalAmount: data.total_amount || data.total || data.totalAmount || 0,
+    paidAmount: data.paid_amount || data.paid || data.paidAmount || 0,
+    changeAmount: data.change_amount || data.change || data.changeAmount || 0,
     paymentMethod: (
       data.payment_method || data.paymentMethod
     )?.toLowerCase() as any,
-    paymentStatus: (data.payment_status ||
-      data.status ||
-      data.paymentStatus) as any,
+    paymentStatus: 
+      data.status  as any,
     items: (data.items || []).map((item: any) => ({
       id: item.id,
       productId: item.product_id || item.productId,
@@ -69,7 +70,7 @@ export const transactionApi = {
   /**
    * Get transaction by ID
    */
-  async getTransaction(id: number): Promise<ApiResponse<Transaction>> {
+  async getTransaction(id: string): Promise<ApiResponse<Transaction>> {
     const response = await apiService.get<any>(`/transactions/${id}`);
 
     // Transform response
@@ -113,7 +114,7 @@ export const transactionApi = {
   /**
    * Get transaction statistics
    */
-  async getStats(params?: {startDate?: string; endDate?: string}): Promise<
+  async getStats(params?: { startDate?: string; endDate?: string }): Promise<
     ApiResponse<{
       totalRevenue: number;
       totalTransactions: number;
@@ -144,7 +145,7 @@ export const transactionApi = {
       totalRevenue: number;
       totalTransactions: number;
       transactions: Transaction[];
-    }>("/transactions/daily", {date});
+    }>("/transactions/daily", { date });
     return response;
   },
 };

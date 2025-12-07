@@ -55,7 +55,7 @@ const createStyles = (colorScheme: "light" | "dark", isTablet: boolean) =>
       borderBottomWidth: 1,
       borderBottomColor: Colors[colorScheme].border,
       borderRadius: isTablet ? 10 : 8,
-      paddingVertical: isTablet ? 16 : 12,
+      paddingVertical: isTablet ? 16 : 8,
       backgroundColor: Colors[colorScheme].background,
     },
     avatar: {

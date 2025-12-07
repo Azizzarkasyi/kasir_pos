@@ -1,0 +1,2 @@
+- untuk pembuatan UI untuk com ponent yang memiliki kemungkinan berulang usage jdikan component dan untuk styling nya juga dipisahin agar lebih mudah. 
+- untuk file taruh di folder components sesuai scale tentukan taruh di atoms, molecules, organisms, templates

@@ -1,3 +1,4 @@
+import HelpPopup from "@/components/atoms/help-popup";
 import Header from "@/components/header";
 import { ThemedButton } from "@/components/themed-button";
 import { ThemedInput } from "@/components/themed-input";
@@ -5,9 +6,10 @@ import { ThemedText } from "@/components/themed-text";
 import { Colors } from "@/constants/theme";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { settingsApi, StruckConfig } from "@/services";
+import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import React, { useEffect, useState } from "react";
-import { ActivityIndicator, Alert, StyleSheet, Switch, useWindowDimensions, View } from "react-native";
+import { ActivityIndicator, Alert, StyleSheet, Switch, TouchableOpacity, useWindowDimensions, View } from "react-native";
 import { ScrollView } from "react-native-gesture-handler";
 
 export default function OrderReceiptSettingScreen() {
@@ -27,6 +29,9 @@ export default function OrderReceiptSettingScreen() {
 
   const [headerDesc, setHeaderDesc] = useState("");
   const [footerDesc, setFooterDesc] = useState("");
+
+  const [showHelpExtra, setShowHelpExtra] = useState(false);
+  const [showHelpMessage, setShowHelpMessage] = useState(false);
 
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -88,10 +93,9 @@ export default function OrderReceiptSettingScreen() {
     setIsSaving(true);
     try {
       await settingsApi.updateStruckConfig(branchId, {
-        display_running_numbers: displayRunningNumbers,
+        display_running_number: displayRunningNumbers,
         display_unit_next_to_qty: displayUnitNextToQty,
         display_transaction_note: showTransactionNote,
-        display_quantity_total: displayQuantityTotal,
         hide_tax_percentage: hideTaxPercentage,
         header_description: headerDesc.trim(),
         footer_description: footerDesc.trim(),
@@ -159,19 +163,61 @@ export default function OrderReceiptSettingScreen() {
         </View>
 
         <View style={styles.sectionCard}>
-          <ThemedText type="subtitle-2" style={{marginBottom: 8}}>
-            Keterangan Struk
-          </ThemedText>
+          <ThemedText type="subtitle-2">Pengaturan Dasar</ThemedText>
           <ThemedInput
-            label="Keterangan Tambahan"
+            label="Keterangan Tambahan (Opsional)"
             value={headerDesc}
+            size="md"
             onChangeText={setHeaderDesc}
+            multiline
+            maxLength={100}
+            rightIcon={
+              <TouchableOpacity onPress={() => setShowHelpExtra(true)}>
+                <Ionicons
+                  name="help-circle-outline"
+                  size={isTablet ? 28 : 20}
+                  color={Colors[colorScheme].primary}
+                />
+              </TouchableOpacity>
+            }
+            inputContainerStyle={{
+              height: isTablet ? 120 : 100,
+              alignItems: "center",
+              paddingVertical: isTablet ? 16 : 12,
+            }}
           />
+          <View style={styles.counterRow}>
+            <ThemedText
+              style={{color: Colors[colorScheme].icon, fontSize: isTablet ? 16 : 14}}
+            >{`${headerDesc.length}/100`}</ThemedText>
+          </View>
           <ThemedInput
-            label="Pesan"
+            label="Pesan (Opsional)"
             value={footerDesc}
             onChangeText={setFooterDesc}
+            multiline
+            size="md"
+            maxLength={100}
+            rightIcon={
+              <TouchableOpacity onPress={() => setShowHelpMessage(true)}>
+                <Ionicons
+                  name="help-circle-outline"
+                  size={isTablet ? 28 : 20}
+                  color={Colors[colorScheme].primary}
+                />
+              </TouchableOpacity>
+            }
+            inputContainerStyle={{
+              height: isTablet ? 120 : 100,
+              alignItems: "center",
+              paddingVertical: isTablet ? 16 : 12,
+            }}
           />
+          <View style={styles.counterRow}>
+            <ThemedText
+              style={{color: Colors[colorScheme].icon, fontSize: isTablet ? 16 : 14}}
+            >{`${footerDesc.length}/100`}</ThemedText>
+          </View>
         </View>
 
         <View style={styles.bottomButtonWrapper}>
@@ -183,9 +229,21 @@ export default function OrderReceiptSettingScreen() {
         </View>
         </View>
       </ScrollView>
+      <HelpPopup
+        visible={showHelpExtra}
+        title="Keterangan Tambahan"
+        description="Keterangan tambahan akan ditampilkan di bawah nama outlet kamu."
+        onClose={() => setShowHelpExtra(false)}
+      />
+      <HelpPopup
+        visible={showHelpMessage}
+        title="Pesan Untuk Pelanggan"
+        description="Pesan akan ditampilkan di bawah kembalian struk."
+        onClose={() => setShowHelpMessage(false)}
+      />
     </View>
   );
-}
+};
 
 type RowProps = {
   label: string;
@@ -244,10 +302,12 @@ const createStyles = (colorScheme: "light" | "dark", isTablet: boolean, isTablet
       paddingHorizontal: isTablet ? 16 : 8,
       paddingVertical: isTablet ? 16 : 8,
     },
+    counterRow: {
+      alignItems: "flex-end",
+      marginTop: isTablet ? -12 : -8,
+      marginBottom: isTablet ? 12 : 8,
+    },
     bottomButtonWrapper: {
-      position: "absolute",
-      left: isTablet ? 60 : 16,
-      right: isTablet ? 60 : 16,
-      bottom: isTablet ? 24 : 16,
+      marginTop: isTablet ? 32 : 8,
     },
   });

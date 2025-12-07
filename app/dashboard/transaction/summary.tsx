@@ -113,54 +113,6 @@ export default function TransactionSummaryPage() {
         }
       />
 
-      {/* Summary Info */}
-      <View style={styles.summaryHeader}>
-        <View style={styles.summaryRow}>
-          <Text
-            style={[styles.summaryLabel, { color: Colors[colorScheme].icon }]}
-          >
-            Subtotal
-          </Text>
-          <Text
-            style={[styles.summaryValue, { color: Colors[colorScheme].text }]}
-          >
-            Rp {formatCurrency(subtotal)}
-          </Text>
-        </View>
-        {totalFees > 0 && (
-          <View style={styles.summaryRow}>
-            <Text
-              style={[styles.summaryLabel, { color: Colors[colorScheme].icon }]}
-            >
-              Biaya Tambahan
-            </Text>
-            <Text
-              style={[styles.summaryValue, { color: Colors[colorScheme].text }]}
-            >
-              Rp {formatCurrency(totalFees)}
-            </Text>
-          </View>
-        )}
-        <View style={[styles.summaryRow, styles.summaryRowTotal]}>
-          <Text
-            style={[
-              styles.summaryLabelTotal,
-              { color: Colors[colorScheme].text },
-            ]}
-          >
-            Total
-          </Text>
-          <Text
-            style={[
-              styles.summaryValueTotal,
-              { color: Colors[colorScheme].primary },
-            ]}
-          >
-            Rp {formatCurrency(totalAmount)}
-          </Text>
-        </View>
-      </View>
-
       <ScrollView
         style={styles.listWrapper}
         contentContainerStyle={styles.listContent}
@@ -212,6 +164,56 @@ export default function TransactionSummaryPage() {
   ))
 }
       </ScrollView >
+
+
+      {/* Summary Info */}
+      <View style={styles.summaryHeader}>
+        <View style={styles.summaryRow}>
+          <Text
+            style={[styles.summaryLabel, { color: Colors[colorScheme].icon }]}
+          >
+            Subtotal
+          </Text>
+          <Text
+            style={[styles.summaryValue, { color: Colors[colorScheme].text }]}
+          >
+            Rp {formatCurrency(subtotal)}
+          </Text>
+        </View>
+        {totalFees > 0 && (
+          <View style={styles.summaryRow}>
+            <Text
+              style={[styles.summaryLabel, { color: Colors[colorScheme].icon }]}
+            >
+              Biaya Tambahan
+            </Text>
+            <Text
+              style={[styles.summaryValue, { color: Colors[colorScheme].text }]}
+            >
+              Rp {formatCurrency(totalFees)}
+            </Text>
+          </View>
+        )}
+        <View style={[styles.summaryRow, styles.summaryRowTotal]}>
+          <Text
+            style={[
+              styles.summaryLabelTotal,
+              { color: Colors[colorScheme].text },
+            ]}
+          >
+            Total
+          </Text>
+          <Text
+            style={[
+              styles.summaryValueTotal,
+              { color: Colors[colorScheme].primary },
+            ]}
+          >
+            Rp {formatCurrency(totalAmount)}
+          </Text>
+        </View>
+      </View>
+
 
       <AddAdditionalCostModal
         visible={isCostModalVisible}

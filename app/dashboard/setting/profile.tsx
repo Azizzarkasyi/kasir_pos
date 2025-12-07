@@ -155,7 +155,7 @@ export default function ProfileSettingScreen() {
       await settingsApi.changePin({
         old_pin: oldPin,
         new_pin: newPin,
-        confirm_pin: confirmPin,
+        new_pin_confirmation: confirmPin,
       });
 
       Alert.alert("Berhasil", "PIN berhasil diubah");

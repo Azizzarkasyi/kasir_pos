@@ -240,7 +240,7 @@ export default function Index() {
           title="Daftar Sekarang"
           variant="primary"
           onPress={() =>
-            navigation.navigate("auth/Register/select-country" as never)
+            navigation.navigate("auth/Register/register" as never)
           }
         />
         <ThemedButton

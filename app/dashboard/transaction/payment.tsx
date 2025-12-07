@@ -7,7 +7,7 @@ import { useColorScheme } from "@/hooks/use-color-scheme";
 import { transactionApi } from "@/services/endpoints/transactions";
 import { useCartStore } from "@/stores/cart-store";
 import { useRouter } from "expo-router";
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import {
   Alert,
   StyleSheet,
@@ -19,10 +19,10 @@ import {
 
 export default function PaymentPage() {
   const colorScheme = useColorScheme() ?? "light";
-    const { width, height } = useWindowDimensions();
-    const isTablet = Math.min(width, height) >= 600;
-    const isLandscape = width > height;
-    const isTabletLandscape = isTablet && isLandscape;
+  const { width, height } = useWindowDimensions();
+  const isTablet = Math.min(width, height) >= 600;
+  const isLandscape = width > height;
+  const isTabletLandscape = isTablet && isLandscape;
   const styles = createStyles(colorScheme, isTablet, isTabletLandscape);
   const router = useRouter();
 
@@ -48,13 +48,6 @@ export default function PaymentPage() {
 
   const totalAmount = getTotalAmount();
 
-  // Set initial amount dari total cart
-  useEffect(() => {
-    if (totalAmount > 0) {
-      setAmount(totalAmount.toString());
-    }
-  }, [totalAmount]);
-
   const formatCurrency = (value: string | number) => {
     if (!value) return "0";
     const stringValue = String(value);
@@ -65,12 +58,11 @@ export default function PaymentPage() {
     return withDots;
   };
 
-  const paidAmount = amount === "0" ? 0 : Number(amount.replace(/\D/g, ""));
-  const changeAmount = paidAmount - totalAmount;
+
 
   const handlePayment = async () => {
     // Validasi pembayaran
-    if (paidAmount < totalAmount) {
+    if (Number(amount) < totalAmount) {
       Alert.alert(
         "Pembayaran Kurang",
         `Jumlah bayar minimal Rp ${formatCurrency(totalAmount)}`
@@ -95,7 +87,7 @@ export default function PaymentPage() {
           note: item.note,
         })),
         discount: discount,
-        paid_amount: paidAmount,
+        paid_amount: Number(amount),
         customer_name: customerName || undefined,
         note: receiptNote || undefined,
         additional_fees: additionalFees.map(fee => ({
@@ -116,8 +108,6 @@ export default function PaymentPage() {
           id: response.data.id?.toString() || "",
           invoiceNumber: response.data.invoiceNumber || "",
           totalAmount: totalAmount,
-          paidAmount: paidAmount,
-          changeAmount: changeAmount,
           paymentMethod: paymentMethod,
           createdAt: response.data.createdAt || new Date().toISOString(),
         };
@@ -155,7 +145,7 @@ export default function PaymentPage() {
     <View
       style={[
         styles.container,
-        {backgroundColor: Colors[colorScheme].background},
+        { backgroundColor: Colors[colorScheme].background },
       ]}
     >
       <Header
@@ -166,39 +156,38 @@ export default function PaymentPage() {
 
       {/* Content */}
       <View style={styles.mainWrapper}>
-                {/* Left Column - Amount & Inputs */}
+        {/* Left Column - Amount & Inputs */}
         <View style={styles.leftColumn}>
           <View style={styles.amountWrapper}>
             <Text
-              style={[styles.amountLabel, {color: Colors[colorScheme].icon}]}
+              style={[styles.amountLabel, { color: Colors[colorScheme].icon }]}
             >
               Total Tagihan
             </Text>
             <Text
-              style={[styles.amountValue, {color: Colors[colorScheme].text}]}
+              style={[
+                styles.amountValue,
+                {
+                  color: Colors[colorScheme].text,
+                  fontSize: isTablet ? 32 : 22,
+                },
+              ]}
             >
               Rp {formatCurrency(totalAmount)}
             </Text>
-            {changeAmount > 0 && (
-              <View style={styles.changeWrapper}>
-                <Text
-                  style={[
-                    styles.changeLabel,
-                    {color: Colors[colorScheme].icon},
-                  ]}
-                >
-                  Kembalian
-                </Text>
-                <Text
-                  style={[
-                    styles.changeValue,
-                    {color: Colors[colorScheme].primary},
-                  ]}
-                >
-                  Rp {formatCurrency(changeAmount)}
-                </Text>
-              </View>
-            )}
+
+            <Text
+              style={[styles.amountLabel, { color: Colors[colorScheme].icon }]}
+            >
+              Jumlah Dibayar
+            </Text>
+            <Text
+              style={[styles.amountValue, { color: Colors[colorScheme].text }]}
+            >
+              Rp {formatCurrency(amount)}
+            </Text>
+
+        
           </View>
 
           {/* Input catatan */}
@@ -221,42 +210,6 @@ export default function PaymentPage() {
             />
           </View>
 
-          {/* Payment Method Selector */}
-          <View style={styles.methodRow}>
-            <TouchableOpacity
-              style={[
-                styles.methodBadge,
-                paymentMethod === "cash" && styles.methodBadgeActive,
-              ]}
-              onPress={() => setPaymentMethod("cash")}
-            >
-              <Text
-                style={[
-                  styles.methodBadgeText,
-                  paymentMethod === "cash" && styles.methodBadgeTextActive,
-                ]}
-              >
-                Tunai
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[
-                styles.methodBadge,
-                paymentMethod === "debt" && styles.methodBadgeActive,
-              ]}
-              onPress={() => setPaymentMethod("debt")}
-            >
-              <Text
-                style={[
-                  styles.methodBadgeText,
-                  paymentMethod === "debt" && styles.methodBadgeTextActive,
-                ]}
-              >
-                Hutang
-              </Text>
-            </TouchableOpacity>
-          </View>
-
           {/* Calculator */}
           <PaymentCalculator value={amount} onChangeValue={setAmount} />
         </View>
@@ -268,20 +221,20 @@ export default function PaymentPage() {
               styles.continueButton,
               {
                 backgroundColor:
-                  isProcessing || paidAmount < totalAmount
+                  isProcessing || Number(amount) < totalAmount
                     ? Colors[colorScheme].border
                     : Colors[colorScheme].primary,
               },
             ]}
             onPress={handlePayment}
-            disabled={isProcessing || paidAmount < totalAmount}
+            disabled={isProcessing || Number(amount) < totalAmount}
           >
-            <Text style={[styles.continueButtonText, {color: "white"}]}>
+            <Text style={[styles.continueButtonText, { color: "white" }]}>
               {isProcessing
                 ? "Memproses..."
-                : paidAmount < totalAmount
-                ? "Jumlah Bayar Kurang"
-                : "Proses Pembayaran"}
+                : Number(amount) < totalAmount
+                  ? "Jumlah Bayar Kurang"
+                  : "Proses Pembayaran"}
             </Text>
           </TouchableOpacity>
         </View>
@@ -300,7 +253,7 @@ const createStyles = (colorScheme: "light" | "dark", isTablet: boolean, isTablet
       paddingBottom: isTablet ? 16 : 12,
       paddingHorizontal: isTablet ? 24 : 16,
       shadowColor: "#000000",
-      shadowOffset: {width: 0, height: 2},
+      shadowOffset: { width: 0, height: 2 },
       shadowOpacity: 0.16,
       shadowRadius: 6,
       elevation: 6,
@@ -335,19 +288,19 @@ const createStyles = (colorScheme: "light" | "dark", isTablet: boolean, isTablet
     },
     mainWrapper: {
       flex: 1,
-            flexDirection: isTabletLandscape ? "row" : "column",
+      flexDirection: isTabletLandscape ? "row" : "column",
     },
     leftColumn: {
       flex: isTabletLandscape ? 1 : 1,
       paddingHorizontal: isTablet ? 24 : 4,
       paddingTop: isTablet ? 24 : 16,
       flexDirection: "column",
-            borderRightWidth: isTabletLandscape ? 1 : 0,
-            borderRightColor: Colors[colorScheme].border,
-        },
-        rightColumn: {
-            flex: isTabletLandscape ? 1 : undefined,
-            justifyContent: isTabletLandscape ? "flex-end" : undefined,
+      borderRightWidth: isTabletLandscape ? 1 : 0,
+      borderRightColor: Colors[colorScheme].border,
+    },
+    rightColumn: {
+      flex: isTabletLandscape ? 1 : undefined,
+      justifyContent: isTabletLandscape ? "flex-end" : undefined,
     },
     amountWrapper: {
       alignItems: "center",
@@ -397,13 +350,13 @@ const createStyles = (colorScheme: "light" | "dark", isTablet: boolean, isTablet
       flexDirection: "row",
       marginBottom: isTablet ? 24 : 16,
       justifyContent: "space-evenly",
-            paddingHorizontal: isTablet ? 16 : 12,
-            gap: isTablet ? 16 : 8,
+      paddingHorizontal: isTablet ? 16 : 12,
+      gap: isTablet ? 16 : 8,
     },
     methodBadge: {
       paddingHorizontal: isTablet ? 18 : 14,
       paddingVertical: isTablet ? 10 : 6,
-            flex: isTablet ? 1 : undefined,
+      flex: isTablet ? 1 : undefined,
       borderRadius: 100,
       backgroundColor: Colors[colorScheme].secondary,
       borderWidth: 1,
