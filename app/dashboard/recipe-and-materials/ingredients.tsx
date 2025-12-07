@@ -1,7 +1,5 @@
 import ComboInput from "@/components/combo-input";
-import ConfirmationDialog, {
-  ConfirmationDialogHandle,
-} from "@/components/drawers/confirmation-dialog";
+import ConfirmPopup from "@/components/atoms/confirm-popup";
 import Header from "@/components/header";
 import {ThemedButton} from "@/components/themed-button";
 import {ThemedInput} from "@/components/themed-input";
@@ -49,7 +47,8 @@ export default function IngredientsScreen() {
 
   const addIngredient = useRecipeFormStore(state => state.addIngredient);
 
-  const confirmationRef = useRef<ConfirmationDialogHandle | null>(null);
+  const [showConfirmation, setShowConfirmation] = useState(false);
+  const [pendingNavigation, setPendingNavigation] = useState<any>(null);
 
   const [isLoading, setIsLoading] = useState(true);
   const [ingredients, setIngredients] = useState<Product[]>([]);
@@ -192,20 +191,24 @@ export default function IngredientsScreen() {
       const action = e.data.action;
       e.preventDefault();
 
-      confirmationRef.current?.showConfirmationDialog({
-        title: "Konfirmasi",
-        message: "Data belum disimpan. Yakin ingin keluar dari halaman ini?",
-        onCancel: () => {
-          // Tetap di sini
-        },
-        onConfirm: () => {
-          navigation.dispatch(action);
-        },
-      });
+      setPendingNavigation(action);
+      setShowConfirmation(true);
     });
 
     return sub;
   }, [navigation, isDirty]);
+
+  const handleConfirmExit = () => {
+    setShowConfirmation(false);
+    if (pendingNavigation) {
+      navigation.dispatch(pendingNavigation);
+    }
+  };
+
+  const handleCancelExit = () => {
+    setShowConfirmation(false);
+    setPendingNavigation(null);
+  };
 
   return (
     <View style={{flex: 1, backgroundColor: Colors[colorScheme].background}}>
@@ -300,7 +303,13 @@ export default function IngredientsScreen() {
         </View>
       </View>
 
-      <ConfirmationDialog ref={confirmationRef} />
+      <ConfirmPopup
+        visible={showConfirmation}
+        title="Konfirmasi"
+        message="Pastikan data sudah benar. Apakah Anda yakin ingin menyimpannya?"
+        onConfirm={handleConfirmExit}
+        onCancel={handleCancelExit}
+      />
     </View>
   );
 }

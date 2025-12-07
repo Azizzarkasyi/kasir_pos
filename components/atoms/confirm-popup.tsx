@@ -1,8 +1,13 @@
 import {Colors} from "@/constants/theme";
 import {useColorScheme} from "@/hooks/use-color-scheme";
-import {Ionicons} from "@expo/vector-icons";
 import React from "react";
-import {Modal, StyleSheet, TouchableOpacity, View} from "react-native";
+import {
+  Modal,
+  StyleSheet,
+  TouchableOpacity,
+  View,
+  useWindowDimensions,
+} from "react-native";
 import {ThemedText} from "../themed-text";
 
 type Props = {
@@ -13,28 +18,45 @@ type Props = {
   onCancel: () => void;
 };
 
-const ConfirmPopup: React.FC<Props> = ({visible, title = "WARNING", message, onConfirm, onCancel}) => {
+const ConfirmPopup: React.FC<Props> = ({
+  visible,
+  title = "Konfirmasi",
+  message,
+  onConfirm,
+  onCancel,
+}) => {
   const colorScheme = useColorScheme() ?? "light";
-  const styles = createStyles(colorScheme);
+  const {width, height} = useWindowDimensions();
+  const isTablet = Math.min(width, height) >= 600;
+  const styles = createStyles(colorScheme, isTablet);
 
   return (
-    <Modal animationType="fade" transparent visible={visible} onRequestClose={onCancel}>
-      <View style={styles.overlay}>
+    <Modal
+      animationType="fade"
+      transparent
+      visible={visible}
+      onRequestClose={onCancel}
+    >
+      <View style={styles.backdrop}>
         <View style={styles.card}>
           <ThemedText style={styles.title}>{title}</ThemedText>
-          <View style={styles.separator} />
-          <View style={styles.iconCircle}>
-            <Ionicons name="alert-outline" size={28} color={Colors[colorScheme].primary} />
-          </View>
-          <ThemedText style={styles.message}>
-            {message}
-          </ThemedText>
+          <ThemedText style={styles.message}>{message}</ThemedText>
+
           <View style={styles.actionsRow}>
-            <TouchableOpacity style={styles.btnGhost} onPress={onCancel} activeOpacity={0.8}>
-              <ThemedText style={styles.btnGhostText}>NO</ThemedText>
+            <TouchableOpacity
+              style={[styles.button, styles.buttonSecondary]}
+              onPress={onCancel}
+              activeOpacity={0.8}
+            >
+              <ThemedText style={styles.buttonSecondaryText}>Batal</ThemedText>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.btnPrimary} onPress={onConfirm} activeOpacity={0.8}>
-              <ThemedText style={styles.btnPrimaryText}>YES</ThemedText>
+
+            <TouchableOpacity
+              style={[styles.button, styles.buttonPrimary]}
+              onPress={onConfirm}
+              activeOpacity={0.8}
+            >
+              <ThemedText style={styles.buttonPrimaryText}>Ya</ThemedText>
             </TouchableOpacity>
           </View>
         </View>
@@ -43,80 +65,69 @@ const ConfirmPopup: React.FC<Props> = ({visible, title = "WARNING", message, onC
   );
 };
 
-const createStyles = (colorScheme: "light" | "dark") =>
+const createStyles = (colorScheme: "light" | "dark", isTablet: boolean) =>
   StyleSheet.create({
-    overlay: {
+    backdrop: {
       flex: 1,
-      backgroundColor: "rgba(0,0,0,0.5)",
-      alignItems: "center",
+      backgroundColor: "rgba(0,0,0,0.45)",
       justifyContent: "center",
-      padding: 20,
+      alignItems: "center",
+      paddingHorizontal: isTablet ? 32 : 24,
     },
     card: {
       width: "100%",
-      maxWidth: 360,
-      backgroundColor: Colors[colorScheme].background,
-      borderRadius: 12,
-      paddingHorizontal: 16,
-      paddingVertical: 18,
-      elevation: 6,
+      maxWidth: isTablet ? 520 : 420,
+      borderRadius: isTablet ? 20 : 16,
+      backgroundColor: Colors[colorScheme].secondary,
+      paddingHorizontal: isTablet ? 28 : 24,
+      paddingVertical: isTablet ? 24 : 20,
+      shadowColor: "#000",
+      shadowOffset: {width: 0, height: 4},
+      shadowOpacity: 0.25,
+      shadowRadius: 12,
+      elevation: 8,
     },
     title: {
       textAlign: "center",
+      fontSize: isTablet ? 26 : 18,
       fontWeight: "700",
-      fontSize: 16,
-    },
-    separator: {
-      height: StyleSheet.hairlineWidth,
-      backgroundColor: Colors[colorScheme].icon,
-      marginTop: 10,
-      marginBottom: 12,
-      opacity: 0.4,
-    },
-    iconCircle: {
-      width: 56,
-      height: 56,
-      borderRadius: 28,
-      borderWidth: 2,
-      borderColor: Colors[colorScheme].primary,
-      alignItems: "center",
-      justifyContent: "center",
-      alignSelf: "center",
+      marginBottom: isTablet ? 18 : 8,
+      color: Colors[colorScheme].text,
     },
     message: {
       textAlign: "center",
-      marginTop: 12,
-      color: Colors[colorScheme].text,
+      fontSize: isTablet ? 20 : 14,
+      color: Colors[colorScheme].icon,
+      marginBottom: isTablet ? 24 : 20,
     },
     actionsRow: {
       flexDirection: "row",
-      justifyContent: "space-between",
-      gap: 12,
-      marginTop: 16,
+      columnGap: isTablet ? 12 : 8,
     },
-    btnGhost: {
+    button: {
       flex: 1,
-      backgroundColor: Colors[colorScheme].secondary,
-      paddingVertical: 12,
-      borderRadius: 999,
+      height: isTablet ? 52 : 44,
+      borderRadius: isTablet ? 10 : 8,
       alignItems: "center",
+      justifyContent: "center",
+    },
+    buttonSecondary: {
       borderWidth: 1,
-      borderColor: Colors[colorScheme].icon,
+      borderColor: Colors[colorScheme].border,
+      backgroundColor: Colors[colorScheme].secondary,
     },
-    btnGhostText: {
+    buttonSecondaryText: {
       color: Colors[colorScheme].text,
-      fontWeight: "600",
+      fontWeight: "500",
+      fontSize: isTablet ? 18 : 14,
     },
-    btnPrimary: {
-      flex: 1,
+    buttonPrimary: {
       backgroundColor: Colors[colorScheme].primary,
-      paddingVertical: 12,
-      borderRadius: 999,
-      alignItems: "center",
     },
-    btnPrimaryText: {
+    buttonPrimaryText: {
       color: Colors[colorScheme].secondary,
-      fontWeight: "700",
+      fontWeight: "600",
+      fontSize: isTablet ? 20 : 16,
     },
   });
 
