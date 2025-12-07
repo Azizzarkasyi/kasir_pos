@@ -1,17 +1,25 @@
 import SectionDivider from "@/components/atoms/section-divider";
+import ConfirmPopup from "@/components/atoms/confirm-popup";
 import SelectLanguageModal, {
-    LanguageValue,
+  LanguageValue,
 } from "@/components/drawers/select-language-modal";
 import Header from "@/components/header";
 import MenuRow from "@/components/menu-row";
-import { ThemedButton } from "@/components/themed-button";
-import { ThemedText } from "@/components/themed-text";
-import { Colors } from "@/constants/theme";
-import { useColorScheme } from "@/hooks/use-color-scheme";
-import { useRouter } from "expo-router";
-import React, { useEffect, useState } from "react";
-import { Alert, StyleSheet, Text, TouchableOpacity, useWindowDimensions, View } from "react-native";
-import { ScrollView } from "react-native-gesture-handler";
+import {ThemedButton} from "@/components/themed-button";
+import {ThemedText} from "@/components/themed-text";
+import {Colors} from "@/constants/theme";
+import {useColorScheme} from "@/hooks/use-color-scheme";
+import {useRouter} from "expo-router";
+import React, {useEffect, useState} from "react";
+import {
+  Alert,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  useWindowDimensions,
+  View,
+} from "react-native";
+import {ScrollView} from "react-native-gesture-handler";
 
 export default function GeneralSettingScreen() {
   const colorScheme = useColorScheme() ?? "light";
@@ -22,6 +30,7 @@ export default function GeneralSettingScreen() {
   const styles = createStyles(colorScheme, isTablet, isTabletLandscape);
   const router = useRouter();
   const [language, setLanguage] = useState<LanguageValue>("id");
+  const [showSuccessPopup, setShowSuccessPopup] = useState(false);
   const [showLanguageModal, setShowLanguageModal] = useState(false);
   const [lastSync, setLastSync] = useState<string>("Belum pernah");
   const [isSyncing, setIsSyncing] = useState(false);
@@ -86,7 +95,7 @@ export default function GeneralSettingScreen() {
       await AsyncStorage.default.setItem("last_sync_time", now.toISOString());
 
       setLastSync(formatDate(now));
-      Alert.alert("Berhasil", "Data berhasil disinkronkan");
+      setShowSuccessPopup(true);
     } catch (error: any) {
       console.error("❌ Sync failed:", error);
       Alert.alert("Gagal", error.message || "Gagal melakukan sinkronisasi");
@@ -103,89 +112,89 @@ export default function GeneralSettingScreen() {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.contentWrapper}>
-        <View style={styles.sectionCardHighlight}>
-          <ThemedText type="subtitle-2" style={styles.syncTitle}>
-            Sinkronisasi Data{" "}
-          </ThemedText>
-          <ThemedText style={styles.syncSubtitle}>
-            Lakukan sinkronisasi untuk perbarui data Qasir
-          </ThemedText>
-          <View style={styles.syncRow}>
-            <View>
-              <ThemedText style={styles.syncLastLabel}>
-                Terakhir Disinkronkan
-              </ThemedText>
-              <ThemedText style={styles.syncLastTime}>{lastSync}</ThemedText>
+          <View style={styles.sectionCardHighlight}>
+            <ThemedText type="subtitle-2" style={styles.syncTitle}>
+              Sinkronisasi Data{" "}
+            </ThemedText>
+            <ThemedText style={styles.syncSubtitle}>
+              Lakukan sinkronisasi untuk perbarui data Qasir
+            </ThemedText>
+            <View style={styles.syncRow}>
+              <View>
+                <ThemedText style={styles.syncLastLabel}>
+                  Terakhir Disinkronkan
+                </ThemedText>
+                <ThemedText style={styles.syncLastTime}>{lastSync}</ThemedText>
+              </View>
+              <ThemedButton
+                title={isSyncing ? "Syncing..." : "Sinkronisasi"}
+                size="sm"
+                onPress={handleSync}
+                disabled={isSyncing}
+              />
             </View>
-            <ThemedButton
-              title={isSyncing ? "Syncing..." : "Sinkronisasi"}
-              size="sm"
-              onPress={handleSync}
-              disabled={isSyncing}
+          </View>
+        </View>
+        <SectionDivider />
+
+        <View style={styles.contentWrapper}>
+          <View style={styles.sectionCard}>
+            <ThemedText type="subtitle-2" style={styles.sectionTitle}>
+              Umum
+            </ThemedText>
+            <MenuRow
+              title="Bahasa"
+              rightText={language === "en" ? "English" : "Indonesia"}
+              variant="link"
+              style={styles.menuRowTitle}
+              showTopBorder={false}
+              showBottomBorder={false}
+              onPress={() => setShowLanguageModal(true)}
             />
           </View>
         </View>
-        </View>
         <SectionDivider />
 
         <View style={styles.contentWrapper}>
-        <View style={styles.sectionCard}>
-          <ThemedText type="subtitle-2" style={styles.sectionTitle}>
-            Umum
-          </ThemedText>
-          <MenuRow
-            title="Bahasa"
-            rightText={language === "en" ? "English" : "Indonesia"}
-            variant="link"
-            style={styles.menuRowTitle}
-            showTopBorder={false}
-            showBottomBorder={false}
-            onPress={() => setShowLanguageModal(true)}
-          />
-        </View>
-        </View>
-        <SectionDivider />
-
-        <View style={styles.contentWrapper}>
-        <View style={styles.sectionCard}>
-          <View style={styles.sectionHeaderRow}>
-            <ThemedText type="subtitle-2" style={styles.sectionTitle}>
-              Perangkat Tambahan
-            </ThemedText>
-            <TouchableOpacity>
-              <Text style={styles.buyNowText}>Beli Sekarang</Text>
-            </TouchableOpacity>
+          <View style={styles.sectionCard}>
+            <View style={styles.sectionHeaderRow}>
+              <ThemedText type="subtitle-2" style={styles.sectionTitle}>
+                Perangkat Tambahan
+              </ThemedText>
+              <TouchableOpacity>
+                <Text style={styles.buyNowText}>Beli Sekarang</Text>
+              </TouchableOpacity>
+            </View>
+            <MenuRow
+              title="Printer"
+              rightText="Belum Terhubung"
+              variant="link"
+              rowStyle={styles.printerRow}
+              style={styles.menuRowTitle}
+              showTopBorder={false}
+              showBottomBorder={false}
+              onPress={() => router.push("/dashboard/setting/printer" as never)}
+            />
+            <MenuRow
+              title="Scanner"
+              rightText="Belum Terhubung"
+              variant="link"
+              rowStyle={styles.scannerRow}
+              style={styles.menuRowTitle}
+              showTopBorder={false}
+              showBottomBorder={false}
+              onPress={() => router.push("/dashboard/setting/scanner" as never)}
+            />
+            <MenuRow
+              title="Atur Struk"
+              variant="link"
+              rowStyle={styles.receiptRow}
+              style={styles.menuRowTitle}
+              showTopBorder={false}
+              showBottomBorder={false}
+              onPress={() => router.push("/dashboard/setting/receipt" as never)}
+            />
           </View>
-          <MenuRow
-            title="Printer"
-            rightText="Belum Terhubung"
-            variant="link"
-            rowStyle={styles.printerRow}
-            style={styles.menuRowTitle}
-            showTopBorder={false}
-            showBottomBorder={false}
-            onPress={() => router.push("/dashboard/setting/printer" as never)}
-          />
-          <MenuRow
-            title="Scanner"
-            rightText="Belum Terhubung"
-            variant="link"
-            rowStyle={styles.scannerRow}
-            style={styles.menuRowTitle}
-            showTopBorder={false}
-            showBottomBorder={false}
-            onPress={() => router.push("/dashboard/setting/scanner" as never)}
-          />
-          <MenuRow
-            title="Atur Struk"
-            variant="link"
-            rowStyle={styles.receiptRow}
-            style={styles.menuRowTitle}
-            showTopBorder={false}
-            showBottomBorder={false}
-            onPress={() => router.push("/dashboard/setting/receipt" as never)}
-          />
-        </View>
         </View>
       </ScrollView>
 
@@ -198,11 +207,23 @@ export default function GeneralSettingScreen() {
         }}
         onClose={() => setShowLanguageModal(false)}
       />
+
+      <ConfirmPopup
+        visible={showSuccessPopup}
+        title="Berhasil"
+        message="Data berhasil disinkronkan"
+        onConfirm={() => setShowSuccessPopup(false)}
+        onCancel={() => setShowSuccessPopup(false)}
+      />
     </View>
   );
 }
 
-const createStyles = (colorScheme: "light" | "dark", isTablet: boolean, isTabletLandscape: boolean) =>
+const createStyles = (
+  colorScheme: "light" | "dark",
+  isTablet: boolean,
+  isTabletLandscape: boolean
+) =>
   StyleSheet.create({
     container: {
       flex: 1,

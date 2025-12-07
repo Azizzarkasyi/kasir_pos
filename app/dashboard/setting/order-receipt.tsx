@@ -1,16 +1,25 @@
 import HelpPopup from "@/components/atoms/help-popup";
+import ConfirmPopup from "@/components/atoms/confirm-popup";
 import Header from "@/components/header";
-import { ThemedButton } from "@/components/themed-button";
-import { ThemedInput } from "@/components/themed-input";
-import { ThemedText } from "@/components/themed-text";
-import { Colors } from "@/constants/theme";
-import { useColorScheme } from "@/hooks/use-color-scheme";
-import { settingsApi, StruckConfig } from "@/services";
-import { Ionicons } from "@expo/vector-icons";
+import {ThemedButton} from "@/components/themed-button";
+import {ThemedInput} from "@/components/themed-input";
+import {ThemedText} from "@/components/themed-text";
+import {Colors} from "@/constants/theme";
+import {useColorScheme} from "@/hooks/use-color-scheme";
+import {settingsApi, StruckConfig} from "@/services";
+import {Ionicons} from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import React, { useEffect, useState } from "react";
-import { ActivityIndicator, Alert, StyleSheet, Switch, TouchableOpacity, useWindowDimensions, View } from "react-native";
-import { ScrollView } from "react-native-gesture-handler";
+import React, {useEffect, useState} from "react";
+import {
+  ActivityIndicator,
+  Alert,
+  StyleSheet,
+  Switch,
+  TouchableOpacity,
+  useWindowDimensions,
+  View,
+} from "react-native";
+import {ScrollView} from "react-native-gesture-handler";
 
 export default function OrderReceiptSettingScreen() {
   const colorScheme = useColorScheme() ?? "light";
@@ -36,6 +45,7 @@ export default function OrderReceiptSettingScreen() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [branchId, setBranchId] = useState<string>("");
+  const [showSuccessPopup, setShowSuccessPopup] = useState(false);
 
   useEffect(() => {
     loadBranchAndConfig();
@@ -100,7 +110,7 @@ export default function OrderReceiptSettingScreen() {
         header_description: headerDesc.trim(),
         footer_description: footerDesc.trim(),
       });
-      Alert.alert("Berhasil", "Konfigurasi struk berhasil disimpan");
+      setShowSuccessPopup(true);
       loadStruckConfig(branchId);
     } catch (error: any) {
       console.error("❌ Failed to save struck config:", error);
@@ -134,99 +144,105 @@ export default function OrderReceiptSettingScreen() {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.contentWrapper}>
-        <View style={styles.sectionCard}>
-          <SettingRow
-            label="Tampilkan penomoran"
-            value={displayRunningNumbers}
-            onValueChange={setDisplayRunningNumbers}
-          />
-          <SettingRow
-            label="Tampilkan satuan di samping QTY"
-            value={displayUnitNextToQty}
-            onValueChange={setDisplayUnitNextToQty}
-          />
-          <SettingRow
-            label="Tampilkan Catatan Transaksi"
-            value={showTransactionNote}
-            onValueChange={setShowTransactionNote}
-          />
-          <SettingRow
-            label="Tampilkan jumlah kuantitas"
-            value={displayQuantityTotal}
-            onValueChange={setDisplayQuantityTotal}
-          />
-          <SettingRow
-            label="Sembunyikan persentase pajak"
-            value={hideTaxPercentage}
-            onValueChange={setHideTaxPercentage}
-          />
-        </View>
-
-        <View style={styles.sectionCard}>
-          <ThemedText type="subtitle-2">Pengaturan Dasar</ThemedText>
-          <ThemedInput
-            label="Keterangan Tambahan (Opsional)"
-            value={headerDesc}
-            size="md"
-            onChangeText={setHeaderDesc}
-            multiline
-            maxLength={100}
-            rightIcon={
-              <TouchableOpacity onPress={() => setShowHelpExtra(true)}>
-                <Ionicons
-                  name="help-circle-outline"
-                  size={isTablet ? 28 : 20}
-                  color={Colors[colorScheme].primary}
-                />
-              </TouchableOpacity>
-            }
-            inputContainerStyle={{
-              height: isTablet ? 120 : 100,
-              alignItems: "center",
-              paddingVertical: isTablet ? 16 : 12,
-            }}
-          />
-          <View style={styles.counterRow}>
-            <ThemedText
-              style={{color: Colors[colorScheme].icon, fontSize: isTablet ? 16 : 14}}
-            >{`${headerDesc.length}/100`}</ThemedText>
+          <View style={styles.sectionCard}>
+            <SettingRow
+              label="Tampilkan penomoran"
+              value={displayRunningNumbers}
+              onValueChange={setDisplayRunningNumbers}
+            />
+            <SettingRow
+              label="Tampilkan satuan di samping QTY"
+              value={displayUnitNextToQty}
+              onValueChange={setDisplayUnitNextToQty}
+            />
+            <SettingRow
+              label="Tampilkan Catatan Transaksi"
+              value={showTransactionNote}
+              onValueChange={setShowTransactionNote}
+            />
+            <SettingRow
+              label="Tampilkan jumlah kuantitas"
+              value={displayQuantityTotal}
+              onValueChange={setDisplayQuantityTotal}
+            />
+            <SettingRow
+              label="Sembunyikan persentase pajak"
+              value={hideTaxPercentage}
+              onValueChange={setHideTaxPercentage}
+            />
           </View>
-          <ThemedInput
-            label="Pesan (Opsional)"
-            value={footerDesc}
-            onChangeText={setFooterDesc}
-            multiline
-            size="md"
-            maxLength={100}
-            rightIcon={
-              <TouchableOpacity onPress={() => setShowHelpMessage(true)}>
-                <Ionicons
-                  name="help-circle-outline"
-                  size={isTablet ? 28 : 20}
-                  color={Colors[colorScheme].primary}
-                />
-              </TouchableOpacity>
-            }
-            inputContainerStyle={{
-              height: isTablet ? 120 : 100,
-              alignItems: "center",
-              paddingVertical: isTablet ? 16 : 12,
-            }}
-          />
-          <View style={styles.counterRow}>
-            <ThemedText
-              style={{color: Colors[colorScheme].icon, fontSize: isTablet ? 16 : 14}}
-            >{`${footerDesc.length}/100`}</ThemedText>
-          </View>
-        </View>
 
-        <View style={styles.bottomButtonWrapper}>
-          <ThemedButton
-            title={isSaving ? "Menyimpan..." : "Simpan"}
-            onPress={handleSave}
-            disabled={isSaving}
-          />
-        </View>
+          <View style={styles.sectionCard}>
+            <ThemedText type="subtitle-2">Pengaturan Dasar</ThemedText>
+            <ThemedInput
+              label="Keterangan Tambahan (Opsional)"
+              value={headerDesc}
+              size="md"
+              onChangeText={setHeaderDesc}
+              multiline
+              maxLength={100}
+              rightIcon={
+                <TouchableOpacity onPress={() => setShowHelpExtra(true)}>
+                  <Ionicons
+                    name="help-circle-outline"
+                    size={isTablet ? 28 : 20}
+                    color={Colors[colorScheme].primary}
+                  />
+                </TouchableOpacity>
+              }
+              inputContainerStyle={{
+                height: isTablet ? 120 : 100,
+                alignItems: "center",
+                paddingVertical: isTablet ? 16 : 12,
+              }}
+            />
+            <View style={styles.counterRow}>
+              <ThemedText
+                style={{
+                  color: Colors[colorScheme].icon,
+                  fontSize: isTablet ? 16 : 14,
+                }}
+              >{`${headerDesc.length}/100`}</ThemedText>
+            </View>
+            <ThemedInput
+              label="Pesan (Opsional)"
+              value={footerDesc}
+              onChangeText={setFooterDesc}
+              multiline
+              size="md"
+              maxLength={100}
+              rightIcon={
+                <TouchableOpacity onPress={() => setShowHelpMessage(true)}>
+                  <Ionicons
+                    name="help-circle-outline"
+                    size={isTablet ? 28 : 20}
+                    color={Colors[colorScheme].primary}
+                  />
+                </TouchableOpacity>
+              }
+              inputContainerStyle={{
+                height: isTablet ? 120 : 100,
+                alignItems: "center",
+                paddingVertical: isTablet ? 16 : 12,
+              }}
+            />
+            <View style={styles.counterRow}>
+              <ThemedText
+                style={{
+                  color: Colors[colorScheme].icon,
+                  fontSize: isTablet ? 16 : 14,
+                }}
+              >{`${footerDesc.length}/100`}</ThemedText>
+            </View>
+          </View>
+
+          <View style={styles.bottomButtonWrapper}>
+            <ThemedButton
+              title={isSaving ? "Menyimpan..." : "Simpan"}
+              onPress={handleSave}
+              disabled={isSaving}
+            />
+          </View>
         </View>
       </ScrollView>
       <HelpPopup
@@ -241,9 +257,17 @@ export default function OrderReceiptSettingScreen() {
         description="Pesan akan ditampilkan di bawah kembalian struk."
         onClose={() => setShowHelpMessage(false)}
       />
+
+      <ConfirmPopup
+        visible={showSuccessPopup}
+        title="Berhasil"
+        message="Konfigurasi struk berhasil disimpan"
+        onConfirm={() => setShowSuccessPopup(false)}
+        onCancel={() => setShowSuccessPopup(false)}
+      />
     </View>
   );
-};
+}
 
 type RowProps = {
   label: string;
@@ -273,13 +297,19 @@ const SettingRow: React.FC<RowProps> = ({label, value, onValueChange}) => {
           true: Colors[colorScheme].primary,
         }}
         thumbColor={Colors[colorScheme].secondary}
-        style={isTablet ? {transform: [{scaleX: 1.2}, {scaleY: 1.2}]} : undefined}
+        style={
+          isTablet ? {transform: [{scaleX: 1.2}, {scaleY: 1.2}]} : undefined
+        }
       />
     </View>
   );
 };
 
-const createStyles = (colorScheme: "light" | "dark", isTablet: boolean, isTabletLandscape: boolean) =>
+const createStyles = (
+  colorScheme: "light" | "dark",
+  isTablet: boolean,
+  isTabletLandscape: boolean
+) =>
   StyleSheet.create({
     container: {
       flex: 1,

@@ -1,23 +1,30 @@
 import SectionDivider from "@/components/atoms/section-divider";
+import ConfirmPopup from "@/components/atoms/confirm-popup";
 import SelectBranchModal from "@/components/drawers/select-branch-modal";
 import Header from "@/components/header";
 import RadioButton from "@/components/radio-button";
-import { ThemedButton } from "@/components/themed-button";
-import { ThemedInput } from "@/components/themed-input";
-import { ThemedText } from "@/components/themed-text";
-import { Colors } from "@/constants/theme";
-import { useColorScheme } from "@/hooks/use-color-scheme";
-import { Branch } from "@/services";
+import {ThemedButton} from "@/components/themed-button";
+import {ThemedInput} from "@/components/themed-input";
+import {ThemedText} from "@/components/themed-text";
+import {Colors} from "@/constants/theme";
+import {useColorScheme} from "@/hooks/use-color-scheme";
+import {Branch} from "@/services";
 import employeeApi from "@/services/endpoints/employees";
-import { useRouter } from "expo-router";
-import React, { useState } from "react";
-import { Alert, StyleSheet, TouchableOpacity, useWindowDimensions, View } from "react-native";
-import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+import {useRouter} from "expo-router";
+import React, {useState} from "react";
+import {
+  Alert,
+  StyleSheet,
+  TouchableOpacity,
+  useWindowDimensions,
+  View,
+} from "react-native";
+import {KeyboardAwareScrollView} from "react-native-keyboard-aware-scroll-view";
+import {useSafeAreaInsets} from "react-native-safe-area-context";
 
 export default function AddEmployeeScreen() {
   const colorScheme = useColorScheme() ?? "light";
-  const { width, height } = useWindowDimensions();
+  const {width, height} = useWindowDimensions();
   const isTablet = Math.min(width, height) >= 600;
   const isLandscape = width > height;
   const isTabletLandscape = isTablet && isLandscape;
@@ -34,6 +41,7 @@ export default function AddEmployeeScreen() {
   const [selectedBranches, setSelectedBranches] = useState<Branch[]>([]);
   const [branchModalVisible, setBranchModalVisible] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [showSuccessPopup, setShowSuccessPopup] = useState(false);
 
   const handleSave = async () => {
     // Validate name
@@ -125,7 +133,7 @@ export default function AddEmployeeScreen() {
         email: email.trim().toLowerCase(),
         pin: pin,
         role: role,
-        branch_ids:[]
+        branch_ids: [],
       };
 
       console.log("📦 Creating employee:");
@@ -139,12 +147,7 @@ export default function AddEmployeeScreen() {
 
       if (response.data) {
         console.log("✅ Employee created successfully:", response.data);
-        Alert.alert("Sukses", "Pegawai berhasil ditambahkan", [
-          {
-            text: "OK",
-            onPress: () => router.back(),
-          },
-        ]);
+        setShowSuccessPopup(true);
       }
     } catch (error: any) {
       console.error("❌ Failed to create employee:", error);
@@ -216,7 +219,10 @@ export default function AddEmployeeScreen() {
                 activeOpacity={0.7}
                 onPress={() => setRole("cashier")}
               >
-                <RadioButton selected={role === "cashier"} onPress={() => setRole("cashier")} />
+                <RadioButton
+                  selected={role === "cashier"}
+                  onPress={() => setRole("cashier")}
+                />
                 <ThemedText style={styles.roleLabel}>Cashier</ThemedText>
               </TouchableOpacity>
               <TouchableOpacity
@@ -224,7 +230,10 @@ export default function AddEmployeeScreen() {
                 activeOpacity={0.7}
                 onPress={() => setRole("manager")}
               >
-                <RadioButton selected={role === "manager"} onPress={() => setRole("manager")} />
+                <RadioButton
+                  selected={role === "manager"}
+                  onPress={() => setRole("manager")}
+                />
                 <ThemedText style={styles.roleLabel}>Manager</ThemedText>
               </TouchableOpacity>
             </View>
@@ -241,16 +250,23 @@ export default function AddEmployeeScreen() {
                 style={styles.outletButton}
                 onPress={() => setBranchModalVisible(true)}
               >
-                <ThemedText style={styles.outletButtonText}>Pilih Outlet</ThemedText>
+                <ThemedText style={styles.outletButtonText}>
+                  Pilih Outlet
+                </ThemedText>
               </TouchableOpacity>
             </View>
 
             {selectedBranches.length > 0 ? (
               <View style={styles.selectedOutletsList}>
-                {selectedBranches.map((branch) => (
+                {selectedBranches.map(branch => (
                   <View key={branch.id} style={styles.selectedOutletItem}>
-                    <ThemedText style={styles.selectedOutletName}>{branch.name}</ThemedText>
-                    <ThemedText style={styles.selectedOutletAddress} numberOfLines={1}>
+                    <ThemedText style={styles.selectedOutletName}>
+                      {branch.name}
+                    </ThemedText>
+                    <ThemedText
+                      style={styles.selectedOutletAddress}
+                      numberOfLines={1}
+                    >
                       {branch.address}
                     </ThemedText>
                   </View>
@@ -275,11 +291,29 @@ export default function AddEmployeeScreen() {
         onSelect={setSelectedBranches}
         onClose={() => setBranchModalVisible(false)}
       />
+
+      <ConfirmPopup
+        visible={showSuccessPopup}
+        title="Berhasil"
+        message="Pegawai berhasil ditambahkan"
+        onConfirm={() => {
+          setShowSuccessPopup(false);
+          router.back();
+        }}
+        onCancel={() => {
+          setShowSuccessPopup(false);
+          router.back();
+        }}
+      />
     </View>
   );
 }
 
-const createStyles = (colorScheme: "light" | "dark", isTablet: boolean, isTabletLandscape: boolean) =>
+const createStyles = (
+  colorScheme: "light" | "dark",
+  isTablet: boolean,
+  isTabletLandscape: boolean
+) =>
   StyleSheet.create({
     scrollContent: {
       paddingBottom: isTablet ? 120 : 100,

@@ -5,17 +5,17 @@ import ConfirmationDialog, {
 } from "@/components/drawers/confirmation-dialog";
 import Header from "@/components/header";
 import MenuRow from "@/components/menu-row";
-import { ThemedButton } from "@/components/themed-button";
-import { ThemedInput } from "@/components/themed-input";
-import { Colors } from "@/constants/theme";
-import { useColorScheme } from "@/hooks/use-color-scheme";
-import { recipeApi } from "@/services";
-import { useProductFormStore } from "@/stores/product-form-store";
-import { useLocalSearchParams, useNavigation, useRouter } from "expo-router";
-import React, { useEffect, useRef, useState } from "react";
-import { StyleSheet, View, useWindowDimensions } from "react-native";
-import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+import {ThemedButton} from "@/components/themed-button";
+import {ThemedInput} from "@/components/themed-input";
+import {Colors} from "@/constants/theme";
+import {useColorScheme} from "@/hooks/use-color-scheme";
+import {recipeApi} from "@/services";
+import {useProductFormStore} from "@/stores/product-form-store";
+import {useLocalSearchParams, useNavigation, useRouter} from "expo-router";
+import React, {useEffect, useRef, useState} from "react";
+import {StyleSheet, View, useWindowDimensions} from "react-native";
+import {KeyboardAwareScrollView} from "react-native-keyboard-aware-scroll-view";
+import {useSafeAreaInsets} from "react-native-safe-area-context";
 
 export default function VariantScreen() {
   const colorScheme = useColorScheme() ?? "light";
@@ -42,6 +42,7 @@ export default function VariantScreen() {
     imageUri: qsImageUri,
     capitalPrice: qsCapitalPrice,
     barcode: qsBarcode,
+    recipe: qsRecipe,
     variants: qsVariants,
     variantId: qsVariantId,
   } = useLocalSearchParams<{
@@ -59,6 +60,7 @@ export default function VariantScreen() {
     imageUri?: string;
     capitalPrice?: string;
     barcode?: string;
+    recipe?: string;
     variants?: string;
     variantId?: string;
   }>();
@@ -66,7 +68,9 @@ export default function VariantScreen() {
   const confirmationRef = useRef<ConfirmationDialogHandle | null>(null);
   const setVariants = useProductFormStore(state => state.setVariants);
   const pendingVariant = useProductFormStore(state => state.pendingVariant);
-  const setPendingVariant = useProductFormStore(state => state.setPendingVariant);
+  const setPendingVariant = useProductFormStore(
+    state => state.setPendingVariant
+  );
   const [name, setName] = useState("");
   const [price, setPrice] = useState("");
   const [enableCostBarcode, setEnableCostBarcode] = useState(false);
@@ -116,6 +120,9 @@ export default function VariantScreen() {
       if (qsBarcode) {
         setBarcode(String(qsBarcode));
       }
+      if (qsRecipe) {
+        setRecipe(String(qsRecipe));
+      }
     }
   }, [
     qsOfflineStock,
@@ -127,6 +134,7 @@ export default function VariantScreen() {
     qsEnableCostBarcode,
     qsCapitalPrice,
     qsBarcode,
+    qsRecipe,
   ]);
 
   useEffect(() => {
@@ -142,8 +150,8 @@ export default function VariantScreen() {
       }
       if (qsCapitalPrice) {
         const parsedCapital = Number(
-          String(qsCapitalPrice).replace(/[^0-9]/g, ""))
-        ;
+          String(qsCapitalPrice).replace(/[^0-9]/g, "")
+        );
         if (!Number.isNaN(parsedCapital)) {
           setCapitalPrice(parsedCapital);
         }
@@ -151,8 +159,19 @@ export default function VariantScreen() {
       if (qsBarcode) {
         setBarcode(String(qsBarcode));
       }
+      if (qsRecipe) {
+        setRecipe(String(qsRecipe));
+      }
     }
-  }, [qsFrom, qsName, qsPrice, qsEnableCostBarcode, qsCapitalPrice, qsBarcode]);
+  }, [
+    qsFrom,
+    qsName,
+    qsPrice,
+    qsEnableCostBarcode,
+    qsCapitalPrice,
+    qsBarcode,
+    qsRecipe,
+  ]);
 
   useEffect(() => {
     const loadRecipes = async () => {
@@ -178,52 +197,96 @@ export default function VariantScreen() {
 
     const buildStockFields = () => {
       if (!stock) return {};
-      return {
+      const fields: any = {
         stock: stock.offlineStock,
         is_stock_active: true,
         min_stock: stock.minStock,
         notify_on_stock_ronouts: stock.notifyMin,
-        unit_id: stock.unit,
       };
+
+      // Only add unit_id if it's a valid CUID
+      if (stock.unit && stock.unit.length > 10 && stock.unit.startsWith("cm")) {
+        fields.unit_id = stock.unit;
+      }
+
+      return fields;
     };
 
     if (qsFrom === "edit" && qsVariantId) {
       setVariants(prev =>
-        prev.map(v =>
-          v.id === qsVariantId
-            ? {
-                ...v,
-                name,
-                price: priceNum,
-                ...buildStockFields(),
-              }
-            : v,
-        ),
+        prev.map(v => {
+          if (v.id !== qsVariantId) return v;
+
+          const updated: any = {
+            ...v,
+            name,
+            price: priceNum,
+            capital_price: capitalPrice || 0,
+            ...buildStockFields(),
+          };
+
+          // Only add recipe_id if it's a valid CUID
+          if (recipe && recipe.length > 10 && recipe.startsWith("cm")) {
+            updated.recipe_id = recipe;
+          } else {
+            // Remove recipe_id if invalid
+            delete updated.recipe_id;
+          }
+
+          // Only add barcode if it has a value
+          if (barcode && barcode.trim()) {
+            updated.barcode = barcode;
+          } else {
+            delete updated.barcode;
+          }
+
+          return updated;
+        })
       );
     } else {
       const baseStockFields = (() => {
         if (pendingVariant && pendingVariant.id) {
-          return {
+          const fields: any = {
             stock: pendingVariant.stock,
             is_stock_active: pendingVariant.is_stock_active,
             min_stock: pendingVariant.min_stock,
             notify_on_stock_ronouts: pendingVariant.notify_on_stock_ronouts,
-            unit_id: pendingVariant.unit_id,
           };
+
+          // Only add unit_id if it's a valid CUID
+          if (
+            pendingVariant.unit_id &&
+            pendingVariant.unit_id.length > 10 &&
+            pendingVariant.unit_id.startsWith("cm")
+          ) {
+            fields.unit_id = pendingVariant.unit_id;
+          }
+
+          return fields;
         }
         return buildStockFields();
       })();
 
       const generatedId = pendingVariant?.id ?? `${Date.now()}`;
-      setVariants(prev => [
-        ...prev,
-        {
-          id: generatedId,
-          name,
-          price: priceNum,
-          ...baseStockFields,
-        },
-      ]);
+      const newVariant: any = {
+        id: generatedId,
+        name,
+        price: priceNum,
+        capital_price: capitalPrice || 0,
+        ...baseStockFields,
+      };
+
+      // Only add recipe_id if it's a valid CUID
+      if (recipe && recipe.length > 10 && recipe.startsWith("cm")) {
+        newVariant.recipe_id = recipe;
+      }
+
+      // Only add barcode if it has a value
+      if (barcode && barcode.trim()) {
+        newVariant.barcode = barcode;
+      }
+
+      setVariants(prev => [...prev, newVariant]);
       setPendingVariant(null);
     }
 
@@ -233,6 +296,7 @@ export default function VariantScreen() {
   const isDirty =
     name.trim() !== "" ||
     price.trim() !== "" ||
+    recipe.trim() !== "" ||
     enableCostBarcode ||
     capitalPrice > 0 ||
     barcode.trim() !== "";
@@ -292,9 +356,12 @@ export default function VariantScreen() {
             />
             <ComboInput
               label="Resep Produk"
-              value={recipe}
+              value={recipes.find(r => r.id === recipe)?.name || ""}
               size="md"
-              onChangeText={setRecipe}
+              onChangeText={text => {
+                const found = recipes.find(r => r.name === text);
+                setRecipe(found ? found.id : "");
+              }}
               items={recipes.map(r => ({label: r.name, value: r.id}))}
             />
           </View>
@@ -330,8 +397,12 @@ export default function VariantScreen() {
             <MenuRow
               title="Kelola Stok"
               rightText={
-                (stock || pendingVariant) ? 
-                  `Stok Aktif (${qsFrom === "edit" ? stock?.offlineStock : pendingVariant?.stock})`
+                stock || pendingVariant
+                  ? `Stok Aktif (${
+                      qsFrom === "edit"
+                        ? stock?.offlineStock
+                        : pendingVariant?.stock
+                    })`
                   : "Stok Tidak Aktif"
               }
               showBottomBorder={false}
@@ -377,7 +448,7 @@ export default function VariantScreen() {
       <View style={styles.bottomBar}>
         <ThemedButton title="Simpan" onPress={handleSave} />
         {qsVariantId ? (
-          <View style={{ marginTop: 8 }}>
+          <View style={{marginTop: 8}}>
             <ThemedButton
               title="Hapus Varian"
               variant="secondary"
@@ -397,7 +468,11 @@ export default function VariantScreen() {
   );
 }
 
-const createStyles = (colorScheme: "light" | "dark", isTablet: boolean, isTabletLandscape: boolean) =>
+const createStyles = (
+  colorScheme: "light" | "dark",
+  isTablet: boolean,
+  isTabletLandscape: boolean
+) =>
   StyleSheet.create({
     contentWrapper: {
       width: "100%",

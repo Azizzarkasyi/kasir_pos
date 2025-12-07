@@ -15,6 +15,7 @@ export {default as merkApi} from "./endpoints/merks";
 export {default as productApi} from "./endpoints/products";
 export {default as recipeApi} from "./endpoints/recipes";
 export {default as settingsApi} from "./endpoints/settings";
+export {default as statsApi} from "./endpoints/stats";
 export {default as transactionApi} from "./endpoints/transactions";
 export {default as unitApi} from "./endpoints/units";
 

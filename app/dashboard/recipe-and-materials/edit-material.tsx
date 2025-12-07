@@ -2,6 +2,7 @@ import VariantItem from "@/components/atoms/variant-item";
 import ConfirmationDialog, {
   ConfirmationDialogHandle,
 } from "@/components/drawers/confirmation-dialog";
+import ConfirmPopup from "@/components/atoms/confirm-popup";
 import Header from "@/components/header";
 import ImageUpload from "@/components/image-upload";
 import CategoryPicker from "@/components/mollecules/category-picker";
@@ -41,6 +42,7 @@ export default function EditProductScreen() {
   const navigation = useNavigation();
 
   const confirmationRef = useRef<ConfirmationDialogHandle | null>(null);
+  const [showSuccessPopup, setShowSuccessPopup] = useState(false);
 
   const {
     name,
@@ -340,15 +342,7 @@ export default function EditProductScreen() {
       const response = await productApi.updateProduct(params.id, payload);
 
       if (response.data) {
-        Alert.alert("Sukses", "Produk berhasil diperbarui", [
-          {
-            text: "OK",
-            onPress: () => {
-              reset();
-              router.back();
-            },
-          },
-        ]);
+        setShowSuccessPopup(true);
       }
     } catch (error: any) {
       console.error("Failed to update product:", error);
@@ -553,6 +547,21 @@ export default function EditProductScreen() {
       </KeyboardAwareScrollView>
 
       <ConfirmationDialog ref={confirmationRef} />
+      <ConfirmPopup
+        visible={showSuccessPopup}
+        title="Berhasil"
+        message="Produk berhasil diperbarui"
+        onConfirm={() => {
+          setShowSuccessPopup(false);
+          reset();
+          router.back();
+        }}
+        onCancel={() => {
+          setShowSuccessPopup(false);
+          reset();
+          router.back();
+        }}
+      />
     </View>
   );
 }

@@ -3,6 +3,7 @@ import ComboInput from "@/components/combo-input";
 import ConfirmationDialog, {
   ConfirmationDialogHandle,
 } from "@/components/drawers/confirmation-dialog";
+import ConfirmPopup from "@/components/atoms/confirm-popup";
 import Header from "@/components/header";
 import ImageUpload from "@/components/image-upload";
 import {ThemedButton} from "@/components/themed-button";
@@ -32,6 +33,7 @@ export default function AddProductScreen() {
 
   const confirmationRef = useRef<ConfirmationDialogHandle | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [showSuccessPopup, setShowSuccessPopup] = useState(false);
 
   const name = useRecipeFormStore(state => state.name);
   const category = useRecipeFormStore(state => state.category);
@@ -104,15 +106,7 @@ export default function AddProductScreen() {
 
       if (response.data) {
         console.log("✅ Recipe created successfully:", response.data);
-        Alert.alert("Sukses", "Resep berhasil ditambahkan", [
-          {
-            text: "OK",
-            onPress: () => {
-              resetForm();
-              router.back();
-            },
-          },
-        ]);
+        setShowSuccessPopup(true);
       }
     } catch (error: any) {
       console.error("❌ Failed to create recipe:", error);
@@ -219,6 +213,21 @@ export default function AddProductScreen() {
       </View>
 
       <ConfirmationDialog ref={confirmationRef} />
+      <ConfirmPopup
+        visible={showSuccessPopup}
+        title="Berhasil"
+        message="Resep berhasil ditambahkan"
+        onConfirm={() => {
+          setShowSuccessPopup(false);
+          resetForm();
+          router.back();
+        }}
+        onCancel={() => {
+          setShowSuccessPopup(false);
+          resetForm();
+          router.back();
+        }}
+      />
     </View>
   );
 }

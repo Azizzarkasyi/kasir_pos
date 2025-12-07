@@ -3,6 +3,7 @@ import ComboInput from "@/components/combo-input";
 import ConfirmationDialog, {
   ConfirmationDialogHandle,
 } from "@/components/drawers/confirmation-dialog";
+import ConfirmPopup from "@/components/atoms/confirm-popup";
 import Header from "@/components/header";
 import ImageUpload from "@/components/image-upload";
 import {ThemedButton} from "@/components/themed-button";
@@ -39,6 +40,7 @@ export default function EditRecipeScreen() {
   const confirmationRef = useRef<ConfirmationDialogHandle | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [showSuccessPopup, setShowSuccessPopup] = useState(false);
 
   const {id} = useLocalSearchParams<{id?: string}>();
 
@@ -159,15 +161,7 @@ export default function EditRecipeScreen() {
 
       if (response.data) {
         console.log("✅ Recipe updated successfully:", response.data);
-        Alert.alert("Sukses", "Resep berhasil diperbarui", [
-          {
-            text: "OK",
-            onPress: () => {
-              resetForm();
-              router.back();
-            },
-          },
-        ]);
+        setShowSuccessPopup(true);
       }
     } catch (error: any) {
       console.error("❌ Failed to update recipe:", error);
@@ -291,6 +285,21 @@ export default function EditRecipeScreen() {
       </View>
 
       <ConfirmationDialog ref={confirmationRef} />
+      <ConfirmPopup
+        visible={showSuccessPopup}
+        title="Berhasil"
+        message="Resep berhasil diperbarui"
+        onConfirm={() => {
+          setShowSuccessPopup(false);
+          resetForm();
+          router.back();
+        }}
+        onCancel={() => {
+          setShowSuccessPopup(false);
+          resetForm();
+          router.back();
+        }}
+      />
     </View>
   );
 }

@@ -4,6 +4,7 @@ import CostBarcodeFields from "@/components/cost-barcode-fields";
 import ConfirmationDialog, {
   ConfirmationDialogHandle,
 } from "@/components/drawers/confirmation-dialog";
+import ConfirmPopup from "@/components/atoms/confirm-popup";
 import Header from "@/components/header";
 import ImageUpload from "@/components/image-upload";
 import MenuRow from "@/components/menu-row";
@@ -43,6 +44,7 @@ export default function AddProductScreen() {
   const [recipes, setRecipes] = useState<{id: string; name: string}[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [showSuccessPopup, setShowSuccessPopup] = useState(false);
 
   useEffect(() => {
     loadMerks();
@@ -294,15 +296,7 @@ export default function AddProductScreen() {
       const response = await productApi.createProduct(payload);
 
       if (response.data) {
-        Alert.alert("Sukses", "Produk berhasil ditambahkan", [
-          {
-            text: "OK",
-            onPress: () => {
-              useProductFormStore.getState().reset();
-              router.back();
-            },
-          },
-        ]);
+        setShowSuccessPopup(true);
       }
     } catch (error: any) {
       console.error("Failed to create product:", error);
@@ -531,6 +525,22 @@ export default function AddProductScreen() {
       </KeyboardAwareScrollView>
 
       <ConfirmationDialog ref={confirmationRef} />
+
+      <ConfirmPopup
+        visible={showSuccessPopup}
+        title="Berhasil"
+        message="Produk berhasil ditambahkan"
+        onConfirm={() => {
+          setShowSuccessPopup(false);
+          useProductFormStore.getState().reset();
+          router.back();
+        }}
+        onCancel={() => {
+          setShowSuccessPopup(false);
+          useProductFormStore.getState().reset();
+          router.back();
+        }}
+      />
     </View>
   );
 }

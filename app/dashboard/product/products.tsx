@@ -1,4 +1,5 @@
 import CategoryItem from "@/components/atoms/category-item";
+import ConfirmPopup from "@/components/atoms/confirm-popup";
 import CategoryModal from "@/components/drawers/category-modal";
 import FilterProductModal from "@/components/drawers/filter-product-modal";
 import Header from "@/components/header";

@@ -1,5 +1,6 @@
 import SectionDivider from "@/components/atoms/section-divider";
 import ComboInput from "@/components/combo-input";
+import ConfirmPopup from "@/components/atoms/confirm-popup";
 import Header from "@/components/header";
 import ImageUpload from "@/components/image-upload";
 import {ThemedButton} from "@/components/themed-button";
@@ -13,6 +14,11 @@ import {StyleSheet, useWindowDimensions, View, Alert} from "react-native";
 import {KeyboardAwareScrollView} from "react-native-keyboard-aware-scroll-view";
 import {branchApi} from "@/services/endpoints/branches";
 import assetApi, {prepareFileFromUri} from "@/services/endpoints/assets";
+import axios from "axios";
+
+type LocationOption = {label: string; value: string};
+
+const WILAYAH_API_BASE = "https://wilayah.id/api";
 
 export default function AddOutletScreen() {
   const colorScheme = useColorScheme() ?? "light";
@@ -25,25 +31,237 @@ export default function AddOutletScreen() {
 
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
-  const [province, setProvince] = useState("");
-  const [provinceId, setProvinceId] = useState("");
-  const [city, setCity] = useState("");
-  const [cityId, setCityId] = useState("");
-  const [district, setDistrict] = useState("");
-  const [districtId, setDistrictId] = useState("");
-  const [subDistrict, setSubDistrict] = useState("");
-  const [subDistrictId, setSubDistrictId] = useState("");
+  const [selectedProvince, setSelectedProvince] =
+    useState<LocationOption | null>(null);
+  const [selectedCity, setSelectedCity] = useState<LocationOption | null>(null);
+  const [selectedSubDistrict, setSelectedSubDistrict] =
+    useState<LocationOption | null>(null);
+  const [selectedVillage, setSelectedVillage] = useState<LocationOption | null>(
+    null
+  );
+  const [provinceQuery, setProvinceQuery] = useState("");
+  const [cityQuery, setCityQuery] = useState("");
+  const [subDistrictQuery, setSubDistrictQuery] = useState("");
+  const [villageQuery, setVillageQuery] = useState("");
   const [address, setAddress] = useState("");
   const [imageUri, setImageUri] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showSuccessPopup, setShowSuccessPopup] = useState(false);
 
-  const handleSave = async () => {
+  const [provinceOptions, setProvinceOptions] = useState<LocationOption[]>([
+    {label: "Pilih Provinsi", value: ""},
+  ]);
+  const [regencyOptions, setRegencyOptions] = useState<LocationOption[]>([
+    {label: "Pilih Kabupaten / Kota", value: ""},
+  ]);
+  const [districtOptions, setDistrictOptions] = useState<LocationOption[]>([
+    {label: "Pilih Kecamatan", value: ""},
+  ]);
+  const [villageOptions, setVillageOptions] = useState<LocationOption[]>([
+    {label: "Pilih Kelurahan", value: ""},
+  ]);
+
+  // Fetch provinces on mount
+  React.useEffect(() => {
+    const fetchProvinces = async () => {
+      try {
+        console.log(
+          "🔄 Fetching provinces from:",
+          `${WILAYAH_API_BASE}/provinces.json`
+        );
+        const res = await axios.get(`${WILAYAH_API_BASE}/provinces.json`, {
+          timeout: 10000,
+          headers: {
+            Accept: "application/json",
+          },
+        });
+        console.log("📡 Response status:", res.status);
+        console.log("📦 Received data:", res.data);
+
+        const data = Array.isArray(res.data.data) ? res.data.data : [];
+        console.log("✅ Provinces count:", data.length);
+
+        setProvinceOptions([
+          {label: "Pilih Provinsi", value: ""},
+          ...data.map((item: {code: string; name: string}) => ({
+            label: item.name,
+            value: item.code,
+          })),
+        ]);
+      } catch (e: any) {
+        console.error("❌ Gagal memuat data provinsi:", e.message);
+        Alert.alert("Error", `Gagal memuat data provinsi: ${e.message}`);
+      }
+    };
+
+    fetchProvinces();
+  }, []);
+
+  // Fetch regencies when province changes
+  React.useEffect(() => {
+    if (!selectedProvince) {
+      setRegencyOptions([{label: "Pilih Kabupaten / Kota", value: ""}]);
+      setSelectedCity(null);
+      setSelectedSubDistrict(null);
+      setSelectedVillage(null);
+      setCityQuery("");
+      setSubDistrictQuery("");
+      setVillageQuery("");
+      return;
+    }
+
+    const fetchRegencies = async () => {
+      try {
+        console.log(
+          "🔄 Fetching regencies for province:",
+          selectedProvince.value
+        );
+        const res = await axios.get(
+          `${WILAYAH_API_BASE}/regencies/${selectedProvince.value}.json`,
+          {
+            timeout: 10000,
+            headers: {
+              Accept: "application/json",
+            },
+          }
+        );
+
+        const data = Array.isArray(res.data.data) ? res.data.data : [];
+        console.log("✅ Regencies count:", data.length);
+
+        setRegencyOptions([
+          {label: "Pilih Kabupaten / Kota", value: ""},
+          ...data.map((item: {code: string; name: string}) => ({
+            label: item.name,
+            value: item.code,
+          })),
+        ]);
+      } catch (e: any) {
+        console.error("❌ Gagal memuat data kabupaten/kota:", e.message);
+        Alert.alert("Error", `Gagal memuat data kota: ${e.message}`);
+      }
+    };
+
+    setSelectedCity(null);
+    setSelectedSubDistrict(null);
+    setSelectedVillage(null);
+    setCityQuery("");
+    setSubDistrictQuery("");
+    setVillageQuery("");
+    setDistrictOptions([{label: "Pilih Kecamatan", value: ""}]);
+    setVillageOptions([{label: "Pilih Kelurahan", value: ""}]);
+
+    fetchRegencies();
+  }, [selectedProvince?.value]);
+
+  // Fetch districts when city changes
+  React.useEffect(() => {
+    if (!selectedCity) {
+      setDistrictOptions([{label: "Pilih Kecamatan", value: ""}]);
+      setSelectedSubDistrict(null);
+      setSelectedVillage(null);
+      setSubDistrictQuery("");
+      setVillageQuery("");
+      return;
+    }
+
+    const fetchDistricts = async () => {
+      try {
+        console.log("🔄 Fetching districts for city:", selectedCity.value);
+        const res = await axios.get(
+          `${WILAYAH_API_BASE}/districts/${selectedCity.value}.json`,
+          {
+            timeout: 10000,
+            headers: {
+              Accept: "application/json",
+            },
+          }
+        );
+
+        const data = Array.isArray(res.data.data) ? res.data.data : [];
+        console.log("✅ Districts count:", data.length);
+
+        setDistrictOptions([
+          {label: "Pilih Kecamatan", value: ""},
+          ...data.map((item: {code: string; name: string}) => ({
+            label: item.name,
+            value: item.code,
+          })),
+        ]);
+      } catch (e: any) {
+        console.error("❌ Gagal memuat data kecamatan:", e.message);
+        Alert.alert("Error", `Gagal memuat data kecamatan: ${e.message}`);
+      }
+    };
+
+    setSelectedSubDistrict(null);
+    setSelectedVillage(null);
+    setVillageOptions([{label: "Pilih Kelurahan", value: ""}]);
+    setSubDistrictQuery("");
+    setVillageQuery("");
+
+    fetchDistricts();
+  }, [selectedCity?.value]);
+
+  // Fetch villages when subdistrict changes
+  React.useEffect(() => {
+    if (!selectedSubDistrict) {
+      setVillageOptions([{label: "Pilih Kelurahan", value: ""}]);
+      setSelectedVillage(null);
+      setVillageQuery("");
+      return;
+    }
+
+    const fetchVillages = async () => {
+      try {
+        console.log(
+          "🔄 Fetching villages for subdistrict:",
+          selectedSubDistrict.value
+        );
+        const res = await axios.get(
+          `${WILAYAH_API_BASE}/villages/${selectedSubDistrict.value}.json`,
+          {
+            timeout: 10000,
+            headers: {
+              Accept: "application/json",
+            },
+          }
+        );
+
+        const data = Array.isArray(res.data.data) ? res.data.data : [];
+        console.log("✅ Villages count:", data.length);
+
+        setVillageOptions([
+          {label: "Pilih Kelurahan", value: ""},
+          ...data.map((item: {code: string; name: string}) => ({
+            label: item.name,
+            value: item.code,
+          })),
+        ]);
+      } catch (e: any) {
+        console.error("❌ Gagal memuat data kelurahan:", e.message);
+        Alert.alert("Error", `Gagal memuat data kelurahan: ${e.message}`);
+      }
+    };
+
+    setSelectedVillage(null);
+    setVillageQuery("");
+
+    fetchVillages();
+  }, [selectedSubDistrict?.value]);
+
+  const handleSave = async (): Promise<void> => {
     // Validation
     if (!name.trim()) {
       Alert.alert("Error", "Nama outlet harus diisi");
       return;
     }
-    if (!province || !city || !district || !subDistrict) {
+    if (
+      !selectedProvince ||
+      !selectedCity ||
+      !selectedSubDistrict ||
+      !selectedVillage
+    ) {
       Alert.alert(
         "Error",
         "Alamat lengkap (Provinsi, Kota, Kecamatan, Kelurahan) harus diisi"
@@ -54,7 +272,6 @@ export default function AddOutletScreen() {
       Alert.alert("Error", "Detail alamat harus diisi");
       return;
     }
-
     try {
       setIsSubmitting(true);
 
@@ -91,20 +308,20 @@ export default function AddOutletScreen() {
         name: name.trim(),
         phone: phone.trim() || undefined,
         province: {
-          id: provinceId || "1",
-          name: province,
+          id: selectedProvince?.value || "1",
+          name: selectedProvince?.label || "",
         },
         city: {
-          id: cityId || "1",
-          name: city,
+          id: selectedCity?.value || "1",
+          name: selectedCity?.label || "",
         },
         subdistrict: {
-          id: districtId || "1",
-          name: district,
+          id: selectedSubDistrict?.value || "1",
+          name: selectedSubDistrict?.label || "",
         },
         village: {
-          id: subDistrictId || "1",
-          name: subDistrict,
+          id: selectedVillage?.value || "1",
+          name: selectedVillage?.label || "",
         },
         address: address.trim(),
         status: "active",
@@ -126,16 +343,7 @@ export default function AddOutletScreen() {
 
       if (response.data) {
         console.log("✅ Branch created:", response.data);
-        Alert.alert("Berhasil", "Outlet berhasil ditambahkan", [
-          {
-            text: "OK",
-            onPress: () => {
-              router.back();
-              // Trigger refresh on index page
-              router.setParams({refresh: Date.now().toString()});
-            },
-          },
-        ]);
+        setShowSuccessPopup(true);
       }
     } catch (error: any) {
       console.error("❌ Failed to create branch:", error);
@@ -202,46 +410,54 @@ export default function AddOutletScreen() {
             </ThemedText>
             <ComboInput
               label="Provinsi"
-              value={province}
-              onChangeText={setProvince}
-              items={[
-                {label: "JAWA TIMUR", value: "JAWA TIMUR"},
-                {label: "DKI JAKARTA", value: "DKI JAKARTA"},
-                {label: "JAWA BARAT", value: "JAWA BARAT"},
-              ]}
+              value={provinceQuery}
+              onChangeText={text => {
+                setProvinceQuery(text);
+                const found = provinceOptions.find(p => p.label === text);
+                if (found) {
+                  setSelectedProvince(found);
+                }
+              }}
+              items={provinceOptions}
               size="md"
             />
             <ComboInput
               label="Kota/Kabupaten"
-              value={city}
-              onChangeText={setCity}
-              items={[
-                {label: "Kota Malang", value: "Kota Malang"},
-                {label: "Kab. Malang", value: "Kab. Malang"},
-                {label: "Surabaya", value: "Surabaya"},
-              ]}
+              value={cityQuery}
+              onChangeText={text => {
+                setCityQuery(text);
+                const found = regencyOptions.find(c => c.label === text);
+                if (found) {
+                  setSelectedCity(found);
+                }
+              }}
+              items={regencyOptions}
               size="md"
             />
             <ComboInput
               label="Kecamatan"
-              value={district}
-              onChangeText={setDistrict}
-              items={[
-                {label: "Kedungkandang", value: "Kedungkandang"},
-                {label: "Klojen", value: "Klojen"},
-                {label: "Lowokwaru", value: "Lowokwaru"},
-              ]}
+              value={subDistrictQuery}
+              onChangeText={text => {
+                setSubDistrictQuery(text);
+                const found = districtOptions.find(d => d.label === text);
+                if (found) {
+                  setSelectedSubDistrict(found);
+                }
+              }}
+              items={districtOptions}
               size="md"
             />
             <ComboInput
               label="Kelurahan"
-              value={subDistrict}
-              onChangeText={setSubDistrict}
-              items={[
-                {label: "Arjowinangun", value: "Arjowinangun"},
-                {label: "Sawojajar", value: "Sawojajar"},
-                {label: "Tlogowaru", value: "Tlogowaru"},
-              ]}
+              value={villageQuery}
+              onChangeText={text => {
+                setVillageQuery(text);
+                const found = villageOptions.find(v => v.label === text);
+                if (found) {
+                  setSelectedVillage(found);
+                }
+              }}
+              items={villageOptions}
               size="md"
             />
             <ThemedInput
@@ -269,6 +485,22 @@ export default function AddOutletScreen() {
           </View>
         </View>
       </KeyboardAwareScrollView>
+
+      <ConfirmPopup
+        visible={showSuccessPopup}
+        title="Berhasil"
+        message="Outlet berhasil ditambahkan"
+        onConfirm={() => {
+          setShowSuccessPopup(false);
+          router.back();
+          router.setParams({refresh: Date.now().toString()});
+        }}
+        onCancel={() => {
+          setShowSuccessPopup(false);
+          router.back();
+          router.setParams({refresh: Date.now().toString()});
+        }}
+      />
     </View>
   );
 }

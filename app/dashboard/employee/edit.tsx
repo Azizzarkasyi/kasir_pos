@@ -1,30 +1,38 @@
 import SectionDivider from "@/components/atoms/section-divider";
+import ConfirmPopup from "@/components/atoms/confirm-popup";
 import SelectBranchModal from "@/components/drawers/select-branch-modal";
 import Header from "@/components/header";
 import RadioButton from "@/components/radio-button";
-import { ThemedButton } from "@/components/themed-button";
-import { ThemedInput } from "@/components/themed-input";
-import { ThemedText } from "@/components/themed-text";
-import { Colors } from "@/constants/theme";
-import { useColorScheme } from "@/hooks/use-color-scheme";
-import { Branch } from "@/services";
+import {ThemedButton} from "@/components/themed-button";
+import {ThemedInput} from "@/components/themed-input";
+import {ThemedText} from "@/components/themed-text";
+import {Colors} from "@/constants/theme";
+import {useColorScheme} from "@/hooks/use-color-scheme";
+import {Branch} from "@/services";
 import employeeApi from "@/services/endpoints/employees";
-import { useLocalSearchParams, useRouter } from "expo-router";
-import React, { useEffect, useState } from "react";
-import { ActivityIndicator, Alert, StyleSheet, TouchableOpacity, useWindowDimensions, View } from "react-native";
-import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+import {useLocalSearchParams, useRouter} from "expo-router";
+import React, {useEffect, useState} from "react";
+import {
+  ActivityIndicator,
+  Alert,
+  StyleSheet,
+  TouchableOpacity,
+  useWindowDimensions,
+  View,
+} from "react-native";
+import {KeyboardAwareScrollView} from "react-native-keyboard-aware-scroll-view";
+import {useSafeAreaInsets} from "react-native-safe-area-context";
 
 export default function EditEmployeeScreen() {
   const colorScheme = useColorScheme() ?? "light";
-  const { width, height } = useWindowDimensions();
+  const {width, height} = useWindowDimensions();
   const isTablet = Math.min(width, height) >= 600;
   const isLandscape = width > height;
   const isTabletLandscape = isTablet && isLandscape;
   const styles = createStyles(colorScheme, isTablet, isTabletLandscape);
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const params = useLocalSearchParams<{ id?: string }>();
+  const params = useLocalSearchParams<{id?: string}>();
 
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
@@ -36,12 +44,14 @@ export default function EditEmployeeScreen() {
   const [branchModalVisible, setBranchModalVisible] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [showSuccessPopup, setShowSuccessPopup] = useState(false);
+  const [showDeleteSuccessPopup, setShowDeleteSuccessPopup] = useState(false);
 
   useEffect(() => {
     loadEmployee();
   }, []);
 
-  console.log(params.id)
+  console.log(params.id);
 
   const loadEmployee = async () => {
     if (!params.id) {
@@ -59,7 +69,7 @@ export default function EditEmployeeScreen() {
         setName(employee.name);
         setPhone(employee.phone || "");
         setEmail(employee.email);
-        setRole(employee.role as any || "cashier");
+        setRole((employee.role as any) || "cashier");
         console.log("✅ Employee loaded:", employee);
       }
     } catch (error: any) {
@@ -155,12 +165,7 @@ export default function EditEmployeeScreen() {
 
       if (response.data) {
         console.log("✅ Employee updated successfully:", response.data);
-        Alert.alert("Sukses", "Pegawai berhasil diperbarui", [
-          {
-            text: "OK",
-            onPress: () => router.back(),
-          },
-        ]);
+        setShowSuccessPopup(true);
       }
     } catch (error: any) {
       console.error("❌ Failed to update employee:", error);
@@ -175,7 +180,7 @@ export default function EditEmployeeScreen() {
       "Hapus Pegawai",
       "Apakah Anda yakin ingin menghapus pegawai ini?",
       [
-        { text: "Batal", style: "cancel" },
+        {text: "Batal", style: "cancel"},
         {
           text: "Hapus",
           style: "destructive",
@@ -186,12 +191,7 @@ export default function EditEmployeeScreen() {
               await employeeApi.deleteEmployee(params.id as string);
 
               console.log("✅ Employee deleted successfully");
-              Alert.alert("Sukses", "Pegawai berhasil dihapus", [
-                {
-                  text: "OK",
-                  onPress: () => router.back(),
-                },
-              ]);
+              setShowDeleteSuccessPopup(true);
             } catch (error: any) {
               console.error("❌ Failed to delete employee:", error);
               Alert.alert("Error", error.message || "Gagal menghapus pegawai");
@@ -206,11 +206,11 @@ export default function EditEmployeeScreen() {
 
   if (isLoading) {
     return (
-      <View style={{ flex: 1, backgroundColor: Colors[colorScheme].background }}>
+      <View style={{flex: 1, backgroundColor: Colors[colorScheme].background}}>
         <Header title="Edit Pegawai" showHelp={false} />
-        <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+        <View style={{flex: 1, justifyContent: "center", alignItems: "center"}}>
           <ActivityIndicator size="large" color={Colors[colorScheme].primary} />
-          <ThemedText style={{ marginTop: 16, color: Colors[colorScheme].icon }}>
+          <ThemedText style={{marginTop: 16, color: Colors[colorScheme].icon}}>
             Memuat data pegawai...
           </ThemedText>
         </View>
@@ -219,7 +219,7 @@ export default function EditEmployeeScreen() {
   }
 
   return (
-    <View style={{ flex: 1, backgroundColor: Colors[colorScheme].background }}>
+    <View style={{flex: 1, backgroundColor: Colors[colorScheme].background}}>
       <Header title="Edit Pegawai" showHelp={false} />
       <KeyboardAwareScrollView
         contentContainerStyle={styles.scrollContent}
@@ -256,7 +256,6 @@ export default function EditEmployeeScreen() {
               keyboardType="email-address"
               autoCapitalize="none"
             />
-
           </View>
         </View>
 
@@ -264,7 +263,9 @@ export default function EditEmployeeScreen() {
 
         <View style={styles.contentWrapper}>
           <View style={styles.sectionPadding}>
-            <ThemedText style={styles.sectionTitle}>Ubah PIN (Opsional)</ThemedText>
+            <ThemedText style={styles.sectionTitle}>
+              Ubah PIN (Opsional)
+            </ThemedText>
 
             <ThemedInput
               label="PIN Baru"
@@ -307,7 +308,10 @@ export default function EditEmployeeScreen() {
                 activeOpacity={0.7}
                 onPress={() => setRole("cashier")}
               >
-                <RadioButton selected={role === "cashier"} onPress={() => setRole("cashier")} />
+                <RadioButton
+                  selected={role === "cashier"}
+                  onPress={() => setRole("cashier")}
+                />
                 <ThemedText style={styles.roleLabel}>Cashier</ThemedText>
               </TouchableOpacity>
               <TouchableOpacity
@@ -315,7 +319,10 @@ export default function EditEmployeeScreen() {
                 activeOpacity={0.7}
                 onPress={() => setRole("manager")}
               >
-                <RadioButton selected={role === "manager"} onPress={() => setRole("manager")} />
+                <RadioButton
+                  selected={role === "manager"}
+                  onPress={() => setRole("manager")}
+                />
                 <ThemedText style={styles.roleLabel}>Manager</ThemedText>
               </TouchableOpacity>
             </View>
@@ -332,16 +339,23 @@ export default function EditEmployeeScreen() {
                 style={styles.outletButton}
                 onPress={() => setBranchModalVisible(true)}
               >
-                <ThemedText style={styles.outletButtonText}>Pilih Outlet</ThemedText>
+                <ThemedText style={styles.outletButtonText}>
+                  Pilih Outlet
+                </ThemedText>
               </TouchableOpacity>
             </View>
 
             {selectedBranches.length > 0 ? (
               <View style={styles.selectedOutletsList}>
-                {selectedBranches.map((branch) => (
+                {selectedBranches.map(branch => (
                   <View key={branch.id} style={styles.selectedOutletItem}>
-                    <ThemedText style={styles.selectedOutletName}>{branch.name}</ThemedText>
-                    <ThemedText style={styles.selectedOutletAddress} numberOfLines={1}>
+                    <ThemedText style={styles.selectedOutletName}>
+                      {branch.name}
+                    </ThemedText>
+                    <ThemedText
+                      style={styles.selectedOutletAddress}
+                      numberOfLines={1}
+                    >
                       {branch.address}
                     </ThemedText>
                   </View>
@@ -378,13 +392,43 @@ export default function EditEmployeeScreen() {
         onSelect={setSelectedBranches}
         onClose={() => setBranchModalVisible(false)}
       />
+
+      <ConfirmPopup
+        visible={showSuccessPopup}
+        title="Berhasil"
+        message="Pegawai berhasil diperbarui"
+        onConfirm={() => {
+          setShowSuccessPopup(false);
+          router.back();
+        }}
+        onCancel={() => {
+          setShowSuccessPopup(false);
+          router.back();
+        }}
+      />
+
+      <ConfirmPopup
+        visible={showDeleteSuccessPopup}
+        title="Berhasil"
+        message="Pegawai berhasil dihapus"
+        onConfirm={() => {
+          setShowDeleteSuccessPopup(false);
+          router.back();
+        }}
+        onCancel={() => {
+          setShowDeleteSuccessPopup(false);
+          router.back();
+        }}
+      />
     </View>
   );
 }
 
-
-
-const createStyles = (colorScheme: "light" | "dark", isTablet: boolean, isTabletLandscape: boolean) =>
+const createStyles = (
+  colorScheme: "light" | "dark",
+  isTablet: boolean,
+  isTabletLandscape: boolean
+) =>
   StyleSheet.create({
     scrollContent: {
       paddingBottom: isTablet ? 120 : 100,

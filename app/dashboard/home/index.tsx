@@ -1,14 +1,15 @@
-import { ReportCard, ReportCardSkeleton } from "@/components/atoms/report-card";
+import {ReportCard, ReportCardSkeleton} from "@/components/atoms/report-card";
 import Header from "@/components/header";
-import { DashboardMenuKey } from "@/components/layouts/dashboard/menu-config";
+import {DashboardMenuKey} from "@/components/layouts/dashboard/menu-config";
 import Sidebar from "@/components/layouts/dashboard/sidebar";
-import { ThemedButton } from "@/components/themed-button";
-import { ThemedText } from "@/components/themed-text";
-import { Colors } from "@/constants/theme";
-import { useColorScheme } from "@/hooks/use-color-scheme";
-import { Ionicons } from "@expo/vector-icons";
+import {ThemedButton} from "@/components/themed-button";
+import {ThemedText} from "@/components/themed-text";
+import {Colors} from "@/constants/theme";
+import {useColorScheme} from "@/hooks/use-color-scheme";
+import {statsApi} from "@/services";
+import {Ionicons} from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useRouter } from "expo-router";
+import {useRouter, useFocusEffect} from "expo-router";
 import React from "react";
 import {
   Image,
@@ -22,7 +23,7 @@ import {
 
 const DashboardScreen = () => {
   const colorScheme = useColorScheme() ?? "light";
-  const { width, height } = useWindowDimensions();
+  const {width, height} = useWindowDimensions();
   const isTablet = Math.min(width, height) >= 600;
   const isPhone = !isTablet;
   const isLandscape = width > height;
@@ -32,17 +33,52 @@ const DashboardScreen = () => {
   const [refreshing, setRefreshing] = React.useState(false);
   const [activeMenu, setActiveMenu] = React.useState<DashboardMenuKey>("home");
   const [isDrawerOpen, setIsDrawerOpen] = React.useState(false);
-  const [currentBranchName, setCurrentBranchName] = React.useState<string | null>(null);
+  const [currentBranchName, setCurrentBranchName] = React.useState<
+    string | null
+  >(null);
   const [hasScrolledDown, setHasScrolledDown] = React.useState(false);
+  const [salesStats, setSalesStats] = React.useState<{
+    current_month_sales: number;
+    current_month_percentage: number;
+    today_sales: number;
+    today_percentage: number;
+  } | null>(null);
+  const [statsError, setStatsError] = React.useState<string | null>(null);
   const router = useRouter();
 
-  React.useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-    }, 2000);
-
-    return () => clearTimeout(timer);
+  const fetchSalesStats = React.useCallback(async () => {
+    try {
+      setStatsError(null);
+      console.log("📊 Fetching sales stats...");
+      const response = await statsApi.getSalesStats();
+      console.log("📊 Stats response:", JSON.stringify(response, null, 2));
+      if (response.data) {
+        console.log("✅ Sales stats loaded:", response.data);
+        setSalesStats(response.data);
+      } else {
+        console.warn("⚠️ No data in response");
+      }
+    } catch (error) {
+      console.error("❌ Error fetching sales stats:", error);
+      setStatsError("Gagal memuat data penjualan");
+    }
   }, []);
+
+  React.useEffect(() => {
+    const loadData = async () => {
+      await fetchSalesStats();
+      setIsLoading(false);
+    };
+    loadData();
+  }, [fetchSalesStats]);
+
+  // Refresh data when screen comes into focus (after transaction)
+  useFocusEffect(
+    React.useCallback(() => {
+      console.log("🔄 Home screen focused, refreshing stats...");
+      fetchSalesStats();
+    }, [fetchSalesStats])
+  );
 
   React.useEffect(() => {
     AsyncStorage.getItem("current_branch_name")
@@ -51,7 +87,7 @@ const DashboardScreen = () => {
           setCurrentBranchName(name);
         }
       })
-      .catch(() => { });
+      .catch(() => {});
   }, []);
 
   const openDrawer = React.useCallback(() => {
@@ -62,17 +98,44 @@ const DashboardScreen = () => {
     setIsDrawerOpen(false);
   }, []);
 
-  const onRefresh = React.useCallback(() => {
+  const onRefresh = React.useCallback(async () => {
     setRefreshing(true);
-    setIsLoading(true);
+    await fetchSalesStats();
+    setRefreshing(false);
+  }, [fetchSalesStats]);
 
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-      setRefreshing(false);
-    }, 1500);
+  const formatCurrency = (amount: number): string => {
+    return new Intl.NumberFormat("id-ID", {
+      style: "currency",
+      currency: "IDR",
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(amount);
+  };
 
-    return () => clearTimeout(timer);
-  }, []);
+  const formatPercentage = (percentage: number): string => {
+    const sign = percentage >= 0 ? "+" : "";
+    return `${sign}${percentage.toFixed(2)}%`;
+  };
+
+  const getCurrentMonthName = (): string => {
+    const months = [
+      "Januari",
+      "Februari",
+      "Maret",
+      "April",
+      "Mei",
+      "Juni",
+      "Juli",
+      "Agustus",
+      "September",
+      "Oktober",
+      "November",
+      "Desember",
+    ];
+    const now = new Date();
+    return `${months[now.getMonth()]} ${now.getFullYear()}`;
+  };
 
   return (
     <View style={styles.container}>
@@ -108,11 +171,23 @@ const DashboardScreen = () => {
         }
       />
       <ScrollView
-        contentContainerStyle={styles.scrollContainer}
+        contentContainerStyle={[
+          styles.scrollContainer,
+          {
+            paddingBottom:
+              !isTabletLandscape || (isTabletLandscape && hasScrolledDown)
+                ? isTablet
+                  ? 100
+                  : 80
+                : 20,
+          },
+        ]}
         showsVerticalScrollIndicator={false}
-        style={{
-          // paddingVertical: 10
-        }}
+        style={
+          {
+            // paddingVertical: 10
+          }
+        }
         onScroll={event => {
           const offsetY = event.nativeEvent.contentOffset.y;
           if (offsetY > 80 && !hasScrolledDown) {
@@ -135,7 +210,7 @@ const DashboardScreen = () => {
           <View style={styles.sectionCard}>
             {/* <ThemedText type="subtitle-2" style={{ marginBottom: 10 }}>Paket Berlangganan</ThemedText> */}
             <Image
-              source={require("@/assets/banners/subscription.jpg")}
+              source={require("@/assets/banners/subscription.png")}
               style={styles.bannerImage}
             />
           </View>
@@ -146,7 +221,9 @@ const DashboardScreen = () => {
                   Outlet Aktif
                 </ThemedText>
                 <TouchableOpacity
-                  onPress={() => router.push("/dashboard/select-branch" as never)}
+                  onPress={() =>
+                    router.push("/dashboard/select-branch" as never)
+                  }
                   style={styles.linkContainer}
                 >
                   <ThemedText style={styles.link}>Pilih Outlet</ThemedText>
@@ -185,53 +262,106 @@ const DashboardScreen = () => {
                   <ReportCardSkeleton />
                   <ReportCardSkeleton />
                 </>
-              ) : (
+              ) : statsError ? (
+                <View style={{padding: 16}}>
+                  <ThemedText style={{color: Colors[colorScheme].icon}}>
+                    {statsError}
+                  </ThemedText>
+                </View>
+              ) : salesStats ? (
                 <>
                   <ReportCard
-                    title="Penjualan Nov 2025"
-                    amount="Rp0"
-                    subtitle="0,00% vs bulan lalu"
+                    title={`Penjualan ${getCurrentMonthName()}`}
+                    amount={formatCurrency(salesStats.current_month_sales)}
+                    subtitle={`${formatPercentage(
+                      salesStats.current_month_percentage
+                    )} vs bulan lalu`}
                   />
                   <ReportCard
                     title="Penjualan hari ini"
-                    amount="Rp0"
-                    subtitle="0,00% vs kemarin"
+                    amount={formatCurrency(salesStats.today_sales)}
+                    subtitle={`${formatPercentage(
+                      salesStats.today_percentage
+                    )} vs kemarin`}
                   />
                   <ReportCard
                     title="Pengeluaran hari ini"
                     amount="Rp0"
-                    subtitle="0,00% vs kemarin"
+                    subtitle="Data tidak tersedia"
+                  />
+                </>
+              ) : (
+                <>
+                  <ReportCard
+                    title={`Penjualan ${getCurrentMonthName()}`}
+                    amount="Rp0"
+                    subtitle="0% vs bulan lalu"
+                  />
+                  <ReportCard
+                    title="Penjualan hari ini"
+                    amount="Rp0"
+                    subtitle="0% vs kemarin"
+                  />
+                  <ReportCard
+                    title="Pengeluaran hari ini"
+                    amount="Rp0"
+                    subtitle="Data tidak tersedia"
                   />
                 </>
               )}
             </ScrollView>
           </View>
           <View style={styles.quickActionRow}>
-            <MenuItem label="Kelola Produk" icon="bag-outline" onPress={() => {
-              router.push("/dashboard/product/manage" as never);
-            }} />
-            <MenuItem label="Pegawai" icon="id-card-outline" onPress={() => {
-              router.push("/dashboard/employee" as never);
-            }} />
-            <MenuItem label="Outlet" icon="storefront-outline" onPress={() => {
-              router.push("/dashboard/outlet" as never);
-            }} />
-            <MenuItem label="Bantuan" icon="help-circle-outline" onPress={() => {
-              router.push("/dashboard/help" as never);
-            }} />
-            <MenuItem label="Profil" icon="person-circle-outline" onPress={() => {
-              router.push("/dashboard/setting/profile" as never);
-            }} />
-            <MenuItem label="Pilih Outlet" icon="location-outline" onPress={() => {
-              router.push("/dashboard/select-branch" as never);
-            }} />
+            <MenuItem
+              label="Kelola Produk"
+              icon="bag-outline"
+              onPress={() => {
+                router.push("/dashboard/product/manage" as never);
+              }}
+            />
+            <MenuItem
+              label="Pegawai"
+              icon="id-card-outline"
+              onPress={() => {
+                router.push("/dashboard/employee" as never);
+              }}
+            />
+            <MenuItem
+              label="Outlet"
+              icon="storefront-outline"
+              onPress={() => {
+                router.push("/dashboard/outlet" as never);
+              }}
+            />
+            <MenuItem
+              label="Bantuan"
+              icon="help-circle-outline"
+              onPress={() => {
+                router.push("/dashboard/help" as never);
+              }}
+            />
+            <MenuItem
+              label="Profil"
+              icon="person-circle-outline"
+              onPress={() => {
+                router.push("/dashboard/setting/profile" as never);
+              }}
+            />
+            <MenuItem
+              label="Pilih Outlet"
+              icon="location-outline"
+              onPress={() => {
+                router.push("/dashboard/select-branch" as never);
+              }}
+            />
           </View>
 
-
           <View style={styles.sectionCard}>
-            <ThemedText type="subtitle-2" style={{ marginBottom: 10 }}>Perangkat Tambahan</ThemedText>
+            <ThemedText type="subtitle-2" style={{marginBottom: 10}}>
+              Perangkat Tambahan
+            </ThemedText>
             <Image
-              source={require("@/assets/banners/device-offer.jpg")}
+              source={require("@/assets/banners/device-offer.png")}
               style={styles.bannerImage}
             />
           </View>
@@ -240,9 +370,12 @@ const DashboardScreen = () => {
 
       {(!isTabletLandscape || (isTabletLandscape && hasScrolledDown)) && (
         <View style={styles.bottomButtonWrapper}>
-          <ThemedButton title="Transaksi" onPress={() => {
-            router.push("/dashboard/transaction" as never);
-          }} />
+          <ThemedButton
+            title="Transaksi"
+            onPress={() => {
+              router.push("/dashboard/transaction" as never);
+            }}
+          />
         </View>
       )}
 
@@ -258,16 +391,28 @@ const DashboardScreen = () => {
   );
 };
 
-const MenuItem = ({ label, icon, onPress }: { label: string; icon: any, onPress?: () => void }) => {
+const MenuItem = ({
+  label,
+  icon,
+  onPress,
+}: {
+  label: string;
+  icon: any;
+  onPress?: () => void;
+}) => {
   const colorScheme = useColorScheme() ?? "light";
-  const { width, height } = useWindowDimensions();
+  const {width, height} = useWindowDimensions();
   const isTablet = Math.min(width, height) >= 600;
   const styles = menuItemStyles(colorScheme, isTablet);
   const baseIconSize = icon == "help-circle-outline" ? 24 : 24;
   const iconSize = isTablet ? baseIconSize + 20 : baseIconSize;
 
   return (
-    <TouchableOpacity activeOpacity={0.7} style={styles.wrapper} onPress={onPress}>
+    <TouchableOpacity
+      activeOpacity={0.7}
+      style={styles.wrapper}
+      onPress={onPress}
+    >
       <View style={styles.iconWrapper}>
         <Ionicons
           name={icon}
@@ -282,12 +427,16 @@ const MenuItem = ({ label, icon, onPress }: { label: string; icon: any, onPress?
   );
 };
 
-const createStyles = (colorScheme: "light" | "dark", isTablet: boolean, isTabletLandscape: boolean) =>
+const createStyles = (
+  colorScheme: "light" | "dark",
+  isTablet: boolean,
+  isTabletLandscape: boolean
+) =>
   StyleSheet.create({
     container: {
       flex: 1,
       backgroundColor: Colors[colorScheme].background,
-      paddingBottom: isTabletLandscape ? 80: 20,
+      paddingBottom: isTabletLandscape ? 80 : 20,
     },
     scrollContainer: {
       paddingHorizontal: isTablet ? 24 : 8,
@@ -342,7 +491,7 @@ const createStyles = (colorScheme: "light" | "dark", isTablet: boolean, isTablet
       marginBottom: isTablet ? 12 : 8,
     },
     bannerImage: {
-      width: "100%",
+      width: "auto",
       borderRadius: 12,
       // marginTop: 8,
       height: isTablet ? 160 : 120,

@@ -3,6 +3,7 @@ import CostBarcodeFields from "@/components/cost-barcode-fields";
 import ConfirmationDialog, {
   ConfirmationDialogHandle,
 } from "@/components/drawers/confirmation-dialog";
+import ConfirmPopup from "@/components/atoms/confirm-popup";
 import Header from "@/components/header";
 import ImageUpload from "@/components/image-upload";
 import MenuRow from "@/components/menu-row";
@@ -82,6 +83,7 @@ export default function EditProductScreen() {
   const [isSaving, setIsSaving] = useState(false);
   const [productData, setProductData] = useState<Product | null>(null);
   const [defaultVariantId, setDefaultVariantId] = useState<string | null>(null);
+  const [showSuccessPopup, setShowSuccessPopup] = useState(false);
 
   React.useEffect(() => {
     loadProduct();
@@ -359,11 +361,48 @@ export default function EditProductScreen() {
         allVariants.push(defaultVariantData);
       }
 
-      // 2. Tambahkan variant non-default yang sudah ada
+      // 2. Tambahkan variant non-default yang sudah ada (filter yang bukan default variant)
       if (variants.length > 0) {
-        const nonDefaultVariants = variants.map(v => ({
-          ...v,
-        }));
+        const nonDefaultVariants = variants
+          .filter(v => v.id !== defaultVariantId) // Skip variant default
+          .map(v => {
+            const cleaned: any = {
+              id: v.id,
+              name: v.name,
+              price: v.price,
+              capital_price: v.capital_price || 0,
+              is_stock_active: v.is_stock_active || false,
+            };
+
+            // Only add fields that have valid values
+            if (v.barcode) cleaned.barcode = v.barcode;
+
+            if (
+              v.recipe_id &&
+              v.recipe_id.length > 10 &&
+              v.recipe_id.startsWith("cm")
+            ) {
+              cleaned.recipe_id = v.recipe_id;
+            }
+
+            if (v.is_stock_active) {
+              if (typeof v.stock === "number") cleaned.stock = v.stock;
+              if (typeof v.min_stock === "number")
+                cleaned.min_stock = v.min_stock;
+              if (typeof v.notify_on_stock_ronouts === "boolean") {
+                cleaned.notify_on_stock_ronouts = v.notify_on_stock_ronouts;
+              }
+              if (
+                v.unit_id &&
+                v.unit_id.length > 10 &&
+                v.unit_id.startsWith("cm")
+              ) {
+                cleaned.unit_id = v.unit_id;
+              }
+            }
+
+            return cleaned;
+          });
         allVariants.push(...nonDefaultVariants);
       }
 
@@ -373,15 +412,7 @@ export default function EditProductScreen() {
       const response = await productApi.updateProduct(params.id, payload);
 
       if (response.data) {
-        Alert.alert("Sukses", "Produk berhasil diperbarui", [
-          {
-            text: "OK",
-            onPress: () => {
-              reset();
-              router.back();
-            },
-          },
-        ]);
+        setShowSuccessPopup(true);
       }
     } catch (error: any) {
       console.error("Failed to update product:", error);
@@ -562,6 +593,11 @@ export default function EditProductScreen() {
                           ...(v.id ? {variantId: v.id} : {}),
                           name: v.name,
                           price: String(v.price),
+                          ...(v.recipe_id ? {recipe: v.recipe_id} : {}),
+                          ...(v.capital_price
+                            ? {capitalPrice: String(v.capital_price)}
+                            : {}),
+                          ...(v.barcode ? {barcode: v.barcode} : {}),
                           ...(typeof v.stock === "number"
                             ? {
                                 offlineStock: String(v.stock),
@@ -642,6 +678,22 @@ export default function EditProductScreen() {
       </KeyboardAwareScrollView>
 
       <ConfirmationDialog ref={confirmationRef} />
+
+      <ConfirmPopup
+        visible={showSuccessPopup}
+        title="Berhasil"
+        message="Produk berhasil diperbarui"
+        onConfirm={() => {
+          setShowSuccessPopup(false);
+          reset();
+          router.back();
+        }}
+        onCancel={() => {
+          setShowSuccessPopup(false);
+          reset();
+          router.back();
+        }}
+      />
     </View>
   );
 }

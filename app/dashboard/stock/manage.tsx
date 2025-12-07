@@ -1,24 +1,26 @@
 import StockProductItem from "@/components/atoms/stock-product-item";
+import ConfirmPopup from "@/components/atoms/confirm-popup";
 import EditStockModal from "@/components/drawers/edit-stock-modal";
 import Header from "@/components/header";
-import { ThemedInput } from "@/components/themed-input";
-import { ThemedText } from "@/components/themed-text";
-import { Colors } from "@/constants/theme";
-import { useColorScheme } from "@/hooks/use-color-scheme";
+import {ThemedInput} from "@/components/themed-input";
+import {ThemedText} from "@/components/themed-text";
+import {Colors} from "@/constants/theme";
+import {useColorScheme} from "@/hooks/use-color-scheme";
 import productApi from "@/services/endpoints/products";
-import { Product, ProductVariant } from "@/types/api";
-import { AntDesign } from "@expo/vector-icons";
-import { useFocusEffect } from "expo-router";
-import React, { useCallback, useState } from "react";
+import {Product, ProductVariant} from "@/types/api";
+import {AntDesign} from "@expo/vector-icons";
+import {useFocusEffect} from "expo-router";
+import React, {useCallback, useState} from "react";
 import {
   ActivityIndicator,
   Alert,
   StyleSheet,
-  TouchableOpacity, useWindowDimensions,
+  TouchableOpacity,
+  useWindowDimensions,
   View,
 } from "react-native";
-import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+import {KeyboardAwareScrollView} from "react-native-keyboard-aware-scroll-view";
+import {useSafeAreaInsets} from "react-native-safe-area-context";
 
 type StockItem = {
   id: string;
@@ -31,7 +33,7 @@ type StockItem = {
 
 export default function ManageStockScreen() {
   const colorScheme = useColorScheme() ?? "light";
-  const { width, height } = useWindowDimensions();
+  const {width, height} = useWindowDimensions();
   const isTablet = Math.min(width, height) >= 600;
   const isLandscape = width > height;
   const isTabletLandscape = isTablet && isLandscape;
@@ -44,6 +46,7 @@ export default function ManageStockScreen() {
   const [isLoading, setIsLoading] = useState(true);
   const [editingItem, setEditingItem] = useState<StockItem | null>(null);
   const [isUpdatingStock, setIsUpdatingStock] = useState(false);
+  const [showSuccessPopup, setShowSuccessPopup] = useState(false);
 
   // Load products and build stock items
   const loadProducts = async () => {
@@ -131,9 +134,7 @@ export default function ManageStockScreen() {
               />
             </View>
 
-            <TouchableOpacity style={styles.scanButton} onPress={() => {
-              
-            }}>
+            <TouchableOpacity style={styles.scanButton} onPress={() => {}}>
               <AntDesign
                 name="scan"
                 size={isTablet ? 32 : 24}
@@ -225,7 +226,7 @@ export default function ManageStockScreen() {
             });
 
             console.log("✅ Stock updated successfully");
-            Alert.alert("Sukses", "Stok berhasil diperbarui");
+            setShowSuccessPopup(true);
             setEditingItem(null);
 
             // Reload products to get updated stock
@@ -238,11 +239,23 @@ export default function ManageStockScreen() {
           }
         }}
       />
+
+      <ConfirmPopup
+        visible={showSuccessPopup}
+        title="Berhasil"
+        message="Stok berhasil diperbarui"
+        onConfirm={() => setShowSuccessPopup(false)}
+        onCancel={() => setShowSuccessPopup(false)}
+      />
     </View>
   );
 }
 
-const createStyles = (colorScheme: "light" | "dark", isTablet: boolean, isTabletLandscape: boolean) =>
+const createStyles = (
+  colorScheme: "light" | "dark",
+  isTablet: boolean,
+  isTabletLandscape: boolean
+) =>
   StyleSheet.create({
     contentWrapper: {
       width: "100%",

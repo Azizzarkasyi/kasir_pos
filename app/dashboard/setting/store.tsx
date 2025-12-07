@@ -2,15 +2,21 @@ import ConfirmPopup from "@/components/atoms/confirm-popup";
 import ComboInput from "@/components/combo-input";
 import Header from "@/components/header";
 import ImageUpload from "@/components/image-upload";
-import { ThemedButton } from "@/components/themed-button";
-import { ThemedInput } from "@/components/themed-input";
-import { ThemedText } from "@/components/themed-text";
-import { Colors } from "@/constants/theme";
-import { useColorScheme } from "@/hooks/use-color-scheme";
-import { settingsApi, StoreInfo } from "@/services";
-import React, { useEffect, useState } from "react";
-import { ActivityIndicator, Alert, StyleSheet, useWindowDimensions, View } from "react-native";
-import { ScrollView } from "react-native-gesture-handler";
+import {ThemedButton} from "@/components/themed-button";
+import {ThemedInput} from "@/components/themed-input";
+import {ThemedText} from "@/components/themed-text";
+import {Colors} from "@/constants/theme";
+import {useColorScheme} from "@/hooks/use-color-scheme";
+import {settingsApi, StoreInfo} from "@/services";
+import React, {useEffect, useState} from "react";
+import {
+  ActivityIndicator,
+  Alert,
+  StyleSheet,
+  useWindowDimensions,
+  View,
+} from "react-native";
+import {ScrollView} from "react-native-gesture-handler";
 
 export default function StoreSettingScreen() {
   const colorScheme = useColorScheme() ?? "light";
@@ -35,6 +41,7 @@ export default function StoreSettingScreen() {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [showSuccessPopup, setShowSuccessPopup] = useState(false);
 
   useEffect(() => {
     loadStoreData();
@@ -87,7 +94,7 @@ export default function StoreSettingScreen() {
         country: country,
         address: address.trim(),
       });
-      Alert.alert("Berhasil", "Data toko berhasil diperbarui");
+      setShowSuccessPopup(true);
       setConfirmOpen(false);
       loadStoreData();
     } catch (error: any) {
@@ -119,92 +126,92 @@ export default function StoreSettingScreen() {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.contentWrapper}>
-        <View style={styles.sectionCard}>
-          <ImageUpload uri={photoUri} onPress={() => {}} />
-        </View>
+          <View style={styles.sectionCard}>
+            <ImageUpload uri={photoUri} onPress={() => {}} />
+          </View>
 
-        <View style={styles.sectionCard}>
-          <ThemedText type="subtitle-2" style={{marginBottom: 12}}>
-            Store or Business Data
-          </ThemedText>
-          <ComboInput
-            label="Business Type"
-            value={businessType}
-            onChangeText={setBusinessType}
-            items={[
-              {label: "Jasa/Service Lainnya", value: "services_other"},
-              {label: "Makanan/Minuman", value: "food_beverage"},
-              {label: "Retail", value: "retail"},
-              {label: "Restoran", value: "restoran"},
-            ]}
-          />
-          <ThemedInput
-            label="Store Business Name"
-            value={storeName}
-            onChangeText={setStoreName}
-          />
-          <ThemedInput
-            label="Default Tax"
-            value={defaultTax}
-            onChangeText={setDefaultTax}
-            keyboardType="decimal-pad"
-          />
-          <ThemedInput
-            label="Owner Name"
-            value={ownerName}
-            onChangeText={setOwnerName}
-          />
-          <ThemedInput label="Mobile Number" value={phone} editable={false} />
-          {/* <ThemedText style={{color: "red"}}>
+          <View style={styles.sectionCard}>
+            <ThemedText type="subtitle-2" style={{marginBottom: 12}}>
+              Store or Business Data
+            </ThemedText>
+            <ComboInput
+              label="Business Type"
+              value={businessType}
+              onChangeText={setBusinessType}
+              items={[
+                {label: "Jasa/Service Lainnya", value: "services_other"},
+                {label: "Makanan/Minuman", value: "food_beverage"},
+                {label: "Retail", value: "retail"},
+                {label: "Restoran", value: "restoran"},
+              ]}
+            />
+            <ThemedInput
+              label="Store Business Name"
+              value={storeName}
+              onChangeText={setStoreName}
+            />
+            <ThemedInput
+              label="Default Tax"
+              value={defaultTax}
+              onChangeText={setDefaultTax}
+              keyboardType="decimal-pad"
+            />
+            <ThemedInput
+              label="Owner Name"
+              value={ownerName}
+              onChangeText={setOwnerName}
+            />
+            <ThemedInput label="Mobile Number" value={phone} editable={false} />
+            {/* <ThemedText style={{color: "red"}}>
             * Have not verified yet
           </ThemedText> */}
-        </View>
+          </View>
 
-        <View style={styles.sectionCard}>
-          <ThemedText type="subtitle-2">Store Location</ThemedText>
-          <ComboInput
-            label="Country"
-            value={country}
-            onChangeText={setCountry}
-            items={[
-              {label: "Indonesia", value: "id"},
-              {label: "Malaysia", value: "my"},
-              {label: "Singapore", value: "sg"},
-            ]}
-          />
-          <ComboInput
-            label="Province"
-            value={province}
-            onChangeText={setProvince}
-            items={[
-              {label: "JAWA TIMUR", value: "JAWA TIMUR"},
-              {label: "DKI JAKARTA", value: "DKI JAKARTA"},
-              {label: "JAWA BARAT", value: "JAWA BARAT"},
-            ]}
-          />
-          <ComboInput
-            label="Region/City"
-            value={cityRegion}
-            onChangeText={setCityRegion}
-            items={[
-              {label: "Kota Malang", value: "Kota Malang"},
-              {label: "Kab. Malang", value: "Kab. Malang"},
-              {label: "Surabaya", value: "Surabaya"},
-            ]}
-          />
-          <ThemedInput
-            label="Address"
-            value={address}
-            onChangeText={setAddress}
-            multiline
-            inputContainerStyle={{
-              height: 120,
-              alignItems: "flex-start",
-              paddingVertical: 12,
-            }}
-          />
-        </View>
-        {/* 
+          <View style={styles.sectionCard}>
+            <ThemedText type="subtitle-2">Store Location</ThemedText>
+            <ComboInput
+              label="Country"
+              value={country}
+              onChangeText={setCountry}
+              items={[
+                {label: "Indonesia", value: "id"},
+                {label: "Malaysia", value: "my"},
+                {label: "Singapore", value: "sg"},
+              ]}
+            />
+            <ComboInput
+              label="Province"
+              value={province}
+              onChangeText={setProvince}
+              items={[
+                {label: "JAWA TIMUR", value: "JAWA TIMUR"},
+                {label: "DKI JAKARTA", value: "DKI JAKARTA"},
+                {label: "JAWA BARAT", value: "JAWA BARAT"},
+              ]}
+            />
+            <ComboInput
+              label="Region/City"
+              value={cityRegion}
+              onChangeText={setCityRegion}
+              items={[
+                {label: "Kota Malang", value: "Kota Malang"},
+                {label: "Kab. Malang", value: "Kab. Malang"},
+                {label: "Surabaya", value: "Surabaya"},
+              ]}
+            />
+            <ThemedInput
+              label="Address"
+              value={address}
+              onChangeText={setAddress}
+              multiline
+              inputContainerStyle={{
+                height: 120,
+                alignItems: "flex-start",
+                paddingVertical: 12,
+              }}
+            />
+          </View>
+          {/* 
         <View style={styles.sectionCard}>
           <ThemedText type="subtitle-2">
             Select Language and Currency
@@ -226,28 +233,40 @@ export default function StoreSettingScreen() {
           />
         </View> */}
 
-        <View style={styles.bottomButtonWrapper}>
-          <ThemedButton
-            title={isSaving ? "SAVING..." : "SAVE"}
-            onPress={handleSaveStore}
-            disabled={isSaving}
-          />
-        </View>
+          <View style={styles.bottomButtonWrapper}>
+            <ThemedButton
+              title={isSaving ? "SAVING..." : "SAVE"}
+              onPress={handleSaveStore}
+              disabled={isSaving}
+            />
+          </View>
 
-        <ConfirmPopup
-          visible={confirmOpen}
-          title="Konfirmasi"
-          message="Apakah Anda yakin ingin menyimpan perubahan?"
-          onCancel={() => setConfirmOpen(false)}
-          onConfirm={handleSaveStore}
-        />
+          <ConfirmPopup
+            visible={confirmOpen}
+            title="Konfirmasi"
+            message="Apakah Anda yakin ingin menyimpan perubahan?"
+            onCancel={() => setConfirmOpen(false)}
+            onConfirm={handleSaveStore}
+          />
+
+          <ConfirmPopup
+            visible={showSuccessPopup}
+            title="Berhasil"
+            message="Data toko berhasil diperbarui"
+            onConfirm={() => setShowSuccessPopup(false)}
+            onCancel={() => setShowSuccessPopup(false)}
+          />
         </View>
       </ScrollView>
     </View>
   );
 }
 
-const createStyles = (colorScheme: "light" | "dark", isTablet: boolean, isTabletLandscape: boolean) =>
+const createStyles = (
+  colorScheme: "light" | "dark",
+  isTablet: boolean,
+  isTabletLandscape: boolean
+) =>
   StyleSheet.create({
     container: {
       flex: 1,

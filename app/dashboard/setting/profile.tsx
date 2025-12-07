@@ -1,6 +1,7 @@
 import ConfirmationDialog, {
   ConfirmationDialogHandle,
 } from "@/components/drawers/confirmation-dialog";
+import ConfirmPopup from "@/components/atoms/confirm-popup";
 import Header from "@/components/header";
 import ImageUpload from "@/components/image-upload";
 import {ThemedButton} from "@/components/themed-button";
@@ -41,6 +42,9 @@ export default function ProfileSettingScreen() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [isChangingPin, setIsChangingPin] = useState(false);
+  const [showProfileSuccessPopup, setShowProfileSuccessPopup] = useState(false);
+  const [showPinSuccessPopup, setShowPinSuccessPopup] = useState(false);
+  const [showDeleteSuccessPopup, setShowDeleteSuccessPopup] = useState(false);
   const confirmationDialogRef = React.useRef<ConfirmationDialogHandle | null>(
     null
   );
@@ -122,7 +126,7 @@ export default function ProfileSettingScreen() {
       }
 
       await settingsApi.updateProfile(payload);
-      Alert.alert("Berhasil", "Profil berhasil diperbarui");
+      setShowProfileSuccessPopup(true);
       loadProfile();
     } catch (error: any) {
       console.error("❌ Failed to update profile:", error);
@@ -158,7 +162,7 @@ export default function ProfileSettingScreen() {
         new_pin_confirmation: confirmPin,
       });
 
-      Alert.alert("Berhasil", "PIN berhasil diubah");
+      setShowPinSuccessPopup(true);
       setOldPin("");
       setNewPin("");
       setConfirmPin("");
@@ -178,9 +182,7 @@ export default function ProfileSettingScreen() {
       onConfirm: async () => {
         try {
           await settingsApi.deleteAccount();
-          Alert.alert("Berhasil", "Akun berhasil dihapus", [
-            {text: "OK", onPress: () => router.replace("/auth/Login/login")},
-          ]);
+          setShowDeleteSuccessPopup(true);
         } catch (error: any) {
           console.error("❌ Failed to delete account:", error);
           Alert.alert("Gagal", error.message || "Gagal menghapus akun");
@@ -301,6 +303,36 @@ export default function ProfileSettingScreen() {
       </ScrollView>
 
       <ConfirmationDialog ref={confirmationDialogRef} />
+
+      <ConfirmPopup
+        visible={showProfileSuccessPopup}
+        title="Berhasil"
+        message="Profil berhasil diperbarui"
+        onConfirm={() => setShowProfileSuccessPopup(false)}
+        onCancel={() => setShowProfileSuccessPopup(false)}
+      />
+
+      <ConfirmPopup
+        visible={showPinSuccessPopup}
+        title="Berhasil"
+        message="PIN berhasil diubah"
+        onConfirm={() => setShowPinSuccessPopup(false)}
+        onCancel={() => setShowPinSuccessPopup(false)}
+      />
+
+      <ConfirmPopup
+        visible={showDeleteSuccessPopup}
+        title="Berhasil"
+        message="Akun berhasil dihapus"
+        onConfirm={() => {
+          setShowDeleteSuccessPopup(false);
+          router.replace("/auth/Login/login");
+        }}
+        onCancel={() => {
+          setShowDeleteSuccessPopup(false);
+          router.replace("/auth/Login/login");
+        }}
+      />
     </View>
   );
 }

@@ -1,50 +1,153 @@
-
 import Header from "@/components/header";
-import { ThemedText } from "@/components/themed-text";
-import { Colors } from "@/constants/theme";
-import { useColorScheme } from "@/hooks/use-color-scheme";
-import { AntDesign, Ionicons } from "@expo/vector-icons";
-import React from "react";
-import { StyleSheet, TextInput, TouchableOpacity, useWindowDimensions, View } from "react-native";
+import {ThemedText} from "@/components/themed-text";
+import {Colors} from "@/constants/theme";
+import {useColorScheme} from "@/hooks/use-color-scheme";
+import {AntDesign, Ionicons} from "@expo/vector-icons";
+import React, {useState, useEffect} from "react";
+import {
+  StyleSheet,
+  TextInput,
+  TouchableOpacity,
+  useWindowDimensions,
+  View,
+  FlatList,
+  ActivityIndicator,
+} from "react-native";
+import {branchApi, Branch} from "@/services/endpoints/branches";
+import {useRouter} from "expo-router";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 type OutletItemProps = {
-  name: string;
-  isPrimary?: boolean;
-  address: string;
+  branch: Branch;
+  isSelected: boolean;
+  onPress: (branch: Branch) => void;
   styles: ReturnType<typeof createStyles>;
   isTablet: boolean;
+  colorScheme: "light" | "dark";
 };
 
-const OutletItem: React.FC<OutletItemProps> = ({ name, isPrimary, address, styles, isTablet }) => {
+const OutletItem: React.FC<OutletItemProps> = ({
+  branch,
+  isSelected,
+  onPress,
+  styles,
+  isTablet,
+  colorScheme,
+}) => {
+  const formatAddress = () => {
+    const parts = [
+      branch.village?.name,
+      branch.subdistrict?.name,
+      branch.city?.name,
+      branch.province?.name,
+    ].filter(Boolean);
+    return parts.join(", ");
+  };
+
   return (
-    <TouchableOpacity activeOpacity={0.7} style={styles.outletCard}>
+    <TouchableOpacity
+      activeOpacity={0.7}
+      style={[styles.outletCard, isSelected && styles.outletCardSelected]}
+      onPress={() => onPress(branch)}
+    >
       <View style={styles.outletIconWrapper}>
-        <AntDesign name="shop" size={isTablet ? 32 : 24} style={styles.outletIcon} />
+        <AntDesign
+          name="shop"
+          size={isTablet ? 32 : 24}
+          style={styles.outletIcon}
+        />
       </View>
 
       <View style={styles.outletInfoWrapper}>
         <View style={styles.outletTitleRow}>
-          <ThemedText style={styles.outletName}>{name}</ThemedText>
-          {isPrimary && (
-            <View style={styles.outletBadge}>
-              <ThemedText style={styles.outletBadgeText}>Utama</ThemedText>
-            </View>
-          )}
+          <ThemedText
+            style={[styles.outletName, isSelected && styles.outletNameSelected]}
+          >
+            {branch.name}
+          </ThemedText>
         </View>
-        <ThemedText style={styles.outletAddress}>{address}</ThemedText>
+        <ThemedText style={styles.outletAddress}>{formatAddress()}</ThemedText>
       </View>
+
+      {isSelected && (
+        <View style={styles.checkboxWrapper}>
+          <Ionicons
+            name="checkmark-circle"
+            size={isTablet ? 32 : 24}
+            color="#22C55E"
+          />
+        </View>
+      )}
     </TouchableOpacity>
   );
 };
 
 const SelectBranchScreen = () => {
   const colorScheme = useColorScheme() ?? "light";
-  const { width, height } = useWindowDimensions();
+  const {width, height} = useWindowDimensions();
   const isTablet = Math.min(width, height) >= 600;
   const isLandscape = width > height;
   const isTabletLandscape = isTablet && isLandscape;
   const styles = createStyles(colorScheme, isTablet, isTabletLandscape);
-  const [isSearchFocused, setIsSearchFocused] = React.useState(false);
+  const router = useRouter();
+
+  const [isSearchFocused, setIsSearchFocused] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [branches, setBranches] = useState<Branch[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [selectedBranchId, setSelectedBranchId] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetchBranches();
+    loadSelectedBranch();
+  }, []);
+
+  const loadSelectedBranch = async () => {
+    try {
+      const savedBranchId = await AsyncStorage.getItem("selectedBranchId");
+      if (savedBranchId) {
+        setSelectedBranchId(savedBranchId);
+      }
+    } catch (error) {
+      console.error("Error loading selected branch:", error);
+    }
+  };
+
+  const fetchBranches = async () => {
+    try {
+      setIsLoading(true);
+      const response = await branchApi.getBranches();
+      if (response.data) {
+        setBranches(response.data);
+      }
+    } catch (error) {
+      console.error("Error fetching branches:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleSelectBranch = async (branch: Branch) => {
+    try {
+      setSelectedBranchId(branch.id);
+      await AsyncStorage.setItem("selectedBranchId", branch.id);
+      await AsyncStorage.setItem("selectedBranchData", JSON.stringify(branch));
+      console.log("Selected branch saved:", branch);
+    } catch (error) {
+      console.error("Error saving selected branch:", error);
+    }
+  };
+
+  const filteredBranches = branches.filter(branch =>
+    branch.name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  // Sort branches: selected branch first, then alphabetically
+  const sortedBranches = [...filteredBranches].sort((a, b) => {
+    if (a.id === selectedBranchId) return -1;
+    if (b.id === selectedBranchId) return 1;
+    return a.name.localeCompare(b.name);
+  });
 
   return (
     <>
@@ -57,7 +160,10 @@ const SelectBranchScreen = () => {
       <View style={styles.container}>
         <View style={styles.contentWrapper}>
           <View
-            style={[styles.searchWrapper, isSearchFocused && styles.searchWrapperFocused]}
+            style={[
+              styles.searchWrapper,
+              isSearchFocused && styles.searchWrapperFocused,
+            ]}
           >
             <Ionicons
               name="search"
@@ -68,25 +174,54 @@ const SelectBranchScreen = () => {
               placeholder="Cari Outlet"
               placeholderTextColor="#A0A0A0"
               style={styles.searchInput}
+              value={searchQuery}
+              onChangeText={setSearchQuery}
               onFocus={() => setIsSearchFocused(true)}
               onBlur={() => setIsSearchFocused(false)}
             />
           </View>
 
-          <OutletItem
-            name="Pusat"
-            isPrimary
-            address="Arjowinangun, Kalipare, Kab. Malang"
-            styles={styles}
-            isTablet={isTablet}
-          />
+          {isLoading ? (
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator
+                size={isTablet ? "large" : "small"}
+                color={Colors[colorScheme].primary}
+              />
+            </View>
+          ) : (
+            <FlatList
+              data={sortedBranches}
+              keyExtractor={item => item.id}
+              renderItem={({item}) => (
+                <OutletItem
+                  branch={item}
+                  isSelected={selectedBranchId === item.id}
+                  onPress={handleSelectBranch}
+                  styles={styles}
+                  isTablet={isTablet}
+                  colorScheme={colorScheme}
+                />
+              )}
+              contentContainerStyle={styles.listContainer}
+              ItemSeparatorComponent={() => <View style={styles.separator} />}
+              ListEmptyComponent={
+                <ThemedText style={styles.emptyText}>
+                  {searchQuery ? "Outlet tidak ditemukan" : "Belum ada outlet"}
+                </ThemedText>
+              }
+            />
+          )}
         </View>
       </View>
     </>
   );
 };
 
-const createStyles = (colorScheme: "light" | "dark", isTablet: boolean, isTabletLandscape: boolean) =>
+const createStyles = (
+  colorScheme: "light" | "dark",
+  isTablet: boolean,
+  isTabletLandscape: boolean
+) =>
   StyleSheet.create({
     container: {
       flex: 1,
@@ -172,7 +307,34 @@ const createStyles = (colorScheme: "light" | "dark", isTablet: boolean, isTablet
       fontSize: isTablet ? 18 : 12,
       color: Colors[colorScheme].icon,
     },
+    outletCardSelected: {
+      borderColor: "#22C55E",
+      borderWidth: 2,
+    },
+    outletNameSelected: {
+      color: "#22C55E",
+    },
+    checkboxWrapper: {
+      marginLeft: isTablet ? 12 : 8,
+    },
+    loadingContainer: {
+      flex: 1,
+      alignItems: "center",
+      justifyContent: "center",
+      paddingVertical: isTablet ? 48 : 32,
+    },
+    listContainer: {
+      paddingBottom: isTablet ? 24 : 16,
+    },
+    separator: {
+      height: isTablet ? 16 : 12,
+    },
+    emptyText: {
+      fontSize: isTablet ? 18 : 14,
+      color: Colors[colorScheme].icon,
+      textAlign: "center",
+      paddingVertical: isTablet ? 48 : 32,
+    },
   });
 
 export default SelectBranchScreen;
-

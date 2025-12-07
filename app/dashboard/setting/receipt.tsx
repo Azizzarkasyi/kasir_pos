@@ -1,4 +1,5 @@
 import HelpPopup from "@/components/atoms/help-popup";
+import ConfirmPopup from "@/components/atoms/confirm-popup";
 import Header from "@/components/header";
 import ImageUpload from "@/components/image-upload";
 import {ThemedButton} from "@/components/themed-button";
@@ -40,6 +41,7 @@ export default function ReceiptSettingScreen() {
   const [showHelpMessage, setShowHelpMessage] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [showSuccessPopup, setShowSuccessPopup] = useState(false);
   const [branchId, setBranchId] = useState<string>("");
 
   useEffect(() => {
@@ -130,7 +132,7 @@ export default function ReceiptSettingScreen() {
         header_description: extraNotes.trim(),
         footer_description: message.trim(),
       });
-      Alert.alert("Berhasil", "Konfigurasi struk berhasil disimpan");
+      setShowSuccessPopup(true);
       loadStruckConfig(branchId);
     } catch (error: any) {
       console.error("❌ Failed to save struck config:", error);
@@ -297,6 +299,14 @@ export default function ReceiptSettingScreen() {
           title="Pesan Untuk Pelanggan"
           description="Pesan akan ditampilkan di bawah kembalian struk."
           onClose={() => setShowHelpMessage(false)}
+        />
+
+        <ConfirmPopup
+          visible={showSuccessPopup}
+          title="Berhasil"
+          message="Konfigurasi struk berhasil disimpan"
+          onConfirm={() => setShowSuccessPopup(false)}
+          onCancel={() => setShowSuccessPopup(false)}
         />
       </ScrollView>
     </View>
