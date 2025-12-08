@@ -1,24 +1,24 @@
 import SmallLogo from "@/components/atoms/logo-sm";
 import CountryCodePicker from "@/components/country-code-picker";
-import SplashScreen from "@/components/splash-screen";
-import { ThemedButton } from "@/components/themed-button";
-import { ThemedInput } from "@/components/themed-input";
-import { ThemedText } from "@/components/themed-text";
-import { Colors } from "@/constants/theme";
-import { useColorScheme } from "@/hooks/use-color-scheme";
-import { useRouter } from "expo-router";
-import React, { useState } from "react";
+import LoadingLoginScreen from "@/components/loading-login";
+import {ThemedButton} from "@/components/themed-button";
+import {ThemedInput} from "@/components/themed-input";
+import {ThemedText} from "@/components/themed-text";
+import {Colors} from "@/constants/theme";
+import {useColorScheme} from "@/hooks/use-color-scheme";
+import {useRouter} from "expo-router";
+import React, {useState} from "react";
 import {
-    Image,
-    Keyboard,
-    Platform,
-    StyleSheet,
-    TouchableOpacity,
-    View,
-    useWindowDimensions,
+  Image,
+  Keyboard,
+  Platform,
+  StyleSheet,
+  TouchableOpacity,
+  View,
+  useWindowDimensions,
 } from "react-native";
-import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+import {KeyboardAwareScrollView} from "react-native-keyboard-aware-scroll-view";
+import {useSafeAreaInsets} from "react-native-safe-area-context";
 
 export default function LoginScreen() {
   const colorScheme = useColorScheme() ?? "light";
@@ -30,7 +30,7 @@ export default function LoginScreen() {
   const [pinError, setPinError] = useState("");
   const router = useRouter();
   const [isLoggingIn, setIsLoggingIn] = useState(false);
-  const { width, height } = useWindowDimensions();
+  const {width, height} = useWindowDimensions();
   const isTablet = Math.min(width, height) >= 600;
 
   const styles = createStyles(colorScheme, isTablet);
@@ -183,7 +183,10 @@ export default function LoginScreen() {
         keyboardShouldPersistTaps="handled"
         style={{backgroundColor: Colors[colorScheme].background}}
       >
-        <Image source={require("@/assets/ilustrations/login.png")} style={styles.loginIlustration} />
+        <Image
+          source={require("@/assets/ilustrations/login.png")}
+          style={styles.loginIlustration}
+        />
 
         <View style={styles.formContainer}>
           {isPhoneLogin ? (
@@ -244,8 +247,8 @@ export default function LoginScreen() {
           />
         </View>
 
-        <View style={{ marginTop: isTablet ? 20 : 0}}>
-          <SmallLogo/>
+        <View style={{marginTop: isTablet ? 20 : 0}}>
+          <SmallLogo />
         </View>
 
         <View style={styles.footer}>
@@ -258,7 +261,7 @@ export default function LoginScreen() {
       {/* Overlay Loading */}
       {isLoggingIn ? (
         <View style={styles.overlay}>
-          <SplashScreen />
+          <LoadingLoginScreen />
         </View>
       ) : null}
     </View>

@@ -1,39 +1,146 @@
-import { Colors } from "@/constants/theme";
-import { useColorScheme } from "@/hooks/use-color-scheme";
-import React, { useEffect, useRef, useState } from "react";
-import { Animated, Image, StatusBar, StyleSheet, Text, View } from "react-native";
+import {Colors} from "@/constants/theme";
+import {useColorScheme} from "@/hooks/use-color-scheme";
+import React, {useEffect, useRef, useState, useMemo} from "react"; // Tambahkan useMemo
+import {
+  Animated,
+  Easing,
+  Image,
+  StatusBar,
+  StyleSheet,
+  View,
+} from "react-native";
 
-interface SplashScreenProps {
-  text?: string; // text bersifat opsional
-}
+// --- KUMPULAN KATA-KATA MUTIARA/SEMANGAT ---
+const LOADING_MESSAGES = [
+  "Siap melariskan daganganmu...",
+  "Menjemput rezeki hari ini...",
+  "Halo Juragan, siap beraksi?",
+  "Buka toko, buka peluang...",
+  "Menyiapkan meja kasirmu...",
+  "Semoga hari ini laris manis!",
+  "Toko siap, rezeki pun datang...",
+  "Membuka pintu rezeki...",
+  "Selamat datang kembali, Juragan!",
+  "Persiapkan dagangan terbaikmu...",
+  "Waktunya berjualan dengan semangat!",
+  "Mari kita mulai petualangan jualan!",
+  "Apa kabar? Yuk mulai jualan.",
+  "Mengoptimalkan performa toko...",
+];
 
-export default function SplashScreen({
-  text = "Menyiapkan Toko Kamu...",
-}: SplashScreenProps) {
+const LOGO_SIZE = 250;
+
+export default function SplashScreen() {
+  // Hapus prop text static
   const colorScheme = useColorScheme() ?? "light";
-  // 1. Inisialisasi nilai animasi (mulai dari 0)
-  const progress = useRef(new Animated.Value(0)).current;
-  const fadeAnim = useRef(new Animated.Value(0)).current;
-  const [barWidth, setBarWidth] = useState(0);
+  const isDark = colorScheme === "dark";
+
+  // --- MEMILIH TEKS SECARA ACAK SAAT PERTAMA LOAD ---
+  const randomText = useMemo(() => {
+    const randomIndex = Math.floor(Math.random() * LOADING_MESSAGES.length);
+    return LOADING_MESSAGES[randomIndex];
+  }, []);
+
+  const textColor = isDark ? "#FFFFFF" : "#4CAF50";
+  const emptyColor = isDark ? "#333333" : "#E0E0E0";
+
+  const entranceAnim = useRef(new Animated.Value(0)).current;
+  const textEntranceAnim = useRef(new Animated.Value(0)).current;
+  const fillProgress = useRef(new Animated.Value(0)).current;
+  const breathAnim = useRef(new Animated.Value(0)).current;
+
+  const logoSource = isDark
+    ? require("../assets/logos/3.png")
+    : require("../assets/logos/2.png");
 
   useEffect(() => {
-    // 2. Menjalankan animasi saat komponen dimuat
-    Animated.parallel([
-      // Animasi Loading Bar (Width 0% -> 100%)
-      Animated.timing(progress, {
-        toValue: 1,
-        duration: 3000, // Durasi 3 detik
-        useNativeDriver: false,
-      }),
-      // Animasi Fade In Logo (Opacity 0 -> 1)
-      Animated.timing(fadeAnim, {
-        toValue: 1,
-        duration: 1000,
-        useNativeDriver: true,
-      }),
+    Animated.sequence([
+      Animated.parallel([
+        Animated.timing(entranceAnim, {
+          toValue: 1,
+          duration: 1000,
+          easing: Easing.out(Easing.back(1.5)),
+          useNativeDriver: true,
+        }),
+        Animated.timing(textEntranceAnim, {
+          toValue: 1,
+          duration: 800,
+          delay: 300,
+          easing: Easing.out(Easing.quad),
+          useNativeDriver: true,
+        }),
+      ]),
+      Animated.parallel([
+        Animated.timing(fillProgress, {
+          toValue: 1,
+          duration: 2500,
+          easing: Easing.inOut(Easing.cubic),
+          useNativeDriver: false,
+        }),
+        Animated.loop(
+          Animated.sequence([
+            Animated.timing(breathAnim, {
+              toValue: 1,
+              duration: 1000,
+              easing: Easing.inOut(Easing.sin),
+              useNativeDriver: true,
+            }),
+            Animated.timing(breathAnim, {
+              toValue: 0,
+              duration: 1000,
+              easing: Easing.inOut(Easing.sin),
+              useNativeDriver: true,
+            }),
+          ])
+        ),
+      ]),
     ]).start();
   }, []);
-  const animatedWidth = Animated.multiply(progress, barWidth || 1);
+
+  // ... (Sisa kode style animasi sama seperti sebelumnya) ...
+  const entranceStyle = {
+    opacity: entranceAnim,
+    transform: [
+      {
+        scale: entranceAnim.interpolate({
+          inputRange: [0, 1],
+          outputRange: [0.5, 1],
+        }),
+      },
+    ],
+  };
+
+  const textStyle = {
+    opacity: textEntranceAnim,
+    transform: [
+      {
+        translateY: textEntranceAnim.interpolate({
+          inputRange: [0, 1],
+          outputRange: [20, 0],
+        }),
+      },
+    ],
+  };
+
+  const heightAnim = fillProgress.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0, LOGO_SIZE],
+  });
+
+  const breathStyle = {
+    transform: [
+      {
+        scale: breathAnim.interpolate({
+          inputRange: [0, 1],
+          outputRange: [1, 1.03],
+        }),
+      },
+    ],
+    opacity: breathAnim.interpolate({
+      inputRange: [0, 1],
+      outputRange: [0.3, 0.6],
+    }),
+  };
 
   return (
     <View
@@ -43,86 +150,81 @@ export default function SplashScreen({
       ]}
     >
       <StatusBar
-        barStyle={colorScheme === "dark" ? "light-content" : "dark-content"}
+        barStyle={isDark ? "light-content" : "dark-content"}
         backgroundColor={Colors[colorScheme].background}
       />
 
-      {/* Bagian Logo (Tengah) */}
-      <View style={styles.logoContainer}>
-        <Image
-          source={colorScheme == "dark" ? require("../assets/logos/3.png") : require("../assets/logos/2.png")}
-          style={{ width: 200, height: 200 }}
-          resizeMode="contain"
-        />
-      </View>
-
-      {/* Bagian Loading Bar (Bawah) */}
-      <View style={styles.footerContainer}>
-        {/* Container Bar (Abu-abu) */}
-        <View
-          style={[
-            styles.progressBarBackground,
-            {backgroundColor: colorScheme === "dark" ? "#333" : "#E0E0E0"},
-          ]}
-          onLayout={e => setBarWidth(e.nativeEvent.layout.width)}
-        >
-          {/* Isi Bar (Oranye - Bergerak) */}
-          <Animated.View
-            style={[
-              styles.progressBarFill,
-              {
-                width: animatedWidth,
-                backgroundColor: Colors[colorScheme].primary,
-              },
-            ]}
+      <View style={styles.centerContent}>
+        <Animated.View style={[styles.logoWrapper, entranceStyle]}>
+          <Animated.Image
+            source={logoSource}
+            style={[styles.logoBase, {tintColor: emptyColor}, breathStyle]}
+            resizeMode="contain"
           />
-        </View>
 
-        <Text style={[styles.loadingText, {color: Colors[colorScheme].icon}]}>
-          Menyiapkan Toko Kamu...
-        </Text>
+          <Animated.View
+            style={[styles.overflowContainer, {height: heightAnim}]}
+          >
+            <Image
+              source={logoSource}
+              style={styles.logoFill}
+              resizeMode="contain"
+            />
+          </Animated.View>
+        </Animated.View>
+
+        {/* MENGGUNAKAN RANDOM TEXT */}
+        <Animated.Text
+          style={[styles.loadingText, {color: textColor}, textStyle]}
+        >
+          {randomText}
+        </Animated.Text>
       </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
+  // ... (Style tetap sama, copy paste dari sebelumnya)
   container: {
-    flex: 1,
-    backgroundColor: "#FFFFFF",
-    justifyContent: "space-between", // Membagi ruang atas dan bawah
-    paddingVertical: 60, // Jarak aman dari atas dan bawah layar
-  },
-  logoContainer: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
   },
-  logoText: {
-    fontSize: 48,
-    fontWeight: "500", // Font weight sedang seperti di gambar
-    color: "#FF5722", // Warna Oranye khas Qasir
-    letterSpacing: 1,
-  },
-  footerContainer: {
+  centerContent: {
     alignItems: "center",
-    paddingHorizontal: 40, // Jarak kiri kanan loading bar
-    width: "100%",
+    justifyContent: "center",
   },
-  progressBarBackground: {
-    height: 8, // Ketebalan garis
-    width: 100,
-    borderRadius: 3,
-    overflow: "hidden", // Agar bar oranye tidak keluar dari radius
-    position: "relative",
-    marginBottom: 20,
+  logoWrapper: {
+    width: LOGO_SIZE,
+    height: LOGO_SIZE,
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 40,
   },
-  progressBarFill: {
-    height: "100%",
-    borderRadius: 3,
+  logoBase: {
+    width: LOGO_SIZE,
+    height: LOGO_SIZE,
+    position: "absolute",
+  },
+  overflowContainer: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    width: LOGO_SIZE,
+    overflow: "hidden",
+    justifyContent: "flex-end",
+    zIndex: 2,
+  },
+  logoFill: {
+    width: LOGO_SIZE,
+    height: LOGO_SIZE,
+    position: "absolute",
+    bottom: 0,
   },
   loadingText: {
-    fontSize: 14,
-    fontWeight: "400",
+    fontSize: 16,
+    fontWeight: "600",
+    letterSpacing: 0.8,
   },
 });

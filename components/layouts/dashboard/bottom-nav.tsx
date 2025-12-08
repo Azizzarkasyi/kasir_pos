@@ -1,18 +1,30 @@
-import { DASHBOARD_MENU_ITEMS, DashboardMenuKey, getDashboardRouteForKey } from "@/components/layouts/dashboard/menu-config";
-import { ThemedText } from "@/components/themed-text";
-import { Colors } from "@/constants/theme";
-import { useColorScheme } from "@/hooks/use-color-scheme";
-import { AntDesign } from "@expo/vector-icons";
-import { usePathname, useRouter } from "expo-router";
+import {
+  DASHBOARD_MENU_ITEMS,
+  DashboardMenuKey,
+  getDashboardRouteForKey,
+} from "@/components/layouts/dashboard/menu-config";
+import {ThemedText} from "@/components/themed-text";
+import {Colors} from "@/constants/theme";
+import {useColorScheme} from "@/hooks/use-color-scheme";
+import {AntDesign} from "@expo/vector-icons";
+import {usePathname, useRouter} from "expo-router";
 import React from "react";
-import { StyleSheet, TouchableOpacity, View, useWindowDimensions } from "react-native";
+import {
+  Platform,
+  StyleSheet,
+  TouchableOpacity,
+  View,
+  useWindowDimensions,
+} from "react-native";
+import {useSafeAreaInsets} from "react-native-safe-area-context";
 
 const DashboardBottomNav: React.FC = () => {
   const colorScheme = useColorScheme() ?? "light";
-  const { width, height } = useWindowDimensions();
+  const {width, height} = useWindowDimensions();
   const isTablet = Math.min(width, height) >= 600;
   const isPhone = !isTablet;
-  const styles = createStyles(colorScheme);
+  const insets = useSafeAreaInsets();
+  const styles = createStyles(colorScheme, insets.bottom);
   const router = useRouter();
   const pathname = usePathname();
 
@@ -28,7 +40,8 @@ const DashboardBottomNav: React.FC = () => {
   ];
 
   const primaryMenus = React.useMemo(
-    () => DASHBOARD_MENU_ITEMS.filter(item => PRIMARY_MENU_KEYS.includes(item.key)),
+    () =>
+      DASHBOARD_MENU_ITEMS.filter(item => PRIMARY_MENU_KEYS.includes(item.key)),
     []
   );
 
@@ -38,10 +51,15 @@ const DashboardBottomNav: React.FC = () => {
     if (pathname.startsWith("/dashboard/transaction/history")) return "history";
     if (pathname.startsWith("/dashboard/transaction")) return "transactions";
     if (pathname.startsWith("/dashboard/setting")) return "settings";
-    if (pathname.startsWith("/dashboard/select-branch") || pathname.startsWith("/dashboard/outlet")) return "outlet";
+    if (
+      pathname.startsWith("/dashboard/select-branch") ||
+      pathname.startsWith("/dashboard/outlet")
+    )
+      return "outlet";
     if (pathname.startsWith("/dashboard/employee")) return "employees";
     if (pathname.startsWith("/dashboard/product")) return "products";
-    if (pathname.startsWith("/dashboard/recipe-and-materials")) return "products";
+    if (pathname.startsWith("/dashboard/recipe-and-materials"))
+      return "products";
     if (pathname.startsWith("/dashboard/help")) return "help";
 
     return "home";
@@ -94,13 +112,13 @@ const DashboardBottomNav: React.FC = () => {
   );
 };
 
-const createStyles = (colorScheme: "light" | "dark") =>
+const createStyles = (colorScheme: "light" | "dark", bottomInset: number) =>
   StyleSheet.create({
     bottomNavContainer: {
       flexDirection: "row",
       paddingHorizontal: 12,
       paddingTop: 12,
-      paddingBottom: 12,
+      paddingBottom: Platform.OS === "android" ? Math.max(bottomInset, 12) : 12,
       position: "relative",
       backgroundColor: Colors[colorScheme].secondary,
       borderTopWidth: 1,
