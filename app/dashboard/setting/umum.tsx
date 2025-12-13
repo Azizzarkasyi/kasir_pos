@@ -1,25 +1,25 @@
-import SectionDivider from "@/components/atoms/section-divider";
 import ConfirmPopup from "@/components/atoms/confirm-popup";
+import SectionDivider from "@/components/atoms/section-divider";
 import SelectLanguageModal, {
-  LanguageValue,
+    LanguageValue,
 } from "@/components/drawers/select-language-modal";
 import Header from "@/components/header";
 import MenuRow from "@/components/menu-row";
-import {ThemedButton} from "@/components/themed-button";
-import {ThemedText} from "@/components/themed-text";
-import {Colors} from "@/constants/theme";
-import {useColorScheme} from "@/hooks/use-color-scheme";
-import {useRouter} from "expo-router";
-import React, {useEffect, useState} from "react";
+import { ThemedButton } from "@/components/themed-button";
+import { ThemedText } from "@/components/themed-text";
+import { Colors } from "@/constants/theme";
+import { useColorScheme } from "@/hooks/use-color-scheme";
+import { useRouter } from "expo-router";
+import React, { useEffect, useState } from "react";
 import {
-  Alert,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  useWindowDimensions,
-  View,
+    Alert,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    useWindowDimensions,
+    View,
 } from "react-native";
-import {ScrollView} from "react-native-gesture-handler";
+import { ScrollView } from "react-native-gesture-handler";
 
 export default function GeneralSettingScreen() {
   const colorScheme = useColorScheme() ?? "light";
@@ -210,6 +210,7 @@ export default function GeneralSettingScreen() {
 
       <ConfirmPopup
         visible={showSuccessPopup}
+        successOnly
         title="Berhasil"
         message="Data berhasil disinkronkan"
         onConfirm={() => setShowSuccessPopup(false)}

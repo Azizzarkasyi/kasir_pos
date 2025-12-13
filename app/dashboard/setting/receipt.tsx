@@ -303,6 +303,7 @@ export default function ReceiptSettingScreen() {
 
         <ConfirmPopup
           visible={showSuccessPopup}
+        successOnly
           title="Berhasil"
           message="Konfigurasi struk berhasil disimpan"
           onConfirm={() => setShowSuccessPopup(false)}

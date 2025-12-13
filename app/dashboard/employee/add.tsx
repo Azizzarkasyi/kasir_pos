@@ -294,6 +294,7 @@ export default function AddEmployeeScreen() {
 
       <ConfirmPopup
         visible={showSuccessPopup}
+        successOnly
         title="Berhasil"
         message="Pegawai berhasil ditambahkan"
         onConfirm={() => {

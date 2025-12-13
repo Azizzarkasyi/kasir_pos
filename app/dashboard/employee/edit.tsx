@@ -395,6 +395,7 @@ export default function EditEmployeeScreen() {
 
       <ConfirmPopup
         visible={showSuccessPopup}
+        successOnly
         title="Berhasil"
         message="Pegawai berhasil diperbarui"
         onConfirm={() => {

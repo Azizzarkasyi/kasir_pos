@@ -260,6 +260,7 @@ export default function OrderReceiptSettingScreen() {
 
       <ConfirmPopup
         visible={showSuccessPopup}
+        successOnly
         title="Berhasil"
         message="Konfigurasi struk berhasil disimpan"
         onConfirm={() => setShowSuccessPopup(false)}

@@ -1,26 +1,26 @@
-import StockProductItem from "@/components/atoms/stock-product-item";
 import ConfirmPopup from "@/components/atoms/confirm-popup";
+import StockProductItem from "@/components/atoms/stock-product-item";
 import EditStockModal from "@/components/drawers/edit-stock-modal";
 import Header from "@/components/header";
-import {ThemedInput} from "@/components/themed-input";
-import {ThemedText} from "@/components/themed-text";
-import {Colors} from "@/constants/theme";
-import {useColorScheme} from "@/hooks/use-color-scheme";
+import { ThemedInput } from "@/components/themed-input";
+import { ThemedText } from "@/components/themed-text";
+import { Colors } from "@/constants/theme";
+import { useColorScheme } from "@/hooks/use-color-scheme";
 import productApi from "@/services/endpoints/products";
-import {Product, ProductVariant} from "@/types/api";
-import {AntDesign} from "@expo/vector-icons";
-import {useFocusEffect} from "expo-router";
-import React, {useCallback, useState} from "react";
+import { Product, ProductVariant } from "@/types/api";
+import { AntDesign } from "@expo/vector-icons";
+import { useFocusEffect } from "expo-router";
+import React, { useCallback, useState } from "react";
 import {
-  ActivityIndicator,
-  Alert,
-  StyleSheet,
-  TouchableOpacity,
-  useWindowDimensions,
-  View,
+    ActivityIndicator,
+    Alert,
+    StyleSheet,
+    TouchableOpacity,
+    useWindowDimensions,
+    View,
 } from "react-native";
-import {KeyboardAwareScrollView} from "react-native-keyboard-aware-scroll-view";
-import {useSafeAreaInsets} from "react-native-safe-area-context";
+import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 type StockItem = {
   id: string;
@@ -242,6 +242,7 @@ export default function ManageStockScreen() {
 
       <ConfirmPopup
         visible={showSuccessPopup}
+        successOnly
         title="Berhasil"
         message="Stok berhasil diperbarui"
         onConfirm={() => setShowSuccessPopup(false)}

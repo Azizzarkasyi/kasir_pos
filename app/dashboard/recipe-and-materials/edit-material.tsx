@@ -549,6 +549,7 @@ export default function EditProductScreen() {
       <ConfirmationDialog ref={confirmationRef} />
       <ConfirmPopup
         visible={showSuccessPopup}
+        successOnly
         title="Berhasil"
         message="Produk berhasil diperbarui"
         onConfirm={() => {

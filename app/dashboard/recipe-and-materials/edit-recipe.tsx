@@ -287,6 +287,7 @@ export default function EditRecipeScreen() {
       <ConfirmationDialog ref={confirmationRef} />
       <ConfirmPopup
         visible={showSuccessPopup}
+        successOnly
         title="Berhasil"
         message="Resep berhasil diperbarui"
         onConfirm={() => {

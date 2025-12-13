@@ -1,5 +1,5 @@
-import {Colors} from "@/constants/theme";
-import {useColorScheme} from "@/hooks/use-color-scheme";
+import { Colors } from "@/constants/theme";
+import { useColorScheme } from "@/hooks/use-color-scheme";
 import React from "react";
 import {
   Modal,
@@ -8,7 +8,7 @@ import {
   View,
   useWindowDimensions,
 } from "react-native";
-import {ThemedText} from "../themed-text";
+import { ThemedText } from "../themed-text";
 
 type Props = {
   visible: boolean;
@@ -16,6 +16,7 @@ type Props = {
   message: string;
   onConfirm: () => void;
   onCancel: () => void;
+  successOnly?: boolean; // Jika true, hanya tampilkan tombol OK
 };
 
 const ConfirmPopup: React.FC<Props> = ({
@@ -24,6 +25,7 @@ const ConfirmPopup: React.FC<Props> = ({
   message,
   onConfirm,
   onCancel,
+  successOnly = false,
 }) => {
   const colorScheme = useColorScheme() ?? "light";
   const {width, height} = useWindowDimensions();
@@ -43,20 +45,24 @@ const ConfirmPopup: React.FC<Props> = ({
           <ThemedText style={styles.message}>{message}</ThemedText>
 
           <View style={styles.actionsRow}>
-            <TouchableOpacity
-              style={[styles.button, styles.buttonSecondary]}
-              onPress={onCancel}
-              activeOpacity={0.8}
-            >
-              <ThemedText style={styles.buttonSecondaryText}>Batal</ThemedText>
-            </TouchableOpacity>
+            {!successOnly && (
+              <TouchableOpacity
+                style={[styles.button, styles.buttonSecondary]}
+                onPress={onCancel}
+                activeOpacity={0.8}
+              >
+                <ThemedText style={styles.buttonSecondaryText}>Batal</ThemedText>
+              </TouchableOpacity>
+            )}
 
             <TouchableOpacity
               style={[styles.button, styles.buttonPrimary]}
               onPress={onConfirm}
               activeOpacity={0.8}
             >
-              <ThemedText style={styles.buttonPrimaryText}>Ya</ThemedText>
+              <ThemedText style={styles.buttonPrimaryText}>
+                {successOnly ? "OK" : "Ya"}
+              </ThemedText>
             </TouchableOpacity>
           </View>
         </View>

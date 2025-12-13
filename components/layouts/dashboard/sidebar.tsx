@@ -170,7 +170,7 @@ const Sidebar: React.FC<SidebarProps> = ({
               style={styles.profileRow}
             >
               <View style={styles.avatarCircle}>
-                {profile?.photo ? (
+                {profile?.profile_url ? (
                   <Text>Photo</Text>
                 ) : (
                   <AntDesign

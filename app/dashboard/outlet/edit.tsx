@@ -506,6 +506,7 @@ export default function EditOutletScreen() {
 
       <ConfirmPopup
         visible={showSuccessPopup}
+        successOnly
         title="Berhasil"
         message="Outlet berhasil diperbarui"
         onConfirm={() => {

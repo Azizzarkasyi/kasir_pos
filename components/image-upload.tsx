@@ -1,19 +1,17 @@
-import {Colors} from "@/constants/theme";
-import {useColorScheme} from "@/hooks/use-color-scheme";
-import {Ionicons} from "@expo/vector-icons";
-import React, {useState} from "react";
-import {
-  Image,
-  StyleSheet,
-  TouchableOpacity,
-  useWindowDimensions,
-  View,
-  Alert,
-  ActivityIndicator,
-} from "react-native";
-import {ThemedText} from "./themed-text";
+import { Colors } from "@/constants/theme";
+import { useColorScheme } from "@/hooks/use-color-scheme";
+import { Ionicons } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
-import assetApi from "@/services/endpoints/assets";
+import React from "react";
+import {
+    Alert,
+    Image,
+    StyleSheet,
+    TouchableOpacity,
+    useWindowDimensions,
+    View
+} from "react-native";
+import { ThemedText } from "./themed-text";
 
 interface ImageUploadProps {
   uri?: string | null;
@@ -63,6 +61,8 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
         allowsEditing: true,
         aspect: [1, 1],
         quality: 0.8,
+        exif: false, // Disable EXIF to prevent rendering issues
+        legacy: true, // Use legacy mode for better Android compatibility
       });
 
       if (!result.canceled && result.assets[0]) {

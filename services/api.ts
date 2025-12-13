@@ -7,7 +7,7 @@ import axios, {
 import {ApiError, ApiResponse} from "../types/api";
 
 // Baca dari environment variable, fallback ke localhost jika tidak ada
-const API_URL = process.env.API_URL || "http://10.103.0.161:3001";
+const API_URL = process.env.API_URL || "http://localhost:3001";
 
 console.log("🔧 API Configuration:", {API_URL});
 

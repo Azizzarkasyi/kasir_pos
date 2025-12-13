@@ -1,6 +1,6 @@
-import {Colors} from "@/constants/theme";
-import {useColorScheme} from "@/hooks/use-color-scheme";
-import React, {useEffect, useRef, useState, useMemo} from "react"; // Tambahkan useMemo
+import { Colors } from "@/constants/theme";
+import { useColorScheme } from "@/hooks/use-color-scheme";
+import React, { useEffect, useMemo, useRef } from "react"; // Tambahkan useMemo
 import {
   Animated,
   Easing,
@@ -28,7 +28,7 @@ const LOADING_MESSAGES = [
   "Mengoptimalkan performa toko...",
 ];
 
-const LOGO_SIZE = 250;
+const LOGO_SIZE = 150;
 
 export default function SplashScreen() {
   // Hapus prop text static
@@ -200,7 +200,6 @@ const styles = StyleSheet.create({
     height: LOGO_SIZE,
     justifyContent: "center",
     alignItems: "center",
-    marginBottom: 40,
   },
   logoBase: {
     width: LOGO_SIZE,
@@ -223,8 +222,7 @@ const styles = StyleSheet.create({
     bottom: 0,
   },
   loadingText: {
-    fontSize: 16,
-    fontWeight: "600",
+    fontSize: 14,
     letterSpacing: 0.8,
   },
 });

@@ -528,6 +528,7 @@ export default function AddProductScreen() {
 
       <ConfirmPopup
         visible={showSuccessPopup}
+        successOnly
         title="Berhasil"
         message="Produk berhasil ditambahkan"
         onConfirm={() => {

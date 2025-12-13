@@ -488,6 +488,7 @@ export default function AddOutletScreen() {
 
       <ConfirmPopup
         visible={showSuccessPopup}
+        successOnly
         title="Berhasil"
         message="Outlet berhasil ditambahkan"
         onConfirm={() => {
