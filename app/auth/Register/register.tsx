@@ -9,7 +9,7 @@ import { useColorScheme } from "@/hooks/use-color-scheme";
 import { authApi } from "@/services";
 import { useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
-import { ActivityIndicator, Alert, StyleSheet, TouchableOpacity, useWindowDimensions, View } from "react-native";
+import { Alert, StyleSheet, TouchableOpacity, useWindowDimensions, View } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -504,13 +504,13 @@ const RegisterScreen = () => {
           onPress={handleRegister}
           disabled={isLoading}
         />
-        {isLoading && (
+        {/* {isLoading && (
           <ActivityIndicator
             size="small"
             color={Colors[colorScheme].primary}
             style={{marginTop: 8}}
           />
-        )}
+        )} */}
       </View>
     </View>
   );

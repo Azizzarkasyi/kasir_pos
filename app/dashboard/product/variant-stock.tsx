@@ -29,9 +29,11 @@ export default function StockSettingsScreen() {
   const {
     variantId,
     from,
+    action,
   } = useLocalSearchParams<{
     variantId?: string;
     from?: string;
+    action?: string;
   }>();
 
   const confirmationRef = useRef<ConfirmationDialogHandle | null>(null);
@@ -62,7 +64,7 @@ export default function StockSettingsScreen() {
 
 
       if (variantId) {
-        if (from === "add") {
+        if (from === "add" || (from === "edit" && action === "add")) {
           const base =
             pendingVariant && pendingVariant.id === variantId
               ? pendingVariant
@@ -94,10 +96,12 @@ export default function StockSettingsScreen() {
   };
 
   useEffect(() => {
+      console.log("variant_id",variantId)
+
     if (!variantId) return;
 
     const current =
-      from === "add"
+      from === "add" || (from === "edit" && action === "add")
         ? pendingVariant && pendingVariant.id === variantId
           ? pendingVariant
           : null

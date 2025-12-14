@@ -588,6 +588,7 @@ export default function EditProductScreen() {
                   pathname: "/dashboard/product/variant",
                   params: {
                     from: "edit",
+                    editAction: "add"
                   },
                 } as never)
               }

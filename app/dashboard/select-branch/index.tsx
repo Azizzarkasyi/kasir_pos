@@ -1,21 +1,21 @@
 import Header from "@/components/header";
-import {ThemedText} from "@/components/themed-text";
-import {Colors} from "@/constants/theme";
-import {useColorScheme} from "@/hooks/use-color-scheme";
-import {AntDesign, Ionicons} from "@expo/vector-icons";
-import React, {useState, useEffect} from "react";
+import { ThemedText } from "@/components/themed-text";
+import { Colors } from "@/constants/theme";
+import { useColorScheme } from "@/hooks/use-color-scheme";
+import { Branch, branchApi } from "@/services/endpoints/branches";
+import { AntDesign, Ionicons } from "@expo/vector-icons";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useRouter } from "expo-router";
+import React, { useEffect, useState } from "react";
 import {
+  ActivityIndicator,
+  FlatList,
   StyleSheet,
   TextInput,
   TouchableOpacity,
   useWindowDimensions,
   View,
-  FlatList,
-  ActivityIndicator,
 } from "react-native";
-import {branchApi, Branch} from "@/services/endpoints/branches";
-import {useRouter} from "expo-router";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 
 type OutletItemProps = {
   branch: Branch;
@@ -305,6 +305,7 @@ const createStyles = (
     },
     outletAddress: {
       fontSize: isTablet ? 18 : 12,
+      lineHeight: isTablet ? 24 : 16,
       color: Colors[colorScheme].icon,
     },
     outletCardSelected: {

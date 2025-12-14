@@ -100,6 +100,7 @@ export const productApi = {
     data: {
       action_type: "adjust_stock" | "add_stock" | "remove_stock";
       amount: number;
+      note: string;
     }
   ): Promise<ApiResponse<any>> {
     const response = await apiService.put<any>(

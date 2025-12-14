@@ -1,20 +1,20 @@
+import ConfirmPopup from "@/components/atoms/confirm-popup";
 import SectionDivider from "@/components/atoms/section-divider";
 import ComboInput from "@/components/combo-input";
-import ConfirmPopup from "@/components/atoms/confirm-popup";
 import Header from "@/components/header";
 import ImageUpload from "@/components/image-upload";
-import {ThemedButton} from "@/components/themed-button";
-import {ThemedInput} from "@/components/themed-input";
-import {ThemedText} from "@/components/themed-text";
-import {Colors} from "@/constants/theme";
-import {useColorScheme} from "@/hooks/use-color-scheme";
-import {useRouter} from "expo-router";
-import React, {useState} from "react";
-import {StyleSheet, useWindowDimensions, View, Alert} from "react-native";
-import {KeyboardAwareScrollView} from "react-native-keyboard-aware-scroll-view";
-import {branchApi} from "@/services/endpoints/branches";
-import assetApi, {prepareFileFromUri} from "@/services/endpoints/assets";
+import { ThemedButton } from "@/components/themed-button";
+import { ThemedInput } from "@/components/themed-input";
+import { ThemedText } from "@/components/themed-text";
+import { Colors } from "@/constants/theme";
+import { useColorScheme } from "@/hooks/use-color-scheme";
+import assetApi, { prepareFileFromUri } from "@/services/endpoints/assets";
+import { branchApi } from "@/services/endpoints/branches";
 import axios from "axios";
+import { useRouter } from "expo-router";
+import React, { useState } from "react";
+import { Alert, StyleSheet, useWindowDimensions, View } from "react-native";
+import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 
 type LocationOption = {label: string; value: string};
 
@@ -75,11 +75,8 @@ export default function AddOutletScreen() {
             Accept: "application/json",
           },
         });
-        console.log("📡 Response status:", res.status);
-        console.log("📦 Received data:", res.data);
 
         const data = Array.isArray(res.data.data) ? res.data.data : [];
-        console.log("✅ Provinces count:", data.length);
 
         setProvinceOptions([
           {label: "Pilih Provinsi", value: ""},

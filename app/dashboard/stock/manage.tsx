@@ -12,12 +12,12 @@ import { AntDesign } from "@expo/vector-icons";
 import { useFocusEffect } from "expo-router";
 import React, { useCallback, useState } from "react";
 import {
-    ActivityIndicator,
-    Alert,
-    StyleSheet,
-    TouchableOpacity,
-    useWindowDimensions,
-    View,
+  ActivityIndicator,
+  Alert,
+  StyleSheet,
+  TouchableOpacity,
+  useWindowDimensions,
+  View,
 } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -33,7 +33,7 @@ type StockItem = {
 
 export default function ManageStockScreen() {
   const colorScheme = useColorScheme() ?? "light";
-  const {width, height} = useWindowDimensions();
+  const { width, height } = useWindowDimensions();
   const isTablet = Math.min(width, height) >= 600;
   const isLandscape = width > height;
   const isTabletLandscape = isTablet && isLandscape;
@@ -67,7 +67,7 @@ export default function ManageStockScreen() {
                 variantId: variant.id,
                 productName: product.name,
                 variantName:
-                  variant.name !== "Regular" ? variant.name : undefined,
+                  variant.name,
                 quantity: variant.stock || 0,
                 unit: undefined, // Unit will be loaded from unit_id if needed
               });
@@ -106,7 +106,7 @@ export default function ManageStockScreen() {
   );
 
   return (
-    <View style={{flex: 1, backgroundColor: Colors[colorScheme].background}}>
+    <View style={{ flex: 1, backgroundColor: Colors[colorScheme].background }}>
       <Header title="Kelola Stok" showHelp={false} />
       <KeyboardAwareScrollView
         contentContainerStyle={{
@@ -121,7 +121,7 @@ export default function ManageStockScreen() {
       >
         <View style={styles.contentWrapper}>
           <View style={styles.searchRow}>
-            <View style={{flex: 1, flexDirection: "row", alignItems: "center"}}>
+            <View style={{ flex: 1, flexDirection: "row", alignItems: "center" }}>
               <ThemedInput
                 label="Cari Produk"
                 value={search}
@@ -134,7 +134,7 @@ export default function ManageStockScreen() {
               />
             </View>
 
-            <TouchableOpacity style={styles.scanButton} onPress={() => {}}>
+            <TouchableOpacity style={styles.scanButton} onPress={() => { }}>
               <AntDesign
                 name="scan"
                 size={isTablet ? 32 : 24}
@@ -194,35 +194,26 @@ export default function ManageStockScreen() {
             setEditingItem(null);
           }
         }}
-        onSubmit={async ({quantity, mode}) => {
+        onSubmit={async ({ quantity, mode, note }) => {
           if (!editingItem) return;
 
           try {
             setIsUpdatingStock(true);
 
-            // Map modal mode to backend action_type
-            const actionTypeMap: Record<
-              string,
-              "adjust_stock" | "add_stock" | "remove_stock"
-            > = {
-              adjust: "adjust_stock",
-              increase: "add_stock",
-              decrease: "remove_stock",
-            };
-
-            const action_type = actionTypeMap[mode] || "adjust_stock";
+        
 
             console.log("📦 Updating stock:", {
+              mode,
               variantId: editingItem.variantId,
-              action_type,
               amount: quantity,
               product: editingItem.productName,
               variant: editingItem.variantName,
             });
 
             await productApi.updateStock(editingItem.variantId, {
-              action_type,
+              action_type: mode,
               amount: quantity,
+              note,
             });
 
             console.log("✅ Stock updated successfully");
