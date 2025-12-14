@@ -9,13 +9,14 @@ import Sidebar from "@/components/layouts/dashboard/sidebar";
 import CalculatorInput from "@/components/mollecules/calculator-input";
 import { Colors } from "@/constants/theme";
 import { useColorScheme } from "@/hooks/use-color-scheme";
+import { useScannerDevice } from "@/hooks/use-scanner-device";
 import { categoryApi } from "@/services/endpoints/categories";
 import { productApi } from "@/services/endpoints/products";
 import { useCartStore } from "@/stores/cart-store";
 import { Category, Product } from "@/types/api";
 import { AntDesign, Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   FlatList,
@@ -67,6 +68,17 @@ export default function PaymentPage() {
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [isLoading, setIsLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  const [isBarcodeLoading, setIsBarcodeLoading] = useState(false);
+  const [usbInputBuffer, setUsbInputBuffer] = useState("");
+
+  const textInputRef = useRef<TextInput>(null);
+  const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const {
+    savedDevice,
+    lastScannedBarcode,
+    clearLastBarcode,
+  } = useScannerDevice();
 
   const [checkoutProducts, setCheckoutProducts] = useState<CheckoutItemData[]>([]);
   const [variantModalVisible, setVariantModalVisible] = useState(false);
@@ -83,6 +95,23 @@ export default function PaymentPage() {
   useEffect(() => {
     clearCart();
   }, [])
+
+  useEffect(() => {
+    if (savedDevice?.connectionType === "usb") {
+      textInputRef.current?.focus();
+      const timer = setTimeout(() => {
+        textInputRef.current?.focus();
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [savedDevice]);
+
+  useEffect(() => {
+    if (lastScannedBarcode) {
+      handleScannedBarcode(lastScannedBarcode);
+      clearLastBarcode();
+    }
+  }, [lastScannedBarcode]);
 
   // Cart store
   const {
@@ -287,6 +316,86 @@ export default function PaymentPage() {
     setSelectedProductForVariant(null);
   };
 
+  const handleScannedBarcode = async (code: string) => {
+    if (!code || isBarcodeLoading) {
+      return;
+    }
+
+    try {
+      setIsBarcodeLoading(true);
+      const response = await productApi.getProducts({ search: code });
+
+      const list = response.data ?? [];
+      if (!list.length) {
+        return;
+      }
+
+      const product = list[0];
+
+      if (product.variants && product.variants.length > 0) {
+        const matchedVariant =
+          product.variants.find(v => v.barcode === code) ||
+          product.variants[0];
+
+        if (matchedVariant) {
+          handleConfirmVariant({
+            productId: product.id,
+            variantId: matchedVariant.id,
+            quantity: 1,
+            note: "",
+          });
+          return;
+        }
+      }
+
+      // Fallback: treat as non-variant product match (by product barcode or generic search)
+      handleAddProductToCheckout(product.id);
+    } catch (error) {
+      console.error("❌ Failed to fetch product by variant (barcode):", error);
+    } finally {
+      setIsBarcodeLoading(false);
+    }
+  };
+
+  const handleUsbTextChange = (text: string) => {
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+    }
+
+    if (text.includes("\n")) {
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+        debounceTimerRef.current = null;
+      }
+
+      const barcode = text.replace(/\n/g, "").trim();
+
+      if (barcode) {
+        handleScannedBarcode(barcode);
+      }
+      setUsbInputBuffer("");
+
+      setTimeout(() => {
+        textInputRef.current?.focus();
+      }, 50);
+      return;
+    }
+
+    setUsbInputBuffer(text);
+
+    debounceTimerRef.current = setTimeout(() => {
+      const barcode = text.trim();
+      if (barcode && barcode.length >= 3) {
+        handleScannedBarcode(barcode);
+        setUsbInputBuffer("");
+
+        setTimeout(() => {
+          textInputRef.current?.focus();
+        }, 50);
+      }
+    }, 150);
+  };
+
   const getProductQuantity = (productId: string) => {
     return checkoutProducts
       .filter(item => item.productId === productId)
@@ -424,6 +533,21 @@ export default function PaymentPage() {
         { backgroundColor: Colors[colorScheme].background },
       ]}
     >
+      {savedDevice?.connectionType === "usb" && (
+        <TextInput
+          ref={textInputRef}
+          value={usbInputBuffer}
+          onChangeText={handleUsbTextChange}
+          autoFocus
+          style={styles.hiddenInput}
+          keyboardType="default"
+          autoCapitalize="none"
+          autoCorrect={false}
+          multiline={false}
+          blurOnSubmit={false}
+        />
+      )}
+
       <Header
         showHelp={false}
         title="Transaksi"
@@ -471,13 +595,6 @@ export default function PaymentPage() {
           </View>
 
           <View style={styles.headerIcons}>
-            <TouchableOpacity onPress={() => { }} style={styles.headerIconBox}>
-              <Ionicons
-                name="barcode-outline"
-                size={isTablet ? 28 : 24}
-                color={Colors[colorScheme].icon}
-              />
-            </TouchableOpacity>
             <TouchableOpacity
               onPress={() => router.push("/dashboard/transaction/history")}
               style={styles.headerIconBox}
@@ -929,6 +1046,27 @@ const createStyles = (colorScheme: "light" | "dark", isTablet: boolean, isTablet
     headerIcons: {
       flexDirection: "row",
       columnGap: isTablet ? 12 : 8,
+    },
+    hiddenInput: {
+      position: "absolute",
+      opacity: 0,
+      height: 0,
+      width: 0,
+    },
+    barcodeInputWrapper: {
+      minWidth: isTablet ? 180 : 140,
+      maxWidth: isTablet ? 220 : 160,
+      height: isTablet ? 52 : 40,
+      borderRadius: isTablet ? 10 : 8,
+      borderColor: Colors[colorScheme].border,
+      borderWidth: 1,
+      justifyContent: "center",
+      paddingHorizontal: isTablet ? 12 : 8,
+      backgroundColor: Colors[colorScheme].background,
+    },
+    barcodeInput: {
+      fontSize: isTablet ? 16 : 13,
+      paddingVertical: 0,
     },
     headerIconBox: {
       width: isTablet ? 52 : 40,

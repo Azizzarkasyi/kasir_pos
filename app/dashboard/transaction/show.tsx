@@ -1,16 +1,22 @@
 "use client";
 
 import CheckoutItem from "@/components/atoms/checkout-item";
-import ConfirmPopup from "@/components/atoms/confirm-popup";
 import Header from "@/components/header";
-import {ThemedButton} from "@/components/themed-button";
-import {Colors} from "@/constants/theme";
-import {useColorScheme} from "@/hooks/use-color-scheme";
-import {transactionApi} from "@/services/endpoints/transactions";
-import {Transaction} from "@/types/api";
-import {Ionicons} from "@expo/vector-icons";
-import {useLocalSearchParams, useRouter} from "expo-router";
-import React, {useEffect, useState} from "react";
+import { ThemedButton } from "@/components/themed-button";
+import { Colors } from "@/constants/theme";
+import { useColorScheme } from "@/hooks/use-color-scheme";
+import { usePrinterDevice } from "@/hooks/use-printer-device";
+import { settingsApi, StoreInfo } from "@/services";
+import { transactionApi } from "@/services/endpoints/transactions";
+import { printReceipt } from "@/services/receipt";
+// import { buildPrintReceiptText } from "@/services/receipt";
+import { Transaction } from "@/types/api";
+import { Ionicons } from "@expo/vector-icons";
+import {
+  BluetoothManager
+} from "@vardrz/react-native-bluetooth-escpos-printer";
+import { useLocalSearchParams, useRouter } from "expo-router";
+import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -24,15 +30,18 @@ import {
 
 export default function TransactionDetailPage() {
   const colorScheme = useColorScheme() ?? "light";
-  const {width, height} = useWindowDimensions();
+  const { width, height } = useWindowDimensions();
   const isTablet = Math.min(width, height) >= 600;
   const styles = createStyles(colorScheme, isTablet);
   const router = useRouter();
   const params = useLocalSearchParams();
+  const { savedDevice, connectedDeviceInstance, connectToDevice } = usePrinterDevice();
 
   const [transaction, setTransaction] = useState<Transaction | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isDetailOpen, setIsDetailOpen] = useState(true);
+  const [isPrinting, setIsPrinting] = useState(false);
+  const [store, setStore] = useState<StoreInfo | null>(null);
 
   useEffect(() => {
     const fetchTransaction = async () => {
@@ -58,6 +67,21 @@ export default function TransactionDetailPage() {
     fetchTransaction();
   }, [params.id]);
 
+  useEffect(() => {
+    const fetchStore = async () => {
+      try {
+        const response = await settingsApi.getStoreInfo();
+        if (response.data) {
+          setStore(response.data);
+        }
+      } catch (error) {
+        console.error("Failed to fetch store info:", error);
+      }
+    };
+
+    fetchStore();
+  }, []);
+
   const items = transaction?.items || [];
 
   const formatCurrency = (value: number) => {
@@ -74,23 +98,81 @@ export default function TransactionDetailPage() {
 
   const transactionDate = transaction?.createdAt
     ? new Date(transaction.createdAt).toLocaleString("id-ID", {
-        day: "2-digit",
-        month: "short",
-        year: "numeric",
-        hour: "2-digit",
-        minute: "2-digit",
-      })
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    })
     : "-";
 
   const paymentMethod =
     transaction?.paymentMethod === "cash" ? "Tunai" : "Hutang";
+
+  const handlePrintReceipt = async () => {
+    if (!transaction) {
+      return;
+    }
+
+    if (!savedDevice) {
+      Alert.alert(
+        "Error",
+        "Printer belum dipilih. Silakan pilih dan simpan printer terlebih dahulu.",
+      );
+      return;
+    }
+
+    setIsPrinting(true);
+
+    try {
+      console.log(
+        "[TransactionDetailPage] Connecting via BluetoothManager to:",
+        savedDevice.address,
+      );
+
+      // Pastikan terkoneksi ke printer via library ESC/POS baru
+      const isConnected = await BluetoothManager.isBluetoothEnabled();
+      if (!isConnected) {
+        await BluetoothManager.enableBluetooth();
+      }
+
+      await BluetoothManager.connect(savedDevice.address).finally(() => {
+        console.log("[TransactionDetailPage] Connected to printer");
+      });
+
+      await printReceipt({
+        transaction,
+        store,
+        subtotal,
+        dibayar,
+        kembalian,
+        transactionDate,
+        paymentMethod,
+        formatCurrency,
+      });
+
+      // BluetoothManager.disconnect();
+
+
+
+      Alert.alert("Berhasil", "Struk berhasil dikirim ke printer.");
+    } catch (e: any) {
+      console.error("[TransactionDetailPage] Print error:", e);
+      Alert.alert(
+        "Gagal",
+        e?.message ?? "Gagal mencetak. Pastikan printer terhubung dengan benar.",
+      );
+    } finally {
+      setIsPrinting(false);
+    }
+  };
 
   const handleCancelTransaction = () => {
     Alert.alert(
       "Batalkan Transaksi",
       "Yakin ingin membatalkan transaksi ini?",
       [
-        {text: "Tidak", style: "cancel"},
+        { text: "Tidak", style: "cancel" },
         {
           text: "Ya, Batalkan",
           style: "destructive",
@@ -115,13 +197,13 @@ export default function TransactionDetailPage() {
       <View
         style={[
           styles.container,
-          {backgroundColor: Colors[colorScheme].background},
+          { backgroundColor: Colors[colorScheme].background },
         ]}
       >
         <Header showBack={true} showHelp={false} title="Detail Transaksi" />
-        <View style={{flex: 1, justifyContent: "center", alignItems: "center"}}>
+        <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
           <ActivityIndicator size="large" color={Colors[colorScheme].primary} />
-          <Text style={{marginTop: 16, color: Colors[colorScheme].text}}>
+          <Text style={{ marginTop: 16, color: Colors[colorScheme].text }}>
             Memuat detail transaksi...
           </Text>
         </View>
@@ -134,12 +216,12 @@ export default function TransactionDetailPage() {
       <View
         style={[
           styles.container,
-          {backgroundColor: Colors[colorScheme].background},
+          { backgroundColor: Colors[colorScheme].background },
         ]}
       >
         <Header showBack={true} showHelp={false} title="Detail Transaksi" />
-        <View style={{flex: 1, justifyContent: "center", alignItems: "center"}}>
-          <Text style={{color: Colors[colorScheme].text}}>
+        <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+          <Text style={{ color: Colors[colorScheme].text }}>
             Transaksi tidak ditemukan
           </Text>
         </View>
@@ -151,7 +233,7 @@ export default function TransactionDetailPage() {
     <View
       style={[
         styles.container,
-        {backgroundColor: Colors[colorScheme].background},
+        { backgroundColor: Colors[colorScheme].background },
       ]}
     >
       <Header
@@ -199,14 +281,16 @@ export default function TransactionDetailPage() {
                 onPress={() =>
                   router.push({
                     pathname: "/dashboard/transaction/share-struck",
-                    params: {transactionId: transaction.id?.toString() || ""},
+                    params: { transactionId: transaction.id?.toString() || "" },
                   })
                 }
               />
               <ThemedButton
-                title="Cetak Struk"
+                title={isPrinting ? "Mencetak..." : "Cetak Struk"}
                 size="medium"
                 variant="primary"
+                onPress={handlePrintReceipt}
+                disabled={isPrinting}
               />
             </View>
           </View>
@@ -219,9 +303,9 @@ export default function TransactionDetailPage() {
               styles.sectionHeaderRowSecondary,
               isDetailOpen
                 ? {
-                    borderBottomWidth: 1,
-                    borderBottomColor: Colors[colorScheme].border,
-                  }
+                  borderBottomWidth: 1,
+                  borderBottomColor: Colors[colorScheme].border,
+                }
                 : {},
             ]}
             onPress={() => setIsDetailOpen(prev => !prev)}

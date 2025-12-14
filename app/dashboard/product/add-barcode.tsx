@@ -2,8 +2,9 @@ import Header from "@/components/header";
 import { Colors } from "@/constants/theme";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { useProductFormStore } from "@/stores/product-form-store";
+import { useVariantBarcodeStore } from "@/stores/variant-barcode-store";
 import { CameraView, useCameraPermissions } from "expo-camera";
-import { useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
 import { Animated, StyleSheet, View, useWindowDimensions } from "react-native";
 
@@ -15,7 +16,9 @@ export default function AddBarcodeScreen() {
   const isTabletLandscape = isTablet && isLandscape;
   const styles = createStyles(colorScheme, isTablet, isTabletLandscape);
   const router = useRouter();
-  const setBarcode = useProductFormStore(state => state.setBarcode);
+  const setProductBarcode = useProductFormStore(state => state.setBarcode);
+  const setVariantBarcode = useVariantBarcodeStore(state => state.setBarcode);
+  const { from } = useLocalSearchParams<{ from?: string }>();
 
   const [permission, requestPermission] = useCameraPermissions();
   const [hasPermission, setHasPermission] = useState<
@@ -71,8 +74,11 @@ export default function AddBarcodeScreen() {
     if (scanned) return;
     setScanned(true);
     console.log("Barcode scanned:", data);
-
-    setBarcode(String(data));
+    if (from === "variant") {
+      setVariantBarcode(String(data));
+    } else {
+      setProductBarcode(String(data));
+    }
     router.back();
   };
 

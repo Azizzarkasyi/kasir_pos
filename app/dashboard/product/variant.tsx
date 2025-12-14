@@ -5,17 +5,18 @@ import ConfirmationDialog, {
 } from "@/components/drawers/confirmation-dialog";
 import Header from "@/components/header";
 import MenuRow from "@/components/menu-row";
-import {ThemedButton} from "@/components/themed-button";
-import {ThemedInput} from "@/components/themed-input";
-import {Colors} from "@/constants/theme";
-import {useColorScheme} from "@/hooks/use-color-scheme";
-import {recipeApi} from "@/services";
-import {useProductFormStore} from "@/stores/product-form-store";
-import {useLocalSearchParams, useNavigation, useRouter} from "expo-router";
-import React, {useEffect, useRef, useState} from "react";
-import {StyleSheet, View, useWindowDimensions} from "react-native";
-import {KeyboardAwareScrollView} from "react-native-keyboard-aware-scroll-view";
-import {useSafeAreaInsets} from "react-native-safe-area-context";
+import { ThemedButton } from "@/components/themed-button";
+import { ThemedInput } from "@/components/themed-input";
+import { Colors } from "@/constants/theme";
+import { useColorScheme } from "@/hooks/use-color-scheme";
+import { recipeApi } from "@/services";
+import { useProductFormStore } from "@/stores/product-form-store";
+import { useVariantBarcodeStore } from "@/stores/variant-barcode-store";
+import { useLocalSearchParams, useNavigation, useRouter } from "expo-router";
+import React, { useEffect, useRef, useState } from "react";
+import { StyleSheet, View, useWindowDimensions } from "react-native";
+import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function VariantScreen() {
   const colorScheme = useColorScheme() ?? "light";
@@ -86,6 +87,8 @@ export default function VariantScreen() {
     notifyMin: boolean;
   } | null>(null);
   const [isSubmit, setIsSubmit] = useState(false);
+  const variantBarcode = useVariantBarcodeStore(state => state.barcode);
+  const resetVariantBarcode = useVariantBarcodeStore(state => state.reset);
 
   useEffect(() => {
     if (qsOfflineStock || qsUnit || qsMinStock || qsNotifyMin) {
@@ -138,6 +141,13 @@ export default function VariantScreen() {
   ]);
 
   useEffect(() => {
+    if (variantBarcode && variantBarcode !== barcode) {
+      setBarcode(variantBarcode);
+      resetVariantBarcode();
+    }
+  }, [variantBarcode, barcode, resetVariantBarcode]);
+
+  useEffect(() => {
     if (qsFrom === "edit") {
       if (qsName) {
         setName(String(qsName));
@@ -145,6 +155,7 @@ export default function VariantScreen() {
       if (qsPrice) {
         setPrice(String(qsPrice));
       }
+
       if (qsEnableCostBarcode) {
         setEnableCostBarcode(String(qsEnableCostBarcode) === "true");
       }
@@ -239,6 +250,8 @@ export default function VariantScreen() {
           } else {
             delete updated.barcode;
           }
+
+          console.log(updated);
 
           return updated;
         })
@@ -385,6 +398,12 @@ export default function VariantScreen() {
                 onCapitalPriceChange={setCapitalPrice}
                 barcode={barcode}
                 onBarcodeChange={setBarcode}
+                onPressScan={() =>
+                  router.push({
+                    pathname: "/dashboard/product/add-barcode",
+                    params: { from: "variant" },
+                  } as never)
+                }
               />
             ) : null}
           </View>

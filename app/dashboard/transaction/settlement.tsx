@@ -3,21 +3,21 @@
 import Header from "@/components/header";
 import { Colors } from "@/constants/theme";
 import { useColorScheme } from "@/hooks/use-color-scheme";
+import { usePrinterDevice } from "@/hooks/use-printer-device";
+import { settingsApi, StoreInfo } from "@/services";
+import { transactionApi } from "@/services/endpoints/transactions";
+import { printReceipt } from "@/services/receipt";
 import { useCartStore } from "@/stores/cart-store";
+import { Transaction } from "@/types/api";
 import { Ionicons } from "@expo/vector-icons";
+import {
+  BluetoothManager,
+} from "@vardrz/react-native-bluetooth-escpos-printer";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
-import { ScrollView, Share, StyleSheet, Text, TouchableOpacity, useWindowDimensions, View } from "react-native";
+import { Alert, ScrollView, Share, StyleSheet, Text, TouchableOpacity, useWindowDimensions, View } from "react-native";
 
-type TransactionResult = {
-  id: string;
-  invoiceNumber: string;
-  totalAmount: number;
-  paidAmount: number;
-  changeAmount: number;
-  paymentMethod: string;
-  createdAt: string;
-};
+type TransactionResult = Transaction;
 
 export default function TransactionSettlementPage() {
   const colorScheme = useColorScheme() ?? "light";
@@ -29,23 +29,62 @@ export default function TransactionSettlementPage() {
   const router = useRouter();
   const params = useLocalSearchParams();
 
-  const {getTotalAmount, clearCart} = useCartStore();
+  const { getTotalAmount, clearCart } = useCartStore();
+
+  const { savedDevice } = usePrinterDevice();
 
   const [transaction, setTransaction] = useState<TransactionResult | null>(
     null
   );
+  const [store, setStore] = useState<StoreInfo | null>(null);
+  const [isPrinting, setIsPrinting] = useState(false);
 
   useEffect(() => {
-    // Parse transaction data from params
-    if (params.transaction) {
+    // Parse transaction data from params, then fetch full detail from API using id
+    const fetchTransaction = async () => {
+      if (!params.transaction) return;
+
       try {
         const txnData = JSON.parse(params.transaction as string);
+
+        if (txnData?.id) {
+          try {
+            const response = await transactionApi.getTransaction(
+              String(txnData.id),
+            );
+
+            if (response.data) {
+              setTransaction(response.data);
+              return;
+            }
+          } catch (error) {
+            console.error("Failed to fetch transaction from API:", error);
+          }
+        }
+
         setTransaction(txnData);
       } catch (error) {
         console.error("Failed to parse transaction data:", error);
       }
-    }
+    };
+
+    fetchTransaction();
   }, [params.transaction]);
+
+  useEffect(() => {
+    const fetchStore = async () => {
+      try {
+        const response = await settingsApi.getStoreInfo();
+        if (response.data) {
+          setStore(response.data);
+        }
+      } catch (error) {
+        console.error("Failed to fetch store info:", error);
+      }
+    };
+
+    fetchStore();
+  }, []);
 
   const paymentMethod =
     transaction?.paymentMethod === "cash" ? "Tunai" : "Hutang";
@@ -54,12 +93,12 @@ export default function TransactionSettlementPage() {
   const kembali = transaction?.changeAmount || 0;
   const transactionDate = transaction?.createdAt
     ? new Date(transaction.createdAt).toLocaleString("id-ID", {
-        day: "2-digit",
-        month: "short",
-        year: "numeric",
-        hour: "2-digit",
-        minute: "2-digit",
-      })
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    })
     : "-";
 
   const formatCurrency = (value: number) => {
@@ -69,15 +108,67 @@ export default function TransactionSettlementPage() {
     return withDots;
   };
 
+  const handlePrintReceipt = async () => {
+    if (!transaction) {
+      return;
+    }
+
+    if (!savedDevice) {
+      Alert.alert(
+        "Error",
+        "Printer belum dipilih. Silakan pilih dan simpan printer terlebih dahulu.",
+      );
+      return;
+    }
+
+    setIsPrinting(true);
+
+    try {
+      console.log(
+        "[TransactionSettlementPage] Connecting via BluetoothManager to:",
+        savedDevice.address,
+      );
+
+      const isConnected = await BluetoothManager.isBluetoothEnabled();
+      if (!isConnected) {
+        await BluetoothManager.enableBluetooth();
+      }
+
+      await BluetoothManager.connect(savedDevice.address).then(async () => {
+        await printReceipt({
+          transaction,
+          store,
+          subtotal: totalTagihan,
+          dibayar: diterima,
+          kembalian: kembali,
+          transactionDate,
+          paymentMethod,
+          formatCurrency,
+        });
+      });
+
+
+
+      Alert.alert("Berhasil", "Struk berhasil dikirim ke printer.");
+    } catch (e: any) {
+      console.error("[TransactionSettlementPage] Print error:", e);
+      Alert.alert(
+        "Gagal",
+        e?.message ?? "Gagal mencetak. Pastikan printer terhubung dengan benar.",
+      );
+    } finally {
+      setIsPrinting(false);
+    }
+  };
+
   const handleShareReceipt = async () => {
     try {
-      const message = `Transaksi Berhasil\n\nNo: ${
-        transaction?.invoiceNumber || "-"
-      }\nTotal: Rp ${formatCurrency(totalTagihan)}\nBayar: Rp ${formatCurrency(
-        diterima
-      )}\nKembali: Rp ${formatCurrency(
-        kembali
-      )}\nMetode: ${paymentMethod}\nWaktu: ${transactionDate}`;
+      const message = `Transaksi Berhasil\n\nNo: ${transaction?.invoiceNumber || "-"
+        }\nTotal: Rp ${formatCurrency(totalTagihan)}\nBayar: Rp ${formatCurrency(
+          diterima
+        )}\nKembali: Rp ${formatCurrency(
+          kembali
+        )}\nMetode: ${paymentMethod}\nWaktu: ${transactionDate}`;
 
       await Share.share({
         message: message,
@@ -96,7 +187,7 @@ export default function TransactionSettlementPage() {
     <View
       style={[
         styles.container,
-        {backgroundColor: Colors[colorScheme].background},
+        { backgroundColor: Colors[colorScheme].background },
       ]}
     >
       <Header
@@ -121,12 +212,12 @@ export default function TransactionSettlementPage() {
 
             <Text style={styles.successTitle}>Transaksi Berhasil</Text>
             <Text style={styles.successSubtitle}>{transactionDate}</Text>
-          {transaction?.invoiceNumber && (
-            <Text style={[styles.successSubtitle, {marginTop: 4}]}>
-              #{transaction.invoiceNumber}
-            </Text>
+            {transaction?.invoiceNumber && (
+              <Text style={[styles.successSubtitle, { marginTop: 4 }]}>
+                #{transaction.invoiceNumber}
+              </Text>
             )}
-        </View>
+          </View>
 
           <View style={styles.detailWrapper}>
             <View style={styles.detailRow}>
@@ -136,8 +227,8 @@ export default function TransactionSettlementPage() {
             <View style={styles.detailRow}>
               <Text style={styles.detailLabel}>Total Tagihan</Text>
               <Text style={styles.detailValue}>
-              Rp{formatCurrency(totalTagihan)}
-            </Text>
+                Rp{formatCurrency(totalTagihan)}
+              </Text>
             </View>
             <View style={styles.detailRow}>
               <Text style={styles.detailLabel}>Diterima</Text>
@@ -150,49 +241,49 @@ export default function TransactionSettlementPage() {
           </View>
 
           <View style={styles.bottomWrapper}>
-        <View style={styles.topButtonsRow}>
-          <TouchableOpacity
-            style={styles.secondaryButton}
-            onPress={() => {
-              // TODO: Implement print functionality
-              console.log("Print receipt");
-            }}
-          >
-            <Text style={styles.secondaryButtonText}>Cetak Struk</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.secondaryButton}
-            onPress={() => {
-              if (transaction) {
-                router.push({
-                  pathname: "/dashboard/transaction/share-struck",
-                  params: {transactionId: transaction.id},
-                });
-              } else {
-                handleShareReceipt();
-              }
-            }}
-          >
-            <Text style={styles.secondaryButtonText}>Kirim Struk</Text>
-          </TouchableOpacity>
-        </View>
+            <View style={styles.topButtonsRow}>
+              <TouchableOpacity
+                style={styles.secondaryButton}
+                onPress={() => {
+                  // TODO: Implement print functionality
+                  handlePrintReceipt();
+                }}
+              >
+                <Text style={styles.secondaryButtonText}>{isPrinting ? "Mencetak..." : "Cetak Struk"}</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.secondaryButton}
+                onPress={() => {
+                  if (transaction) {
+                    router.push({
+                      pathname: "/dashboard/transaction/share-struck",
+                      params: { transactionId: transaction.id },
+                    });
+                  } else {
+                    handleShareReceipt();
+                  }
+                }}
+              >
+                <Text style={styles.secondaryButtonText}>Kirim Struk</Text>
+              </TouchableOpacity>
+            </View>
 
-          <TouchableOpacity
-            style={[
-            styles.primaryButton,
-            {backgroundColor: Colors[colorScheme].primary},
-          ]}
-            onPress={handleNewTransaction}
-          >
-            <Text
+            <TouchableOpacity
               style={[
-                styles.primaryButtonText,
-                {color: "white"},
+                styles.primaryButton,
+                { backgroundColor: Colors[colorScheme].primary },
               ]}
+              onPress={handleNewTransaction}
             >
-              Transaksi Baru
-            </Text>
-          </TouchableOpacity>
+              <Text
+                style={[
+                  styles.primaryButtonText,
+                  { color: "white" },
+                ]}
+              >
+                Transaksi Baru
+              </Text>
+            </TouchableOpacity>
           </View>
         </View>
       </ScrollView>

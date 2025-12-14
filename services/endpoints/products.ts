@@ -51,6 +51,16 @@ export const productApi = {
   },
 
   /**
+   * Get product by variant ID (used for barcode scanning)
+   */
+  async getProductByVariant(variantId: string): Promise<ApiResponse<Product>> {
+    const response = await apiService.get<Product>(
+      `/products/variant/${variantId}`
+    );
+    return response;
+  },
+
+  /**
    * Create new product with variants
    */
   async createProduct(

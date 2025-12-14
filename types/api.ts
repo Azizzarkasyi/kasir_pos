@@ -209,6 +209,14 @@ export interface Transaction {
   items: TransactionItem[];
   customerId?: number;
   employeeId?: number;
+  cashier: {
+    id: string;
+    name: string;
+  } ;
+  additional_fees: {
+    name: string;
+    amount: number;
+  }[];
   notes?: string;
   createdAt: string;
   updatedAt?: string;

@@ -1,19 +1,19 @@
-import HelpPopup from "@/components/atoms/help-popup";
 import ConfirmPopup from "@/components/atoms/confirm-popup";
+import HelpPopup from "@/components/atoms/help-popup";
 import Header from "@/components/header";
 import ImageUpload from "@/components/image-upload";
-import {ThemedButton} from "@/components/themed-button";
-import {ThemedInput} from "@/components/themed-input";
-import {ThemedText} from "@/components/themed-text";
-import {Colors} from "@/constants/theme";
-import {useColorScheme} from "@/hooks/use-color-scheme";
-import assetApi, {prepareFileFromUri} from "@/services/endpoints/assets";
-import {settingsApi, StruckConfig} from "@/services";
-import {Ionicons} from "@expo/vector-icons";
+import { ThemedButton } from "@/components/themed-button";
+import { ThemedInput } from "@/components/themed-input";
+import { ThemedText } from "@/components/themed-text";
+import { Colors } from "@/constants/theme";
+import { useColorScheme } from "@/hooks/use-color-scheme";
+import { settingsApi, StruckConfig } from "@/services";
+import assetApi, { prepareFileFromUri } from "@/services/endpoints/assets";
+import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import {useNavigation} from "@react-navigation/native";
-import {useRouter} from "expo-router";
-import React, {useEffect, useState} from "react";
+import { useNavigation } from "@react-navigation/native";
+import { useRouter } from "expo-router";
+import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -22,11 +22,11 @@ import {
   useWindowDimensions,
   View,
 } from "react-native";
-import {ScrollView} from "react-native-gesture-handler";
+import { ScrollView } from "react-native-gesture-handler";
 
 export default function ReceiptSettingScreen() {
   const colorScheme = useColorScheme() ?? "light";
-  const {width, height} = useWindowDimensions();
+  const { width, height } = useWindowDimensions();
   const isTablet = Math.min(width, height) >= 600;
   const isLandscape = width > height;
   const isTabletLandscape = isTablet && isLandscape;
@@ -54,6 +54,7 @@ export default function ReceiptSettingScreen() {
       const branchIdFromStorage = await AsyncStorage.getItem(
         "current_branch_id"
       );
+      console.log("branchIdFromStorage", branchIdFromStorage);
       if (branchIdFromStorage) {
         setBranchId(branchIdFromStorage);
         await loadStruckConfig(branchIdFromStorage);
@@ -118,7 +119,7 @@ export default function ReceiptSettingScreen() {
                 style: "cancel",
                 onPress: () => setIsSaving(false),
               },
-              {text: "Lanjutkan", onPress: () => {}},
+              { text: "Lanjutkan", onPress: () => { } },
             ]
           );
           return;
@@ -148,8 +149,8 @@ export default function ReceiptSettingScreen() {
   React.useEffect(() => {
     navigation.setOptions({
       headerRight: () => (
-        <TouchableOpacity style={{paddingHorizontal: 8}}>
-          <ThemedText style={{color: Colors[colorScheme].primary}}>
+        <TouchableOpacity style={{ paddingHorizontal: 8 }}>
+          <ThemedText style={{ color: Colors[colorScheme].primary }}>
             Lihat Struk
           </ThemedText>
         </TouchableOpacity>
@@ -163,7 +164,7 @@ export default function ReceiptSettingScreen() {
       <View
         style={[
           styles.container,
-          {justifyContent: "center", alignItems: "center"},
+          { justifyContent: "center", alignItems: "center" },
         ]}
       >
         <ActivityIndicator size="large" color={Colors[colorScheme].primary} />
@@ -261,9 +262,9 @@ export default function ReceiptSettingScreen() {
               router.push("/dashboard/setting/order-receipt" as never)
             }
           >
-            <View style={{flex: 1}}>
+            <View style={{ flex: 1 }}>
               <ThemedText
-                style={{fontWeight: "600", fontSize: isTablet ? 20 : 16}}
+                style={{ fontWeight: "600", fontSize: isTablet ? 20 : 16 }}
               >
                 Ingin Pengaturan Tambahan?
               </ThemedText>
