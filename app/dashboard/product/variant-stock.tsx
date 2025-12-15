@@ -1,6 +1,6 @@
 import Checkbox from "@/components/checkbox";
 import ConfirmationDialog, {
-  ConfirmationDialogHandle,
+    ConfirmationDialogHandle,
 } from "@/components/drawers/confirmation-dialog";
 import Header from "@/components/header";
 import UnitPicker from "@/components/mollecules/unit-picker";
@@ -42,7 +42,7 @@ export default function StockSettingsScreen() {
 
   const [offlineStock, setOfflineStock] = useState(0);
   const [unit, setUnit] = useState("");
-  const [minStock, setMinStock] = useState(0);
+  const [minStock, setMinStock] = useState(5);
   const [notifyMin, setNotifyMin] = useState(true);
   const [isSubmit, setIsSubmit] = useState(false);
 

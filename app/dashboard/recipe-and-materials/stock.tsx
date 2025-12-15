@@ -36,7 +36,7 @@ export default function StockSettingsScreen() {
     stockFromStore?.offlineStock ?? 0
   );
   const [unit, setUnit] = useState(stockFromStore?.unit ?? "");
-  const [minStock, setMinStock] = useState(stockFromStore?.minStock ?? 0);
+  const [minStock, setMinStock] = useState(stockFromStore?.minStock ?? 5);
   const [notifyMin, setNotifyMin] = useState(
     stockFromStore?.notifyMin ?? true
   );
