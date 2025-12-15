@@ -1,15 +1,15 @@
-import {ReportCard, ReportCardSkeleton} from "@/components/atoms/report-card";
+import { ReportCard, ReportCardSkeleton } from "@/components/atoms/report-card";
 import Header from "@/components/header";
-import {DashboardMenuKey} from "@/components/layouts/dashboard/menu-config";
+import { DashboardMenuKey } from "@/components/layouts/dashboard/menu-config";
 import Sidebar from "@/components/layouts/dashboard/sidebar";
-import {ThemedButton} from "@/components/themed-button";
-import {ThemedText} from "@/components/themed-text";
-import {Colors} from "@/constants/theme";
-import {useColorScheme} from "@/hooks/use-color-scheme";
-import {statsApi} from "@/services";
-import {Ionicons} from "@expo/vector-icons";
+import { ThemedButton } from "@/components/themed-button";
+import { ThemedText } from "@/components/themed-text";
+import { Colors } from "@/constants/theme";
+import { useColorScheme } from "@/hooks/use-color-scheme";
+import { statsApi } from "@/services";
+import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import {useRouter, useFocusEffect} from "expo-router";
+import { useFocusEffect, useRouter } from "expo-router";
 import React from "react";
 import {
   Image,
@@ -23,7 +23,7 @@ import {
 
 const DashboardScreen = () => {
   const colorScheme = useColorScheme() ?? "light";
-  const {width, height} = useWindowDimensions();
+  const { width, height } = useWindowDimensions();
   const isTablet = Math.min(width, height) >= 600;
   const isPhone = !isTablet;
   const isLandscape = width > height;
@@ -87,7 +87,7 @@ const DashboardScreen = () => {
           setCurrentBranchName(name);
         }
       })
-      .catch(() => {});
+      .catch(() => { });
   }, []);
 
   const openDrawer = React.useCallback(() => {
@@ -263,15 +263,15 @@ const DashboardScreen = () => {
                   <ReportCardSkeleton />
                 </>
               ) : statsError ? (
-                <View style={{padding: 16}}>
-                  <ThemedText style={{color: Colors[colorScheme].icon}}>
+                <View style={{ padding: 16 }}>
+                  <ThemedText style={{ color: Colors[colorScheme].icon }}>
                     {statsError}
                   </ThemedText>
                 </View>
               ) : salesStats ? (
                 <>
                   <ReportCard
-                    title={`Penjualan ${getCurrentMonthName()}`}
+                    title={`Penjualan Bulan ini`}
                     amount={formatCurrency(salesStats.current_month_sales)}
                     subtitle={`${formatPercentage(
                       salesStats.current_month_percentage
@@ -357,7 +357,7 @@ const DashboardScreen = () => {
           </View>
 
           <View style={styles.sectionCard}>
-            <ThemedText type="subtitle-2" style={{marginBottom: 10}}>
+            <ThemedText type="subtitle-2" style={{ marginBottom: 10 }}>
               Perangkat Tambahan
             </ThemedText>
             <Image
@@ -401,7 +401,7 @@ const MenuItem = ({
   onPress?: () => void;
 }) => {
   const colorScheme = useColorScheme() ?? "light";
-  const {width, height} = useWindowDimensions();
+  const { width, height } = useWindowDimensions();
   const isTablet = Math.min(width, height) >= 600;
   const styles = menuItemStyles(colorScheme, isTablet);
   const baseIconSize = icon == "help-circle-outline" ? 24 : 24;

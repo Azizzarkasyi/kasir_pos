@@ -1,7 +1,7 @@
 import ConfirmPopup from "@/components/atoms/confirm-popup";
 import SectionDivider from "@/components/atoms/section-divider";
 import SelectLanguageModal, {
-    LanguageValue,
+  LanguageValue,
 } from "@/components/drawers/select-language-modal";
 import Header from "@/components/header";
 import MenuRow from "@/components/menu-row";
@@ -9,26 +9,30 @@ import { ThemedButton } from "@/components/themed-button";
 import { ThemedText } from "@/components/themed-text";
 import { Colors } from "@/constants/theme";
 import { useColorScheme } from "@/hooks/use-color-scheme";
+import { usePrinterStore } from "@/stores/printer-store";
+import { useScannerStore } from "@/stores/scanner-store";
 import { useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
-    Alert,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    useWindowDimensions,
-    View,
+  Alert,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  useWindowDimensions,
+  View,
 } from "react-native";
 import { ScrollView } from "react-native-gesture-handler";
 
 export default function GeneralSettingScreen() {
   const colorScheme = useColorScheme() ?? "light";
-  const {width, height} = useWindowDimensions();
+  const { width, height } = useWindowDimensions();
   const isTablet = Math.min(width, height) >= 600;
   const isLandscape = width > height;
   const isTabletLandscape = isTablet && isLandscape;
   const styles = createStyles(colorScheme, isTablet, isTabletLandscape);
   const router = useRouter();
+  const { savedDevice: printerDevice, getDisplayName: getPrinterDisplayName } = usePrinterStore();
+  const { savedDevice: scannerDevice, getDisplayName: getScannerDisplayName } = useScannerStore();
   const [language, setLanguage] = useState<LanguageValue>("id");
   const [showSuccessPopup, setShowSuccessPopup] = useState(false);
   const [showLanguageModal, setShowLanguageModal] = useState(false);
@@ -167,23 +171,35 @@ export default function GeneralSettingScreen() {
             </View>
             <MenuRow
               title="Printer"
-              rightText="Belum Terhubung"
+              rightText={getPrinterDisplayName()}
               variant="link"
               rowStyle={styles.printerRow}
               style={styles.menuRowTitle}
               showTopBorder={false}
               showBottomBorder={false}
-              onPress={() => router.push("/dashboard/setting/printer" as never)}
+              onPress={() => {
+                if (printerDevice) {
+                  router.push("/dashboard/setting/printer-test" as never);
+                } else {
+                  router.push("/dashboard/setting/printer" as never);
+                }
+              }}
             />
             <MenuRow
               title="Scanner"
-              rightText="Belum Terhubung"
+              rightText={getScannerDisplayName()}
               variant="link"
               rowStyle={styles.scannerRow}
               style={styles.menuRowTitle}
               showTopBorder={false}
               showBottomBorder={false}
-              onPress={() => router.push("/dashboard/setting/scanner" as never)}
+              onPress={() => {
+                if (scannerDevice) {
+                  router.push("/dashboard/setting/scanner-test" as never);
+                } else {
+                  router.push("/dashboard/setting/scanner" as never);
+                }
+              }}
             />
             <MenuRow
               title="Atur Struk"

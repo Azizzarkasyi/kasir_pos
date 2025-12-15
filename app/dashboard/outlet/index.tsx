@@ -1,22 +1,22 @@
 import Header from "@/components/header";
-import {ThemedText} from "@/components/themed-text";
-import {Colors} from "@/constants/theme";
-import {useColorScheme} from "@/hooks/use-color-scheme";
-import {AntDesign, Ionicons} from "@expo/vector-icons";
-import {useRouter} from "expo-router";
-import {useFocusEffect} from "@react-navigation/native";
-import React, {useState, useEffect, useCallback} from "react";
+import { ThemedText } from "@/components/themed-text";
+import { Colors } from "@/constants/theme";
+import { useColorScheme } from "@/hooks/use-color-scheme";
+import { Branch, branchApi } from "@/services/endpoints/branches";
+import { AntDesign, Ionicons } from "@expo/vector-icons";
+import { useFocusEffect } from "@react-navigation/native";
+import { useRouter } from "expo-router";
+import React, { useCallback, useEffect, useState } from "react";
 import {
+  ActivityIndicator,
+  FlatList,
+  RefreshControl,
   StyleSheet,
   TextInput,
   TouchableOpacity,
   useWindowDimensions,
   View,
-  ActivityIndicator,
-  FlatList,
-  RefreshControl,
 } from "react-native";
-import {branchApi, Branch} from "@/services/endpoints/branches";
 
 type OutletItemProps = {
   name: string;
@@ -307,6 +307,7 @@ const createStyles = (
     },
     outletAddress: {
       fontSize: isTablet ? 18 : 12,
+      lineHeight: isTablet ? 24 : 0,
       color: Colors[colorScheme].icon,
     },
     fab: {

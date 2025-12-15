@@ -24,7 +24,7 @@ const WILAYAH_API_BASE = "https://wilayah.id/api";
 
 export default function StoreSettingScreen() {
   const colorScheme = useColorScheme() ?? "light";
-  const {width, height} = useWindowDimensions();
+  const { width, height } = useWindowDimensions();
   const isTablet = Math.min(width, height) >= 600;
   const isLandscape = width > height;
   const isTabletLandscape = isTablet && isLandscape;
@@ -275,6 +275,7 @@ export default function StoreSettingScreen() {
   const loadStoreData = async () => {
     try {
       const response = await settingsApi.getStoreInfo();
+      console.log(JSON.stringify(response.data))
       if (response.data) {
         const storeData = response.data;
         setStore(storeData);
@@ -404,7 +405,7 @@ export default function StoreSettingScreen() {
       <View
         style={[
           styles.container,
-          {justifyContent: "center", alignItems: "center"},
+          { justifyContent: "center", alignItems: "center" },
         ]}
       >
         <ActivityIndicator size="large" color={Colors[colorScheme].primary} />
@@ -422,7 +423,7 @@ export default function StoreSettingScreen() {
         <View style={styles.contentWrapper}>
 
           <View style={styles.sectionCard}>
-            <ThemedText type="subtitle-2" style={{marginBottom: 12}}>
+            <ThemedText type="subtitle-2" style={{ marginBottom: 12 }}>
               Store or Business Data
             </ThemedText>
             <ComboInput
@@ -430,10 +431,10 @@ export default function StoreSettingScreen() {
               value={businessType}
               onChangeText={setBusinessType}
               items={[
-                {label: "Jasa/Service Lainnya", value: "services_other"},
-                {label: "Makanan/Minuman", value: "food_beverage"},
-                {label: "Retail", value: "retail"},
-                {label: "Restoran", value: "restoran"},
+                { label: "Jasa/Service Lainnya", value: "services_other" },
+                { label: "Makanan/Minuman", value: "food_beverage" },
+                { label: "Retail", value: "retail" },
+                { label: "Restoran", value: "restoran" },
               ]}
             />
             <ThemedInput
@@ -465,9 +466,9 @@ export default function StoreSettingScreen() {
               value={country}
               onChangeText={setCountry}
               items={[
-                {label: "Indonesia", value: "id"},
-                {label: "Malaysia", value: "my"},
-                {label: "Singapore", value: "sg"},
+                { label: "Indonesia", value: "id" },
+                { label: "Malaysia", value: "my" },
+                { label: "Singapore", value: "sg" },
               ]}
             />
             <ComboInput

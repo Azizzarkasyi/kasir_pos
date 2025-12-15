@@ -1,14 +1,16 @@
 import DeviceList from "@/components/atoms/device-list";
+import SelectScannerTypeModal, { type ScannerTypeValue } from "@/components/drawers/select-scanner-type-modal";
 import Header from "@/components/header";
 import { ThemedButton } from "@/components/themed-button";
 import { ThemedText } from "@/components/themed-text";
 import { Colors } from "@/constants/theme";
-import { useBluetoothDevices } from "@/hooks/use-bluetooth-devices";
 import { useColorScheme } from "@/hooks/use-color-scheme";
+import { useScannerDevice } from "@/hooks/use-scanner-device";
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
+import { useRouter } from "expo-router";
 import React from "react";
-import { ActivityIndicator, Image, StyleSheet, TouchableOpacity, useWindowDimensions, View } from "react-native";
+import { ActivityIndicator, Alert, Image, StyleSheet, TouchableOpacity, useWindowDimensions, View } from "react-native";
 
 export default function ScannerScreen() {
   const colorScheme = useColorScheme() ?? "light";
@@ -18,21 +20,60 @@ export default function ScannerScreen() {
   const isTabletLandscape = isTablet && isLandscape;
   const styles = createStyles(colorScheme, isTablet, isTabletLandscape);
   const navigation = useNavigation();
-  const { devices, startScan, stopScan, isScanning, error } = useBluetoothDevices();
+  const router = useRouter();
+  const {
+    devices,
+    startScan,
+    stopScan,
+    isScanning,
+    error,
+    connectToDevice,
+    savedDevice,
+  } = useScannerDevice();
 
-  const [connected, setConnected] = React.useState<
-    { name: string; mac: string } | null
-  >(null);
   const [showScan, setShowScan] = React.useState(false);
+  const [showTypeModal, setShowTypeModal] = React.useState(false);
+  const [selectedType, setSelectedType] = React.useState<ScannerTypeValue | null>(null);
 
   const refresh = React.useCallback(() => {
     startScan();
   }, [startScan]);
 
-  const connect = (d: { name: string; mac: string }) => {
-    setConnected(d);
-    setShowScan(false);
-    stopScan();
+  const handleAddScanner = () => {
+    setShowTypeModal(true);
+  };
+
+  const handleTypeSelect = (type: ScannerTypeValue) => {
+    setShowTypeModal(false);
+    setSelectedType(type);
+
+    if (type === "bluetooth") {
+      setShowScan(true);
+      startScan();
+    } else {
+      // USB - just save as connected (USB scanners work as keyboard)
+      handleUsbConnect();
+    }
+  };
+
+  const handleUsbConnect = async () => {
+    try {
+      await connectToDevice("usb", "USB Scanner", "usb");
+      router.replace("/dashboard/setting/scanner-test" as never);
+    } catch (e: any) {
+      Alert.alert("Error", "Gagal menyimpan scanner USB.");
+    }
+  };
+
+  const connect = async (d: { name: string; mac: string }) => {
+    try {
+      await connectToDevice(d.mac, d.name, "bluetooth");
+      setShowScan(false);
+      stopScan();
+      router.replace("/dashboard/setting/scanner-test" as never);
+    } catch {
+      // error sudah ditangani di hook
+    }
   };
 
   React.useEffect(() => {
@@ -55,89 +96,89 @@ export default function ScannerScreen() {
       <Header title="Scanner" showHelp={false} />
       <View style={styles.container}>
         <View style={styles.contentWrapper}>
-        {!connected && !showScan ? (
-          <View style={styles.emptyStateWrapper}>
-            <View style={{ flexDirection: "column", alignItems: "center" }}>
-              <Image
-                source={require("@/assets/ilustrations/empty.jpg")}
-                style={styles.emptyImage}
-              />
-              <ThemedText style={styles.emptyTitle}>
-                Tidak Ada Scanner Terhubung
-              </ThemedText>
-              <ThemedText style={styles.emptySubtitle}>
-                Pilih Tambah Scanner untuk menghubungkan Scanner.
-              </ThemedText>
-              <View style={{ marginTop: isTablet ? 24 : 16 }}>
-                <ThemedButton
-                  title="Tambah Scanner"
-                  size={isTablet ? "base" : "medium"}
-                  onPress={() => {
-                    setShowScan(true);
-                    startScan();
-                  }}
+          {!savedDevice && !showScan ? (
+            <View style={styles.emptyStateWrapper}>
+              <View style={{ flexDirection: "column", alignItems: "center" }}>
+                <Image
+                  source={require("@/assets/ilustrations/empty.jpg")}
+                  style={styles.emptyImage}
                 />
+                <ThemedText style={styles.emptyTitle}>
+                  Tidak Ada Scanner Terhubung
+                </ThemedText>
+                <ThemedText style={styles.emptySubtitle}>
+                  Pilih Tambah Scanner untuk menghubungkan Scanner.
+                </ThemedText>
+                <View style={{ marginTop: isTablet ? 24 : 16 }}>
+                  <ThemedButton
+                    title="Tambah Scanner"
+                    size={isTablet ? "base" : "medium"}
+                    onPress={handleAddScanner}
+                  />
+                </View>
               </View>
             </View>
-          </View>
-        ) : null}
+          ) : null}
 
-        {showScan ? (
-          <View style={styles.sectionCard}>
-            <ThemedText type="subtitle-2">Perangkat Tersedia</ThemedText>
+          {showScan ? (
+            <View style={styles.sectionCard}>
+              <ThemedText type="subtitle-2">Perangkat Tersedia</ThemedText>
 
-
-
-            {!isScanning && devices.length === 0 ? (
-              <View style={{ paddingVertical: isTablet ? 24 : 16 }}>
-                <ThemedText style={{ color: Colors[colorScheme].icon, fontSize: isTablet ? 18 : 14 }}>
-                  Tidak ada perangkat ditemukan.
-                </ThemedText>
-                {error ? (
-                  <ThemedText style={{ color: Colors[colorScheme].danger, fontSize: isTablet ? 18 : 14 }}>
-                    {error}
+              {!isScanning && devices.length === 0 ? (
+                <View style={{ paddingVertical: isTablet ? 24 : 16 }}>
+                  <ThemedText style={{ color: Colors[colorScheme].icon, fontSize: isTablet ? 18 : 14 }}>
+                    Tidak ada perangkat ditemukan.
                   </ThemedText>
-                ) : null}
-              </View>
-            ) : null}
+                  {error ? (
+                    <ThemedText style={{ color: Colors[colorScheme].danger, fontSize: isTablet ? 18 : 14 }}>
+                      {error}
+                    </ThemedText>
+                  ) : null}
+                </View>
+              ) : null}
 
-            {devices.length > 0 ? (
-              <DeviceList devices={devices} onConnect={connect} />
-            ) : null}
+              {devices.length > 0 ? (
+                <DeviceList devices={devices} onConnect={connect} />
+              ) : null}
 
-            {isScanning ? (
-              <View style={{ paddingVertical: isTablet ? 24 : 16, alignItems: "center" }}>
-                <ActivityIndicator color={Colors[colorScheme].primary} size={isTablet ? "large" : "small"} />
-                <ThemedText style={{ marginTop: isTablet ? 16 : 8, fontSize: isTablet ? 18 : 14 }}>
-                  Memindai perangkat Bluetooth...
+              {isScanning ? (
+                <View style={{ paddingVertical: isTablet ? 24 : 16, alignItems: "center" }}>
+                  <ActivityIndicator color={Colors[colorScheme].primary} size={isTablet ? "large" : "small"} />
+                  <ThemedText style={{ marginTop: isTablet ? 16 : 8, fontSize: isTablet ? 18 : 14 }}>
+                    Memindai perangkat Bluetooth...
+                  </ThemedText>
+                </View>
+              ) : null}
+            </View>
+          ) : null}
+
+          {savedDevice && !showScan ? (
+            <View style={styles.sectionCard}>
+              <ThemedText type="subtitle-2">Scanner Terhubung</ThemedText>
+              <View style={{ flexDirection: "row", alignItems: "center", gap: isTablet ? 16 : 8 }}>
+                <Ionicons
+                  name={savedDevice.connectionType === "usb" ? "hardware-chip-outline" : "bluetooth"}
+                  size={isTablet ? 28 : 18}
+                  color={Colors[colorScheme].primary}
+                />
+                <ThemedText style={{ fontWeight: "600", fontSize: isTablet ? 20 : 16 }}>
+                  {savedDevice.name}
                 </ThemedText>
               </View>
-            ) : null}
-          </View>
-        ) : null}
-
-        {connected ? (
-          <View style={styles.sectionCard}>
-            <ThemedText type="subtitle-2">Scanner Terhubung</ThemedText>
-            <View style={{ flexDirection: "row", alignItems: "center", gap: isTablet ? 16 : 8 }}>
-              <Ionicons
-                name="bluetooth"
-                size={isTablet ? 28 : 18}
-                color={Colors[colorScheme].primary}
-              />
-              <ThemedText style={{ fontWeight: "600", fontSize: isTablet ? 20 : 16 }}>
-                {connected.name}
+              <ThemedText style={{ color: Colors[colorScheme].icon, fontSize: isTablet ? 18 : 14 }}>
+                {savedDevice.connectionType === "usb" ? "USB" : savedDevice.address}
               </ThemedText>
             </View>
-            <ThemedText style={{ color: Colors[colorScheme].icon, fontSize: isTablet ? 18 : 14 }}>
-              {connected.mac}
-            </ThemedText>
-          </View>
-        ) : null}
+          ) : null}
         </View>
       </View>
-    </>
 
+      <SelectScannerTypeModal
+        visible={showTypeModal}
+        onSelect={handleTypeSelect}
+        onClose={() => setShowTypeModal(false)}
+      />
+    </>
   );
 }
 

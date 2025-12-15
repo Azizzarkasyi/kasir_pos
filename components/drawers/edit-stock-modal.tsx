@@ -7,15 +7,16 @@ import { Colors } from "@/constants/theme";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import React, { useEffect, useRef, useState } from "react";
 import {
-    Animated,
-    KeyboardAvoidingView,
-    Modal,
-    Platform,
-    StyleSheet,
-    TouchableOpacity,
-    TouchableWithoutFeedback,
-    useWindowDimensions,
-    View,
+  Animated,
+  KeyboardAvoidingView,
+  Modal,
+  Platform,
+  StyleSheet,
+  TextInput,
+  TouchableOpacity,
+  TouchableWithoutFeedback,
+  useWindowDimensions,
+  View,
 } from "react-native";
 
 type EditStockModalProps = {
@@ -24,13 +25,13 @@ type EditStockModalProps = {
   initialQuantity: number;
   previousQuantity?: number;
   onClose: () => void;
-  onSubmit: (params: { quantity: number; mode: string }) => void;
+  onSubmit: (params: { quantity: number; mode: any , note: string}) => void;
 };
 
 const STOCK_MODES = [
-  { label: "Stok Disesuaikan", value: "adjust" },
-  { label: "Stok Bertambah", value: "increase" },
-  { label: "Stok Berkurang", value: "decrease" },
+  // { label: "Stok Disesuaikan", value: "adjust_stock" },
+  { label: "Stok Ditambah", value: "add_stock" },
+  { label: "Stok Dikurangi", value: "remove_stock" },
 ];
 
 const EditStockModal: React.FC<EditStockModalProps> = ({
@@ -47,8 +48,9 @@ const EditStockModal: React.FC<EditStockModalProps> = ({
   const styles = createStyles(colorScheme, isTablet);
 
   const [internalVisible, setInternalVisible] = useState(visible);
-  const [quantity, setQuantity] = useState(initialQuantity);
-  const [mode, setMode] = useState(STOCK_MODES[0].label);
+  const [quantity, setQuantity] = useState(0);
+  const [mode, setMode] = useState(STOCK_MODES[0].value);
+  const [modeText, setModeText] = useState(STOCK_MODES[0].label);
   const [note, setNote] = useState("");
 
   const opacity = useRef(new Animated.Value(1)).current;
@@ -57,7 +59,7 @@ const EditStockModal: React.FC<EditStockModalProps> = ({
   useEffect(() => {
     if (visible) {
       setInternalVisible(true);
-      setQuantity(initialQuantity);
+
       opacity.setValue(1);
     } else {
       setInternalVisible(false);
@@ -72,8 +74,18 @@ const EditStockModal: React.FC<EditStockModalProps> = ({
     });
   };
 
+  const handleClose = () => {
+    setInternalVisible(false);
+    setMode(STOCK_MODES[0].value);
+    setModeText(STOCK_MODES[0].label);
+    setNote("");
+    onClose();
+  };
+
   const handleSave = () => {
-    onSubmit({ quantity, mode });
+    console.log("📦 Updating stock:", { quantity, mode, note });
+    onSubmit({ quantity, mode, note });
+    handleClose();
   };
 
   return (
@@ -81,15 +93,15 @@ const EditStockModal: React.FC<EditStockModalProps> = ({
       visible={internalVisible}
       transparent
       animationType="none"
-      onRequestClose={onClose}
+      onRequestClose={handleClose}
     >
       <View style={styles.root}> 
-        <TouchableWithoutFeedback onPress={onClose}>
+        <TouchableWithoutFeedback onPress={handleClose}>
           <Animated.View style={[styles.backdrop, { opacity }]} />
         </TouchableWithoutFeedback>
 
         <KeyboardAvoidingView
-          behavior={Platform.OS === "ios" ? "padding" : undefined}
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
           style={styles.centerWrapper}
         >
           <Animated.View style={[styles.card, { transform: [{ scale }] }]}> 
@@ -100,8 +112,13 @@ const EditStockModal: React.FC<EditStockModalProps> = ({
             <View style={{ marginTop: 16 }}>
               <ComboInput
                 label="Stok Disesuaikan"
-                value={mode}
-                onChangeText={setMode}
+                value={modeText}
+                onChange={(value) => {
+                  console.log("Selected mode:", value.value);
+                  setMode(value.value);
+                  setModeText(value.label);
+                }}
+                onChangeText={setModeText}
                 items={STOCK_MODES}
                 disableAutoComplete
               />
@@ -119,7 +136,17 @@ const EditStockModal: React.FC<EditStockModalProps> = ({
                 </TouchableOpacity>
 
                 <View style={styles.qtyValueContainer}>
-                  <ThemedText style={styles.qtyValue}>{quantity}</ThemedText>
+                  <TextInput
+                    style={styles.qtyValue}
+                    value={String(quantity)}
+                    onChangeText={text => {
+                      const clean = text.replace(/[^0-9]/g, "");
+                      const num = clean === "" ? 0 : Number(clean);
+                      setQuantity(num);
+                    }}
+                    keyboardType="number-pad"
+                    textAlign="center"
+                  />
                 </View>
 
                 <TouchableOpacity
@@ -178,6 +205,7 @@ const createStyles = (colorScheme: "light" | "dark", isTablet: boolean) =>
       backgroundColor: "rgba(0,0,0,0.45)",
     },
     centerWrapper: {
+      flex: 1,
       width: "100%",
       justifyContent: "center",
       alignItems: "center",

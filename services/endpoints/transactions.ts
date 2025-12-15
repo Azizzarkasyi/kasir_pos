@@ -19,6 +19,11 @@ const transformTransaction = (data: any): Transaction => {
     totalAmount: data.total_amount || data.total || data.totalAmount || 0,
     paidAmount: data.paid_amount || data.paid || data.paidAmount || 0,
     changeAmount: data.change_amount || data.change || data.changeAmount || 0,
+    cashier: {
+      id: data.cashier_id || data.cashierId,
+      name: data.cashier?.name || data.cashierName,
+    },
+    additional_fees: data.additional_fees || data.additionalFees || [],
     paymentMethod: (
       data.payment_method || data.paymentMethod
     )?.toLowerCase() as any,

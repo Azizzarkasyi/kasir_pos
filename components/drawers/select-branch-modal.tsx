@@ -4,14 +4,15 @@ import { Branch, branchApi } from "@/services";
 import { Ionicons } from "@expo/vector-icons";
 import React, { useEffect, useState } from "react";
 import {
-    ActivityIndicator,
-    FlatList,
-    Modal,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    useWindowDimensions,
-    View,
+  ActivityIndicator,
+  FlatList,
+  Modal,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  useWindowDimensions,
+  View,
 } from "react-native";
 import Checkbox from "../atoms/checkbox";
 
@@ -36,18 +37,24 @@ const SelectBranchModal: React.FC<SelectBranchModalProps> = ({
   const [branches, setBranches] = useState<Branch[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
     if (visible) {
-      fetchBranches();
+      fetchBranches("");
+      setSearchQuery("");
     }
   }, [visible]);
 
-  const fetchBranches = async () => {
+  const fetchBranches = async (query: string) => {
     setLoading(true);
     setError(null);
     try {
-      const response = await branchApi.getBranches();
+      const params: any = {};
+      if (query) {
+        params.search = query;
+      }
+      const response = await branchApi.getBranches(params);
       if (response.data) {
         setBranches(response.data);
       }
@@ -57,6 +64,16 @@ const SelectBranchModal: React.FC<SelectBranchModalProps> = ({
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (!visible) return;
+
+    const timer = setTimeout(() => {
+      fetchBranches(searchQuery);
+    }, 400);
+
+    return () => clearTimeout(timer);
+  }, [searchQuery, visible]);
 
   const handleToggle = (branch: Branch) => {
     const isSelected = selectedBranches.some((b) => b.id === branch.id);
@@ -109,6 +126,21 @@ const SelectBranchModal: React.FC<SelectBranchModalProps> = ({
             </TouchableOpacity>
           </View>
 
+          <View style={styles.searchWrapper}>
+            <Ionicons
+              name="search"
+              size={isTablet ? 22 : 18}
+              style={styles.searchIcon}
+            />
+            <TextInput
+              placeholder="Cari Outlet"
+              placeholderTextColor={Colors[colorScheme].icon}
+              style={styles.searchInput}
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+            />
+          </View>
+
           {loading ? (
             <View style={styles.centerContainer}>
               <ActivityIndicator size="large" color={Colors[colorScheme].primary} />
@@ -116,7 +148,10 @@ const SelectBranchModal: React.FC<SelectBranchModalProps> = ({
           ) : error ? (
             <View style={styles.centerContainer}>
               <Text style={styles.errorText}>{error}</Text>
-              <TouchableOpacity onPress={fetchBranches} style={styles.retryButton}>
+              <TouchableOpacity
+                onPress={() => fetchBranches(searchQuery)}
+                style={styles.retryButton}
+              >
                 <Text style={styles.retryText}>Coba Lagi</Text>
               </TouchableOpacity>
             </View>
@@ -168,6 +203,28 @@ const createStyles = (colorScheme: "light" | "dark", isTablet: boolean) =>
     },
     listContent: {
       paddingHorizontal: isTablet ? 24 : 20,
+    },
+    searchWrapper: {
+      flexDirection: "row",
+      alignItems: "center",
+      marginHorizontal: isTablet ? 24 : 20,
+      marginBottom: isTablet ? 16 : 12,
+      borderRadius: isTablet ? 16 : 12,
+      borderWidth: 1,
+      borderColor: Colors[colorScheme].border,
+      paddingHorizontal: isTablet ? 16 : 12,
+      paddingVertical: isTablet ? 12 : 10,
+      backgroundColor: Colors[colorScheme].secondary,
+    },
+    searchIcon: {
+      color: Colors[colorScheme].icon,
+      marginRight: isTablet ? 12 : 8,
+    },
+    searchInput: {
+      flex: 1,
+      fontSize: isTablet ? 18 : 14,
+      paddingVertical: 0,
+      color: Colors[colorScheme].text,
     },
     branchItem: {
       flexDirection: "row",

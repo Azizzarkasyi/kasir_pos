@@ -1,25 +1,25 @@
+import ConfirmPopup from "@/components/atoms/confirm-popup";
 import VariantItem from "@/components/atoms/variant-item";
 import ConfirmationDialog, {
   ConfirmationDialogHandle,
 } from "@/components/drawers/confirmation-dialog";
-import ConfirmPopup from "@/components/atoms/confirm-popup";
 import Header from "@/components/header";
 import ImageUpload from "@/components/image-upload";
 import CategoryPicker from "@/components/mollecules/category-picker";
 import MerkPicker from "@/components/mollecules/merk-picker";
-import {ThemedButton} from "@/components/themed-button";
-import {ThemedInput} from "@/components/themed-input";
-import {ThemedText} from "@/components/themed-text";
-import {Colors} from "@/constants/theme";
-import {useColorScheme} from "@/hooks/use-color-scheme";
-import {recipeApi} from "@/services";
+import { ThemedButton } from "@/components/themed-button";
+import { ThemedInput } from "@/components/themed-input";
+import { ThemedText } from "@/components/themed-text";
+import { Colors } from "@/constants/theme";
+import { useColorScheme } from "@/hooks/use-color-scheme";
+import { recipeApi } from "@/services";
+import assetApi, { prepareFileFromUri } from "@/services/endpoints/assets";
 import merkApi from "@/services/endpoints/merks";
 import productApi from "@/services/endpoints/products";
-import assetApi, {prepareFileFromUri} from "@/services/endpoints/assets";
-import {useProductFormStore} from "@/stores/product-form-store";
-import {Merk, Product} from "@/types/api";
-import {useLocalSearchParams, useNavigation, useRouter} from "expo-router";
-import React, {useEffect, useRef, useState} from "react";
+import { useProductFormStore } from "@/stores/product-form-store";
+import { Merk, Product } from "@/types/api";
+import { useLocalSearchParams, useNavigation, useRouter } from "expo-router";
+import React, { useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -27,8 +27,8 @@ import {
   useWindowDimensions,
   View,
 } from "react-native";
-import {KeyboardAwareScrollView} from "react-native-keyboard-aware-scroll-view";
-import {useSafeAreaInsets} from "react-native-safe-area-context";
+import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function EditProductScreen() {
   const colorScheme = useColorScheme() ?? "light";
@@ -451,7 +451,7 @@ export default function EditProductScreen() {
                       key={idx}
                       initials={(v.name || "VR").slice(0, 2).toUpperCase()}
                       name={v.name}
-                      price={v.price}
+                      price={v.capital_price??0}
                       stock={
                         v.is_stock_active && typeof v.stock === "number"
                           ? {count: v.stock, unit: v.unit_id || "pcs"}

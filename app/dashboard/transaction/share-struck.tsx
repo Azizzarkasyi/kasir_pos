@@ -3,6 +3,7 @@
 import Header from "@/components/header";
 import { Colors } from "@/constants/theme";
 import { useColorScheme } from "@/hooks/use-color-scheme";
+import { settingsApi, StoreInfo } from "@/services";
 import { transactionApi } from "@/services/endpoints/transactions";
 import { useCartStore } from "@/stores/cart-store";
 import { Transaction } from "@/types/api";
@@ -29,9 +30,10 @@ export default function ShareStruckPage() {
   const router = useRouter();
   const params = useLocalSearchParams();
 
-  const {items: cartItems, getTotalAmount, additionalFees} = useCartStore();
+  const { items: cartItems, getTotalAmount, additionalFees } = useCartStore();
 
   const [transaction, setTransaction] = useState<Transaction | null>(null);
+  const [store, setStore] = useState<StoreInfo | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
@@ -41,7 +43,7 @@ export default function ShareStruckPage() {
       if (txnId) {
         try {
           setIsLoading(true);
-          const response = await transactionApi.getTransaction(Number(txnId));
+          const response = await transactionApi.getTransaction(txnId);
           if (response.data) {
             setTransaction(response.data);
           }
@@ -54,7 +56,19 @@ export default function ShareStruckPage() {
       }
     };
 
+    const fetchStore = async () => {
+      try {
+        const response = await settingsApi.getStoreInfo();
+        if (response.data) {
+          setStore(response.data);
+        }
+      } catch (error) {
+        console.error("Failed to fetch store info:", error);
+      }
+    };
+
     fetchTransaction();
+    fetchStore();
   }, [params.transactionId]);
 
   // Use transaction items or cart items
@@ -79,53 +93,75 @@ export default function ShareStruckPage() {
   const subtotal = transaction
     ? transaction.totalAmount
     : items.reduce(
-        (sum, item) => sum + (item.subtotal || item.price * item.quantity),
-        0
-      );
+      (sum, item) => sum + (item.subtotal || item.price * item.quantity),
+      0
+    );
 
   const totalProduk = items.reduce((sum, item) => sum + item.quantity, 0);
-  const dibayar = transaction?.totalAmount || subtotal;
-  const kembalian = 0; // Calculate from transaction data if available
+  const dibayar = transaction?.paidAmount ?? subtotal;
+  const kembalian = transaction?.changeAmount ?? 0;
 
   const transactionDate = transaction?.createdAt
     ? new Date(transaction.createdAt).toLocaleString("id-ID", {
-        day: "2-digit",
-        month: "short",
-        year: "numeric",
-        hour: "2-digit",
-        minute: "2-digit",
-      })
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    })
     : new Date().toLocaleString("id-ID", {
-        day: "2-digit",
-        month: "short",
-        year: "numeric",
-        hour: "2-digit",
-        minute: "2-digit",
-      });
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
 
   const paymentMethod =
     transaction?.paymentMethod === "cash" ? "Tunai" : "Hutang";
 
+  const storeName = store?.owner_name || "Basofi Rswt";
+  const storeBranch = store?.province?.name || "Pusat";
+  const storeAddress = store?.address || "";
+  const storePhone = store?.owner_phone || "";
+
+  const additionalFeesList =
+    transaction?.additional_fees && transaction.additional_fees.length > 0
+      ? transaction.additional_fees
+      : additionalFees || [];
+
   const handleShare = async () => {
     try {
-      const receiptText = `STRUK PEMBAYARAN\n\nBasofi Rswt - Pusat\n\nNo. Struk: ${
+      const storeLine = `${storeName}${storeBranch ? " - " + storeBranch : ""}`;
+      const addressLine = storeAddress ? `\n${storeAddress}` : "";
+
+      const additionalFeesText =
+        additionalFeesList && additionalFeesList.length > 0
+          ? `\n\n--- BIAYA TAMBAHAN ---\n${additionalFeesList
+              .map(
+                fee => `${fee.name}: Rp ${formatCurrency(fee.amount || 0)}`
+              )
+              .join("\n")}`
+          : "";
+
+      const receiptText = `STRUK PEMBAYARAN\n\n${storeLine}${addressLine}\n\nNo. Struk: ${
         transaction?.invoiceNumber || "-"
-      }\nWaktu: ${transactionDate}\nPembayaran: ${paymentMethod}\n\n--- DETAIL PEMBELIAN ---\n${items
-        .map(
-          (item, i) =>
-            `${i + 1}. ${item.productName || "Item"}\n   ${formatCurrency(
-              item.price || item.subtotal / item.quantity
-            )} x ${item.quantity} = ${formatCurrency(
-              item.subtotal || item.price * item.quantity
-            )}`
-        )
-        .join("\n\n")}\n\n--- RINGKASAN ---\nSubtotal: Rp ${formatCurrency(
-        subtotal
-      )}\nTotal: Rp ${formatCurrency(subtotal)}\nBayar: Rp ${formatCurrency(
-        dibayar
-      )}\nKembali: Rp ${formatCurrency(
-        kembalian
-      )}\n\nPowered by Qasir\nwww.qasir.id`;
+        }\nWaktu: ${transactionDate}\nPembayaran: ${paymentMethod}\n\n--- DETAIL PEMBELIAN ---\n${items
+          .map(
+            (item, i) =>
+              `${i + 1}. ${item.productName || "Item"}\n   ${formatCurrency(
+                item.price || item.subtotal / item.quantity
+              )} x ${item.quantity} = ${formatCurrency(
+                item.subtotal || item.price * item.quantity
+              )}`
+          )
+          .join("\n\n")}${additionalFeesText}\n\n--- RINGKASAN ---\nSubtotal: Rp ${formatCurrency(
+            subtotal
+          )}\nTotal: Rp ${formatCurrency(subtotal)}\nBayar: Rp ${formatCurrency(
+            dibayar
+          )}\nKembali: Rp ${formatCurrency(
+            kembalian
+          )}\n\nPowered by ELBIC\nwww.qasir.id`;
 
       await Share.share({
         message: receiptText,
@@ -140,7 +176,7 @@ export default function ShareStruckPage() {
       <View
         style={[
           styles.container,
-          {backgroundColor: Colors[colorScheme].background},
+          { backgroundColor: Colors[colorScheme].background },
         ]}
       >
         <Header
@@ -150,9 +186,9 @@ export default function ShareStruckPage() {
           withNotificationButton={false}
           onBackPress={() => router.back()}
         />
-        <View style={{flex: 1, justifyContent: "center", alignItems: "center"}}>
+        <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
           <ActivityIndicator size="large" color={Colors[colorScheme].primary} />
-          <Text style={{marginTop: 16, color: Colors[colorScheme].text}}>
+          <Text style={{ marginTop: 16, color: Colors[colorScheme].text }}>
             Memuat struk...
           </Text>
         </View>
@@ -164,7 +200,7 @@ export default function ShareStruckPage() {
     <View
       style={[
         styles.container,
-        {backgroundColor: Colors[colorScheme].background},
+        { backgroundColor: Colors[colorScheme].background },
       ]}
     >
       <Header
@@ -183,16 +219,30 @@ export default function ShareStruckPage() {
         >
           <View style={styles.receiptCard}>
             <View style={styles.storeHeaderWrapper}>
-              <Text style={styles.storeName}>Basofi Rswt</Text>
-              <Text style={styles.storeBranch}>Pusat</Text>
+              <Text style={styles.storeName}>{storeName} ({storeBranch})</Text>
             </View>
+
+            {storeAddress ? (
+              <>
+                <View
+                  style={{ marginBottom: isTablet ? 8 : 4, alignItems: "center" }}
+                >
+                  <Text style={styles.storeBranch}>{storeAddress}</Text>
+                </View>
+                <View
+                  style={{ marginBottom: isTablet ? 8 : 4, alignItems: "center" }}
+                >
+                  <Text style={styles.storeBranch}>{storePhone}</Text>
+                </View>
+              </>
+            ) : null}
 
             <View style={styles.sectionDivider} />
 
             <View style={styles.infoGrid}>
               <View style={styles.infoGridRow}>
                 <Text style={styles.infoLabel}>Kasir</Text>
-                <Text style={styles.infoValue}>Basofi Rswt</Text>
+                <Text style={styles.infoValue}>{transaction?.cashier.name}</Text>
               </View>
               <View style={styles.infoGridRow}>
                 <Text style={styles.infoLabel}>Waktu</Text>
@@ -215,6 +265,7 @@ export default function ShareStruckPage() {
             <View style={styles.copyBannerWrapper}>
               <Text style={styles.copyBannerText}>### SALINAN ###</Text>
             </View>
+            <View style={styles.sectionDivider} />
 
             <View style={styles.itemsSection}>
               {items.map((item, index) => {
@@ -223,7 +274,7 @@ export default function ShareStruckPage() {
                   (item.subtotal ? item.subtotal / item.quantity : 0);
                 const lineTotal = item.subtotal || item.price * item.quantity;
                 return (
-                  <View key={item.id || index} style={styles.itemRow}>
+                  <View key={index} style={styles.itemRow}>
                     <View style={styles.itemLeft}>
                       <Text style={styles.itemName}>
                         {item.productName || "Item"}
@@ -239,6 +290,21 @@ export default function ShareStruckPage() {
                 );
               })}
             </View>
+
+            {additionalFeesList && additionalFeesList.length > 0 && (
+              <View style={[styles.itemsSection, { marginTop: isTablet ? 12 : 8 }]}>
+                {additionalFeesList.map((fee, index) => (
+                  <View key={`fee-${index}`} style={styles.itemRow}>
+                    <View style={styles.itemLeft}>
+                      <Text style={styles.itemName}>{fee.name}</Text>
+                    </View>
+                    <Text style={styles.itemAmount}>
+                      {formatCurrency(fee.amount || 0)}
+                    </Text>
+                  </View>
+                ))}
+              </View>
+            )}
 
             <View style={styles.sectionDivider} />
 
@@ -272,8 +338,8 @@ export default function ShareStruckPage() {
             </View>
 
             <View style={styles.footerWrapper}>
-              <Text style={styles.footerText}>Powered by Qasir</Text>
-              <Text style={styles.footerText}>www.qasir.id</Text>
+              <Text style={styles.footerText}>Powered by ELBIC</Text>
+              <Text style={styles.footerText}>www.elbic.id</Text>
             </View>
           </View>
         </ScrollView>
@@ -281,7 +347,7 @@ export default function ShareStruckPage() {
         <TouchableOpacity
           style={[
             styles.fabButton,
-            {backgroundColor: Colors[colorScheme].primary},
+            { backgroundColor: Colors[colorScheme].primary },
           ]}
           activeOpacity={0.8}
           onPress={handleShare}
@@ -359,7 +425,7 @@ const createStyles = (colorScheme: "light" | "dark", isTablet: boolean) =>
     },
     copyBannerWrapper: {
       alignItems: "center",
-      marginVertical: isTablet ? 12 : 8,
+      marginVertical: isTablet ? 12 : 6,
     },
     copyBannerText: {
       fontSize: isTablet ? 20 : 13,
@@ -436,7 +502,7 @@ const createStyles = (colorScheme: "light" | "dark", isTablet: boolean) =>
       alignItems: "center",
       justifyContent: "center",
       shadowColor: "#000",
-      shadowOffset: {width: 0, height: 2},
+      shadowOffset: { width: 0, height: 2 },
       shadowOpacity: 0.25,
       shadowRadius: 4,
       elevation: 6,
