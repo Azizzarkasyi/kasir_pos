@@ -1,9 +1,11 @@
+import { usePrinterStore } from "../../stores/printer-store";
+import { useScannerStore } from "../../stores/scanner-store";
 import {
-  ApiResponse,
-  LoginRequest,
-  LoginResponse,
-  RegisterRequest,
-  User,
+    ApiResponse,
+    LoginRequest,
+    LoginResponse,
+    RegisterRequest,
+    User,
 } from "../../types/api";
 import apiService from "../api";
 
@@ -90,7 +92,13 @@ export const authApi = {
       "auth_token",
       "current_branch_id",
       "current_branch_name",
+      "printer_saved_device",
+      "scanner_saved_device",
     ]);
+
+    // Reset Zustand store state
+    usePrinterStore.getState().clearSavedDevice();
+    useScannerStore.getState().clearSavedDevice();
   },
 
   /**
