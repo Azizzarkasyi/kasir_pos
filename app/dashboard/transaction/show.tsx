@@ -12,21 +12,26 @@ import { printReceipt } from "@/services/receipt";
 // import { buildPrintReceiptText } from "@/services/receipt";
 import { Transaction } from "@/types/api";
 import { Ionicons } from "@expo/vector-icons";
-import {
-  BluetoothManager
-} from "@vardrz/react-native-bluetooth-escpos-printer";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
-  ActivityIndicator,
-  Alert,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  useWindowDimensions,
-  View,
+    ActivityIndicator,
+    Alert,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    useWindowDimensions,
+    View,
 } from "react-native";
+
+// Lazy import BluetoothManager to avoid crash when native module is not linked
+let BluetoothManager: any = null;
+try {
+  BluetoothManager = require("@vardrz/react-native-bluetooth-escpos-printer").BluetoothManager;
+} catch (e) {
+  console.warn("[show] BluetoothManager not available:", e);
+}
 
 export default function TransactionDetailPage() {
   const colorScheme = useColorScheme() ?? "light";
@@ -118,6 +123,14 @@ export default function TransactionDetailPage() {
       Alert.alert(
         "Error",
         "Printer belum dipilih. Silakan pilih dan simpan printer terlebih dahulu.",
+      );
+      return;
+    }
+
+    if (!BluetoothManager) {
+      Alert.alert(
+        "Error",
+        "Module Bluetooth tidak tersedia. Pastikan native module sudah ter-link.",
       );
       return;
     }

@@ -3,18 +3,18 @@ import { ThemedText } from "@/components/themed-text";
 import { Colors } from "@/constants/theme";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { Branch, branchApi } from "@/services/endpoints/branches";
+import { useBranchStore } from "@/stores/branch-store";
 import { AntDesign, Ionicons } from "@expo/vector-icons";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
-  ActivityIndicator,
-  FlatList,
-  StyleSheet,
-  TextInput,
-  TouchableOpacity,
-  useWindowDimensions,
-  View,
+    ActivityIndicator,
+    FlatList,
+    StyleSheet,
+    TextInput,
+    TouchableOpacity,
+    useWindowDimensions,
+    View,
 } from "react-native";
 
 type OutletItemProps = {
@@ -91,27 +91,22 @@ const SelectBranchScreen = () => {
   const styles = createStyles(colorScheme, isTablet, isTabletLandscape);
   const router = useRouter();
 
+  // Use branch store
+  const { currentBranchId, setCurrentBranch } = useBranchStore();
+
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [branches, setBranches] = useState<Branch[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [selectedBranchId, setSelectedBranchId] = useState<string | null>(null);
+  const [selectedBranchId, setSelectedBranchId] = useState<string | null>(currentBranchId);
 
   useEffect(() => {
     fetchBranches();
-    loadSelectedBranch();
-  }, []);
-
-  const loadSelectedBranch = async () => {
-    try {
-      const savedBranchId = await AsyncStorage.getItem("selectedBranchId");
-      if (savedBranchId) {
-        setSelectedBranchId(savedBranchId);
-      }
-    } catch (error) {
-      console.error("Error loading selected branch:", error);
+    // Sync local state with store
+    if (currentBranchId) {
+      setSelectedBranchId(currentBranchId);
     }
-  };
+  }, [currentBranchId]);
 
   const fetchBranches = async () => {
     try {
@@ -130,9 +125,17 @@ const SelectBranchScreen = () => {
   const handleSelectBranch = async (branch: Branch) => {
     try {
       setSelectedBranchId(branch.id);
-      await AsyncStorage.setItem("selectedBranchId", branch.id);
-      await AsyncStorage.setItem("selectedBranchData", JSON.stringify(branch));
-      console.log("Selected branch saved:", branch);
+      // Use store to save branch (handles AsyncStorage internally)
+      await setCurrentBranch({
+        id: String(branch.id),
+        name: branch.name,
+        address: branch.address,
+        province: branch.province ? { id: String(branch.province.id), name: branch.province.name } : undefined,
+        city: branch.city ? { id: String(branch.city.id), name: branch.city.name } : undefined,
+        subdistrict: branch.subdistrict ? { id: String(branch.subdistrict.id), name: branch.subdistrict.name } : undefined,
+        village: branch.village ? { id: String(branch.village.id), name: branch.village.name } : undefined,
+      });
+      console.log("Selected branch saved via store:", branch.name);
     } catch (error) {
       console.error("Error saving selected branch:", error);
     }

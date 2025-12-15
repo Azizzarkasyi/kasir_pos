@@ -1,6 +1,13 @@
 import { StoreInfo } from "@/services";
 import { Transaction } from "@/types/api";
-import { BluetoothEscposPrinter } from "@vardrz/react-native-bluetooth-escpos-printer";
+
+// Lazy import BluetoothEscposPrinter to avoid crash when native module is not linked
+let BluetoothEscposPrinter: any = null;
+try {
+  BluetoothEscposPrinter = require("@vardrz/react-native-bluetooth-escpos-printer").BluetoothEscposPrinter;
+} catch (e) {
+  console.warn("[receipt] BluetoothEscposPrinter not available:", e);
+}
 
 const LINE_WIDTH = 32;
 
@@ -26,6 +33,9 @@ export async function printReceipt(params: {
     paymentMethod: string;
     formatCurrency: (value: number) => string;
 }) {
+    if (!BluetoothEscposPrinter) {
+        throw new Error("Printer module tidak tersedia. Pastikan native module sudah ter-link.");
+    }
     const {
         transaction,
         store,

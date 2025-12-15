@@ -7,8 +7,8 @@ import { ThemedText } from "@/components/themed-text";
 import { Colors } from "@/constants/theme";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { statsApi } from "@/services";
+import { useBranchStore } from "@/stores/branch-store";
 import { Ionicons } from "@expo/vector-icons";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useFocusEffect, useRouter } from "expo-router";
 import React from "react";
 import {
@@ -33,9 +33,6 @@ const DashboardScreen = () => {
   const [refreshing, setRefreshing] = React.useState(false);
   const [activeMenu, setActiveMenu] = React.useState<DashboardMenuKey>("home");
   const [isDrawerOpen, setIsDrawerOpen] = React.useState(false);
-  const [currentBranchName, setCurrentBranchName] = React.useState<
-    string | null
-  >(null);
   const [hasScrolledDown, setHasScrolledDown] = React.useState(false);
   const [salesStats, setSalesStats] = React.useState<{
     current_month_sales: number;
@@ -45,6 +42,9 @@ const DashboardScreen = () => {
   } | null>(null);
   const [statsError, setStatsError] = React.useState<string | null>(null);
   const router = useRouter();
+
+  // Use branch store for reactive branch name
+  const { currentBranchName } = useBranchStore();
 
   const fetchSalesStats = React.useCallback(async () => {
     try {
@@ -79,16 +79,6 @@ const DashboardScreen = () => {
       fetchSalesStats();
     }, [fetchSalesStats])
   );
-
-  React.useEffect(() => {
-    AsyncStorage.getItem("current_branch_name")
-      .then(name => {
-        if (name) {
-          setCurrentBranchName(name);
-        }
-      })
-      .catch(() => { });
-  }, []);
 
   const openDrawer = React.useCallback(() => {
     setIsDrawerOpen(true);
