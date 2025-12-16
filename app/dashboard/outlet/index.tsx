@@ -6,16 +6,16 @@ import { Branch, branchApi } from "@/services/endpoints/branches";
 import { AntDesign, Ionicons } from "@expo/vector-icons";
 import { useFocusEffect } from "@react-navigation/native";
 import { useRouter } from "expo-router";
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
-  ActivityIndicator,
-  FlatList,
-  RefreshControl,
-  StyleSheet,
-  TextInput,
-  TouchableOpacity,
-  useWindowDimensions,
-  View,
+    ActivityIndicator,
+    FlatList,
+    RefreshControl,
+    StyleSheet,
+    TextInput,
+    TouchableOpacity,
+    useWindowDimensions,
+    View,
 } from "react-native";
 
 type OutletItemProps = {
@@ -76,6 +76,7 @@ const SelectBranchScreen = () => {
   const [branches, setBranches] = useState<Branch[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  const isFirstRender = useRef(true);
   const router = useRouter();
 
   // Fetch branches
@@ -110,8 +111,13 @@ const SelectBranchScreen = () => {
     }, [])
   );
 
-  // Debounced search
+  // Debounced search - skip first render to avoid double fetch
   useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
+
     const timer = setTimeout(() => {
       fetchBranches();
     }, 500);

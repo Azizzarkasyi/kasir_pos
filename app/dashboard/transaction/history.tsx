@@ -10,17 +10,17 @@ import { transactionApi } from "@/services/endpoints/transactions";
 import { Transaction } from "@/types/api";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
-  ActivityIndicator,
-  FlatList,
-  RefreshControl,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  useWindowDimensions,
-  View,
+    ActivityIndicator,
+    FlatList,
+    RefreshControl,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    useWindowDimensions,
+    View,
 } from "react-native";
 
 type TransactionHistoryGroupProps = {
@@ -79,6 +79,7 @@ export default function TransactionHistoryPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  const isFirstRender = useRef(true);
 
   const openDrawer = useCallback(() => {
     setIsDrawerOpen(true);
@@ -176,8 +177,13 @@ export default function TransactionHistoryPage() {
     fetchTransactions();
   }, []);
 
-  // Debounced search
+  // Debounced search - skip first render to avoid double fetch
   useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
+
     const timer = setTimeout(() => {
       fetchTransactions();
     }, 500);

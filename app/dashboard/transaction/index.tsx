@@ -18,18 +18,18 @@ import { AntDesign, Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
-  ActivityIndicator,
-  FlatList,
-  Image,
-  RefreshControl,
-  ScrollView,
-  StatusBar,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  useWindowDimensions,
-  View,
+    ActivityIndicator,
+    FlatList,
+    Image,
+    RefreshControl,
+    ScrollView,
+    StatusBar,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    useWindowDimensions,
+    View,
 } from "react-native";
 
 const STATUS_BAR_HEIGHT = StatusBar.currentHeight ?? 0;
@@ -73,6 +73,7 @@ export default function PaymentPage() {
 
   const textInputRef = useRef<TextInput>(null);
   const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const isSearchFirstRender = useRef(true);
 
   const {
     savedDevice,
@@ -176,8 +177,13 @@ export default function PaymentPage() {
     }
   }, [fetchProducts, activeTab]);
 
-  // Debounced search
+  // Debounced search - skip first render to avoid double fetch
   useEffect(() => {
+    if (isSearchFirstRender.current) {
+      isSearchFirstRender.current = false;
+      return;
+    }
+
     const timer = setTimeout(() => {
       if (activeTab !== "manual") {
         fetchProducts();
@@ -784,7 +790,6 @@ export default function PaymentPage() {
                   data={products}
                   renderItem={({ item: product }) => (
                     <ProductItem
-                      key={product.id}
                       name={product.name}
                       remaining={getProductStock(product.id)}
                       price={

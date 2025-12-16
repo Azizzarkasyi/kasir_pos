@@ -1,30 +1,29 @@
 import CategoryItem from "@/components/atoms/category-item";
-import ConfirmPopup from "@/components/atoms/confirm-popup";
 import CategoryModal from "@/components/drawers/category-modal";
 import FilterProductModal from "@/components/drawers/filter-product-modal";
 import Header from "@/components/header";
 import ProductCard from "@/components/product-card";
-import {ThemedInput} from "@/components/themed-input";
-import {ThemedText} from "@/components/themed-text";
-import {Colors} from "@/constants/theme";
-import {useColorScheme} from "@/hooks/use-color-scheme";
+import { ThemedInput } from "@/components/themed-input";
+import { ThemedText } from "@/components/themed-text";
+import { Colors } from "@/constants/theme";
+import { useColorScheme } from "@/hooks/use-color-scheme";
 import categoryApi from "@/services/endpoints/categories";
 import productApi from "@/services/endpoints/products";
-import {useProductFormStore} from "@/stores/product-form-store";
-import {Category, Product} from "@/types/api";
-import {Ionicons} from "@expo/vector-icons";
-import {useFocusEffect, useRouter} from "expo-router";
-import React, {useCallback, useEffect, useState} from "react";
+import { useProductFormStore } from "@/stores/product-form-store";
+import { Category, Product } from "@/types/api";
+import { Ionicons } from "@expo/vector-icons";
+import { useFocusEffect, useRouter } from "expo-router";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
-  ActivityIndicator,
-  Alert,
-  StyleSheet,
-  TouchableOpacity,
-  View,
-  useWindowDimensions,
+    ActivityIndicator,
+    Alert,
+    StyleSheet,
+    TouchableOpacity,
+    View,
+    useWindowDimensions,
 } from "react-native";
-import {KeyboardAwareScrollView} from "react-native-keyboard-aware-scroll-view";
-import {useSafeAreaInsets} from "react-native-safe-area-context";
+import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function ProductsScreen() {
   const colorScheme = useColorScheme() ?? "light";
@@ -51,6 +50,7 @@ export default function ProductsScreen() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [isLoadingProducts, setIsLoadingProducts] = useState(false);
   const [isLoadingCategories, setIsLoadingCategories] = useState(false);
+  const isFirstRender = useRef(true);
 
   useEffect(() => {
     loadCategories();
@@ -63,7 +63,13 @@ export default function ProductsScreen() {
     }, [search, selectedCategoryIds])
   );
 
+  // Debounced search - skip first render to avoid double fetch
   useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
+
     // Re-fetch products when search or filter changes
     const timer = setTimeout(() => {
       loadProducts();
