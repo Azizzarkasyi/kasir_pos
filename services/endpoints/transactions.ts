@@ -1,7 +1,7 @@
 import {
-  ApiResponse,
-  CreateTransactionRequest,
-  Transaction,
+    ApiResponse,
+    CreateTransactionRequest,
+    Transaction,
 } from "../../types/api";
 import apiService from "../api";
 
@@ -56,6 +56,7 @@ export const transactionApi = {
   async getTransactions(params?: {
     page?: number;
     limit?: number;
+    branch_id?: string;
     startDate?: string;
     endDate?: string;
     paymentMethod?: string;

@@ -7,20 +7,21 @@ import Sidebar from "@/components/layouts/dashboard/sidebar";
 import { Colors } from "@/constants/theme";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { transactionApi } from "@/services/endpoints/transactions";
+import { useBranchStore } from "@/stores/branch-store";
 import { Transaction } from "@/types/api";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
-    ActivityIndicator,
-    FlatList,
-    RefreshControl,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    useWindowDimensions,
-    View,
+  ActivityIndicator,
+  FlatList,
+  RefreshControl,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  useWindowDimensions,
+  View,
 } from "react-native";
 
 type TransactionHistoryGroupProps = {
@@ -80,6 +81,9 @@ export default function TransactionHistoryPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const isFirstRender = useRef(true);
+
+  // Get current branch from store
+  const { currentBranchId } = useBranchStore();
 
   const openDrawer = useCallback(() => {
     setIsDrawerOpen(true);
@@ -156,6 +160,11 @@ export default function TransactionHistoryPage() {
       if (searchQuery) {
         // Search by invoice number or other fields
         params.search = searchQuery;
+      }
+
+      // Filter by selected branch/outlet
+      if (currentBranchId) {
+        params.branch_id = currentBranchId;
       }
 
       const response = await transactionApi.getTransactions(params);

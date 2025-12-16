@@ -12,6 +12,7 @@ import { useColorScheme } from "@/hooks/use-color-scheme";
 import { useScannerDevice } from "@/hooks/use-scanner-device";
 import { categoryApi } from "@/services/endpoints/categories";
 import { productApi } from "@/services/endpoints/products";
+import { useBranchStore } from "@/stores/branch-store";
 import { useCartStore } from "@/stores/cart-store";
 import { Category, Product } from "@/types/api";
 import { AntDesign, Ionicons } from "@expo/vector-icons";
@@ -93,6 +94,9 @@ export default function PaymentPage() {
       clearCart,
     } = useCartStore();
 
+  // Get current branch from store
+  const { currentBranchId } = useBranchStore();
+
   useEffect(() => {
     clearCart();
   }, [])
@@ -141,6 +145,11 @@ export default function PaymentPage() {
       //   params.is_favorite = true;
       // }
 
+      // Filter by selected branch/outlet
+      if (currentBranchId) {
+        params.branch_id = currentBranchId;
+      }
+
       const response = await productApi.getProducts(params);
 
       if (response.data) {
@@ -151,7 +160,7 @@ export default function PaymentPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [searchQuery, selectedCategoryId, activeTab]);
+  }, [searchQuery, selectedCategoryId, activeTab, currentBranchId]);
 
   // Fetch categories
   const fetchCategories = useCallback(async () => {

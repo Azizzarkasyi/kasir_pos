@@ -1,8 +1,8 @@
 import {
-  ApiResponse,
-  CreateProductRequest,
-  Product,
-  UpdateProductRequest,
+    ApiResponse,
+    CreateProductRequest,
+    Product,
+    UpdateProductRequest,
 } from "../../types/api";
 import apiService from "../api";
 
@@ -17,6 +17,7 @@ export const productApi = {
     search?: string;
     category_id?: string;
     merk_id?: string;
+    branch_id?: string;
     is_favorite?: boolean;
   }): Promise<ApiResponse<Product[]>> {
     const response = await apiService.get<Product[]>("/products?is_product=true", params);
@@ -28,6 +29,7 @@ export const productApi = {
     search?: string;
     category_id?: string;
     merk_id?: string;
+    branch_id?: string;
     is_favorite?: boolean;
   }): Promise<ApiResponse<Product[]>> {
     const response = await apiService.get<Product[]>("/products?is_ingredient=true", params);

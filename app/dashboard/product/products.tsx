@@ -9,6 +9,7 @@ import { Colors } from "@/constants/theme";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import categoryApi from "@/services/endpoints/categories";
 import productApi from "@/services/endpoints/products";
+import { useBranchStore } from "@/stores/branch-store";
 import { useProductFormStore } from "@/stores/product-form-store";
 import { Category, Product } from "@/types/api";
 import { Ionicons } from "@expo/vector-icons";
@@ -52,6 +53,9 @@ export default function ProductsScreen() {
   const [isLoadingCategories, setIsLoadingCategories] = useState(false);
   const isFirstRender = useRef(true);
 
+  // Get current branch from store
+  const { currentBranchId } = useBranchStore();
+
   useEffect(() => {
     loadCategories();
   }, []);
@@ -60,7 +64,7 @@ export default function ProductsScreen() {
   useFocusEffect(
     useCallback(() => {
       loadProducts();
-    }, [search, selectedCategoryIds])
+    }, [search, selectedCategoryIds, currentBranchId])
   );
 
   // Debounced search - skip first render to avoid double fetch
@@ -75,7 +79,7 @@ export default function ProductsScreen() {
       loadProducts();
     }, 300);
     return () => clearTimeout(timer);
-  }, [search, selectedCategoryIds]);
+  }, [search, selectedCategoryIds, currentBranchId]);
 
   const loadProducts = async () => {
     try {
@@ -84,6 +88,11 @@ export default function ProductsScreen() {
       if (search) params.search = search;
       if (selectedCategoryIds.length > 0) {
         params.category_id = selectedCategoryIds[0]; // API mungkin hanya terima 1 kategori
+      }
+
+      // Filter by selected branch/outlet
+      if (currentBranchId) {
+        params.branch_id = currentBranchId;
       }
 
       const response = await productApi.getProducts(params);

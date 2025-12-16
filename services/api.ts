@@ -32,7 +32,7 @@ class ApiService {
    * Setup request and response interceptors
    */
   private setupInterceptors() {
-    // Request interceptor - add auth token
+    // Request interceptor - add auth token and branch_id
     this.api.interceptors.request.use(
       async (config: InternalAxiosRequestConfig) => {
         // Jika token belum dimuat, coba muat dari storage
@@ -45,6 +45,16 @@ class ApiService {
           config.headers.Authorization = `Bearer ${this.token}`;
         }
 
+        // Tambahkan branch_id ke header untuk filter outlet
+        try {
+          const branchId = await AsyncStorage.getItem("current_branch_id");
+          if (branchId && config.headers) {
+            config.headers["branch_id"] = branchId;
+          }
+        } catch (error) {
+          // Ignore error loading branch_id
+        }
+
         console.log(
           `📤 API Request: ${config.method?.toUpperCase()} ${config.url}`
         );
@@ -55,6 +65,7 @@ class ApiService {
         return Promise.reject(error);
       }
     );
+
 
     // Response interceptor - handle errors
     this.api.interceptors.response.use(
