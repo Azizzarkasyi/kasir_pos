@@ -5,6 +5,7 @@ import axios, {
   InternalAxiosRequestConfig,
 } from "axios";
 import {ApiError, ApiResponse} from "../types/api";
+import {appEvents, APP_EVENTS} from "./event-emitter";
 
 // Baca dari environment variable, fallback ke localhost jika tidak ada
 const API_URL = process.env.API_URL || "http://localhost:3001";
@@ -79,8 +80,9 @@ class ApiService {
         // Handle 401 Unauthorized - clear token and redirect to login
         if (error.response?.status === 401) {
           await this.clearToken();
-          // TODO: Navigate to login screen
-          // You can use navigation service or event emitter here
+          // Emit event untuk redirect ke login screen
+          console.log("🔐 Token expired, emitting TOKEN_EXPIRED event...");
+          appEvents.emit(APP_EVENTS.TOKEN_EXPIRED);
         }
 
         // Format error response

@@ -445,6 +445,7 @@ const RegisterScreen = () => {
               }
             }}
             keyboardType="phone-pad"
+            numericOnly
             error={errors.phoneNumber}
           />
           <ThemedInput

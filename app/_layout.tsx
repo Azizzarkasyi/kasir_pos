@@ -2,13 +2,14 @@ import DashboardBottomNav from "@/components/layouts/dashboard/bottom-nav";
 import CustomSplashScreen from "@/components/splash-screen";
 import { Colors } from "@/constants/theme";
 import { useColorScheme } from "@/hooks/use-color-scheme";
+import { appEvents, APP_EVENTS } from "@/services/event-emitter";
 import {
   Roboto_400Regular,
   Roboto_500Medium,
   Roboto_700Bold,
 } from "@expo-google-fonts/roboto";
 import { useFonts } from "expo-font";
-import { Stack } from "expo-router";
+import { Stack, useRouter } from "expo-router";
 import * as SystemUI from "expo-system-ui";
 import React, { useEffect, useState } from "react";
 import { View } from "react-native";
@@ -18,6 +19,7 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 export default function RootLayout() {
   const colorScheme = useColorScheme() ?? "light";
   const [showCustomSplash, setShowCustomSplash] = useState(true);
+  const router = useRouter();
 
   const [fontsLoaded] = useFonts({
     Roboto: Roboto_400Regular,
@@ -30,6 +32,20 @@ export default function RootLayout() {
       () => { }
     );
   }, [colorScheme]);
+
+  // Listen for TOKEN_EXPIRED event and redirect to login
+  useEffect(() => {
+    const handleTokenExpired = () => {
+      console.log("🔐 Token expired detected, redirecting to login...");
+      router.replace("/");
+    };
+
+    appEvents.on(APP_EVENTS.TOKEN_EXPIRED, handleTokenExpired);
+
+    return () => {
+      appEvents.off(APP_EVENTS.TOKEN_EXPIRED, handleTokenExpired);
+    };
+  }, [router]);
 
   useEffect(() => {
     if (fontsLoaded) {

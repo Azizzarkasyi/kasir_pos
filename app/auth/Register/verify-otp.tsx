@@ -107,13 +107,13 @@ const VerifyOtpScreen = () => {
       if (response.success && response.data?.access_token) {
         console.log("✅ OTP verified successfully");
 
-        // Simpan token
-        await authApi.setToken?.(response.data.access_token);
+        // Jangan simpan token, user harus login manual setelah registrasi
+        // await authApi.setToken?.(response.data.access_token);
 
-        Alert.alert("Berhasil!", "Akun Anda berhasil terdaftar", [
+        Alert.alert("Berhasil!", "Akun Anda berhasil terdaftar. Silakan login untuk melanjutkan.", [
           {
             text: "OK",
-            onPress: () => router.replace("/dashboard/home"),
+            onPress: () => router.replace("/auth/Login/login"),
           },
         ]);
       } else {

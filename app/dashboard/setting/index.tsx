@@ -1,3 +1,4 @@
+import ConfirmPopup from "@/components/atoms/confirm-popup";
 import SmallLogo from "@/components/atoms/logo-sm";
 import SettingListItem from "@/components/atoms/setting-list-item";
 import Header from "@/components/header";
@@ -23,6 +24,7 @@ export default function SettingScreen() {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [showLogoutPopup, setShowLogoutPopup] = useState(false);
 
   useEffect(() => {
     loadProfile();
@@ -47,33 +49,36 @@ export default function SettingScreen() {
     }
   };
 
-  const handleLogout = async () => {
-    Alert.alert("Keluar", "Apakah Anda yakin ingin keluar?", [
-      { text: "Batal", style: "cancel" },
-      {
-        text: "Keluar",
-        style: "destructive",
-        onPress: async () => {
-          setIsLoggingOut(true);
-          try {
-            console.log("🚪 Logging out...");
-            await authApi.logout();
-            console.log("✅ Logout successful");
-            router.replace("/");
-          } catch (error) {
-            console.error("❌ Logout error:", error);
-            // Tetap logout dan redirect meskipun API gagal
-            router.replace("/");
-          } finally {
-            setIsLoggingOut(false);
-          }
-        },
-      },
-    ]);
+  const handleLogout = () => {
+    setShowLogoutPopup(true);
+  };
+
+  const confirmLogout = async () => {
+    setShowLogoutPopup(false);
+    setIsLoggingOut(true);
+    try {
+      console.log("🚪 Logging out...");
+      await authApi.logout();
+      console.log("✅ Logout successful");
+      router.replace("/");
+    } catch (error) {
+      console.error("❌ Logout error:", error);
+      // Tetap logout dan redirect meskipun API gagal
+      router.replace("/");
+    } finally {
+      setIsLoggingOut(false);
+    }
   };
 
   return (
     <View style={styles.container}>
+      <ConfirmPopup
+        visible={showLogoutPopup}
+        title="Keluar"
+        message="Apakah Anda yakin ingin keluar?"
+        onConfirm={confirmLogout}
+        onCancel={() => setShowLogoutPopup(false)}
+      />
       <Header showBack={true} showHelp={false} title="Setting" />
 
       <View style={styles.contentWrapper}>
