@@ -2,6 +2,7 @@ import { ThemedButton } from "@/components/themed-button";
 import { ThemedText } from "@/components/themed-text";
 import { Colors } from "@/constants/theme";
 import { useColorScheme } from "@/hooks/use-color-scheme";
+import { useUserStore } from "@/stores/user-store";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNavigation } from "@react-navigation/native";
 import { useRouter } from "expo-router";
@@ -21,6 +22,7 @@ export default function Index() {
   const colorScheme = useColorScheme() ?? "light";
   const navigation = useNavigation();
   const router = useRouter();
+  const { setUser, startPeriodicFetch } = useUserStore();
   const [activeSlide, setActiveSlide] = useState(0);
   const [carouselWidth, setCarouselWidth] = useState(0);
   const scrollRef = useRef<ScrollView | null>(null);
@@ -96,6 +98,17 @@ export default function Index() {
       console.log("🔑 Checking auth token:", token ? "Found" : "Not found");
 
       if (token) {
+        // Load user data from AsyncStorage
+        const userDataStr = await AsyncStorage.getItem("user_data");
+        if (userDataStr) {
+          const userData = JSON.parse(userDataStr);
+          setUser(userData);
+          console.log("✅ User data loaded from storage");
+        }
+        
+        // Start periodic fetching
+        startPeriodicFetch();
+        
         console.log("✅ User is authenticated, redirecting to dashboard...");
         router.replace("/dashboard/home");
       } else {

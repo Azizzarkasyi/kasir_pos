@@ -165,10 +165,13 @@ export default function EditProductScreen() {
             notify_on_stock_ronouts: v.notify_on_stock_ronouts || false,
             is_stock_active: v.is_stock_active || false,
             min_stock: v.min_stock || undefined,
+            recipe_id: v.recipe_id || undefined,
             barcode: v.barcode || undefined,
             capital_price: v.capital_price || undefined,
           }));
+          console.log("variants",variants)
           setVariants(() => mappedVariants);
+          
         }
       }
     } catch (error: any) {

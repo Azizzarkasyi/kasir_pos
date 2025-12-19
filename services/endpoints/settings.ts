@@ -64,9 +64,8 @@ export interface StruckConfig {
   header_description?: string;
   display_transaction_note?: boolean;
   hide_tax_percentage?: boolean;
-  display_running_numbers?: boolean;
+  display_running_number?: boolean;
   display_unit_next_to_qty?: boolean;
-  display_quantity_total?: boolean;
 }
 
 export interface UpdateStruckConfigRequest {

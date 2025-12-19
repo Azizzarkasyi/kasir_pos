@@ -3,11 +3,12 @@ import {
   DashboardMenuKey,
   getDashboardRouteForKey,
 } from "@/components/layouts/dashboard/menu-config";
-import {ThemedText} from "@/components/themed-text";
-import {Colors} from "@/constants/theme";
-import {useColorScheme} from "@/hooks/use-color-scheme";
-import {AntDesign} from "@expo/vector-icons";
-import {usePathname, useRouter} from "expo-router";
+import { ThemedText } from "@/components/themed-text";
+import { Colors } from "@/constants/theme";
+import { useColorScheme } from "@/hooks/use-color-scheme";
+import { usePermissions } from "@/hooks/usePermissions";
+import { AntDesign } from "@expo/vector-icons";
+import { usePathname, useRouter } from "expo-router";
 import React from "react";
 import {
   Platform,
@@ -16,7 +17,7 @@ import {
   View,
   useWindowDimensions,
 } from "react-native";
-import {useSafeAreaInsets} from "react-native-safe-area-context";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const DashboardBottomNav: React.FC = () => {
   const colorScheme = useColorScheme() ?? "light";
@@ -27,42 +28,49 @@ const DashboardBottomNav: React.FC = () => {
   const styles = createStyles(colorScheme, insets.bottom);
   const router = useRouter();
   const pathname = usePathname();
+  const { hasPermission } = usePermissions();
 
   if (!isPhone) return null;
   if (!pathname?.startsWith("/dashboard")) return null;
   if (pathname.startsWith("/dashboard/transaction")) return null;
 
   const PRIMARY_MENU_KEYS: DashboardMenuKey[] = [
-    "home",
-    "transactions",
+    "dashboard",
+    "transaction",
     "history",
     "settings",
   ];
 
   const primaryMenus = React.useMemo(
     () =>
-      DASHBOARD_MENU_ITEMS.filter(item => PRIMARY_MENU_KEYS.includes(item.key)),
+      DASHBOARD_MENU_ITEMS.filter(item => {
+        // Only filter by primary menu keys
+        // Don't check permissions for bottom nav - show all menus
+        return PRIMARY_MENU_KEYS.includes(item.key);
+      }),
     []
   );
 
   const getActiveKeyFromPath = React.useCallback((): DashboardMenuKey => {
-    if (!pathname) return "home";
+    if (!pathname) return "dashboard";
 
-    if (pathname.startsWith("/dashboard/transaction/history")) return "history";
-    if (pathname.startsWith("/dashboard/transaction")) return "transactions";
+    if (pathname.startsWith("/dashboard/transaction/history")) return "transaction";
+    if (pathname.startsWith("/dashboard/transaction")) return "transaction";
+    if (pathname.startsWith("/dashboard/reports")) return "reports";
     if (pathname.startsWith("/dashboard/setting")) return "settings";
     if (
       pathname.startsWith("/dashboard/select-branch") ||
       pathname.startsWith("/dashboard/outlet")
     )
-      return "outlet";
+      return "outlets";
     if (pathname.startsWith("/dashboard/employee")) return "employees";
     if (pathname.startsWith("/dashboard/product")) return "products";
-    if (pathname.startsWith("/dashboard/recipe-and-materials"))
-      return "products";
+    if (pathname.startsWith("/dashboard/category")) return "categories";
+    if (pathname.startsWith("/dashboard/customer")) return "customers";
+    if (pathname.startsWith("/dashboard/supplier")) return "suppliers";
     if (pathname.startsWith("/dashboard/help")) return "help";
 
-    return "home";
+    return "dashboard";
   }, [pathname]);
 
   const activeKey = getActiveKeyFromPath();

@@ -1,11 +1,12 @@
 import { usePrinterStore } from "../../stores/printer-store";
 import { useScannerStore } from "../../stores/scanner-store";
+import { useUserStore } from "../../stores/user-store";
 import {
-    ApiResponse,
-    LoginRequest,
-    LoginResponse,
-    RegisterRequest,
-    User,
+  ApiResponse,
+  LoginRequest,
+  LoginResponse,
+  RegisterRequest,
+  User,
 } from "../../types/api";
 import apiService from "../api";
 
@@ -92,6 +93,8 @@ export const authApi = {
       "auth_token",
       "current_branch_id",
       "current_branch_name",
+      "user_data",
+      "user_role",
       "printer_saved_device",
       "scanner_saved_device",
     ]);
@@ -99,6 +102,12 @@ export const authApi = {
     // Reset Zustand store state
     usePrinterStore.getState().clearSavedDevice();
     useScannerStore.getState().clearSavedDevice();
+    useUserStore.getState().clearUser();
+    useUserStore.getState().stopPeriodicFetch();
+    
+    // Also reset branch store
+    const { useBranchStore } = await import("../../stores/branch-store");
+    useBranchStore.getState().clearCurrentBranch();
   },
 
   /**

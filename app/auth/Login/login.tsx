@@ -1,13 +1,15 @@
 import SmallLogo from "@/components/atoms/logo-sm";
 import CountryCodePicker from "@/components/country-code-picker";
 import LoadingLoginScreen from "@/components/loading-login";
-import {ThemedButton} from "@/components/themed-button";
-import {ThemedInput} from "@/components/themed-input";
-import {ThemedText} from "@/components/themed-text";
-import {Colors} from "@/constants/theme";
-import {useColorScheme} from "@/hooks/use-color-scheme";
-import {useRouter} from "expo-router";
-import React, {useState} from "react";
+import { ThemedButton } from "@/components/themed-button";
+import { ThemedInput } from "@/components/themed-input";
+import { ThemedText } from "@/components/themed-text";
+import { Colors } from "@/constants/theme";
+import { useColorScheme } from "@/hooks/use-color-scheme";
+import { useBranchStore } from "@/stores/branch-store";
+import { useUserStore } from "@/stores/user-store";
+import { useRouter } from "expo-router";
+import React, { useState } from "react";
 import {
   Image,
   Keyboard,
@@ -17,8 +19,8 @@ import {
   View,
   useWindowDimensions,
 } from "react-native";
-import {KeyboardAwareScrollView} from "react-native-keyboard-aware-scroll-view";
-import {useSafeAreaInsets} from "react-native-safe-area-context";
+import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function LoginScreen() {
   const colorScheme = useColorScheme() ?? "light";
@@ -27,6 +29,8 @@ export default function LoginScreen() {
   const [credential, setCredential] = useState("");
   const [pin, setPin] = useState("");
   const [credentialError, setCredentialError] = useState("");
+  const {setCurrentBranch} = useBranchStore();
+  const {setUser, startPeriodicFetch} = useUserStore();
   const [pinError, setPinError] = useState("");
   const router = useRouter();
   const [isLoggingIn, setIsLoggingIn] = useState(false);
@@ -120,23 +124,36 @@ export default function LoginScreen() {
 
         // Save branch ID and name to AsyncStorage
         if (result.branch?.id) {
+          setCurrentBranch({
+            id: result.branch.id,
+            name: result.branch.name,
+          });
+        }
+
+        // Save user data to store (including plan and role)
+        if (result.user) {
+          setUser(result.user);
+          console.log("✅ User data saved to store:", result.user);
+        }
+
+        // Save user role to AsyncStorage (backward compatibility)
+        if (result.user?.role) {
           const AsyncStorage = await import(
             "@react-native-async-storage/async-storage"
           );
           await AsyncStorage.default.setItem(
-            "current_branch_id",
-            result.branch.id
+            "user_role",
+            result.user.role
           );
-          if (result.branch?.name) {
-            await AsyncStorage.default.setItem(
-              "current_branch_name",
-              result.branch.name
-            );
-          }
+          console.log("✅ User role saved:", result.user.role);
         }
 
         // D. Navigate ke dashboard jika berhasil dan sudah terverifikasi
         setIsLoggingIn(false);
+        
+        // Start periodic user data fetching
+        startPeriodicFetch();
+        
         router.replace("/dashboard/home" as never);
       } catch (error: any) {
         console.error("❌ Login failed:", error);
@@ -278,6 +295,7 @@ const createStyles = (colorScheme: "light" | "dark", isTablet: boolean) =>
       width: isTablet ? 450 : 300,
       height: isTablet ? 450 : 300,
       resizeMode: "contain",
+      marginTop: isTablet ? 0 : 100,
       marginBottom: isTablet ? 20 : 0,
     },
     scrollContainer: {

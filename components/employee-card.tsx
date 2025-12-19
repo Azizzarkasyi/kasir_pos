@@ -52,8 +52,8 @@ const createStyles = (colorScheme: "light" | "dark", isTablet: boolean) =>
       backgroundColor: Colors[colorScheme].background,
     },
     avatar: {
-      width: isTablet ? 64 : 48,
-      height: isTablet ? 64 : 48,
+      width: isTablet ? 64 : 42,
+      height: isTablet ? 64 : 42,
       borderRadius: isTablet ? 32 : 24, // Circular avatar
       backgroundColor: Colors[colorScheme].border,
       alignItems: "center",
@@ -62,11 +62,11 @@ const createStyles = (colorScheme: "light" | "dark", isTablet: boolean) =>
     avatarText: {
       color: Colors[colorScheme].background,
       fontWeight: "700",
-      fontSize: isTablet ? 24 : 18,
+      fontSize: isTablet ? 22 : 16,
     },
     nameText: {
       color: Colors[colorScheme].text,
-      fontSize: isTablet ? 20 : 16,
+      fontSize: isTablet ? 20 : 14,
       lineHeight: isTablet ? 28 : 20,
       fontWeight: "700",
     },

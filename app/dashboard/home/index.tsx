@@ -4,9 +4,12 @@ import { DashboardMenuKey } from "@/components/layouts/dashboard/menu-config";
 import Sidebar from "@/components/layouts/dashboard/sidebar";
 import { ThemedButton } from "@/components/themed-button";
 import { ThemedText } from "@/components/themed-text";
+import ProBadge from "@/components/ui/pro-badge";
 import { Colors } from "@/constants/theme";
 import { useColorScheme } from "@/hooks/use-color-scheme";
-import { statsApi } from "@/services";
+import { useUserPlan } from "@/hooks/use-user-plan";
+import { usePermissions } from "@/hooks/usePermissions";
+import { notificationApi, statsApi } from "@/services";
 import { useBranchStore } from "@/stores/branch-store";
 import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect, useRouter } from "expo-router";
@@ -16,6 +19,7 @@ import {
   RefreshControl,
   ScrollView,
   StyleSheet,
+  Text,
   TouchableOpacity,
   View,
   useWindowDimensions,
@@ -31,16 +35,23 @@ const DashboardScreen = () => {
   const styles = createStyles(colorScheme, isTablet, isTabletLandscape);
   const [isLoading, setIsLoading] = React.useState(true);
   const [refreshing, setRefreshing] = React.useState(false);
-  const [activeMenu, setActiveMenu] = React.useState<DashboardMenuKey>("home");
+  const [activeMenu, setActiveMenu] = React.useState<DashboardMenuKey>("dashboard");
   const [isDrawerOpen, setIsDrawerOpen] = React.useState(false);
   const [hasScrolledDown, setHasScrolledDown] = React.useState(false);
+  const { hasPermission } = usePermissions();
+  const { isBasic } = useUserPlan();
   const [salesStats, setSalesStats] = React.useState<{
     current_month_sales: number;
     current_month_percentage: number;
     today_sales: number;
     today_percentage: number;
+    today_expenses: number;
+    today_expense_percentage: number;
+    current_month_expenses: number;
+    current_month_expense_percentage: number;
   } | null>(null);
   const [statsError, setStatsError] = React.useState<string | null>(null);
+  const [unreadNotificationCount, setUnreadNotificationCount] = React.useState(0);
   const router = useRouter();
 
   // Use branch store for reactive branch name
@@ -52,9 +63,9 @@ const DashboardScreen = () => {
       console.log("📊 Fetching sales stats...");
       const response = await statsApi.getSalesStats();
       console.log("📊 Stats response:", JSON.stringify(response, null, 2));
-      if (response.data) {
-        console.log("✅ Sales stats loaded:", response.data);
-        setSalesStats(response.data);
+      if (response) {
+        console.log("✅ Sales stats loaded:", response);
+        setSalesStats(response);
       } else {
         console.warn("⚠️ No data in response");
       }
@@ -64,20 +75,32 @@ const DashboardScreen = () => {
     }
   }, []);
 
+  const fetchUnreadNotificationCount = React.useCallback(async () => {
+    try {
+      const response = await notificationApi.getUnreadCount();
+      if (response.data) {
+        setUnreadNotificationCount(response.data.unread_count);
+      }
+    } catch (error) {
+      console.error("Failed to fetch unread notification count:", error);
+    }
+  }, []);
+
   React.useEffect(() => {
     const loadData = async () => {
-      await fetchSalesStats();
+      await Promise.all([fetchSalesStats(), fetchUnreadNotificationCount()]);
       setIsLoading(false);
     };
     loadData();
-  }, [fetchSalesStats]);
+  }, [fetchSalesStats, fetchUnreadNotificationCount]);
 
   // Refresh data when screen comes into focus (after transaction)
   useFocusEffect(
     React.useCallback(() => {
       console.log("🔄 Home screen focused, refreshing stats...");
       fetchSalesStats();
-    }, [fetchSalesStats])
+      fetchUnreadNotificationCount();
+    }, [fetchSalesStats, fetchUnreadNotificationCount])
   );
 
   const openDrawer = React.useCallback(() => {
@@ -103,7 +126,10 @@ const DashboardScreen = () => {
     }).format(amount);
   };
 
-  const formatPercentage = (percentage: number): string => {
+  const formatPercentage = (percentage: number | null | undefined): string => {
+    if (percentage === null || percentage === undefined) {
+      return "0.00%";
+    }
     const sign = percentage >= 0 ? "+" : "";
     return `${sign}${percentage.toFixed(2)}%`;
   };
@@ -152,11 +178,20 @@ const DashboardScreen = () => {
             onPress={() => router.push("/dashboard/notification" as never)}
             style={styles.headerIconButton}
           >
-            <Ionicons
-              name="notifications-outline"
-              size={isTablet ? 32 : 24}
-              color="white"
-            />
+            <View>
+              <Ionicons
+                name="notifications-outline"
+                size={isTablet ? 32 : 24}
+                color="white"
+              />
+              {unreadNotificationCount > 0 && (
+                <View style={styles.notificationBadge}>
+                  <Text style={styles.notificationBadgeText}>
+                    {unreadNotificationCount > 99 ? "99+" : unreadNotificationCount}
+                  </Text>
+                </View>
+              )}
+            </View>
           </TouchableOpacity>
         }
       />
@@ -207,39 +242,63 @@ const DashboardScreen = () => {
           {isPhone && (
             <View style={styles.activeOutletWrapper}>
               <View style={styles.sectionHeader}>
-                <ThemedText type="subtitle-2" style={styles.activeOutletTitle}>
-                  Outlet Aktif
-                </ThemedText>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                  <ThemedText type="subtitle-2" style={[
+                    styles.activeOutletTitle,
+                    isBasic && styles.disabledText
+                  ]}>
+                    Outlet Aktif
+                  </ThemedText>
+                  {isBasic && <ProBadge size="small" />}
+                </View>
                 <TouchableOpacity
-                  onPress={() =>
-                    router.push("/dashboard/select-branch" as never)
-                  }
-                  style={styles.linkContainer}
+                  onPress={() => {
+                    if (!isBasic) {
+                      router.push("/dashboard/select-branch" as never);
+                    }
+                  }}
+                  style={[
+                    styles.linkContainer,
+                    isBasic && styles.disabledLink
+                  ]}
+                  disabled={isBasic}
                 >
-                  <ThemedText style={styles.link}>Pilih Outlet</ThemedText>
+                  <ThemedText 
+                    style={[
+                      styles.outletNameText,
+                      isBasic && styles.disabledText
+                    ]}
+                  >
+                    {currentBranchName 
+                      ? currentBranchName.length > 20 
+                        ? currentBranchName.substring(0, 20) + "..."
+                        : currentBranchName
+                      : "Pilih Outlet"}
+                  </ThemedText>
                   <Ionicons
                     name="chevron-forward-outline"
                     size={18}
-                    color={Colors[colorScheme].icon}
+                    color={isBasic ? Colors[colorScheme].icon : Colors[colorScheme].icon}
                   />
                 </TouchableOpacity>
               </View>
-              <ThemedText style={styles.activeOutletMutedText}>
-                {currentBranchName || "Belum ada outlet dipilih"}
-              </ThemedText>
+
             </View>
           )}
           <View style={styles.sectionCard}>
             <View style={styles.sectionHeader}>
               <ThemedText type="subtitle-2">Laporan</ThemedText>
-              <View style={styles.linkContainer}>
+              <TouchableOpacity
+                onPress={() => router.push("/dashboard/home/report" as never)}
+                style={styles.linkContainer}
+              >
                 <ThemedText style={styles.link}>Lihat Semua</ThemedText>
                 <Ionicons
                   name="chevron-forward-outline"
                   size={18}
                   color={Colors[colorScheme].icon}
                 />
-              </View>
+              </TouchableOpacity>
             </View>
             <ScrollView
               horizontal
@@ -251,12 +310,11 @@ const DashboardScreen = () => {
                   <ReportCardSkeleton />
                   <ReportCardSkeleton />
                   <ReportCardSkeleton />
+                  <ReportCardSkeleton />
                 </>
               ) : statsError ? (
                 <View style={{ padding: 16 }}>
-                  <ThemedText style={{ color: Colors[colorScheme].icon }}>
-                    {statsError}
-                  </ThemedText>
+                  <ThemedText>{statsError}</ThemedText>
                 </View>
               ) : salesStats ? (
                 <>
@@ -265,25 +323,43 @@ const DashboardScreen = () => {
                     amount={formatCurrency(salesStats.current_month_sales)}
                     subtitle={`${formatPercentage(
                       salesStats.current_month_percentage
-                    )} vs bulan lalu`}
+                    )} `}
+                    subtitleColor={salesStats.current_month_percentage > 0 ? '#10b981' : undefined}
+                  />
+                  <ReportCard
+                    title="Pengeluaran bulan ini"
+                    amount={formatCurrency(salesStats.current_month_expenses)}
+                    subtitle={`${formatPercentage(
+                      salesStats.current_month_expense_percentage
+                    )} `}
+                    subtitleColor={salesStats.current_month_expense_percentage > 0 ? '#ef4444' : undefined}
                   />
                   <ReportCard
                     title="Penjualan hari ini"
                     amount={formatCurrency(salesStats.today_sales)}
                     subtitle={`${formatPercentage(
                       salesStats.today_percentage
-                    )} vs kemarin`}
+                    )} `}
+                    subtitleColor={salesStats.today_percentage > 0 ? '#10b981' : undefined}
                   />
                   <ReportCard
                     title="Pengeluaran hari ini"
-                    amount="Rp0"
-                    subtitle="Data tidak tersedia"
+                    amount={formatCurrency(salesStats.today_expenses)}
+                    subtitle={`${formatPercentage(
+                      salesStats.today_expense_percentage
+                    )} `}
+                    subtitleColor={salesStats.today_expense_percentage > 0 ? '#ef4444' : undefined}
                   />
                 </>
               ) : (
                 <>
                   <ReportCard
                     title={`Penjualan ${getCurrentMonthName()}`}
+                    amount="Rp0"
+                    subtitle="0% vs bulan lalu"
+                  />
+                  <ReportCard
+                    title="Pengeluaran bulan ini"
                     amount="Rp0"
                     subtitle="0% vs bulan lalu"
                   />
@@ -295,34 +371,51 @@ const DashboardScreen = () => {
                   <ReportCard
                     title="Pengeluaran hari ini"
                     amount="Rp0"
-                    subtitle="Data tidak tersedia"
+                    subtitle="0% vs kemarin"
                   />
                 </>
               )}
             </ScrollView>
           </View>
           <View style={styles.quickActionRow}>
+            {hasPermission('products') && (
+              <MenuItem
+                label="Kelola Produk"
+                icon="bag-outline"
+                onPress={() => {
+                  router.push("/dashboard/product/manage" as never);
+                }}
+              />
+            )}
             <MenuItem
-              label="Kelola Produk"
-              icon="bag-outline"
+              label="Perputaran Stock"
+              icon="sync-outline"
               onPress={() => {
-                router.push("/dashboard/product/manage" as never);
+                router.push("/dashboard/stock-history" as never);
               }}
+              disabled={isBasic}
             />
-            <MenuItem
-              label="Pegawai"
-              icon="id-card-outline"
-              onPress={() => {
-                router.push("/dashboard/employee" as never);
-              }}
-            />
-            <MenuItem
-              label="Outlet"
-              icon="storefront-outline"
-              onPress={() => {
-                router.push("/dashboard/outlet" as never);
-              }}
-            />
+            {hasPermission('employees') && (
+              <MenuItem
+                label="Pegawai"
+                icon="id-card-outline"
+                onPress={() => {
+                  router.push("/dashboard/employee" as never);
+                }}
+              />
+            )}
+            {hasPermission('outlets') && (
+              <MenuItem
+                label="Outlet"
+                icon="storefront-outline"
+                onPress={() => {
+                  if (!isBasic) {
+                    router.push("/dashboard/outlet" as never);
+                  }
+                }}
+                disabled={isBasic}
+              />
+            )}
             <MenuItem
               label="Bantuan"
               icon="help-circle-outline"
@@ -337,13 +430,15 @@ const DashboardScreen = () => {
                 router.push("/dashboard/setting/profile" as never);
               }}
             />
-            <MenuItem
-              label="Pilih Outlet"
-              icon="location-outline"
-              onPress={() => {
-                router.push("/dashboard/select-branch" as never);
-              }}
-            />
+            {hasPermission('settings') && (
+              <MenuItem
+                label="Pengaturan"
+                icon="settings-outline"
+                onPress={() => {
+                  router.push("/dashboard/setting" as never);
+                }}
+              />
+            )}
           </View>
 
           <View style={styles.sectionCard}>
@@ -358,7 +453,7 @@ const DashboardScreen = () => {
         </View>
       </ScrollView>
 
-      {(!isTabletLandscape || (isTabletLandscape && hasScrolledDown)) && (
+      {(!isTabletLandscape || (isTabletLandscape && hasScrolledDown)) && hasPermission('transaction') && (
         <View style={styles.bottomButtonWrapper}>
           <ThemedButton
             title="Transaksi"
@@ -376,7 +471,7 @@ const DashboardScreen = () => {
           onClose={closeDrawer}
           onSelect={key => setActiveMenu(key as DashboardMenuKey)}
         />
-      )}
+       )} 
     </View>
   );
 };
@@ -385,10 +480,12 @@ const MenuItem = ({
   label,
   icon,
   onPress,
+  disabled = false,
 }: {
   label: string;
   icon: any;
   onPress?: () => void;
+  disabled?: boolean;
 }) => {
   const colorScheme = useColorScheme() ?? "light";
   const { width, height } = useWindowDimensions();
@@ -399,18 +496,35 @@ const MenuItem = ({
 
   return (
     <TouchableOpacity
-      activeOpacity={0.7}
-      style={styles.wrapper}
+      activeOpacity={disabled ? 1 : 0.7}
+      style={[
+        styles.wrapper,
+        disabled && styles.disabledWrapper
+      ]}
       onPress={onPress}
+      disabled={disabled}
     >
-      <View style={styles.iconWrapper}>
-        <Ionicons
-          name={icon}
-          size={iconSize}
-          color={Colors[colorScheme].primary}
-        />
+      <View style={styles.iconContainer}>
+        <View style={[
+          styles.iconWrapper,
+          disabled && styles.disabledIconWrapper
+        ]}>
+          <Ionicons
+            name={icon}
+            size={iconSize}
+            color={disabled ? Colors[colorScheme].icon : Colors[colorScheme].primary}
+          />
+        </View>
+        {disabled && (
+          <View style={styles.badgeOverlay}>
+            <ProBadge size="small" />
+          </View>
+        )}
       </View>
-      <ThemedText style={styles.label} numberOfLines={2}>
+      <ThemedText style={[
+        styles.label,
+        disabled && styles.disabledLabel
+      ]} numberOfLines={2}>
         {label}
       </ThemedText>
     </TouchableOpacity>
@@ -441,6 +555,27 @@ const createStyles = (
       borderRadius: 18,
       alignItems: "center",
       justifyContent: "center",
+    },
+    notificationBadge: {
+      position: "absolute",
+      top: -2,
+      right: -4,
+      backgroundColor: "#FF3B30",
+      padding: 0,
+      borderRadius: 8,
+      minWidth: isTablet ? 16 : 14,
+      display: "flex",
+      height: isTablet ? 16 : 14,
+      alignItems: "center",
+      justifyContent: "center",
+      paddingHorizontal: 3,
+    },
+    notificationBadgeText: {
+      color: "white",
+      fontSize: isTablet ? 9 : 8,
+      fontWeight: "700",
+      lineHeight: isTablet ? 14 : 12,
+      textAlign: "center",
     },
     title: {
       marginBottom: 8,
@@ -502,6 +637,10 @@ const createStyles = (
       color: Colors[colorScheme].primary,
       fontSize: isTablet ? 16 : 14,
     },
+    outletNameText: {
+      color: Colors[colorScheme].primary,
+      fontSize: isTablet ? 16 : 14,
+    },
     quickActionRow: {
       flexDirection: "row",
       alignItems: "stretch",
@@ -527,6 +666,7 @@ const createStyles = (
     },
     activeOutletWrapper: {
       marginBottom: 4,
+      paddingVertical: isTablet ? 12 : 8,
       paddingHorizontal: isTablet ? 16 : 12,
     },
     activeOutletTitle: {
@@ -535,6 +675,7 @@ const createStyles = (
     activeOutletMutedText: {
       color: Colors[colorScheme].icon,
       fontSize: isTablet ? 18 : 14,
+      marginBottom: isTablet ? 8 : 8,
     },
     subscriptionBanner: {
       marginTop: 8,
@@ -590,6 +731,23 @@ const createStyles = (
       width: isTablet ? 320 : 260,
       backgroundColor: Colors[colorScheme].background,
     },
+    disabledWrapper: {
+      opacity: 0.5,
+    },
+    disabledIconWrapper: {
+      backgroundColor: Colors[colorScheme].background,
+      borderWidth: 1,
+      borderColor: Colors[colorScheme].border,
+    },
+    disabledLabel: {
+      color: Colors[colorScheme].icon,
+    },
+    disabledText: {
+      color: Colors[colorScheme].icon,
+    },
+    disabledLink: {
+      opacity: 0.5,
+    },
   });
 
 const menuItemStyles = (colorScheme: "light" | "dark", isTablet: boolean) =>
@@ -603,6 +761,9 @@ const menuItemStyles = (colorScheme: "light" | "dark", isTablet: boolean) =>
       borderRadius: 12,
       width: isTablet ? "22%" : "23%",
     },
+    disabledWrapper: {
+      opacity: 0.5,
+    },
     iconWrapper: {
       borderRadius: 10,
       backgroundColor:
@@ -612,12 +773,30 @@ const menuItemStyles = (colorScheme: "light" | "dark", isTablet: boolean) =>
       // borderWidth: 1,
       // borderColor: Colors[colorScheme].border,
     },
+    disabledIconWrapper: {
+      backgroundColor: Colors[colorScheme].background,
+      borderWidth: 1,
+      borderColor: Colors[colorScheme].border,
+    },
     label: {
       fontSize: isTablet ? 16 : 11,
       fontWeight: "500",
       textAlign: "center",
       lineHeight: isTablet ? 18 : 13,
       color: Colors[colorScheme].text,
+    },
+    disabledLabel: {
+      color: Colors[colorScheme].icon,
+    },
+    iconContainer: {
+      position: 'relative',
+      alignSelf: 'center',
+    },
+    badgeOverlay: {
+      position: 'absolute',
+      top: -4,
+      right: -4,
+      zIndex: 1,
     },
   });
 

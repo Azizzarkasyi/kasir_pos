@@ -148,6 +148,7 @@ export default function VariantScreen() {
       setBarcode(variantBarcode);
       resetVariantBarcode();
     }
+
   }, [variantBarcode, barcode, resetVariantBarcode]);
 
   useEffect(() => {
@@ -201,7 +202,6 @@ export default function VariantScreen() {
     qsEnableCostBarcode,
     qsCapitalPrice,
     qsBarcode,
-    qsRecipe,
   ]);
 
   useEffect(() => {
@@ -210,7 +210,16 @@ export default function VariantScreen() {
         setLoadingRecipes(true);
         const response = await recipeApi.getRecipes();
         if (response.data) {
-          setRecipes(response.data.map(r => ({ id: r.id, name: r.name })));
+          const recipesList = response.data.map(r => ({ id: r.id, name: r.name }));
+          setRecipes(recipesList);
+          
+          // Set recipe after recipes are loaded
+          if (qsRecipe) {
+            const found = recipesList.find(r => r.id === qsRecipe);
+            if (found) {
+              setRecipe(qsRecipe);
+            }
+          }
         }
       } catch (error) {
         console.error("Failed to load recipes:", error);
@@ -220,7 +229,7 @@ export default function VariantScreen() {
     };
 
     loadRecipes();
-  }, []);
+  }, [qsRecipe]);
 
   const handleSave = () => {
     setIsSubmit(true);
@@ -230,7 +239,7 @@ export default function VariantScreen() {
       if (!stock) return {};
       const fields: any = {
         stock: stock.offlineStock,
-        is_stock_active: true,
+        is_stock_active: stock.offlineStock> 0 && stock.minStock> 0 ,
         min_stock: stock.minStock,
         notify_on_stock_ronouts: stock.notifyMin,
       };
@@ -245,6 +254,8 @@ export default function VariantScreen() {
 
     console.log("qsfrom", qsFrom)
     console.log("variant_id", qsVariantId)
+    
+    
 
 
     if (qsFrom === "edit" && qsVariantId) {
@@ -274,8 +285,6 @@ export default function VariantScreen() {
           } else {
             delete updated.barcode;
           }
-
-          console.log(updated);
 
           return updated;
         })

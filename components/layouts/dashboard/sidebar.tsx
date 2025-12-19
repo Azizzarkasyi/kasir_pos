@@ -1,12 +1,16 @@
+import Skeleton from "@/components/atoms/skeleton";
+import ProBadge from "@/components/ui/pro-badge";
+import SoonBadge from "@/components/ui/soon-badge";
 import { Colors } from "@/constants/theme";
 import { useColorScheme } from "@/hooks/use-color-scheme";
+import { useUserPlan } from "@/hooks/use-user-plan";
+import { usePermissions } from "@/hooks/usePermissions";
 import { authApi, settingsApi, UserProfile } from "@/services";
 import { AntDesign } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { usePathname, useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
-  ActivityIndicator,
   ScrollView,
   StyleSheet,
   Text,
@@ -20,10 +24,11 @@ type SidebarItemProps = {
   label: string;
   icon: React.ComponentProps<typeof AntDesign>["name"];
   active?: boolean;
-
   onPress?: () => void;
   styles: ReturnType<typeof createStyles>;
   iconSize: number;
+  disabled?: boolean;
+  soonBadge?: boolean;
 };
 
 const SidebarItem: React.FC<SidebarItemProps> = ({
@@ -33,21 +38,48 @@ const SidebarItem: React.FC<SidebarItemProps> = ({
   onPress,
   styles,
   iconSize,
+  disabled = false,
+  soonBadge = false,
 }) => {
   return (
     <TouchableOpacity
       onPress={onPress}
-      style={[styles.itemContainer, active && styles.itemActive]}
+      style={[styles.itemContainer, active && styles.itemActive, disabled && styles.itemDisabled]}
+      disabled={disabled}
     >
       <View style={styles.itemContent}>
-        <AntDesign
-          name={icon}
-          size={iconSize}
-          color={active ? styles.itemActiveIcon.color : styles.itemIcon.color}
-        />
-        <Text style={[styles.itemLabel, active && styles.itemLabelActive]}>
-          {label}
-        </Text>
+        <View style={styles.leftContent}>
+          <View style={styles.iconContainer}>
+            <AntDesign
+              name={icon}
+              size={iconSize}
+              color={
+                disabled 
+                  ? Colors["light"].icon 
+                  : active 
+                    ? styles.itemActiveIcon.color 
+                    : styles.itemIcon.color
+              }
+            />
+          </View>
+          <Text style={[
+            styles.itemLabel, 
+            active && styles.itemLabelActive,
+            disabled && styles.itemLabelDisabled
+          ]}>
+            {label}
+          </Text>
+        </View>
+        {(disabled && !soonBadge) && (
+          <View style={styles.rightBadge}>
+            <ProBadge size="small" />
+          </View>
+        )}
+        {soonBadge && (
+          <View style={styles.rightBadge}>
+            <SoonBadge size="small" />
+          </View>
+        )}
       </View>
     </TouchableOpacity>
   );
@@ -78,6 +110,8 @@ const Sidebar: React.FC<SidebarProps> = ({
     name: string;
   } | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const { hasPermission } = usePermissions();
+  const { isBasic } = useUserPlan();
 
   useEffect(() => {
     if (isOpen) {
@@ -132,6 +166,7 @@ const Sidebar: React.FC<SidebarProps> = ({
     onSelect?.(key);
 
     if (key === "outlet") {
+      if (isBasic) return;
       const outletRoute = "/dashboard/select-branch";
       if (pathname !== outletRoute) {
         router.push(outletRoute as never);
@@ -179,16 +214,25 @@ const Sidebar: React.FC<SidebarProps> = ({
                     color={Colors[colorScheme].primary}
                   />
                 )}
-                <View style={styles.badgeFree}>
-                  <Text style={styles.badgeFreeText}>FREE</Text>
+                <View style={[styles.badgeFree, !isBasic && styles.badgePro]}>
+                  <Text style={[styles.badgeFreeText, !isBasic && styles.badgeProText]}>
+                    {isBasic ? "BASIC" : "PRO"}
+                  </Text>
                 </View>
               </View>
               <View style={{flex: 1}}>
                 {isLoading ? (
-                  <ActivityIndicator
-                    size="small"
-                    color={Colors[colorScheme].primary}
-                  />
+                  <View>
+                    <Skeleton 
+                      width={isTablet ? 120 : 80} 
+                      height={isTablet ? 22 : 14} 
+                      style={{marginBottom: 2}}
+                    />
+                    <Skeleton 
+                      width={isTablet ? 60 : 40} 
+                      height={isTablet ? 18 : 12} 
+                    />
+                  </View>
                 ) : (
                   <>
                     <Text style={styles.profileName} numberOfLines={1}>
@@ -212,38 +256,76 @@ const Sidebar: React.FC<SidebarProps> = ({
             <View style={styles.outletRow}>
               <View style={{flex: 1}}>
                 {isLoading ? (
-                  <ActivityIndicator
-                    size="small"
-                    color={Colors[colorScheme].primary}
-                  />
+                  <View>
+                    <Skeleton 
+                      width={isTablet ? 100 : 70} 
+                      height={isTablet ? 18 : 14} 
+                      style={{marginBottom: 2}}
+                    />
+                    <Skeleton 
+                      width={isTablet ? 80 : 60} 
+                      height={isTablet ? 16 : 12} 
+                    />
+                  </View>
                 ) : (
                   <>
-                    <Text style={styles.outletName} numberOfLines={1}>
+                    <Text style={[
+                      styles.outletName, 
+                      isBasic && styles.disabledText
+                    ]} numberOfLines={1}>
                       {currentBranch?.name || "Outlet"}
                     </Text>
-                    <Text style={styles.outletLocation}>
+                    <Text style={[
+                      styles.outletLocation,
+                      isBasic && styles.disabledText
+                    ]}>
                       {currentBranch ? "Outlet Aktif" : "Pilih Outlet"}
                     </Text>
                   </>
                 )}
               </View>
               <TouchableOpacity
-                style={styles.outletButton}
+                style={[
+                  styles.outletButton,
+                  isBasic && styles.disabledOutletButton
+                ]}
                 onPress={() => {
-                  const outletRoute = "/dashboard/select-branch";
-                  if (pathname !== outletRoute) {
-                    router.push(outletRoute as never);
+                  if (!isBasic) {
+                    const outletRoute = "/dashboard/select-branch";
+                    if (pathname !== outletRoute) {
+                      router.push(outletRoute as never);
+                    }
+                    onClose?.();
                   }
-                  onClose?.();
                 }}
+                disabled={isBasic}
               >
-                <Text style={styles.outletButtonText}>Pilih Outlet</Text>
+                <Text style={[
+                  styles.outletButtonText,
+                  isBasic && styles.disabledButtonText
+                ]}>
+                  Pilih Outlet
+                </Text>
+                {isBasic && (
+                  <View style={styles.proBadgeAbsolute}>
+                    <ProBadge size="small" />
+                  </View>
+                )}
               </TouchableOpacity>
             </View>
           </View>
 
           <ScrollView contentContainerStyle={styles.scrollContent}>
-            {DASHBOARD_MENU_ITEMS.filter(item => item.key !== "profile").map(item => (
+            {DASHBOARD_MENU_ITEMS.filter(item => {
+              // Always show help menu and bio-link menu
+              if (item.key === 'help' || item.key === 'bio-link') return true;
+              // Check permission if permissionKey is defined
+              if (item.permissionKey) {
+                return hasPermission(item.permissionKey);
+              }
+              // Default to false for items without permission
+              return false;
+            }).map(item => (
               <SidebarItem
                 key={item.key}
                 label={item.label}
@@ -252,6 +334,8 @@ const Sidebar: React.FC<SidebarProps> = ({
                 onPress={() => handleSelectItem(item.key)}
                 styles={styles}
                 iconSize={isTablet ? 26 : 20}
+                disabled={item.key === 'outlets' ? isBasic : item.key === 'bio-link' ? true : item.key === 'stock-history' ? isBasic : false}
+                soonBadge={item.key === 'bio-link' ? true : false}
               />
             ))}
           </ScrollView>
@@ -334,6 +418,11 @@ const createStyles = (colorScheme: "light" | "dark", isTablet: boolean) =>
       alignItems: "center",
       paddingVertical: isTablet ? 14 : 10,
       paddingHorizontal: isTablet ? 16 : 8,
+      justifyContent: "space-between",
+    },
+    leftContent: {
+      flexDirection: "row",
+      alignItems: "center",
       gap: isTablet ? 18 : 12,
     },
     itemIcon: {
@@ -384,6 +473,12 @@ const createStyles = (colorScheme: "light" | "dark", isTablet: boolean) =>
       color: "#FFFFFF",
       fontWeight: "700",
     },
+    badgePro: {
+      backgroundColor: "#FF6B35",
+    },
+    badgeProText: {
+      color: "#FFFFFF",
+    },
     profileName: {
       fontSize: isTablet ? 22 : 14,
       fontWeight: "600",
@@ -393,6 +488,22 @@ const createStyles = (colorScheme: "light" | "dark", isTablet: boolean) =>
       fontSize: isTablet? 18: 12,
       color: Colors[colorScheme].icon,
       marginTop: 2,
+    },
+    roleRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: isTablet ? 8 : 6,
+      marginTop: 2,
+    },
+    planName: {
+      fontSize: isTablet ? 16 : 11,
+      color: Colors[colorScheme].primary,
+      fontWeight: '600',
+      backgroundColor: Colors[colorScheme].primary + '15',
+      paddingHorizontal: isTablet ? 8 : 6,
+      paddingVertical: 2,
+      borderRadius: 8,
+      overflow: 'hidden',
     },
     outletRow: {
       flexDirection: "row",
@@ -466,5 +577,42 @@ const createStyles = (colorScheme: "light" | "dark", isTablet: boolean) =>
     backdrop: {
       flex: 1,
       backgroundColor: "transparent",
+    },
+    itemDisabled: {
+      opacity: 0.5,
+    },
+    itemLabelDisabled: {
+      color: Colors[colorScheme].icon,
+    },
+    disabledText: {
+      color: Colors[colorScheme].icon,
+    },
+    disabledOutletButton: {
+      backgroundColor: Colors[colorScheme].secondary,
+      borderWidth: 1,
+      borderColor: Colors[colorScheme].border,
+      opacity: 0.6,
+    },
+    disabledButtonText: {
+      color: Colors[colorScheme].icon,
+      opacity: 0.7,
+    },
+    iconContainer: {
+      position: 'relative',
+    },
+    rightBadge: {
+      alignSelf: 'center',
+    },
+    badgeOverlay: {
+      position: 'absolute',
+      top: -4,
+      right: -4,
+      zIndex: 1,
+    },
+    proBadgeAbsolute: {
+      position: 'absolute',
+      top: -6,
+      right: -6,
+      zIndex: 1,
     },
   });

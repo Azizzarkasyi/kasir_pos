@@ -40,7 +40,7 @@ const TransactionHistoryGroup: React.FC<TransactionHistoryGroupProps> = ({
   const colorScheme = useColorScheme() ?? "light";
 
   return (
-    <View style={{marginBottom: isTablet ? 16 : 12}}>
+    <View style={{ marginBottom: isTablet ? 16 : 12 }}>
       <TransactionHistoryGroupHeader
         dateLabel={dateLabel}
         totalAmount={totalAmount}
@@ -102,7 +102,7 @@ export default function TransactionHistoryPage() {
 
   // Group transactions by date
   const groupTransactionsByDate = useCallback((txns: Transaction[]) => {
-    const grouped: {[key: string]: GroupedTransaction} = {};
+    const grouped: { [key: string]: GroupedTransaction } = {};
 
     txns.forEach(txn => {
       try {
@@ -210,7 +210,7 @@ export default function TransactionHistoryPage() {
     <View
       style={[
         styles.container,
-        {backgroundColor: Colors[colorScheme].background},
+        { backgroundColor: Colors[colorScheme].background },
       ]}
     >
       <Header
@@ -246,7 +246,7 @@ export default function TransactionHistoryPage() {
             <TextInput
               placeholder="Cari No. Transaksi"
               placeholderTextColor={Colors[colorScheme].icon}
-              style={[styles.searchInput, {color: Colors[colorScheme].text}]}
+              style={[styles.searchInput, { color: Colors[colorScheme].text }]}
               value={searchQuery}
               onChangeText={setSearchQuery}
             />
@@ -255,7 +255,7 @@ export default function TransactionHistoryPage() {
 
         {isLoading ? (
           <View
-            style={{flex: 1, justifyContent: "center", alignItems: "center"}}
+            style={{ flex: 1, justifyContent: "center", alignItems: "center" }}
           >
             <ActivityIndicator
               size="large"
@@ -264,7 +264,7 @@ export default function TransactionHistoryPage() {
             <Text
               style={[
                 styles.footerText,
-                {color: Colors[colorScheme].text, marginTop: 16},
+                { color: Colors[colorScheme].text, marginTop: 16 },
               ]}
             >
               Memuat transaksi...
@@ -272,10 +272,10 @@ export default function TransactionHistoryPage() {
           </View>
         ) : groupedTransactions.length === 0 ? (
           <View
-            style={{flex: 1, justifyContent: "center", alignItems: "center"}}
+            style={{ flex: 1, justifyContent: "center", alignItems: "center" }}
           >
             <Text
-              style={[styles.footerText, {color: Colors[colorScheme].icon}]}
+              style={[styles.footerText, { color: Colors[colorScheme].icon }]}
             >
               {searchQuery
                 ? "Transaksi tidak ditemukan"
@@ -285,7 +285,7 @@ export default function TransactionHistoryPage() {
         ) : (
           <FlatList
             data={groupedTransactions}
-            renderItem={({item: group}) => (
+            renderItem={({ item: group }) => (
               <TransactionHistoryGroup
                 dateLabel={group.dateLabel}
                 totalAmount={group.totalAmount}
@@ -314,12 +314,12 @@ export default function TransactionHistoryPage() {
                     paymentMethodStr === "cash"
                       ? "Tunai"
                       : paymentMethodStr === "card"
-                      ? "Kartu"
-                      : paymentMethodStr === "transfer"
-                      ? "Transfer"
-                      : paymentMethodStr === "debt"
-                      ? "Hutang"
-                      : "QRIS";
+                        ? "Kartu"
+                        : paymentMethodStr === "transfer"
+                          ? "Transfer"
+                          : paymentMethodStr === "debt"
+                            ? "Hutang"
+                            : "QRIS";
 
                   return (
                     <TransactionHistoryItem
@@ -330,10 +330,7 @@ export default function TransactionHistoryPage() {
                       time={time}
                       isTablet={isTablet}
                       onPress={() =>
-                        router.push({
-                          pathname: "/dashboard/transaction/show",
-                          params: {id: String(txn.id)},
-                        })
+                        router.push(`/dashboard/transaction/${txn.id}/show`)
                       }
                     />
                   );
@@ -341,7 +338,7 @@ export default function TransactionHistoryPage() {
               </TransactionHistoryGroup>
             )}
             keyExtractor={item => item.date}
-            contentContainerStyle={{paddingBottom: 100}}
+            contentContainerStyle={{ paddingBottom: 100 }}
             refreshControl={
               <RefreshControl
                 refreshing={refreshing}
@@ -353,7 +350,7 @@ export default function TransactionHistoryPage() {
             ListFooterComponent={
               <View style={styles.footerSpacer}>
                 <Text
-                  style={[styles.footerText, {color: Colors[colorScheme].icon}]}
+                  style={[styles.footerText, { color: Colors[colorScheme].icon }]}
                 >
                   Tidak ada data lagi.
                 </Text>

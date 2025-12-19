@@ -1,19 +1,23 @@
 import EmployeeCard from "@/components/employee-card";
 import Header from "@/components/header";
 import { ThemedInput } from "@/components/themed-input";
+import ProBadge from "@/components/ui/pro-badge";
 import { Colors } from "@/constants/theme";
 import { useColorScheme } from "@/hooks/use-color-scheme";
+import { useUserPlan } from "@/hooks/use-user-plan";
 import employeeApi from "@/services/endpoints/employees";
+import { useBranchStore } from "@/stores/branch-store";
 import { Employee } from "@/types/api";
 import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect, useRouter } from "expo-router";
 import React, { useCallback, useState } from "react";
 import {
   ActivityIndicator,
+  Alert,
   FlatList,
   StyleSheet,
   TouchableOpacity, useWindowDimensions,
-  View,
+  View
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -26,6 +30,8 @@ export default function EmployeeScreen() {
   const styles = createStyles(colorScheme, isTablet, isTabletLandscape);
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  const { isBasic } = useUserPlan();
+  const {currentBranchId} = useBranchStore()
 
   const [search, setSearch] = useState("");
   const [employees, setEmployees] = useState<Employee[]>([]);
@@ -48,6 +54,7 @@ export default function EmployeeScreen() {
 
       const response = await employeeApi.getEmployees({
         search: search || undefined,
+        branch_id: currentBranchId || undefined
       });
 
       if (response.data) {
@@ -74,6 +81,14 @@ export default function EmployeeScreen() {
   }, [search]);
 
   const goAdd = () => {
+    if (isBasic) {
+      Alert.alert(
+        "Fitur Terkunci",
+        "Untuk menambah pegawai, silakan upgrade ke paket PRO.",
+        [{ text: "OK" }]
+      );
+      return;
+    }
     router.push("/dashboard/employee/add" as never);
   };
 
@@ -142,12 +157,31 @@ export default function EmployeeScreen() {
         </View>
       </View>
 
-      <TouchableOpacity
-        style={[styles.fab, { bottom: insets.bottom + (isTablet ? 40 : 24) }]}
-        onPress={goAdd}
-      >
-        <Ionicons name="add" size={isTablet ? 36 : 28} color={Colors[colorScheme].background} />
-      </TouchableOpacity>
+      <View style={[
+        styles.fab, 
+        { bottom: insets.bottom + (isTablet ? 40 : 24) },
+        isBasic && styles.disabledFab
+      ]}>
+        <TouchableOpacity
+          onPress={goAdd}
+          disabled={isBasic}
+          style={[
+            styles.fabButton,
+            isBasic && styles.disabledFabButton
+          ]}
+        >
+          <Ionicons 
+            name="add" 
+            size={isTablet ? 36 : 28} 
+            color={isBasic ? Colors[colorScheme].icon : Colors[colorScheme].background} 
+          />
+          {isBasic && (
+            <View style={styles.fabBadge}>
+              <ProBadge size="small" />
+            </View>
+          )}
+        </TouchableOpacity>
+      </View>
     </View>
   );
 }
@@ -177,7 +211,29 @@ const createStyles = (colorScheme: "light" | "dark", isTablet: boolean, isTablet
       borderRadius: isTablet ? 36 : 28,
       alignItems: "center",
       justifyContent: "center",
+    },
+    fabButton: {
+      width: isTablet ? 72 : 56,
+      height: isTablet ? 72 : 56,
+      borderRadius: isTablet ? 36 : 28,
+      alignItems: "center",
+      justifyContent: "center",
       backgroundColor: Colors[colorScheme].primary,
       elevation: 6,
+    },
+    disabledFabButton: {
+      backgroundColor: Colors[colorScheme].secondary,
+      borderWidth: 1,
+      borderColor: Colors[colorScheme].border,
+      elevation: 0,
+    },
+    disabledFab: {
+      opacity: 1,
+    },
+    fabBadge: {
+      position: 'absolute',
+      top: -4,
+      right: -4,
+      zIndex: 1,
     },
   });

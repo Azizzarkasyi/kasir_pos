@@ -6,6 +6,8 @@ import { ThemedButton } from "@/components/themed-button";
 import { ThemedText } from "@/components/themed-text";
 import { Colors } from "@/constants/theme";
 import { useColorScheme } from "@/hooks/use-color-scheme";
+import { useUserPlan } from "@/hooks/use-user-plan";
+import { usePermissions } from "@/hooks/usePermissions";
 import { authApi, settingsApi, UserProfile } from "@/services";
 import { useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
@@ -25,6 +27,8 @@ export default function SettingScreen() {
   const [isLoading, setIsLoading] = useState(true);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [showLogoutPopup, setShowLogoutPopup] = useState(false);
+  const { userRole } = usePermissions();
+  const { isBasic, isPro } = useUserPlan();
 
   useEffect(() => {
     loadProfile();
@@ -86,9 +90,16 @@ export default function SettingScreen() {
           <View style={styles.infoCardRow}>
             <View style={styles.iconSquare}>
               <SmallLogo />
-              <View style={styles.badgePro}>
-                <ThemedText style={styles.badgeProText}>PRO</ThemedText>
-              </View>
+              {isPro && (
+                <View style={styles.badgePro}>
+                  <ThemedText style={styles.badgeProText}>PRO</ThemedText>
+                </View>
+              )}
+              {isBasic && (
+                <View style={styles.badgeBasic}>
+                  <ThemedText style={styles.badgeBasicText}>Basic</ThemedText>
+                </View>
+              )}
             </View>
             <View style={{ flex: 1 }}>
               {isLoading ? (
@@ -102,7 +113,7 @@ export default function SettingScreen() {
                     {profile?.email || profile?.phone || "User"}
                   </ThemedText>
                   <ThemedText style={styles.infoVersion}>
-                    Version {VERSION} • {profile?.role || "User"}
+                    Version {VERSION} • {profile?.role || "User"} • {isPro ? "PRO" : "Basic"}
                   </ThemedText>
                 </>
               )}
@@ -132,13 +143,15 @@ export default function SettingScreen() {
               showTopBorder={false}
               showBottomBorder={true}
             />
-            <SettingListItem
-              leftIconName="storefront-outline"
-              title="Store"
-              onPress={() => router.push("/dashboard/setting/store" as never)}
-              showTopBorder={false}
-              showBottomBorder={true}
-            />
+            {userRole === 'owner' && (
+              <SettingListItem
+                leftIconName="storefront-outline"
+                title="Store"
+                onPress={() => router.push("/dashboard/setting/store" as never)}
+                showTopBorder={false}
+                showBottomBorder={true}
+              />
+            )}
           </View>
           <View style={{ height: 80 }} />
         </View>
@@ -232,11 +245,26 @@ const createStyles = (colorScheme: "light" | "dark", isTablet: boolean, isTablet
       paddingHorizontal: isTablet ? 10 : 6,
       paddingVertical: isTablet ? 2 : 0,
       borderRadius: isTablet ? 14 : 10,
-      backgroundColor: Colors[colorScheme].primary,
+      backgroundColor: '#4CAF50',
     },
     badgeProText: {
       fontSize: isTablet ? 12 : 8,
       color: Colors[colorScheme].secondary,
+      fontWeight: "700",
+    },
+    badgeBasic: {
+      position: "absolute",
+      top: isTablet ? -10 : -8,
+      right: isTablet ? -10 : -8,
+      alignSelf: "center",
+      paddingHorizontal: isTablet ? 10 : 6,
+      paddingVertical: isTablet ? 2 : 0,
+      borderRadius: isTablet ? 14 : 10,
+      backgroundColor: Colors[colorScheme].border,
+    },
+    badgeBasicText: {
+      fontSize: isTablet ? 12 : 8,
+      color: Colors[colorScheme].text,
       fontWeight: "700",
     },
     infoEmail: {

@@ -1,8 +1,9 @@
 import {
-    ApiResponse,
-    CreateProductRequest,
-    Product,
-    UpdateProductRequest,
+  ApiResponse,
+  CreateProductRequest,
+  GetStockHistoryResponse,
+  Product,
+  UpdateProductRequest
 } from "../../types/api";
 import apiService from "../api";
 
@@ -21,6 +22,13 @@ export const productApi = {
     is_favorite?: boolean;
   }): Promise<ApiResponse<Product[]>> {
     const response = await apiService.get<Product[]>("/products?is_product=true", params);
+    return response;
+  },
+
+  async getProductStock(params?:{
+    search?: string;
+  }): Promise<ApiResponse<Product[]>> {
+    const response = await apiService.get<Product[]>("/products/stocks", params);
     return response;
   },
 
@@ -118,6 +126,25 @@ export const productApi = {
   async addFromBranch(productId: string): Promise<ApiResponse<Product>> {
     const response = await apiService.post<Product>(
       `/products/add-from-branch/${productId}`
+    );
+    return response;
+  },
+
+  /**
+   * Get stock history for all products
+   */
+  async getStockHistory(params?: {
+    page?: number;
+    limit?: number;
+    start_date?: string;
+    end_date?: string;
+    product_id?: string;
+    variant_id?: string;
+    action_type?: "IN" | "OUT" | "ADJUST";
+  }): Promise<ApiResponse<GetStockHistoryResponse>> {
+    const response = await apiService.get<GetStockHistoryResponse>(
+      "/products/stock-history",
+      params
     );
     return response;
   },

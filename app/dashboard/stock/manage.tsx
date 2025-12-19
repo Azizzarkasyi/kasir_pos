@@ -7,7 +7,7 @@ import { ThemedText } from "@/components/themed-text";
 import { Colors } from "@/constants/theme";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import productApi from "@/services/endpoints/products";
-import { Product, ProductVariant } from "@/types/api";
+import { Product } from "@/types/api";
 import { AntDesign } from "@expo/vector-icons";
 import { useFocusEffect } from "expo-router";
 import React, { useCallback, useState } from "react";
@@ -52,27 +52,25 @@ export default function ManageStockScreen() {
   const loadProducts = async () => {
     try {
       setIsLoading(true);
-      const response = await productApi.getProducts();
+      const response = await productApi.getProductStock({
+        search,
+      });
+      console.log(JSON.stringify(response.data))
 
       if (response.data) {
         setProducts(response.data);
 
-        // Build stock items from products and variants
+        // Build stock items from variants (response is already an array of variants)
         const items: StockItem[] = [];
-        response.data.forEach((product: Product) => {
-          if (product.variants && product.variants.length > 0) {
-            product.variants.forEach((variant: ProductVariant) => {
-              items.push({
-                id: `${product.id}-${variant.id}`,
-                variantId: variant.id,
-                productName: product.name,
-                variantName:
-                  variant.name,
-                quantity: variant.stock || 0,
-                unit: undefined, // Unit will be loaded from unit_id if needed
-              });
-            });
-          }
+        response.data.forEach((variant: any) => {
+          items.push({
+            id: `${variant.product_id}-${variant.id}`,
+            variantId: variant.id,
+            productName: variant.product?.name || 'Unknown Product',
+            variantName: variant.name,
+            quantity: variant.stock || 0,
+            unit: undefined, // Unit will be loaded from unit_id if needed
+          });
         });
         setStockItems(items);
         console.log(
@@ -80,7 +78,7 @@ export default function ManageStockScreen() {
           items.length,
           "stock items from",
           response.data.length,
-          "products"
+          "variants"
         );
       }
     } catch (error: any) {

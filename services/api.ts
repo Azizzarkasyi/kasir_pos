@@ -4,11 +4,11 @@ import axios, {
   AxiosInstance,
   InternalAxiosRequestConfig,
 } from "axios";
-import {ApiError, ApiResponse} from "../types/api";
-import {appEvents, APP_EVENTS} from "./event-emitter";
+import { ApiError, ApiResponse } from "../types/api";
+import { APP_EVENTS, appEvents } from "./event-emitter";
 
 // Baca dari environment variable, fallback ke localhost jika tidak ada
-const API_URL = process.env.API_URL || "http://localhost:3001";
+const API_URL = process.env.API_URL || "http://192.168.1.7:3001";
 
 console.log("🔧 API Configuration:", {API_URL});
 
@@ -33,6 +33,8 @@ class ApiService {
    * Setup request and response interceptors
    */
   private setupInterceptors() {
+    console.log("🔧 Setting up API interceptors");
+    
     // Request interceptor - add auth token and branch_id
     this.api.interceptors.request.use(
       async (config: InternalAxiosRequestConfig) => {
@@ -49,6 +51,7 @@ class ApiService {
         // Tambahkan branch_id ke header untuk filter outlet
         try {
           const branchId = await AsyncStorage.getItem("current_branch_id");
+          console.log("🔧 Branch ID:", branchId);
           if (branchId && config.headers) {
             config.headers["branch_id"] = branchId;
           }

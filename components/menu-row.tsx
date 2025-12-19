@@ -3,14 +3,14 @@ import { useColorScheme } from "@/hooks/use-color-scheme";
 import { Ionicons } from "@expo/vector-icons";
 import React from "react";
 import {
-  StyleProp,
-  StyleSheet,
-  Switch,
-  TextStyle,
-  TouchableOpacity,
-  View,
-  ViewStyle,
-  useWindowDimensions,
+    StyleProp,
+    StyleSheet,
+    Switch,
+    TextStyle,
+    TouchableOpacity,
+    View,
+    ViewStyle,
+    useWindowDimensions,
 } from "react-native";
 import { ThemedText } from "./themed-text";
 
@@ -28,6 +28,8 @@ type MenuRowProps = {
   leftIconName?: React.ComponentProps<typeof Ionicons>["name"];
   style?: StyleProp<TextStyle>;
   rowStyle?: StyleProp<ViewStyle>;
+  disabled?: boolean;
+  rightComponent?: React.ReactNode;
 };
 
 const MenuRow: React.FC<MenuRowProps> = ({
@@ -44,6 +46,8 @@ const MenuRow: React.FC<MenuRowProps> = ({
   showTopBorder = true,
   showBottomBorder = true,
   leftIconName,
+  disabled = false,
+  rightComponent,
 }) => {
   const colorScheme = useColorScheme() ?? "light";
   const { width, height } = useWindowDimensions();
@@ -62,10 +66,12 @@ const MenuRow: React.FC<MenuRowProps> = ({
           {
             borderBottomWidth: showBottomBorder ? bottom : 0,
           },
-          rowStyle
+          rowStyle,
+          disabled && styles.disabledRow
         ]}
         onPress={onPress}
-        activeOpacity={0.8}
+        activeOpacity={disabled ? 1 : 0.8}
+        disabled={disabled}
       >
         <View style={[{flex: 1}]}>
           <View style={styles.titleRow}>
@@ -73,10 +79,10 @@ const MenuRow: React.FC<MenuRowProps> = ({
               <Ionicons
                 name={leftIconName}
                 size={isTablet ? 26 : 20}
-                color={Colors[colorScheme].primary}
+                color={disabled ? Colors[colorScheme].icon : Colors[colorScheme].primary}
               />
             ) : null}
-            <ThemedText style={[styles.rowTitle, style]}>{title}</ThemedText>
+            <ThemedText style={[styles.rowTitle, style, disabled && styles.disabledTitle]}>{title}</ThemedText>
             {badgeText ? (
               <View style={styles.badge}>
                 <ThemedText style={styles.badgeText}>{badgeText}</ThemedText>
@@ -84,19 +90,21 @@ const MenuRow: React.FC<MenuRowProps> = ({
             ) : null}
           </View>
           {subtitle ? (
-            <ThemedText style={styles.rowSubtitle}>{subtitle}</ThemedText>
+            <ThemedText style={[styles.rowSubtitle, disabled && styles.disabledSubtitle]}>{subtitle}</ThemedText>
           ) : null}
         </View>
 
         <View style={styles.rightRow}>
           {rightText ? (
-            <ThemedText style={styles.rightText}>{rightText}</ThemedText>
+            <ThemedText style={[styles.rightText, disabled && styles.disabledRightText]}>{rightText}</ThemedText>
           ) : null}
-          <Ionicons
-            name="chevron-forward-outline"
-            size={isTablet ? 24 : 18}
-            color={Colors[colorScheme].icon}
-          />
+          {rightComponent || (
+            <Ionicons
+              name="chevron-forward-outline"
+              size={isTablet ? 24 : 18}
+              color={Colors[colorScheme].icon}
+            />
+          )}
         </View>
       </TouchableOpacity>
     );
@@ -104,19 +112,21 @@ const MenuRow: React.FC<MenuRowProps> = ({
 
   return (
     <TouchableOpacity
-      style={styles.row}
+      style={[styles.row, disabled && styles.disabledRow]}
       onPress={onPress}
-      activeOpacity={0.8}>
+      activeOpacity={disabled ? 1 : 0.8}
+      disabled={disabled}
+    >
       <View style={[{ flex: 1 } ]}>
         <View style={styles.titleRow}>
           {leftIconName ? (
             <Ionicons
               name={leftIconName}
               size={isTablet ? 26 : 20}
-              color={Colors[colorScheme].primary}
+              color={disabled ? Colors[colorScheme].icon : Colors[colorScheme].primary}
             />
           ) : null}
-          <ThemedText style={styles.rowTitle}>{title}</ThemedText>
+          <ThemedText style={[styles.rowTitle, disabled && styles.disabledTitle]}>{title}</ThemedText>
           {badgeText ? (
             <View style={styles.badge}>
               <ThemedText style={styles.badgeText}>{badgeText}</ThemedText>
@@ -124,7 +134,7 @@ const MenuRow: React.FC<MenuRowProps> = ({
           ) : null}
         </View>
         {subtitle ? (
-          <ThemedText style={styles.rowSubtitle}>{subtitle}</ThemedText>
+          <ThemedText style={[styles.rowSubtitle, disabled && styles.disabledSubtitle]}>{subtitle}</ThemedText>
         ) : null}
       </View>
 
@@ -144,13 +154,15 @@ const MenuRow: React.FC<MenuRowProps> = ({
       ) : (
         <View style={styles.rightRow}>
           {rightText ? (
-            <ThemedText style={styles.rightText}>{rightText}</ThemedText>
+            <ThemedText style={[styles.rightText, disabled && styles.disabledRightText]}>{rightText}</ThemedText>
           ) : null}
-          <Ionicons
-            name="chevron-forward-outline"
-            size={isTablet ? 24 : 18}
-            color={Colors[colorScheme].icon}
-          />
+          {rightComponent || (
+            <Ionicons
+              name="chevron-forward-outline"
+              size={isTablet ? 24 : 18}
+              color={Colors[colorScheme].icon}
+            />
+          )}
         </View>
       )}
     </TouchableOpacity>
@@ -204,6 +216,18 @@ const createStyles = (colorScheme: "light" | "dark", isTablet: boolean) =>
     rightText: {
       color: Colors[colorScheme].icon,
       fontSize: isTablet ? 18 : 14,
+    },
+    disabledRow: {
+      opacity: 0.5,
+    },
+    disabledTitle: {
+      color: Colors[colorScheme].icon,
+    },
+    disabledSubtitle: {
+      color: Colors[colorScheme].icon,
+    },
+    disabledRightText: {
+      color: Colors[colorScheme].icon,
     },
   });
 

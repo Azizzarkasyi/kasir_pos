@@ -1,7 +1,7 @@
 import {
-    ApiResponse,
-    CreateTransactionRequest,
-    Transaction,
+  ApiResponse,
+  CreateTransactionRequest,
+  Transaction,
 } from "../../types/api";
 import apiService from "../api";
 
@@ -41,6 +41,7 @@ const transformTransaction = (data: any): Transaction => {
     customerId: data.customer_id || data.customerId,
     employeeId: data.employee_id || data.cashier_id || data.employeeId,
     notes: data.notes || data.note || "",
+    tax: data.tax || data.taxAmount || 0,
     createdAt: data.created_at || data.createdAt || new Date().toISOString(),
     updatedAt: data.updated_at || data.updatedAt,
   };

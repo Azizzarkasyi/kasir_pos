@@ -109,6 +109,30 @@ const VerifyOtpScreen = () => {
 
         // Save token
         await authApi.setToken(response.data.access_token);
+
+        // Save user data to AsyncStorage (including plan and role)
+        if (response.data.user) {
+          const AsyncStorage = await import(
+            "@react-native-async-storage/async-storage"
+          );
+          await AsyncStorage.default.setItem(
+            "user_data",
+            JSON.stringify(response.data.user)
+          );
+          console.log("✅ User data saved:", response.data.user);
+        }
+
+        // Save user role to AsyncStorage (backward compatibility)
+        if (response.data.user?.role) {
+          const AsyncStorage = await import(
+            "@react-native-async-storage/async-storage"
+          );
+          await AsyncStorage.default.setItem(
+            "user_role",
+            response.data.user.role
+          );
+          console.log("✅ User role saved:", response.data.user.role);
+        }
         console.log("🔑 Token saved");
 
         // Save store_id and branch_id to AsyncStorage

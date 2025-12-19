@@ -18,6 +18,7 @@ export const employeeApi = {
     limit?: number;
     search?: string;
     status?: 'active' | 'inactive';
+    branch_id?: string;
   }): Promise<ApiResponse<Employee[]>> {
     const response = await apiService.get<Employee[]>('/employees', params);
     return response;

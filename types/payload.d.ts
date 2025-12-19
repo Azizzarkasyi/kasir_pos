@@ -25,9 +25,9 @@ interface RegisterPayload {
   country: string;
   bussiness_name: string;
   business_type: string;
-  bussiness_province:RegencyPayload;
-  bussiness_city:RegencyPayload;
-  bussiness_subdistrict:RegencyPayload;
+  bussiness_province: RegencyPayload;
+  bussiness_city: RegencyPayload;
+  bussiness_subdistrict: RegencyPayload;
   bussiness_regency: RegencyPayload;
   bussiness_address: string;
   owner_name: string;
@@ -344,3 +344,12 @@ interface SetDefaultDevicePayload {
 
 // Asset upload uses multipart/form-data with 'file' field
 // No specific payload interface needed, handled by FormData
+
+// =============================================
+// NOTIFICATION PAYLOADS
+// =============================================
+
+interface FilterNotificationQuery extends PaginationQuery {
+  category?: 'INFO' | 'PROMO' | 'ALERT' | 'SYSTEM';
+  is_read?: boolean;
+}

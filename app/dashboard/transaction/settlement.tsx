@@ -4,9 +4,10 @@ import Header from "@/components/header";
 import { Colors } from "@/constants/theme";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { usePrinterDevice } from "@/hooks/use-printer-device";
-import { settingsApi, StoreInfo } from "@/services";
+import { settingsApi, StoreInfo, StruckConfig } from "@/services";
 import { transactionApi } from "@/services/endpoints/transactions";
 import { printReceipt } from "@/services/receipt";
+import { useBranchStore } from "@/stores/branch-store";
 import { useCartStore } from "@/stores/cart-store";
 import { Transaction } from "@/types/api";
 import { Ionicons } from "@expo/vector-icons";
@@ -36,12 +37,14 @@ export default function TransactionSettlementPage() {
 
   const { getTotalAmount, clearCart } = useCartStore();
 
+  const { currentBranchId, currentBranchData } = useBranchStore();
   const { savedDevice } = usePrinterDevice();
 
   const [transaction, setTransaction] = useState<TransactionResult | null>(
     null
   );
   const [store, setStore] = useState<StoreInfo | null>(null);
+  const [struckConfig, setStruckConfig] = useState<StruckConfig | null>(null);
   const [isPrinting, setIsPrinting] = useState(false);
 
   useEffect(() => {
@@ -90,6 +93,34 @@ export default function TransactionSettlementPage() {
 
     fetchStore();
   }, []);
+
+  useEffect(() => {
+    const fetchStruckConfig = async () => {
+      try {
+        // Get branchId from store
+        if (!currentBranchId) {
+          console.log("No branchId found, skipping struck config fetch");
+          return;
+        }
+        
+        const response = await settingsApi.getStruckConfig(currentBranchId);
+        if (response.data) {
+          setStruckConfig(response.data);
+        }
+      } catch (error: any) {
+        // Silently handle 404 as it's expected when config is not set up
+        if (error.code === 404) {
+          console.log("Struck config not found for branch, using defaults");
+        } else {
+          console.error("Failed to fetch struck config:", error);
+        }
+      }
+    };
+
+    if (transaction) {
+      fetchStruckConfig();
+    }
+  }, [transaction, currentBranchId]);
 
   const paymentMethod =
     transaction?.paymentMethod === "cash" ? "Tunai" : "Hutang";
@@ -157,6 +188,7 @@ export default function TransactionSettlementPage() {
           transactionDate,
           paymentMethod,
           formatCurrency,
+          struckConfig,
         });
       });
 
@@ -268,10 +300,7 @@ export default function TransactionSettlementPage() {
                 style={styles.secondaryButton}
                 onPress={() => {
                   if (transaction) {
-                    router.push({
-                      pathname: "/dashboard/transaction/share-struck",
-                      params: { transactionId: transaction.id },
-                    });
+                    router.push(`/dashboard/transaction/${transaction.id}/share-struck`);
                   } else {
                     handleShareReceipt();
                   }

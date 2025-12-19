@@ -1,7 +1,9 @@
 import Header from "@/components/header";
 import MenuRow from "@/components/menu-row";
+import ProBadge from "@/components/ui/pro-badge";
 import { Colors } from "@/constants/theme";
 import { useColorScheme } from "@/hooks/use-color-scheme";
+import { useUserPlan } from "@/hooks/use-user-plan";
 import { useNavigation, useRouter } from "expo-router";
 import React from "react";
 import { ScrollView, StyleSheet, View, useWindowDimensions } from "react-native";
@@ -15,6 +17,7 @@ export default function ManageProductsScreen() {
   const isLandscape = width > height;
   const isTabletLandscape = isTablet && isLandscape;
   const styles = createStyles(isTablet, isTabletLandscape);
+  const { isBasic } = useUserPlan();
 
 
 
@@ -92,9 +95,13 @@ export default function ManageProductsScreen() {
               subtitle="Buat resep produk dari bahan baku."
               variant="link"
               showBottomBorder={false}
-              onPress={() =>
-                router.push("/dashboard/recipe-and-materials" as never)
-              }
+              onPress={() => {
+                if (!isBasic) {
+                  router.push("/dashboard/recipe-and-materials" as never);
+                }
+              }}
+              disabled={isBasic}
+              rightComponent={isBasic ? <ProBadge size="small" /> : undefined}
             />
           </View>
           </View>

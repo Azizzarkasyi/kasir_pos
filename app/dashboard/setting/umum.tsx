@@ -7,8 +7,10 @@ import Header from "@/components/header";
 import MenuRow from "@/components/menu-row";
 import { ThemedButton } from "@/components/themed-button";
 import { ThemedText } from "@/components/themed-text";
+import ProBadge from "@/components/ui/pro-badge";
 import { Colors } from "@/constants/theme";
 import { useColorScheme } from "@/hooks/use-color-scheme";
+import { useUserPlan } from "@/hooks/use-user-plan";
 import { usePrinterStore } from "@/stores/printer-store";
 import { useScannerStore } from "@/stores/scanner-store";
 import { useRouter } from "expo-router";
@@ -33,6 +35,7 @@ export default function GeneralSettingScreen() {
   const router = useRouter();
   const { savedDevice: printerDevice, getDisplayName: getPrinterDisplayName } = usePrinterStore();
   const { savedDevice: scannerDevice, getDisplayName: getScannerDisplayName } = useScannerStore();
+  const { isBasic } = useUserPlan();
   const [language, setLanguage] = useState<LanguageValue>("id");
   const [showSuccessPopup, setShowSuccessPopup] = useState(false);
   const [showLanguageModal, setShowLanguageModal] = useState(false);
@@ -121,7 +124,7 @@ export default function GeneralSettingScreen() {
               Sinkronisasi Data{" "}
             </ThemedText>
             <ThemedText style={styles.syncSubtitle}>
-              Lakukan sinkronisasi untuk perbarui data Qasir
+              Lakukan sinkronisasi untuk perbarui data Toko anda
             </ThemedText>
             <View style={styles.syncRow}>
               <View>
@@ -193,11 +196,15 @@ export default function GeneralSettingScreen() {
               style={styles.menuRowTitle}
               showTopBorder={false}
               showBottomBorder={false}
+              disabled={isBasic}
+              rightComponent={isBasic ? <ProBadge size="small" /> : undefined}
               onPress={() => {
-                if (scannerDevice) {
-                  router.push("/dashboard/setting/scanner-test" as never);
-                } else {
-                  router.push("/dashboard/setting/scanner" as never);
+                if (!isBasic) {
+                  if (scannerDevice) {
+                    router.push("/dashboard/setting/scanner-test" as never);
+                  } else {
+                    router.push("/dashboard/setting/scanner" as never);
+                  }
                 }
               }}
             />
@@ -285,7 +292,8 @@ const createStyles = (
       fontSize: isTablet ? 20 : 16,
     },
     syncSubtitle: {
-      color: Colors[colorScheme].icon,
+      color: Colors[colorScheme].text,
+      lineHeight:18,
       fontSize: isTablet ? 18 : 14,
     },
     syncLastLabel: {

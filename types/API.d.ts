@@ -172,6 +172,33 @@ type DeleteUnitResponse = ApiResponse<null>;
 // PRODUCT RESPONSES
 // =============================================
 
+export interface ProductStockHistory {
+  id: string;
+  action_type: "IN" | "OUT" | "ADJUST";
+  amount: number;
+  prev_stock: number;
+  curr_stock: number;
+  type: "add_stock" | "remove_stock" | "adjust_stock" | "sale";
+  note: string | null;
+  created_at: string;
+  product_display_name: string;
+  variant: {
+    id: string;
+    name: string;
+    current_stock: number;
+  };
+  product: {
+    id: string;
+    name: string;
+  };
+  branch: {
+    id: string;
+    name: string;
+  } | null;
+}
+
+export type GetStockHistoryResponse = PaginatedResponse<ProductStockHistory>;
+
 interface ProductVariantData {
   id: string;
   name: string;
@@ -432,14 +459,18 @@ type SetDefaultDeviceResponse = ApiResponse<PosDeviceData>;
 // STATS RESPONSES
 // =============================================
 
-interface SalesStatsData {
+export interface SalesStatsData {
   current_month_sales: number;
   current_month_percentage: number;
   today_sales: number;
   today_percentage: number;
+  today_expenses: number;
+  today_expense_percentage: number;
+  current_month_expenses: number;
+  current_month_expense_percentage: number;
 }
 
-type GetSalesStatsResponse = ApiResponse<SalesStatsData>;
+export type GetSalesStatsResponse = ApiResponse<SalesStatsData>;
 
 // =============================================
 // ASSET RESPONSES
@@ -476,3 +507,53 @@ interface HealthData {
 
 type GetAppInfoResponse = AppInfoData;
 type GetHealthResponse = HealthData;
+
+// =============================================
+// NOTIFICATION RESPONSES
+// =============================================
+
+type NotificationCategory = 'INFO' | 'PROMO' | 'ALERT' | 'SYSTEM';
+type NotificationReferenceType = 'TRANSACTION' | 'STOCK' | 'PROMO' | 'SYSTEM';
+
+interface NotificationData {
+  id: string;
+  title: string;
+  description: string;
+  cta_url: string | null;
+  category: NotificationCategory;
+  is_read: boolean;
+  reference_type: NotificationReferenceType | null;
+  reference_id: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+interface NotificationPaginationMeta {
+  total: number;
+  page: number;
+  limit: number;
+  total_pages: number;
+}
+
+interface GetNotificationsResponseData {
+  data: NotificationData[];
+  meta: NotificationPaginationMeta;
+  unread_count: number;
+}
+
+interface UnreadCountData {
+  unread_count: number;
+}
+
+interface MarkAsReadData {
+  id: string;
+  is_read: boolean;
+  updated_at: string;
+}
+
+type GetNotificationsResponse = GetNotificationsResponseData;
+type GetUnreadCountResponse = ApiResponse<UnreadCountData>;
+type GetNotificationResponse = ApiResponse<NotificationData>;
+type MarkAsReadResponse = ApiResponse<MarkAsReadData>;
+type MarkAllAsReadResponse = ApiResponse<null>;
+type ClearReadNotificationsResponse = ApiResponse<null>;

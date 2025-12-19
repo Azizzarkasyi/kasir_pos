@@ -6,23 +6,24 @@ import { ThemedButton } from "@/components/themed-button";
 import { Colors } from "@/constants/theme";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { usePrinterDevice } from "@/hooks/use-printer-device";
-import { settingsApi, StoreInfo } from "@/services";
+import { settingsApi, StoreInfo, StruckConfig } from "@/services";
 import { transactionApi } from "@/services/endpoints/transactions";
 import { printReceipt } from "@/services/receipt";
+import { useBranchStore } from "@/stores/branch-store";
 // import { buildPrintReceiptText } from "@/services/receipt";
 import { Transaction } from "@/types/api";
 import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
-    ActivityIndicator,
-    Alert,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    useWindowDimensions,
-    View,
+  ActivityIndicator,
+  Alert,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  useWindowDimensions,
+  View,
 } from "react-native";
 
 // Lazy import BluetoothManager to avoid crash when native module is not linked
@@ -40,6 +41,7 @@ export default function TransactionDetailPage() {
   const styles = createStyles(colorScheme, isTablet);
   const router = useRouter();
   const params = useLocalSearchParams();
+  const { currentBranchId, currentBranchData } = useBranchStore();
   const { savedDevice, connectedDeviceInstance, connectToDevice } = usePrinterDevice();
 
   const [transaction, setTransaction] = useState<Transaction | null>(null);
@@ -47,6 +49,7 @@ export default function TransactionDetailPage() {
   const [isDetailOpen, setIsDetailOpen] = useState(true);
   const [isPrinting, setIsPrinting] = useState(false);
   const [store, setStore] = useState<StoreInfo | null>(null);
+  const [struckConfig, setStruckConfig] = useState<StruckConfig | null>(null);
 
   useEffect(() => {
     const fetchTransaction = async () => {
@@ -56,7 +59,7 @@ export default function TransactionDetailPage() {
         try {
           setIsLoading(true);
           const response = await transactionApi.getTransaction(txnId);
-          console.log("Transaction data:", response.data);
+
           if (response.data) {
             setTransaction(response.data);
           }
@@ -86,6 +89,34 @@ export default function TransactionDetailPage() {
 
     fetchStore();
   }, []);
+
+  useEffect(() => {
+    const fetchStruckConfig = async () => {
+      try {
+        // Get branchId from store
+        if (!currentBranchId) {
+          console.log("No branchId found, skipping struck config fetch");
+          return;
+        }
+        
+        const response = await settingsApi.getStruckConfig(currentBranchId);
+        if (response.data) {
+          setStruckConfig(response.data);
+        }
+      } catch (error: any) {
+        // Silently handle 404 as it's expected when config is not set up
+        if (error.code === 404) {
+          console.log("Struck config not found for branch, using defaults");
+        } else {
+          console.error("Failed to fetch struck config:", error);
+        }
+      }
+    };
+
+    if (transaction) {
+      fetchStruckConfig();
+    }
+  }, [transaction, currentBranchId]);
 
   const items = transaction?.items || [];
 
@@ -162,6 +193,7 @@ export default function TransactionDetailPage() {
         transactionDate,
         paymentMethod,
         formatCurrency,
+        struckConfig,
       });
 
       // BluetoothManager.disconnect();
@@ -292,10 +324,7 @@ export default function TransactionDetailPage() {
                 size="medium"
                 variant="secondary"
                 onPress={() =>
-                  router.push({
-                    pathname: "/dashboard/transaction/share-struck",
-                    params: { transactionId: transaction.id?.toString() || "" },
-                  })
+                  router.push(`/dashboard/transaction/${transaction.id}/share-struck`)
                 }
               />
               <ThemedButton

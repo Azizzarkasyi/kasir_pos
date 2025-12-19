@@ -8,14 +8,14 @@ import { useFocusEffect } from "@react-navigation/native";
 import { useRouter } from "expo-router";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
-    ActivityIndicator,
-    FlatList,
-    RefreshControl,
-    StyleSheet,
-    TextInput,
-    TouchableOpacity,
-    useWindowDimensions,
-    View,
+  ActivityIndicator,
+  FlatList,
+  RefreshControl,
+  StyleSheet,
+  TextInput,
+  TouchableOpacity,
+  useWindowDimensions,
+  View,
 } from "react-native";
 
 type OutletItemProps = {
@@ -134,7 +134,7 @@ const SelectBranchScreen = () => {
     <>
       <Header
         showHelp={false}
-        title="Pilih Outlet"
+        title="Manajemen outlet"
         withNotificationButton={false}
       />
       <View style={styles.container}>

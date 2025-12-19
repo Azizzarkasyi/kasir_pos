@@ -53,6 +53,7 @@ export interface User {
   phone: string;
   email?: string;
   role?: string;
+  plan?: string;
   is_verified?: boolean
 }
 
@@ -89,9 +90,9 @@ export interface Product {
   min_stock?: number;
   photo_url?: string;
   variants?: ProductVariant[];
-  merk?: {id: string; name: string};
-  category?: {id: string; name: string};
-  unit?: {id: string; name: string};
+  merk?: { id: string; name: string };
+  category?: { id: string; name: string };
+  unit?: { id: string; name: string };
   createdAt?: string;
   updatedAt?: string;
 }
@@ -126,7 +127,7 @@ export interface CreateProductRequest {
   }[];
 }
 
-export interface UpdateProductRequest extends Partial<CreateProductRequest> {}
+export interface UpdateProductRequest extends Partial<CreateProductRequest> { }
 
 // Category Types
 export interface Category {
@@ -202,6 +203,7 @@ export interface Transaction {
   id: number;
   invoiceNumber: string;
   totalAmount: number;
+  tax: number;
   paidAmount: number;
   changeAmount: number;
   paymentMethod: "cash" | "card" | "transfer" | "qris";
@@ -212,7 +214,7 @@ export interface Transaction {
   cashier: {
     id: string;
     name: string;
-  } ;
+  };
   additional_fees: {
     name: string;
     amount: number;
@@ -266,3 +268,92 @@ export interface ApiError {
   message: string;
   errors?: Record<string, string[]>;
 }
+
+// Notification Types
+export type NotificationCategory = 'INFO' | 'PROMO' | 'ALERT' | 'SYSTEM';
+export type NotificationReferenceType = 'TRANSACTION' | 'STOCK' | 'PROMO' | 'SYSTEM';
+
+export interface Notification {
+  id: string;
+  title: string;
+  description: string;
+  cta_url: string | null;
+  category: NotificationCategory;
+  is_read: boolean;
+  reference_type: NotificationReferenceType | null;
+  reference_id: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface NotificationPaginationMeta {
+  total: number;
+  page: number;
+  limit: number;
+  total_pages: number;
+}
+
+export interface GetNotificationsResponse {
+  data: Notification[];
+  meta: NotificationPaginationMeta;
+  unread_count: number;
+}
+
+export interface UnreadCountData {
+  unread_count: number;
+}
+
+export interface MarkAsReadData {
+  id: string;
+  is_read: boolean;
+  updated_at: string;
+}
+
+export interface FilterNotificationQuery {
+  page?: number;
+  limit?: number;
+  category?: NotificationCategory;
+  is_read?: boolean;
+}
+
+// Stats Types
+export interface SalesStatsData {
+  current_month_sales: number;
+  current_month_percentage: number;
+  today_sales: number;
+  today_percentage: number;
+  today_expenses: number;
+  today_expense_percentage: number;
+  current_month_expenses: number;
+  current_month_expense_percentage: number;
+}
+
+export type GetSalesStatsResponse = ApiResponse<SalesStatsData>;
+
+// Stock History Types
+export interface ProductStockHistory {
+  id: string;
+  action_type: "IN" | "OUT" | "ADJUST";
+  amount: number;
+  prev_stock: number;
+  curr_stock: number;
+  type: "add_stock" | "remove_stock" | "adjust_stock" | "sale";
+  note: string | null;
+  created_at: string;
+  product_display_name: string;
+  variant: {
+    id: string;
+    name: string;
+    current_stock: number;
+  };
+  product: {
+    id: string;
+    name: string;
+  };
+  branch: {
+    id: string;
+    name: string;
+  } | null;
+}
+
+export type GetStockHistoryResponse = PaginatedResponse<ProductStockHistory>;

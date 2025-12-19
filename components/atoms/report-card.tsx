@@ -9,11 +9,12 @@ export type ReportCardProps = {
   title: string;
   amount: string;
   subtitle: string;
+  subtitleColor?: string;
 };
 
 
 
-const ReportCard: React.FC<ReportCardProps> = ({ title, amount, subtitle }) => {
+const ReportCard: React.FC<ReportCardProps> = ({ title, amount, subtitle, subtitleColor }) => {
   const colorScheme = useColorScheme() ?? "light";
   const styles = useReportCardStyles(colorScheme);
 
@@ -23,7 +24,9 @@ const ReportCard: React.FC<ReportCardProps> = ({ title, amount, subtitle }) => {
         {title}
       </ThemedText>
       <ThemedText style={styles.amountText}>{amount}</ThemedText>
-      <ThemedText style={styles.mutedText}>{subtitle}</ThemedText>
+      <ThemedText style={[styles.mutedText, subtitleColor && { color: subtitleColor }]}>
+        {subtitle}
+      </ThemedText>
     </View>
   );
 };

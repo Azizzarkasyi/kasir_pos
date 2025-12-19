@@ -95,6 +95,18 @@ export default function RootLayout() {
               options={{ headerShown: false }}
             />
             <Stack.Screen
+              name="dashboard/home/report/index"
+              options={{ headerShown: false, title: "Detail Laporan" }}
+            />
+            <Stack.Screen
+              name="dashboard/stock-history/index"
+              options={{ headerShown: false, title: "Perputaran Stock" }}
+            />
+            <Stack.Screen
+              name="dashboard/stock-history/detail"
+              options={{ headerShown: false, title: "Detail Perputaran Stock" }}
+            />
+            <Stack.Screen
               name="dashboard/notification/index"
               options={{ headerShown: false, title: "Notifikasi" }}
             />
@@ -281,6 +293,18 @@ export default function RootLayout() {
             <Stack.Screen
               name="dashboard/transaction/share-struck"
               options={{ headerShown: false, title: "Pratinjau Struk" }}
+            />
+            <Stack.Screen
+              name="dashboard/transaction/[id]/show"
+              options={{ headerShown: false, title: "Detail Transaksi" }}
+            />
+            <Stack.Screen
+              name="dashboard/transaction/[id]/share-struck"
+              options={{ headerShown: false, title: "Pratinjau Struk" }}
+            />
+            <Stack.Screen
+              name="dashboard/help/index"
+              options={{ headerShown: false, title: "Bantuan" }}
             />
           </Stack>
         </View>
