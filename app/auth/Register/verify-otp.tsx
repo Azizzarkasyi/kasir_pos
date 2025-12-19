@@ -107,15 +107,42 @@ const VerifyOtpScreen = () => {
       if (response.success && response.data?.access_token) {
         console.log("✅ OTP verified successfully");
 
-        // Jangan simpan token, user harus login manual setelah registrasi
-        // await authApi.setToken?.(response.data.access_token);
+        // Save token
+        await authApi.setToken(response.data.access_token);
+        console.log("🔑 Token saved");
 
-        Alert.alert("Berhasil!", "Akun Anda berhasil terdaftar. Silakan login untuk melanjutkan.", [
-          {
-            text: "OK",
-            onPress: () => router.replace("/auth/Login/login"),
-          },
-        ]);
+        // Save store_id and branch_id to AsyncStorage
+        const AsyncStorage = await import(
+          "@react-native-async-storage/async-storage"
+        );
+
+        // Save store_id from user response
+        if ((response.data.user as any)?.store_id) {
+          await AsyncStorage.default.setItem(
+            "store_id",
+            String((response.data.user as any).store_id)
+          );
+          console.log("🏪 Store ID saved:", (response.data.user as any).store_id);
+        }
+
+        // Save branch_id and branch_name
+        if (response.data.branch?.id) {
+          await AsyncStorage.default.setItem(
+            "current_branch_id",
+            response.data.branch.id
+          );
+          console.log("🏢 Branch ID saved:", response.data.branch.id);
+
+          if (response.data.branch?.name) {
+            await AsyncStorage.default.setItem(
+              "current_branch_name",
+              response.data.branch.name
+            );
+          }
+        }
+
+        // Navigate directly to home
+        router.replace("/dashboard/home" as never);
       } else {
         throw new Error(response.message || "Kode OTP tidak valid");
       }

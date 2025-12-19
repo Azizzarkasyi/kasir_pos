@@ -13,8 +13,8 @@ export const categoryApi = {
   /**
    * Get all categories
    */
-  async getCategories(): Promise<ApiResponse<Category[]>> {
-    const response = await apiService.get<Category[]>("/product-categories");
+  async getCategories(params?: Record<string, string>): Promise<ApiResponse<Category[]>> {
+    const response = await apiService.get<Category[]>("/product-categories", params);
     return response;
   },
 

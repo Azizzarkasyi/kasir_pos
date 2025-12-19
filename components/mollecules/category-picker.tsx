@@ -3,6 +3,7 @@ import { useColorScheme } from "@/hooks/use-color-scheme";
 import categoryApi from "@/services/endpoints/categories";
 import { Category } from "@/types/api";
 import { AntDesign, Ionicons } from "@expo/vector-icons";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import React, { useEffect, useRef } from "react";
 import {
   ActivityIndicator,
@@ -74,7 +75,9 @@ const CategoryPicker: React.FC<CategoryPickerProps> = ({
   const loadCategories = async () => {
     try {
       setLoading(true);
-      const response = await categoryApi.getCategories();
+      const storeId = await AsyncStorage.getItem("current_branch_id");
+      const params = storeId ? { store_id: storeId } : undefined;
+      const response = await categoryApi.getCategories(params);
       if (response.data) {
         setCategories(response.data);
       }

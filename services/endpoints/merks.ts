@@ -8,8 +8,8 @@ export const merkApi = {
   /**
    * Get all merks
    */
-  async getMerks(): Promise<ApiResponse<Merk[]>> {
-    const response = await apiService.get<Merk[]>("/product-merks");
+  async getMerks(params?: Record<string, string>): Promise<ApiResponse<Merk[]>> {
+    const response = await apiService.get<Merk[]>("/product-merks", params);
     return response;
   },
 

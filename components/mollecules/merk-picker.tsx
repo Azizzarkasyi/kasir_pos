@@ -3,6 +3,7 @@ import { useColorScheme } from "@/hooks/use-color-scheme";
 import { merkApi } from "@/services";
 import { Merk } from "@/types/api";
 import { AntDesign, Ionicons } from "@expo/vector-icons";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import React, { useEffect, useRef } from "react";
 import {
   ActivityIndicator,
@@ -59,7 +60,9 @@ const MerkPicker: React.FC<MerkPickerProps> = ({
   const loadMerks = React.useCallback(async () => {
     try {
       setLoading(true);
-      const response = await merkApi.getMerks();
+      const storeId = await AsyncStorage.getItem("current_branch_id");
+      const params = storeId ? { store_id: storeId } : undefined;
+      const response = await merkApi.getMerks(params);
       if (response.data) {
         setMerkList(response.data);
       }
