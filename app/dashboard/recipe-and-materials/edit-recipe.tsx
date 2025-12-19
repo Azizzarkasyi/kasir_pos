@@ -1,21 +1,20 @@
+import ConfirmPopup from "@/components/atoms/confirm-popup";
 import RecipeIngredientItem from "@/components/atoms/recipe-ingredient-item";
 import ComboInput from "@/components/combo-input";
 import ConfirmationDialog, {
   ConfirmationDialogHandle,
 } from "@/components/drawers/confirmation-dialog";
-import ConfirmPopup from "@/components/atoms/confirm-popup";
 import Header from "@/components/header";
 import ImageUpload from "@/components/image-upload";
-import {ThemedButton} from "@/components/themed-button";
-import {ThemedInput} from "@/components/themed-input";
-import {ThemedText} from "@/components/themed-text";
-import {Colors} from "@/constants/theme";
-import {useColorScheme} from "@/hooks/use-color-scheme";
-import assetApi, {prepareFileFromUri} from "@/services/endpoints/assets";
+import { ThemedButton } from "@/components/themed-button";
+import { ThemedInput } from "@/components/themed-input";
+import { ThemedText } from "@/components/themed-text";
+import { Colors } from "@/constants/theme";
+import { useColorScheme } from "@/hooks/use-color-scheme";
 import recipeApi from "@/services/endpoints/recipes";
-import {useRecipeFormStore} from "@/stores/recipe-form-store";
-import {useLocalSearchParams, useNavigation, useRouter} from "expo-router";
-import React, {useEffect, useRef, useState} from "react";
+import { useRecipeFormStore } from "@/stores/recipe-form-store";
+import { useLocalSearchParams, useNavigation, useRouter } from "expo-router";
+import React, { useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -23,8 +22,8 @@ import {
   useWindowDimensions,
   View,
 } from "react-native";
-import {KeyboardAwareScrollView} from "react-native-keyboard-aware-scroll-view";
-import {useSafeAreaInsets} from "react-native-safe-area-context";
+import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function EditRecipeScreen() {
   const colorScheme = useColorScheme() ?? "light";
@@ -74,8 +73,9 @@ export default function EditRecipeScreen() {
           const mappedIngredients = recipe.items.map(item => ({
             ingredient: {
               id: item.product_id,
-              name: item.product?.name || "",
-              variant_id: item.variant_id,
+              name: item.productVariant?.product?.name || "",
+              variant_id: item.productVariantId,
+              variant_name: item.productVariant?.name || "",
             },
             amount: item.quantity,
             unit: undefined,
@@ -248,7 +248,7 @@ export default function EditRecipeScreen() {
                       .slice(0, 2)
                       .toUpperCase()}
                     name={v.ingredient.name}
-                    variantName={v.ingredient.name}
+                    variantName={v.ingredient.variant_name || ""}
                     count={v.amount}
                     unitName={v.unit?.name}
                     onPress={() => {}}

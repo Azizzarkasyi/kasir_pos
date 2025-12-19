@@ -203,6 +203,8 @@ export interface Transaction {
   id: number;
   invoiceNumber: string;
   totalAmount: number;
+  sub_total?: number;
+  total?: number;
   tax: number;
   paidAmount: number;
   changeAmount: number;

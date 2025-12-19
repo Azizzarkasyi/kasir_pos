@@ -90,11 +90,14 @@ export default function ShareStruckPage() {
     };
 
     const subtotal = transaction
-        ? transaction.totalAmount
+        ? (transaction as any).sub_total || 0
         : items.reduce(
             (sum, item) => sum + (item.subtotal || item.price * item.quantity),
             0
         );
+    const total = transaction
+        ? (transaction as any).total || subtotal
+        : subtotal;
 
     const totalProduk = items.reduce((sum, item) => sum + item.quantity, 0);
     const dibayar = transaction?.paidAmount ?? subtotal;
@@ -183,6 +186,7 @@ export default function ShareStruckPage() {
                 store,
                 items: receiptItems,
                 subtotal,
+                total,
                 dibayar,
                 kembalian,
                 transactionDate,

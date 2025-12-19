@@ -1,26 +1,27 @@
-import SectionDivider from "@/components/atoms/section-divider";
 import ConfirmPopup from "@/components/atoms/confirm-popup";
+import SectionDivider from "@/components/atoms/section-divider";
 import SelectBranchModal from "@/components/drawers/select-branch-modal";
 import Header from "@/components/header";
 import RadioButton from "@/components/radio-button";
-import {ThemedButton} from "@/components/themed-button";
-import {ThemedInput} from "@/components/themed-input";
-import {ThemedText} from "@/components/themed-text";
-import {Colors} from "@/constants/theme";
-import {useColorScheme} from "@/hooks/use-color-scheme";
-import {Branch} from "@/services";
+import { ThemedButton } from "@/components/themed-button";
+import { ThemedInput } from "@/components/themed-input";
+import { ThemedText } from "@/components/themed-text";
+import { Colors } from "@/constants/theme";
+import { useColorScheme } from "@/hooks/use-color-scheme";
+import { Branch } from "@/services";
 import employeeApi from "@/services/endpoints/employees";
-import {useRouter} from "expo-router";
-import React, {useState} from "react";
+import { Ionicons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
+import React, { useState } from "react";
 import {
-  Alert,
-  StyleSheet,
-  TouchableOpacity,
-  useWindowDimensions,
-  View,
+    Alert,
+    StyleSheet,
+    TouchableOpacity,
+    useWindowDimensions,
+    View,
 } from "react-native";
-import {KeyboardAwareScrollView} from "react-native-keyboard-aware-scroll-view";
-import {useSafeAreaInsets} from "react-native-safe-area-context";
+import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function AddEmployeeScreen() {
   const colorScheme = useColorScheme() ?? "light";
@@ -257,20 +258,58 @@ export default function AddEmployeeScreen() {
             </View>
 
             {selectedBranches.length > 0 ? (
-              <View style={styles.selectedOutletsList}>
-                {selectedBranches.map(branch => (
-                  <View key={branch.id} style={styles.selectedOutletItem}>
-                    <ThemedText style={styles.selectedOutletName}>
-                      {branch.name}
-                    </ThemedText>
-                    <ThemedText
-                      style={styles.selectedOutletAddress}
-                      numberOfLines={1}
-                    >
-                      {branch.address}
-                    </ThemedText>
-                  </View>
-                ))}
+              <View style={styles.selectedOutletsContainer}>
+                <View style={styles.selectedOutletsHeader}>
+                  <Ionicons
+                    name="checkmark-circle"
+                    size={20}
+                    color={Colors[colorScheme].primary}
+                  />
+                  <ThemedText style={styles.selectedOutletsHeaderText}>
+                    {selectedBranches.length} Outlet Terpilih
+                  </ThemedText>
+                </View>
+                <View style={styles.selectedOutletsList}>
+                  {selectedBranches.map((branch, index) => (
+                    <View key={branch.id} style={styles.selectedOutletItem}>
+                      <View style={styles.selectedOutletContent}>
+                        <View style={styles.selectedOutletIcon}>
+                          <Ionicons
+                            name="storefront"
+                            size={isTablet ? 22 : 18}
+                            color={Colors[colorScheme].primary}
+                          />
+                        </View>
+                        <View style={styles.selectedOutletInfo}>
+                          <ThemedText style={styles.selectedOutletName}>
+                            {branch.name}
+                          </ThemedText>
+                          {branch.address && (
+                            <ThemedText
+                              style={styles.selectedOutletAddress}
+                              numberOfLines={1}
+                            >
+                              {branch.address}
+                            </ThemedText>
+                          )}
+                        </View>
+                      </View>
+                      <TouchableOpacity
+                        style={styles.removeBranchButton}
+                        onPress={() => {
+                          const newBranches = selectedBranches.filter(b => b.id !== branch.id);
+                          setSelectedBranches(newBranches);
+                        }}
+                      >
+                        <Ionicons
+                          name="close-circle"
+                          size={20}
+                          color={Colors[colorScheme].icon}
+                        />
+                      </TouchableOpacity>
+                    </View>
+                  ))}
+                </View>
               </View>
             ) : (
               <ThemedText style={styles.outletHint}>
@@ -279,7 +318,12 @@ export default function AddEmployeeScreen() {
             )}
 
             <View style={styles.buttonContainer}>
-              <ThemedButton title="Simpan" onPress={handleSave} size="medium" />
+              <ThemedButton
+                title={isSaving ? "Menyimpan..." : "Simpan"}
+                onPress={handleSave}
+                size="medium"
+                disabled={isSaving}
+              />
             </View>
           </View>
         </View>
@@ -397,26 +441,62 @@ const createStyles = (
       textAlign: "center",
       marginTop: isTablet ? 16 : 12,
     },
+    selectedOutletsContainer: {
+      marginTop: isTablet ? 20 : 16,
+    },
+    selectedOutletsHeader: {
+      flexDirection: "row",
+      alignItems: "center",
+      marginBottom: isTablet ? 16 : 12,
+      gap: 8,
+    },
+    selectedOutletsHeaderText: {
+      fontSize: isTablet ? 18 : 14,
+      fontWeight: "600",
+      color: Colors[colorScheme].text,
+    },
     selectedOutletsList: {
-      marginTop: isTablet ? 16 : 12,
       gap: isTablet ? 12 : 8,
     },
     selectedOutletItem: {
-      paddingVertical: isTablet ? 14 : 10,
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      paddingVertical: isTablet ? 16 : 12,
       paddingHorizontal: isTablet ? 16 : 12,
-      borderRadius: 8,
+      borderRadius: 12,
       borderWidth: 1,
       borderColor: Colors[colorScheme].border,
       backgroundColor: Colors[colorScheme].background,
+    },
+    selectedOutletContent: {
+      flexDirection: "row",
+      alignItems: "center",
+      flex: 1,
+      gap: isTablet ? 12 : 10,
+    },
+    selectedOutletIcon: {
+      width: isTablet ? 44 : 36,
+      height: isTablet ? 44 : 36,
+      borderRadius: isTablet ? 22 : 18,
+      backgroundColor: Colors[colorScheme].primary + "20",
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    selectedOutletInfo: {
+      flex: 1,
     },
     selectedOutletName: {
       fontSize: isTablet ? 18 : 14,
       fontWeight: "600",
       color: Colors[colorScheme].text,
-      marginBottom: 4,
+      marginBottom: 2,
     },
     selectedOutletAddress: {
       fontSize: isTablet ? 16 : 12,
       color: Colors[colorScheme].icon,
+    },
+    removeBranchButton: {
+      padding: 4,
     },
   });

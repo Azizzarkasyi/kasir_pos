@@ -1,5 +1,5 @@
-import {Colors} from "@/constants/theme";
-import {useColorScheme} from "@/hooks/use-color-scheme";
+import { Colors } from "@/constants/theme";
+import { useColorScheme } from "@/hooks/use-color-scheme";
 import React from "react";
 import {
   Image,
@@ -8,7 +8,7 @@ import {
   useWindowDimensions,
   View,
 } from "react-native";
-import {ThemedText} from "../themed-text";
+import { ThemedText } from "../themed-text";
 
 export type RecipeItemProps = {
   initials: string;
@@ -68,8 +68,8 @@ const createStyles = (colorScheme: "light" | "dark", isTablet: boolean) =>
       backgroundColor: Colors[colorScheme].secondary,
     },
     avatar: {
-      width: isTablet ? 60 : 48,
-      height: isTablet ? 60 : 48,
+      width: isTablet ? 60 : 42,
+      height: isTablet ? 60 : 42,
       borderRadius: isTablet ? 14 : 12,
       backgroundColor: Colors[colorScheme].primary,
       alignItems: "center",
@@ -83,11 +83,11 @@ const createStyles = (colorScheme: "light" | "dark", isTablet: boolean) =>
     },
     name: {
       fontWeight: "700",
-      fontSize: isTablet ? 20 : 16,
+      fontSize: isTablet ? 20 : 14,
     },
     subtitle: {
       color: Colors[colorScheme].icon,
-      fontSize: isTablet ? 18 : 14,
+      fontSize: isTablet ? 18 : 12,
       marginTop: isTablet ? 4 : 0,
     },
     rightText: {

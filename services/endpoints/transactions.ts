@@ -17,6 +17,8 @@ const transformTransaction = (data: any): Transaction => {
     id: data.id,
     invoiceNumber: invoiceNumber,
     totalAmount: data.total_amount || data.total || data.totalAmount || 0,
+    sub_total: data.sub_total || data.subtotal || 0,
+    total: data.total || data.total_amount || 0,
     paidAmount: data.paid_amount || data.paid || data.paidAmount || 0,
     changeAmount: data.change_amount || data.change || data.changeAmount || 0,
     cashier: {

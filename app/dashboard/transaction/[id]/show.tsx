@@ -123,7 +123,8 @@ export default function TransactionDetailPage() {
         return withDots;
     };
 
-    const subtotal = transaction?.totalAmount || 0;
+    const subtotal = (transaction as any)?.sub_total || transaction?.totalAmount || 0;
+    const total = (transaction as any)?.total || transaction?.totalAmount || 0;
     const totalProduk = items.reduce((sum, item) => sum + item.quantity, 0);
     const dibayar = transaction?.paidAmount || 0;
     const kembalian = transaction?.changeAmount || 0;
@@ -377,12 +378,20 @@ export default function TransactionDetailPage() {
                                         Rp {formatCurrency(subtotal)}
                                     </Text>
                                 </View>
+                                {transaction?.tax && transaction.tax > 0 && (
+                                    <View style={styles.summaryRow}>
+                                        <Text style={styles.summaryLabel}>Pajak</Text>
+                                        <Text style={styles.summaryValue}>
+                                            Rp {formatCurrency(transaction.tax)}
+                                        </Text>
+                                    </View>
+                                )}
                                 <View style={styles.summaryRow}>
                                     <Text style={styles.summaryLabel}>
                                         Total ({totalProduk} Produk)
                                     </Text>
                                     <Text style={styles.summaryValue}>
-                                        Rp {formatCurrency(subtotal)}
+                                        Rp {formatCurrency(total)}
                                     </Text>
                                 </View>
                                 <View style={styles.summaryRow}>

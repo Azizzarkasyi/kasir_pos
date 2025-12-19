@@ -74,6 +74,8 @@ export async function printReceipt(params: {
         transaction.additional_fees?.length > 0
             ? transaction.additional_fees
             : [];
+    const transactionSubtotal = (transaction as any)?.sub_total || 0;
+    const total = (transaction as any)?.total || transactionSubtotal;
 
     const separator = "-".repeat(LINE_WIDTH) + "\n\r";
 
@@ -179,7 +181,7 @@ export async function printReceipt(params: {
     await BluetoothEscposPrinter.printText(
         `${formatKeyValue(
             "Subtotal",
-            `Rp ${formatCurrency(subtotal)}`
+            `Rp ${formatCurrency(transactionSubtotal)}`
         )}\n\r`,
         {}
     );
@@ -198,7 +200,7 @@ export async function printReceipt(params: {
     await BluetoothEscposPrinter.printText(
         `${formatKeyValue(
             `Total (${items.length + " Produk"})`,
-            `Rp ${formatCurrency(subtotal)}`
+            `Rp ${formatCurrency(total)}`
         )}\n\r`,
         {}
     );
@@ -245,6 +247,7 @@ interface ReceiptPDFParams {
     store: StoreInfo | null;
     items: ReceiptItem[];
     subtotal: number;
+    total: number;
     dibayar: number;
     kembalian: number;
     transactionDate: string;
@@ -260,6 +263,7 @@ export function generateReceiptHTML(params: ReceiptPDFParams): string {
         store,
         items,
         subtotal,
+        total,
         dibayar,
         kembalian,
         transactionDate,
@@ -521,7 +525,7 @@ export function generateReceiptHTML(params: ReceiptPDFParams): string {
                     ` : ""}
                     <div class="summary-row">
                         <span class="summary-label summary-label-strong">Total (${totalProduk} Produk)</span>
-                        <span class="summary-value summary-value-strong">${formatCurrency(subtotal)}</span>
+                        <span class="summary-value summary-value-strong">${formatCurrency(total)}</span>
                     </div>
                     <div class="summary-row">
                         <span class="summary-label">Bayar</span>

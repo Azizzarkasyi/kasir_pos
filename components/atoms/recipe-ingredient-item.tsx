@@ -56,8 +56,8 @@ const createStyles = (colorScheme: "light" | "dark", isTablet: boolean) =>
       backgroundColor: Colors[colorScheme].background,
     },
     avatar: {
-      width: isTablet ? 60 : 48,
-      height: isTablet ? 60 : 48,
+      width: isTablet ? 60 : 42,
+      height: isTablet ? 60 : 42,
       borderRadius: isTablet ? 10 : 8,
       backgroundColor: Colors[colorScheme].border,
       alignItems: "center",
@@ -70,22 +70,22 @@ const createStyles = (colorScheme: "light" | "dark", isTablet: boolean) =>
     },
     nameText: {
       color: Colors[colorScheme].text,
-      fontSize: isTablet ? 20 : 16,
+      fontSize: isTablet ? 20 : 14,
       lineHeight: isTablet ? 26 : 20,
       fontWeight: "700",
     },
     variantText: {
       color: Colors[colorScheme].icon,
-      fontSize: isTablet ? 18 : 14,
+      fontSize: isTablet ? 18 : 12,
       marginTop: isTablet ? 4 : 0,
     },
     stockText: {
       color: Colors[colorScheme].icon,
-      fontSize: isTablet ? 18 : 14,
+      fontSize: isTablet ? 18 : 12,
       fontWeight: "700",
     },
     stockCountText: {
       color: Colors[colorScheme].icon,
-      fontSize: isTablet ? 18 : 14,
+      fontSize: isTablet ? 18 : 12,
     },
   });

@@ -6,6 +6,7 @@ import Header from "@/components/header";
 import { Colors } from "@/constants/theme";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { useCartStore } from "@/stores/cart-store";
+import { useTaxStore } from "@/stores/tax-store";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
@@ -36,6 +37,8 @@ export default function TransactionSummaryPage() {
     getSubtotal,
     getTotalFees,
     getTotalAmount,
+    getTotalWithTax,
+    getTaxAmount,
   } = useCartStore();
 
   const [isCostModalVisible, setIsCostModalVisible] = useState(false);
@@ -59,6 +62,8 @@ export default function TransactionSummaryPage() {
   const subtotal = getSubtotal();
   const totalFees = getTotalFees();
   const totalAmount = getTotalAmount();
+  const taxAmount = getTaxAmount();
+  const totalWithTax = getTotalWithTax();
 
   const handleAddFee = (payload: { name: string; price: number }) => {
     addFee({
@@ -194,6 +199,20 @@ export default function TransactionSummaryPage() {
             </Text>
           </View>
         )}
+        {taxAmount > 0 && (
+          <View style={styles.summaryRow}>
+            <Text
+              style={[styles.summaryLabel, { color: Colors[colorScheme].icon }]}
+            >
+              Pajak ({useTaxStore.getState().taxRate}%)
+            </Text>
+            <Text
+              style={[styles.summaryValue, { color: Colors[colorScheme].text }]}
+            >
+              Rp {formatCurrency(taxAmount)}
+            </Text>
+          </View>
+        )}
         <View style={[styles.summaryRow, styles.summaryRowTotal]}>
           <Text
             style={[
@@ -209,7 +228,7 @@ export default function TransactionSummaryPage() {
               { color: Colors[colorScheme].primary },
             ]}
           >
-            Rp {formatCurrency(totalAmount)}
+            Rp {formatCurrency(totalWithTax)}
           </Text>
         </View>
       </View>

@@ -125,6 +125,7 @@ export default function TransactionSettlementPage() {
   const paymentMethod =
     transaction?.paymentMethod === "cash" ? "Tunai" : "Hutang";
   const totalTagihan = transaction?.totalAmount || 0;
+  const subtotal = (transaction as any)?.sub_total || totalTagihan; // Use sub_total if available
   const diterima = transaction?.paidAmount || 0;
   const kembali = transaction?.changeAmount || 0;
   const transactionDate = transaction?.createdAt
@@ -182,7 +183,7 @@ export default function TransactionSettlementPage() {
         await printReceipt({
           transaction,
           store,
-          subtotal: totalTagihan,
+          subtotal: subtotal,
           dibayar: diterima,
           kembalian: kembali,
           transactionDate,

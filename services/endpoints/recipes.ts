@@ -4,13 +4,25 @@ import apiService from "../api";
 export interface RecipeItem {
   product_id: string;
   variant_id?: string;
+  productVariantId?: string | null;
   quantity: number;
-  product?: {
+
+  productVariant?: {
     id: string;
     name: string;
     price: number;
-    is_ingredient?: boolean;
-  };
+    stock: number;
+    unit_id: string;
+    is_stock_active: boolean;
+    min_stock: number;
+    capital_price: number;
+    product?: {
+      id: string;
+      name: string;
+      price: number;
+      is_ingredient?: boolean;
+    };
+  } | null;
 }
 
 export interface Recipe {
@@ -80,7 +92,7 @@ const recipeApi = {
    */
   async updateRecipeStatus(
     id: string,
-    data: {is_active: boolean}
+    data: { is_active: boolean }
   ): Promise<ApiResponse<Recipe>> {
     const response = await apiService.put<Recipe>(
       `/recipes/${id}/status`,

@@ -287,57 +287,56 @@ export default function EditProductScreen() {
         payload.photo_url = imageUri;
       }
 
-      // Build variants array
+      // Build variants array - materials don't have default variant
       const allVariants: any[] = [];
 
-      // 1. Update variant default dengan data dari form
-      if (defaultVariantId) {
-        const defaultVariantData: any = {
-          id: defaultVariantId, // ID variant default yang sudah ada
-          name: "Regular",
-          price: numericPrice,
-          capital_price: capitalPrice || 0,
-          is_stock_active: !!stock,
-        };
-
-        if (barcode) defaultVariantData.barcode = barcode;
-
-        if (recipe && recipe.length > 10 && recipe.startsWith("cm")) {
-          defaultVariantData.recipe_id = recipe;
-        }
-
-        if (stock) {
-          defaultVariantData.stock = stock.offlineStock;
-          defaultVariantData.min_stock = stock.minStock;
-          defaultVariantData.notify_on_stock_ronouts = stock.notifyMin;
-          if (
-            stock.unit &&
-            stock.unit.length > 10 &&
-            stock.unit.startsWith("cm")
-          ) {
-            defaultVariantData.unit_id = stock.unit;
-          }
-        }
-
-        allVariants.push(defaultVariantData);
-      }
-
-      // 2. Tambahkan variant non-default yang sudah ada
+      // Add all variants from store
       if (variants.length > 0) {
         console.log("📦 Variants from store before mapping:", variants);
-        const nonDefaultVariants = variants.map(v => ({
-          ...v,
-        }));
-        console.log("📦 Mapped nonDefaultVariants:", nonDefaultVariants);
-        allVariants.push(...nonDefaultVariants);
+        console.log("📦 Number of variants in store:", variants.length);
+        const mappedVariants = variants.map((v, index) => {
+          console.log(`📦 Mapping variant ${index}:`, v);
+          const cleaned: any = {
+            name: v.name,
+            price: v.price,
+            capital_price: v.capital_price || 0,
+            is_stock_active: v.is_stock_active || false,
+          };
+
+          // Only include ID if it's a real variant ID (not temporary)
+          if (v.id && !String(v.id).match(/^\d{13}$/)) {
+            cleaned.id = v.id;
+            console.log(`📦 Including real ID for variant ${index}:`, v.id);
+          } else if (v.id) {
+            console.log(`📦 Skipping temporary ID for variant ${index}:`, v.id);
+          }
+
+          // Only add fields that have valid values
+          if (v.barcode) cleaned.barcode = v.barcode;
+
+          if (v.is_stock_active) {
+            if (typeof v.stock === "number") cleaned.stock = v.stock;
+            if (typeof v.min_stock === "number") cleaned.min_stock = v.min_stock;
+            if (typeof v.notify_on_stock_ronouts === "boolean") {
+              cleaned.notify_on_stock_ronouts = v.notify_on_stock_ronouts;
+            }
+            if (v.unit_id && v.unit_id.length > 10 && v.unit_id.startsWith("cm")) {
+              cleaned.unit_id = v.unit_id;
+            }
+          }
+
+          console.log(`📦 Cleaned variant ${index}:`, cleaned);
+          return cleaned;
+        });
+        console.log("📦 Mapped variants:", mappedVariants);
+        console.log("📦 Number of mapped variants:", mappedVariants.length);
+        allVariants.push(...mappedVariants);
       }
 
       payload.variants = allVariants;
 
-      console.log(
-        "📦 Final payload.variants:",
-        JSON.stringify(payload.variants, null, 2)
-      );
+      console.log("📦 Final payload.variants:", JSON.stringify(payload.variants, null, 2));
+      console.log("📦 Total variants being sent:", payload.variants?.length || 0);
       console.log("Updating product:", payload);
       const response = await productApi.updateProduct(params.id, payload);
 
@@ -493,6 +492,7 @@ export default function EditProductScreen() {
                   pathname: "/dashboard/recipe-and-materials/variant",
                   params: {
                     from: "edit",
+                    editAction: "add",
                   },
                 } as never)
               }

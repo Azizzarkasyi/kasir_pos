@@ -9,12 +9,12 @@ import { useCartStore } from "@/stores/cart-store";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
-  Alert,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity, useWindowDimensions,
-  View,
+    Alert,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity, useWindowDimensions,
+    View,
 } from "react-native";
 
 export default function PaymentPage() {
@@ -33,6 +33,7 @@ export default function PaymentPage() {
     customerName: cartCustomerName,
     note: cartNote,
     getTotalAmount,
+    getTotalWithTax,
     setCustomerName,
     setNote,
     clearCart,
@@ -46,7 +47,7 @@ export default function PaymentPage() {
   const [paymentMethod, setPaymentMethod] = useState<"cash" | "debt">("cash");
   const [isProcessing, setIsProcessing] = useState(false);
 
-  const totalAmount = getTotalAmount();
+  const totalAmount = getTotalWithTax();
 
   const formatCurrency = (value: string | number) => {
     if (!value) return "0";

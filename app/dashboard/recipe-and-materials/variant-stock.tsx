@@ -26,9 +26,10 @@ export default function StockSettingsScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const navigation = useNavigation();
-  const {variantId, from} = useLocalSearchParams<{
+  const {variantId, from, action} = useLocalSearchParams<{
     variantId?: string;
     from?: string;
+    action?: string;
   }>();
 
   const confirmationRef = useRef<ConfirmationDialogHandle | null>(null);
@@ -65,7 +66,7 @@ export default function StockSettingsScreen() {
       });
 
       if (variantId) {
-        if (from === "add") {
+        if (from === "add" || (from === "edit" && action === "add")) {
           const base =
             pendingVariant && pendingVariant.id === variantId
               ? pendingVariant
@@ -104,7 +105,7 @@ export default function StockSettingsScreen() {
     if (!variantId) return;
 
     const current =
-      from === "add"
+      from === "add" || (from === "edit" && action === "add")
         ? pendingVariant && pendingVariant.id === variantId
           ? pendingVariant
           : null
@@ -124,7 +125,7 @@ export default function StockSettingsScreen() {
     if (typeof current.notify_on_stock_ronouts === "boolean") {
       setNotifyMin(current.notify_on_stock_ronouts);
     }
-  }, [variantId, variants, from, pendingVariant]);
+  }, [variantId, variants, from, action, pendingVariant]);
 
   const isDirty =
     offlineStock !== 0 || unit !== "" || minStock !== 0 || notifyMin;

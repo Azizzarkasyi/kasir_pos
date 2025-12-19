@@ -1,4 +1,5 @@
-import {create} from "zustand";
+import { create } from "zustand";
+import { useTaxStore } from './tax-store';
 
 export type CartItem = {
   productId: string;
@@ -50,6 +51,8 @@ type CartStore = {
   getSubtotal: () => number;
   getTotalFees: () => number;
   getTotalAmount: () => number;
+  getTotalWithTax: () => number;
+  getTaxAmount: () => number;
 };
 
 export const useCartStore = create<CartStore>((set, get) => ({
@@ -163,5 +166,17 @@ export const useCartStore = create<CartStore>((set, get) => ({
     const fees = get().getTotalFees();
     const discount = get().discount;
     return subtotal + fees - discount;
+  },
+
+  getTaxAmount: () => {
+    const subtotal = get().getSubtotal();
+    const taxRate = useTaxStore.getState().taxRate;
+    return Math.round((subtotal * taxRate) / 100);
+  },
+
+  getTotalWithTax: () => {
+    const totalAmount = get().getTotalAmount();
+    const taxAmount = get().getTaxAmount();
+    return totalAmount + taxAmount;
   },
 }));

@@ -19,18 +19,18 @@ import { AntDesign, Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
-    ActivityIndicator,
-    FlatList,
-    Image,
-    RefreshControl,
-    ScrollView,
-    StatusBar,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    useWindowDimensions,
-    View,
+  ActivityIndicator,
+  FlatList,
+  Image,
+  RefreshControl,
+  ScrollView,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  useWindowDimensions,
+  View,
 } from "react-native";
 
 const STATUS_BAR_HEIGHT = StatusBar.currentHeight ?? 0;
@@ -141,9 +141,9 @@ export default function PaymentPage() {
       }
 
       // Note: Backend doesn't support is_favorite filter yet
-      // if (activeTab === "favorite") {
-      //   params.is_favorite = true;
-      // }
+      if (activeTab === "favorite") {
+        params.is_favorite = true;
+      }
 
       // Filter by selected branch/outlet
       if (currentBranchId) {

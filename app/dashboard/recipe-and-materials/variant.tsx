@@ -1,18 +1,18 @@
 import ConfirmationDialog, {
-  ConfirmationDialogHandle,
+    ConfirmationDialogHandle,
 } from "@/components/drawers/confirmation-dialog";
 import Header from "@/components/header";
 import MenuRow from "@/components/menu-row";
-import {ThemedButton} from "@/components/themed-button";
-import {ThemedInput} from "@/components/themed-input";
-import {Colors} from "@/constants/theme";
-import {useColorScheme} from "@/hooks/use-color-scheme";
-import {useProductFormStore} from "@/stores/product-form-store";
-import {useLocalSearchParams, useNavigation, useRouter} from "expo-router";
-import React, {useEffect, useRef, useState} from "react";
-import {StyleSheet, View, useWindowDimensions} from "react-native";
-import {KeyboardAwareScrollView} from "react-native-keyboard-aware-scroll-view";
-import {useSafeAreaInsets} from "react-native-safe-area-context";
+import { ThemedButton } from "@/components/themed-button";
+import { ThemedInput } from "@/components/themed-input";
+import { Colors } from "@/constants/theme";
+import { useColorScheme } from "@/hooks/use-color-scheme";
+import { useProductFormStore } from "@/stores/product-form-store";
+import { useLocalSearchParams, useNavigation, useRouter } from "expo-router";
+import React, { useEffect, useRef, useState } from "react";
+import { StyleSheet, View, useWindowDimensions } from "react-native";
+import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function VariantScreen() {
   const colorScheme = useColorScheme() ?? "light";
@@ -30,6 +30,7 @@ export default function VariantScreen() {
     minStock: qsMinStock,
     notifyMin: qsNotifyMin,
     from: qsFrom,
+    editAction: qsEditActions,
     name: qsName,
     price: qsPrice,
     brand: qsBrand,
@@ -47,6 +48,7 @@ export default function VariantScreen() {
     minStock?: string;
     notifyMin?: string;
     from?: string;
+    editAction?: string;
     name?: string;
     price?: string;
     brand?: string;
@@ -170,7 +172,7 @@ export default function VariantScreen() {
             : v
         )
       );
-    } else {
+    } else if (qsFrom === "edit" && qsEditActions === "add") {
       const baseStockFields = (() => {
         if (pendingVariant && pendingVariant.id) {
           return {
@@ -191,6 +193,7 @@ export default function VariantScreen() {
           id: generatedId,
           name,
           price: priceNum,
+          capital_price: capitalPrice,
           ...baseStockFields,
         },
       ]);
@@ -279,7 +282,8 @@ export default function VariantScreen() {
                   if (currentVariant && currentVariant.is_stock_active) {
                     return `Stok Aktif (${currentVariant.stock || 0})`;
                   }
-                } else if (qsFrom === "add" && pendingVariant) {
+                } else if (qsFrom === "edit" && qsEditActions === "add" && pendingVariant) {
+                  // New variant scenario when adding from edit page
                   if (pendingVariant.is_stock_active) {
                     return `Stok Aktif (${pendingVariant.stock || 0})`;
                   }
@@ -316,6 +320,7 @@ export default function VariantScreen() {
                   params: {
                     variantId: String(targetVariantId),
                     from: qsFrom ?? "add",
+                    action: qsEditActions,
                   },
                 } as never);
               }}
