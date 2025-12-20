@@ -8,16 +8,16 @@ import { statsApi } from "@/services";
 import type { ReportDetailResponse } from "@/services/endpoints/stats";
 import { useBranchStore } from "@/stores/branch-store";
 import { Ionicons } from "@expo/vector-icons";
+import DateTimePicker from "@react-native-community/datetimepicker";
 import { useFocusEffect, useRouter } from "expo-router";
 import React from "react";
 import {
   RefreshControl,
   ScrollView,
   StyleSheet,
-  TextInput,
   TouchableOpacity,
   View,
-  useWindowDimensions,
+  useWindowDimensions
 } from "react-native";
 
 const ReportDetailScreen = () => {
@@ -45,6 +45,10 @@ const ReportDetailScreen = () => {
   const [customEnd, setCustomEnd] = React.useState<string>("");
   const [appliedStart, setAppliedStart] = React.useState<string | undefined>(undefined);
   const [appliedEnd, setAppliedEnd] = React.useState<string | undefined>(undefined);
+  const [showStartPicker, setShowStartPicker] = React.useState(false);
+  const [showEndPicker, setShowEndPicker] = React.useState(false);
+  const [startDate, setStartDate] = React.useState(new Date());
+  const [endDate, setEndDate] = React.useState(new Date());
 
   const formatISODate = (d: Date) => {
     const yyyy = d.getFullYear();
@@ -117,9 +121,24 @@ const ReportDetailScreen = () => {
   }, [fetchReportData]);
 
   const handleApplyCustom = () => {
-    // Expect YYYY-MM-DD
     setAppliedStart(customStart || undefined);
     setAppliedEnd(customEnd || undefined);
+  };
+
+  const onStartDatePickerChange = (event: any, selectedDate?: Date) => {
+    setShowStartPicker(false);
+    if (selectedDate) {
+      setStartDate(selectedDate);
+      setCustomStart(formatISODate(selectedDate));
+    }
+  };
+
+  const onEndDatePickerChange = (event: any, selectedDate?: Date) => {
+    setShowEndPicker(false);
+    if (selectedDate) {
+      setEndDate(selectedDate);
+      setCustomEnd(formatISODate(selectedDate));
+    }
   };
 
   const formatCurrency = (amount: number): string => {
@@ -295,29 +314,53 @@ const ReportDetailScreen = () => {
                 <View style={styles.customRangeRow}>
                   <View style={styles.customRangeField}>
                     <ThemedText style={styles.customRangeLabel}>Mulai</ThemedText>
-                    <TextInput
-                      value={customStart}
-                      onChangeText={setCustomStart}
-                      placeholder="YYYY-MM-DD"
-                      placeholderTextColor={Colors[colorScheme].icon}
-                      style={styles.customRangeInput}
-                      autoCapitalize="none"
-                      autoCorrect={false}
-                    />
+                    <TouchableOpacity
+                      onPress={() => setShowStartPicker(true)}
+                      style={styles.datePickerButton}
+                    >
+                      <ThemedText style={styles.datePickerText}>
+                        {customStart || "Pilih tanggal"}
+                      </ThemedText>
+                      <Ionicons
+                        name="calendar-outline"
+                        size={isTablet ? 20 : 18}
+                        color={Colors[colorScheme].icon}
+                      />
+                    </TouchableOpacity>
                   </View>
                   <View style={styles.customRangeField}>
                     <ThemedText style={styles.customRangeLabel}>Sampai</ThemedText>
-                    <TextInput
-                      value={customEnd}
-                      onChangeText={setCustomEnd}
-                      placeholder="YYYY-MM-DD"
-                      placeholderTextColor={Colors[colorScheme].icon}
-                      style={styles.customRangeInput}
-                      autoCapitalize="none"
-                      autoCorrect={false}
-                    />
+                    <TouchableOpacity
+                      onPress={() => setShowEndPicker(true)}
+                      style={styles.datePickerButton}
+                    >
+                      <ThemedText style={styles.datePickerText}>
+                        {customEnd || "Pilih tanggal"}
+                      </ThemedText>
+                      <Ionicons
+                        name="calendar-outline"
+                        size={isTablet ? 20 : 18}
+                        color={Colors[colorScheme].icon}
+                      />
+                    </TouchableOpacity>
                   </View>
                 </View>
+                {showStartPicker && (
+                  <DateTimePicker
+                    value={startDate}
+                    mode="date"
+                    display="default"
+                    onChange={onStartDatePickerChange}
+                  />
+                )}
+                {showEndPicker && (
+                  <DateTimePicker
+                    value={endDate}
+                    mode="date"
+                    display="default"
+                    onChange={onEndDatePickerChange}
+                  />
+                )}
                 <TouchableOpacity style={styles.applyButton} onPress={handleApplyCustom}>
                   <ThemedText style={styles.applyButtonText}>Terapkan</ThemedText>
                 </TouchableOpacity>
@@ -575,6 +618,21 @@ const createStyles = (
       borderRadius: 10,
       paddingVertical: isTablet ? 12 : 10,
       paddingHorizontal: 12,
+      color: Colors[colorScheme].text,
+      fontSize: isTablet ? 16 : 14,
+    },
+    datePickerButton: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      borderWidth: 1,
+      borderColor: colorScheme === "dark" ? "#262a2d" : Colors[colorScheme].border,
+      backgroundColor: colorScheme === "dark" ? "#202325" : Colors[colorScheme].background,
+      borderRadius: 10,
+      paddingVertical: isTablet ? 12 : 10,
+      paddingHorizontal: 12,
+    },
+    datePickerText: {
       color: Colors[colorScheme].text,
       fontSize: isTablet ? 16 : 14,
     },

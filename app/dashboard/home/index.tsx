@@ -287,16 +287,30 @@ const DashboardScreen = () => {
           )}
           <View style={styles.sectionCard}>
             <View style={styles.sectionHeader}>
-              <ThemedText type="subtitle-2">Laporan</ThemedText>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                <ThemedText type="subtitle-2">Laporan</ThemedText>
+                {isBasic && <ProBadge size="small" />}
+              </View>
               <TouchableOpacity
-                onPress={() => router.push("/dashboard/home/report" as never)}
-                style={styles.linkContainer}
+                onPress={() => {
+                  if (!isBasic) {
+                    router.push("/dashboard/home/report" as never);
+                  }
+                }}
+                style={[
+                  styles.linkContainer,
+                  isBasic && styles.disabledLink
+                ]}
+                disabled={isBasic}
               >
-                <ThemedText style={styles.link}>Lihat Semua</ThemedText>
+                <ThemedText style={[
+                  styles.link,
+                  isBasic && styles.disabledText
+                ]}>Lihat Semua</ThemedText>
                 <Ionicons
                   name="chevron-forward-outline"
                   size={18}
-                  color={Colors[colorScheme].icon}
+                  color={isBasic ? Colors[colorScheme].icon : Colors[colorScheme].icon}
                 />
               </TouchableOpacity>
             </View>
