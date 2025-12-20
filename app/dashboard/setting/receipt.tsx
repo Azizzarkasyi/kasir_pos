@@ -5,8 +5,10 @@ import ImageUpload from "@/components/image-upload";
 import { ThemedButton } from "@/components/themed-button";
 import { ThemedInput } from "@/components/themed-input";
 import { ThemedText } from "@/components/themed-text";
+import ProBadge from "@/components/ui/pro-badge";
 import { Colors } from "@/constants/theme";
 import { useColorScheme } from "@/hooks/use-color-scheme";
+import { useUserPlan } from "@/hooks/use-user-plan";
 import { settingsApi, StruckConfig } from "@/services";
 import assetApi, { prepareFileFromUri } from "@/services/endpoints/assets";
 import { Ionicons } from "@expo/vector-icons";
@@ -15,12 +17,12 @@ import { useNavigation } from "@react-navigation/native";
 import { useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
-  ActivityIndicator,
-  Alert,
-  StyleSheet,
-  TouchableOpacity,
-  useWindowDimensions,
-  View,
+    ActivityIndicator,
+    Alert,
+    StyleSheet,
+    TouchableOpacity,
+    useWindowDimensions,
+    View,
 } from "react-native";
 import { ScrollView } from "react-native-gesture-handler";
 
@@ -33,6 +35,7 @@ export default function ReceiptSettingScreen() {
   const styles = createStyles(colorScheme, isTablet, isTabletLandscape);
   const navigation = useNavigation();
   const router = useRouter();
+  const { isBasic } = useUserPlan();
   const [struckConfig, setStruckConfig] = useState<StruckConfig | null>(null);
   const [logoUri, setLogoUri] = useState<string | undefined>(undefined);
   const [extraNotes, setExtraNotes] = useState("");
@@ -181,11 +184,18 @@ export default function ReceiptSettingScreen() {
       >
         <View style={styles.contentWrapper}>
           <View style={styles.sectionCard}>
-            <ImageUpload
-              uri={logoUri}
-              initials="LG"
-              onImageSelected={uri => setLogoUri(uri)}
-            />
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: isTablet ? 16 : 12 }}>
+              <ThemedText type="subtitle-2">Logo</ThemedText>
+              {isBasic && <ProBadge size="small" />}
+            </View>
+            <View pointerEvents={isBasic ? "none" : "auto"} style={[isBasic && styles.disabledSection]}>
+              <ImageUpload
+                uri={logoUri}
+                initials="LG"
+                onImageSelected={uri => !isBasic && setLogoUri(uri)}
+                disabled={isBasic}
+              />
+            </View>
           </View>
         </View>
 
@@ -257,18 +267,30 @@ export default function ReceiptSettingScreen() {
           </View>
 
           <TouchableOpacity
-            style={styles.sectionCardHighlight}
-            onPress={() =>
-              router.push("/dashboard/setting/order-receipt" as never)
-            }
+            style={[
+              styles.sectionCardHighlight,
+              isBasic && styles.disabledSectionCard
+            ]}
+            onPress={() => {
+              if (!isBasic) {
+                router.push("/dashboard/setting/order-receipt" as never);
+              }
+            }}
+            disabled={isBasic}
           >
             <View style={{ flex: 1 }}>
-              <ThemedText
-                style={{ fontWeight: "600", fontSize: isTablet ? 20 : 16 }}
-              >
-                Ingin Pengaturan Tambahan?
-              </ThemedText>
-              <ThemedText style={styles.extraDescription}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                <ThemedText
+                  style={{ fontWeight: "600", fontSize: isTablet ? 20 : 16 }}
+                >
+                  Ingin Pengaturan Tambahan?
+                </ThemedText>
+                {isBasic && <ProBadge size="small" />}
+              </View>
+              <ThemedText style={[
+                styles.extraDescription,
+                isBasic && styles.disabledText
+              ]}>
                 Kamu akan lebih leluasa mengatur struk sesuai keinginanmu.
               </ThemedText>
             </View>
@@ -276,7 +298,7 @@ export default function ReceiptSettingScreen() {
               <Ionicons
                 name="chevron-forward-outline"
                 size={isTablet ? 24 : 18}
-                color={Colors[colorScheme].primary}
+                color={isBasic ? Colors[colorScheme].icon : Colors[colorScheme].primary}
               />
             </View>
           </TouchableOpacity>
@@ -388,5 +410,15 @@ const createStyles = (
     },
     bottomButtonWrapper: {
       marginTop: isTablet ? 32 : 16,
+    },
+    disabledSection: {
+      opacity: 0.5,
+    },
+    disabledSectionCard: {
+      opacity: 0.5,
+      borderColor: Colors[colorScheme].border,
+    },
+    disabledText: {
+      color: Colors[colorScheme].icon,
     },
   });
