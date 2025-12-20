@@ -10,6 +10,28 @@ try {
     console.warn("[receipt] BluetoothEscposPrinter not available:", e);
 }
 
+// Function to convert image URL to base64
+async function convertUrlToBase64(url: string): Promise<string | null> {
+    try {
+        const response = await fetch(url);
+        const blob = await response.blob();
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => {
+                const result = reader.result as string;
+                // Remove data:image/...;base64, prefix if needed
+                const base64 = result.split(',')[1] || result;
+                resolve(base64);
+            };
+            reader.onerror = reject;
+            reader.readAsDataURL(blob);
+        });
+    } catch (error) {
+        console.warn("Failed to convert URL to base64:", error);
+        return null;
+    }
+}
+
 const LINE_WIDTH = 32;
 
 function formatKeyValue(label: string, value: string) {
@@ -54,6 +76,7 @@ export async function printReceipt(params: {
     const storeBranch = store?.province?.name || "Pusat";
     const storeAddress = store?.address || "";
     const storePhone = store?.owner_phone || "";
+    const storeLogo = struckConfig?.logo_url || null;
     
     // Use struck config or fallback to defaults
     const headerDescription = struckConfig?.header_description || "";
@@ -63,11 +86,6 @@ export async function printReceipt(params: {
     const displayUnitNextToQty = struckConfig?.display_unit_next_to_qty ?? false;
     const hideTaxPercentage = struckConfig?.hide_tax_percentage ?? false;
 
-    console.log("hideTaxPercentage", hideTaxPercentage);
-    console.log("displayTransactionNote", displayTransactionNote);
-    console.log("displayRunningNumbers", displayRunningNumbers);
-    console.log("displayUnitNextToQty", displayUnitNextToQty);
-    console.log("transaction", transaction);
 
     const items = transaction.items || [];
     const additionalFees =
@@ -82,6 +100,28 @@ export async function printReceipt(params: {
     await BluetoothEscposPrinter.printerAlign(
         BluetoothEscposPrinter.ALIGN.CENTER
     );
+
+
+    // --- LOGO (if available) ---
+    if (storeLogo) {
+        try {
+            const logoBase64 = await convertUrlToBase64(storeLogo);
+            if (logoBase64) {
+                await BluetoothEscposPrinter.printPic(
+                    logoBase64,
+                    { width: 120, height: 120 }
+                );
+            }
+        } catch (error) {
+            console.warn("Failed to print logo:", error);
+        }
+    }
+
+
+    await BluetoothEscposPrinter.printerAlign(
+        BluetoothEscposPrinter.ALIGN.CENTER
+    );
+
 
     // --- STORE HEADER ---
     await BluetoothEscposPrinter.printText(
@@ -257,7 +297,7 @@ interface ReceiptPDFParams {
     struckConfig?: StruckConfig | null;
 }
 
-export function generateReceiptHTML(params: ReceiptPDFParams): string {
+export async function generateReceiptHTML(params: ReceiptPDFParams): Promise<string> {
     const {
         transaction,
         store,
@@ -277,12 +317,27 @@ export function generateReceiptHTML(params: ReceiptPDFParams): string {
     const storeBranch = store?.province?.name || "Pusat";
     const storeAddress = store?.address || "";
     const storePhone = store?.owner_phone || "";
+    let storeLogo = struckConfig?.logo_url || null;
     const headerDescription = struckConfig?.header_description || "";
     const footerDescription = struckConfig?.footer_description || "Powered by ELBIC";
     const displayTransactionNote = struckConfig?.display_transaction_note ?? false;
     const displayRunningNumbers = struckConfig?.display_running_number ?? false;
     const displayUnitNextToQty = struckConfig?.display_unit_next_to_qty ?? false;
     const hideTaxPercentage = struckConfig?.hide_tax_percentage ?? false;
+
+    // Convert logo URL to base64 if exists
+    if (storeLogo) {
+        try {
+            storeLogo = await convertUrlToBase64(storeLogo);
+            if (storeLogo) {
+                storeLogo = `data:image/png;base64,${storeLogo}`;
+            }
+        } catch (error) {
+            console.warn("Failed to convert logo URL to base64 for PDF:", error);
+            storeLogo = null;
+        }
+    }
+
 
     const totalProduk = items.reduce((sum, item) => sum + item.quantity, 0);
 
@@ -353,11 +408,16 @@ export function generateReceiptHTML(params: ReceiptPDFParams): string {
                 .receipt {
                     width: 100%;
                     background-color: #ffffff;
-                    padding: 40px 0;
+                    padding: 80px 0;
                 }
                 .store-header {
                     text-align: center;
                     margin-bottom: 24px;
+                }
+                .store-logo {
+                    max-width: 120px;
+                    max-height: 120px;
+                    margin-bottom: 16px;
                 }
                 .store-name {
                     font-size: 42px;
@@ -465,6 +525,7 @@ export function generateReceiptHTML(params: ReceiptPDFParams): string {
         <body>
             <div class="receipt">
                 <div class="store-header">
+                    ${storeLogo ? `<img src="${storeLogo}" alt="Store Logo" class="store-logo" />` : ""}
                     <div class="store-name">${storeName} (${storeBranch})</div>
                     ${storeAddress ? `<div class="store-info">${storeAddress}</div>` : ""}
                     ${storePhone ? `<div class="store-info">${storePhone}</div>` : ""}
@@ -556,7 +617,7 @@ export function generateReceiptHTML(params: ReceiptPDFParams): string {
 }
 
 export async function shareReceiptAsPDF(params: ReceiptPDFParams): Promise<void> {
-    const html = generateReceiptHTML(params);
+    const html = await generateReceiptHTML(params);
 
     const { uri } = await Print.printToFileAsync({
         html,

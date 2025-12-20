@@ -1,6 +1,7 @@
 import ConfirmPopup from "@/components/atoms/confirm-popup";
 import SmallLogo from "@/components/atoms/logo-sm";
 import SettingListItem from "@/components/atoms/setting-list-item";
+import Skeleton from "@/components/atoms/skeleton";
 import Header from "@/components/header";
 import { ThemedButton } from "@/components/themed-button";
 import { ThemedText } from "@/components/themed-text";
@@ -11,7 +12,7 @@ import { usePermissions } from "@/hooks/usePermissions";
 import { authApi, settingsApi, UserProfile } from "@/services";
 import { useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
-import { ActivityIndicator, Alert, StyleSheet, useWindowDimensions, View } from "react-native";
+import { Alert, StyleSheet, useWindowDimensions, View } from "react-native";
 import { ScrollView } from "react-native-gesture-handler";
 
 export default function SettingScreen() {
@@ -103,10 +104,10 @@ export default function SettingScreen() {
             </View>
             <View style={{ flex: 1 }}>
               {isLoading ? (
-                <ActivityIndicator
-                  size="small"
-                  color={Colors[colorScheme].primary}
-                />
+                <View style={styles.profileSkeleton}>
+                  <Skeleton width={120} height={14} style={styles.skeletonEmail} />
+                  <Skeleton width={80} height={12} style={styles.skeletonVersion} />
+                </View>
               ) : (
                 <>
                   <ThemedText style={styles.infoEmail} numberOfLines={1}>
@@ -275,6 +276,15 @@ const createStyles = (colorScheme: "light" | "dark", isTablet: boolean, isTablet
     infoVersion: {
       fontSize: isTablet ? 18 : 13,
       color: Colors[colorScheme].icon,
+      marginTop: isTablet ? 4 : 2,
+    },
+    profileSkeleton: {
+      flex: 1,
+    },
+    skeletonEmail: {
+      marginBottom: isTablet ? 8 : 4,
+    },
+    skeletonVersion: {
       marginTop: isTablet ? 4 : 2,
     },
     bottomButtonWrapper: {

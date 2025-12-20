@@ -4,8 +4,10 @@ import Header from "@/components/header";
 import { Colors } from "@/constants/theme";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { settingsApi, StoreInfo } from "@/services";
+import { StruckConfig } from "@/services/endpoints/settings";
 import { transactionApi } from "@/services/endpoints/transactions";
 import { shareReceiptAsPDF } from "@/services/receipt";
+import { useBranchStore } from "@/stores/branch-store";
 import { useCartStore } from "@/stores/cart-store";
 import { Transaction } from "@/types/api";
 import { Ionicons } from "@expo/vector-icons";
@@ -14,13 +16,14 @@ import React, { useEffect, useState } from "react";
 import {
     ActivityIndicator,
     Alert,
+    Image,
     ScrollView,
     Share,
     StyleSheet,
     Text,
     TouchableOpacity,
     useWindowDimensions,
-    View,
+    View
 } from "react-native";
 
 export default function ShareStruckPage() {
@@ -32,9 +35,11 @@ export default function ShareStruckPage() {
     const { id } = useLocalSearchParams<{ id: string }>();
 
     const { items: cartItems, getTotalAmount, additionalFees } = useCartStore();
+    const { currentBranchId } = useBranchStore();
 
     const [transaction, setTransaction] = useState<Transaction | null>(null);
     const [store, setStore] = useState<StoreInfo | null>(null);
+    const [struckConfig, setStruckConfig] = useState<StruckConfig | null>(null);
     const [isLoading, setIsLoading] = useState(false);
 
     useEffect(() => {
@@ -66,8 +71,24 @@ export default function ShareStruckPage() {
             }
         };
 
+        const fetchStruckConfig = async () => {
+            try {
+                if (!currentBranchId) {
+                    console.log("No branchId found, skipping struck config fetch");
+                    return;
+                }
+                const response = await settingsApi.getStruckConfig(currentBranchId);
+                if (response.data) {
+                    setStruckConfig(response.data);
+                }
+            } catch (error) {
+                console.error("Failed to fetch struck config:", error);
+            }
+        };
+
         fetchTransaction();
         fetchStore();
+        fetchStruckConfig();
     }, [id]);
 
     // Use transaction items or cart items
@@ -126,6 +147,9 @@ export default function ShareStruckPage() {
     const storeBranch = store?.province?.name || "Pusat";
     const storeAddress = store?.address || "";
     const storePhone = store?.owner_phone || "";
+    const storeLogo = struckConfig?.logo_url || null;
+    const headerDescription = struckConfig?.header_description || "";
+    const footerDescription = struckConfig?.footer_description || "Powered by ELBIC";
 
     const additionalFeesList =
         transaction?.additional_fees && transaction.additional_fees.length > 0
@@ -193,6 +217,7 @@ export default function ShareStruckPage() {
                 paymentMethod,
                 additionalFees: additionalFeesList,
                 formatCurrency,
+                struckConfig,
             });
         } catch (error) {
             console.error("Share PDF failed:", error);
@@ -248,7 +273,17 @@ export default function ShareStruckPage() {
                 >
                     <View style={styles.receiptCard}>
                         <View style={styles.storeHeaderWrapper}>
+                            {storeLogo && (
+                                <Image 
+                                    source={{ uri: storeLogo }} 
+                                    style={styles.storeLogo}
+                                    resizeMode="contain"
+                                />
+                            )}
                             <Text style={styles.storeName}>{storeName} ({storeBranch})</Text>
+                            {headerDescription && (
+                                <Text style={styles.headerDescription}>{headerDescription}</Text>
+                            )}
                         </View>
 
                         {storeAddress ? (
@@ -344,6 +379,14 @@ export default function ShareStruckPage() {
                                     {formatCurrency(subtotal)}
                                 </Text>
                             </View>
+                            {!struckConfig?.hide_tax_percentage && transaction?.tax && (
+                                <View style={styles.summaryRow}>
+                                    <Text style={styles.summaryLabel}>Pajak</Text>
+                                    <Text style={styles.summaryValue}>
+                                        {formatCurrency(transaction.tax)}
+                                    </Text>
+                                </View>
+                            )}
                             <View style={styles.summaryRow}>
                                 <Text style={[styles.summaryLabel, styles.summaryLabelStrong]}>
                                     Total ({totalProduk} Produk)
@@ -366,7 +409,15 @@ export default function ShareStruckPage() {
                             </View>
                         </View>
 
+                        {struckConfig?.display_transaction_note && transaction?.notes && (
+                            <View style={styles.transactionNoteWrapper}>
+                                <Text style={styles.transactionNoteLabel}>Catatan:</Text>
+                                <Text style={styles.transactionNoteText}>{transaction.notes}</Text>
+                            </View>
+                        )}
+
                         <View style={styles.footerWrapper}>
+                            <Text style={styles.footerText}>{footerDescription}</Text>
                             <Text style={styles.footerText}>Powered by ELBIC</Text>
                             <Text style={styles.footerText}>www.elbic.id</Text>
                         </View>
@@ -421,10 +472,21 @@ const createStyles = (colorScheme: "light" | "dark", isTablet: boolean) =>
             alignItems: "center",
             marginBottom: isTablet ? 16 : 12,
         },
+        storeLogo: {
+            width: isTablet ? 80 : 60,
+            height: isTablet ? 80 : 60,
+            marginBottom: isTablet ? 12 : 8,
+        },
         storeName: {
             fontSize: isTablet ? 24 : 16,
             fontWeight: "600",
             color: Colors[colorScheme].text,
+        },
+        headerDescription: {
+            marginTop: isTablet ? 8 : 4,
+            fontSize: isTablet ? 18 : 12,
+            color: Colors[colorScheme].icon,
+            fontStyle: "italic",
         },
         storeBranch: {
             marginTop: isTablet ? 4 : 2,
@@ -511,6 +573,21 @@ const createStyles = (colorScheme: "light" | "dark", isTablet: boolean) =>
         },
         summaryValueStrong: {
             fontWeight: "600",
+        },
+        transactionNoteWrapper: {
+            marginTop: isTablet ? 20 : 16,
+            padding: isTablet ? 16 : 12,
+            backgroundColor: Colors[colorScheme].background,
+            borderRadius: isTablet ? 12 : 8,
+        },
+        transactionNoteLabel: {
+            fontSize: isTablet ? 16 : 12,
+            color: Colors[colorScheme].icon,
+            marginBottom: isTablet ? 6 : 4,
+        },
+        transactionNoteText: {
+            fontSize: isTablet ? 18 : 14,
+            color: Colors[colorScheme].text,
         },
         footerWrapper: {
             marginTop: isTablet ? 24 : 16,

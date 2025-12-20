@@ -104,6 +104,7 @@ export default function TransactionSettlementPage() {
         }
         
         const response = await settingsApi.getStruckConfig(currentBranchId);
+        console.log("struk config", response.data)
         if (response.data) {
           setStruckConfig(response.data);
         }
