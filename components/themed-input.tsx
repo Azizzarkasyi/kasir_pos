@@ -3,15 +3,15 @@ import { useColorScheme } from "@/hooks/use-color-scheme";
 import { Ionicons } from "@expo/vector-icons";
 import React, { useEffect, useRef, useState } from "react";
 import {
-  Animated,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
-  useWindowDimensions,
-  type TextInputProps,
-  type ViewStyle,
+    Animated,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
+    useWindowDimensions,
+    type TextInputProps,
+    type ViewStyle,
 } from "react-native";
 
 export type ThemedInputProps = TextInputProps & {

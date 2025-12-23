@@ -42,6 +42,8 @@ const AddCustomQuantityModal: React.FC<AddCustomQuantityModalProps> = ({
 
     const [internalVisible, setInternalVisible] = useState(visible);
     const [quantity, setQuantity] = useState(initialQuantity);
+    const [isEditingQuantity, setIsEditingQuantity] = useState(false);
+    const [tempQuantity, setTempQuantity] = useState(initialQuantity.toString());
 
     const [enableNotes, setEnableNotes] = useState(false);
     const [notes, setNotes] = useState(initialNote ?? "");
@@ -53,6 +55,8 @@ const AddCustomQuantityModal: React.FC<AddCustomQuantityModalProps> = ({
         if (visible) {
             setInternalVisible(true);
             setQuantity(initialQuantity);
+            setTempQuantity(initialQuantity.toString());
+            setIsEditingQuantity(false);
             opacity.setValue(1);
             setEnableNotes(!!initialNote);
             setNotes(initialNote ?? "");
@@ -73,8 +77,39 @@ const AddCustomQuantityModal: React.FC<AddCustomQuantityModalProps> = ({
                 next = Math.min(maxQuantity, next);
             }
 
+            setTempQuantity(next.toString());
             return next;
         });
+    };
+
+    const handleQuantityTextPress = () => {
+        setIsEditingQuantity(true);
+        setTempQuantity(quantity.toString());
+    };
+
+    const handleQuantityTextSubmit = () => {
+        const newQuantity = parseInt(tempQuantity, 10);
+        if (!isNaN(newQuantity)) {
+            let finalQuantity = newQuantity;
+            
+            if (typeof minQuantity === "number") {
+                finalQuantity = Math.max(minQuantity, finalQuantity);
+            }
+            
+            if (typeof maxQuantity === "number") {
+                finalQuantity = Math.min(maxQuantity, finalQuantity);
+            }
+            
+            setQuantity(finalQuantity);
+            setTempQuantity(finalQuantity.toString());
+        } else {
+            setTempQuantity(quantity.toString());
+        }
+        setIsEditingQuantity(false);
+    };
+
+    const handleQuantityTextBlur = () => {
+        handleQuantityTextSubmit();
     };
 
     const handleSave = () => {
@@ -116,7 +151,28 @@ const AddCustomQuantityModal: React.FC<AddCustomQuantityModalProps> = ({
                             </TouchableOpacity>
 
                             <View style={styles.qtyValueContainer}>
-                                <ThemedText style={styles.qtyValue}>{quantity}</ThemedText>
+                                {isEditingQuantity ? (
+                                    <View style={styles.qtyInputWrapper}>
+                                        <TextInput
+                                            style={[styles.qtyInput, { color: Colors[colorScheme].text }]}
+                                            value={tempQuantity}
+                                            onChangeText={setTempQuantity}
+                                            onSubmitEditing={handleQuantityTextSubmit}
+                                            onBlur={handleQuantityTextBlur}
+                                            keyboardType="numeric"
+                                            autoFocus
+                                            selectTextOnFocus
+                                            maxLength={6}
+                                        />
+                                    </View>
+                                ) : (
+                                    <TouchableOpacity
+                                        onPress={handleQuantityTextPress}
+                                        style={styles.qtyTouchable}
+                                    >
+                                        <ThemedText style={styles.qtyValue}>{quantity}</ThemedText>
+                                    </TouchableOpacity>
+                                )}
                             </View>
 
                             <TouchableOpacity
@@ -219,6 +275,27 @@ const createStyles = (colorScheme: "light" | "dark") =>
             fontSize: 18,
             fontWeight: "600",
             color: Colors[colorScheme].text,
+        },
+        qtyInput: {
+            fontSize: 18,
+            fontWeight: "600",
+            textAlign: "center",
+            width: 80,
+            height: 40,
+            padding: 0,
+            margin: 0,
+        },
+        qtyInputWrapper: {
+            width: 80,
+            height: 40,
+            justifyContent: "center",
+            alignItems: "center",
+        },
+        qtyTouchable: {
+            width: 80,
+            height: 40,
+            justifyContent: "center",
+            alignItems: "center",
         },
         qtyValueContainer: {
             flex: 1,

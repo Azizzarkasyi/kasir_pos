@@ -2,14 +2,17 @@
 
 import CheckoutItem from "@/components/atoms/checkout-item";
 import AddAdditionalCostModal from "@/components/drawers/add-addditional-cost-modal";
+import ConfirmationDialog, {
+  ConfirmationDialogHandle,
+} from "@/components/drawers/confirmation-dialog";
 import Header from "@/components/header";
 import { Colors } from "@/constants/theme";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { useCartStore } from "@/stores/cart-store";
 import { useTaxStore } from "@/stores/tax-store";
 import { Ionicons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
-import React, { useEffect, useState } from "react";
+import { useNavigation, useRouter } from "expo-router";
+import React, { useEffect, useRef, useState } from "react";
 import {
   Alert,
   ScrollView,
@@ -27,6 +30,8 @@ export default function TransactionSummaryPage() {
   const isTabletLandscape = isTablet && isLandscape;
   const styles = createStyles(colorScheme, isTablet, isTabletLandscape);
   const router = useRouter();
+  const navigation = useNavigation();
+  const confirmationRef = useRef<ConfirmationDialogHandle | null>(null);
 
   const {
     items: cartItems,
@@ -43,6 +48,9 @@ export default function TransactionSummaryPage() {
 
   const [isCostModalVisible, setIsCostModalVisible] = useState(false);
 
+  // Check if cart has items (for confirmation dialog)
+  const hasItemsInCart = cartItems.length > 0 || additionalFees.length > 0;
+
   useEffect(() => {
     // Cek jika cart kosong hanya saat pertama kali mount
     if (cartItems.length === 0) {
@@ -58,6 +66,32 @@ export default function TransactionSummaryPage() {
       );
     }
   }, []); // Empty dependency - hanya run sekali saat mount
+
+  // Add back navigation confirmation
+  useEffect(() => {
+    const sub = navigation.addListener("beforeRemove", (e) => {
+      // Allow navigation if cart is empty or if it's going forward
+      if (!hasItemsInCart) {
+        return;
+      }
+
+      const action = e.data.action;
+      e.preventDefault();
+
+      confirmationRef.current?.showConfirmationDialog({
+        title: "Konfirmasi",
+        message: "Anda yakin ingin kembali? Data yang telah dimasukkan akan hilang.",
+        onCancel: () => {
+          // Stay on the page
+        },
+        onConfirm: () => {
+          navigation.dispatch(action);
+        },
+      });
+    });
+
+    return sub;
+  }, [navigation, hasItemsInCart]);
 
   const subtotal = getSubtotal();
   const totalFees = getTotalFees();
@@ -240,6 +274,8 @@ export default function TransactionSummaryPage() {
         onConfirm={({ name, price }) => handleAddFee({ name, price })}
       />
 
+      <ConfirmationDialog ref={confirmationRef} />
+
       <View style={styles.bottomWrapper}>
         <TouchableOpacity
           style={[
@@ -247,7 +283,7 @@ export default function TransactionSummaryPage() {
             { backgroundColor: Colors[colorScheme].primary },
           ]}
           onPress={() =>
-            router.replace("/dashboard/transaction/payment" as never)
+            router.push("/dashboard/transaction/payment" as never)
           }
         >
           <Text style={[styles.payButtonText, { color: "white" }]}>

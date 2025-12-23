@@ -293,24 +293,24 @@ const DashboardScreen = () => {
               </View>
               <TouchableOpacity
                 onPress={() => {
-                  if (!isBasic) {
+                  if (hasPermission('reports')) {
                     router.push("/dashboard/home/report" as never);
                   }
                 }}
                 style={[
                   styles.linkContainer,
-                  isBasic && styles.disabledLink
+                  !hasPermission('reports') && styles.disabledLink
                 ]}
-                disabled={isBasic}
+                disabled={!hasPermission('reports')}
               >
                 <ThemedText style={[
                   styles.link,
-                  isBasic && styles.disabledText
+                  !hasPermission('reports') && styles.disabledText
                 ]}>Lihat Semua</ThemedText>
                 <Ionicons
                   name="chevron-forward-outline"
                   size={18}
-                  color={isBasic ? Colors[colorScheme].icon : Colors[colorScheme].icon}
+                  color={!hasPermission('reports') ? Colors[colorScheme].icon : Colors[colorScheme].icon}
                 />
               </TouchableOpacity>
             </View>

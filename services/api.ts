@@ -8,10 +8,10 @@ import { ApiError, ApiResponse } from "../types/api";
 import { APP_EVENTS, appEvents } from "./event-emitter";
 
 // Baca dari environment variable, fallback ke localhost jika tidak ada
-// const API_URL = process.env.API_URL || "http://192.168.1.7:3001";
-const API_URL = process.env.API_URL || "http://192.168.43.78:3001";
+const API_URL = process.env.API_URL || "http://192.168.1.4:3001";
+// const API_URL = process.env.API_URL || "https://ad112ca513aa.ngrok-free.app";
 
-console.log("🔧 API Configuration:", {API_URL});
+console.log("🔧 API Configuration:", { API_URL });
 
 class ApiService {
   private api: AxiosInstance;
@@ -35,7 +35,7 @@ class ApiService {
    */
   private setupInterceptors() {
     console.log("🔧 Setting up API interceptors");
-    
+
     // Request interceptor - add auth token and branch_id
     this.api.interceptors.request.use(
       async (config: InternalAxiosRequestConfig) => {
@@ -170,7 +170,7 @@ class ApiService {
    * Generic GET request
    */
   async get<T>(url: string, params?: any): Promise<ApiResponse<T>> {
-    const response = await this.api.get<ApiResponse<T>>(url, {params});
+    const response = await this.api.get<ApiResponse<T>>(url, { params });
     return response.data;
   }
 

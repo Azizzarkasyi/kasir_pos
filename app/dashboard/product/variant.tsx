@@ -212,7 +212,7 @@ export default function VariantScreen() {
         if (response.data) {
           const recipesList = response.data.map(r => ({ id: r.id, name: r.name }));
           setRecipes(recipesList);
-          
+
           // Set recipe after recipes are loaded
           if (qsRecipe) {
             const found = recipesList.find(r => r.id === qsRecipe);
@@ -239,7 +239,7 @@ export default function VariantScreen() {
       if (!stock) return {};
       const fields: any = {
         stock: stock.offlineStock,
-        is_stock_active: stock.offlineStock> 0 && stock.minStock> 0 ,
+        is_stock_active: stock.offlineStock > 0 && stock.minStock > 0,
         min_stock: stock.minStock,
         notify_on_stock_ronouts: stock.notifyMin,
       };
@@ -254,8 +254,8 @@ export default function VariantScreen() {
 
     console.log("qsfrom", qsFrom)
     console.log("variant_id", qsVariantId)
-    
-    
+
+
 
 
     if (qsFrom === "edit" && qsVariantId) {
@@ -491,68 +491,64 @@ export default function VariantScreen() {
 
         <View style={styles.sectionDivider} />
 
-        {(qsFrom != "edit" || (qsFrom == "edit" && qsEditActions == "add")) && (
-          <>
-            <View style={styles.contentWrapper}>
-              <View style={styles.contentSection}>
-                <MenuRow
-                  title="Kelola Stok"
-                  rightText={
-                    qsFrom === "edit" && qsVariantId
-                      ? variants.find(v => v.id === qsVariantId)?.stock
-                        ? `Stok Aktif (${variants.find(v => v.id === qsVariantId)?.stock})`
-                        : "Stok Tidak Aktif"
-                      : pendingVariant && pendingVariant.is_stock_active && typeof pendingVariant.stock === "number"
-                        ? `Stok Aktif (${pendingVariant.stock})`
-                        : stock
-                          ? `Stok Aktif (${stock.offlineStock})`
-                          : "Stok Tidak Aktif"
-                  }
-                  showBottomBorder={false}
-                  variant="link"
-                  onPress={() => {
-                    let targetVariantId = qsVariantId as string | undefined;
+        <View style={styles.contentWrapper}>
+          <View style={styles.contentSection}>
+            <MenuRow
+              title="Kelola Stok"
+              rightText={
+                qsFrom === "edit" && qsVariantId
+                  ? variants.find(v => v.id === qsVariantId)?.stock
+                    ? `Stok Aktif (${variants.find(v => v.id === qsVariantId)?.stock})`
+                    : "Stok Tidak Aktif"
+                  : pendingVariant && pendingVariant.is_stock_active && typeof pendingVariant.stock === "number"
+                    ? `Stok Aktif (${pendingVariant.stock})`
+                    : stock
+                      ? `Stok Aktif (${stock.offlineStock})`
+                      : "Stok Tidak Aktif"
+              }
+              showBottomBorder={false}
+              variant="link"
+              onPress={() => {
+                let targetVariantId = qsVariantId as string | undefined;
 
 
 
-                    if (!targetVariantId) {
-                      const priceNum = Number((price || "").replace(/[^0-9]/g, ""));
+                if (!targetVariantId) {
+                  const priceNum = Number((price || "").replace(/[^0-9]/g, ""));
 
-                      const base =
-                        pendingVariant && pendingVariant.id
-                          ? pendingVariant
-                          : {
-                            id: `${Date.now()}`,
-                          };
-
-                      const updated = {
-                        ...base,
-                        name,
-                        price: priceNum,
+                  const base =
+                    pendingVariant && pendingVariant.id
+                      ? pendingVariant
+                      : {
+                        id: `${Date.now()}`,
                       };
 
-                      console.log("updated", updated)
+                  const updated = {
+                    ...base,
+                    name,
+                    price: priceNum,
+                  };
 
-                      setPendingVariant(updated as any);
-                      targetVariantId = String(updated.id);
-                    }
+                  console.log("updated", updated)
 
-                    router.push({
-                      pathname: "/dashboard/product/variant-stock",
-                      params: {
-                        variantId: String(targetVariantId),
-                        from: qsFrom ?? "add",
-                        action: qsEditActions,
-                      },
-                    } as never);
-                  }}
-                />
-              </View>
-            </View>
+                  setPendingVariant(updated as any);
+                  targetVariantId = String(updated.id);
+                }
 
-            <View style={styles.sectionDivider} />
-          </>
-        )}
+                router.push({
+                  pathname: "/dashboard/product/variant-stock",
+                  params: {
+                    variantId: String(targetVariantId),
+                    from: qsFrom ?? "add",
+                    action: qsEditActions,
+                  },
+                } as never);
+              }}
+            />
+          </View>
+        </View>
+
+        <View style={styles.sectionDivider} />
 
 
       </KeyboardAwareScrollView>

@@ -12,9 +12,11 @@ import React, { useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
+  KeyboardAvoidingView,
+  Platform,
   StyleSheet,
   useWindowDimensions,
-  View,
+  View
 } from "react-native";
 import { ScrollView } from "react-native-gesture-handler";
 
@@ -84,10 +86,6 @@ export default function StoreSettingScreen() {
   useEffect(() => {
     const fetchProvinces = async () => {
       try {
-        console.log(
-          "🔄 Fetching provinces from:",
-          `${WILAYAH_API_BASE}/provinces.json`
-        );
         const res = await axios.get(`${WILAYAH_API_BASE}/provinces.json`, {
           timeout: 10000,
           headers: {
@@ -95,7 +93,6 @@ export default function StoreSettingScreen() {
           },
         });
         const data = Array.isArray(res.data.data) ? res.data.data : [];
-        console.log("✅ Provinces count:", data.length);
 
         const options = [
           {label: "Pilih Provinsi", value: ""},
@@ -114,7 +111,6 @@ export default function StoreSettingScreen() {
           if (found && found.value) {
             setSelectedProvince(found);
             setProvinceQuery(found.label);
-            console.log("✅ Auto-selected province by ID:", found);
           }
           pendingProvinceId.current = null;
         }
@@ -138,13 +134,11 @@ export default function StoreSettingScreen() {
 
     const fetchCities = async () => {
       try {
-        console.log("🔄 Fetching cities for province:", selectedProvince.value);
         const res = await axios.get(
           `${WILAYAH_API_BASE}/regencies/${selectedProvince.value}.json`,
           {timeout: 10000, headers: {Accept: "application/json"}}
         );
         const data = Array.isArray(res.data.data) ? res.data.data : [];
-        console.log("✅ Cities count:", data.length);
 
         const options = [
           {label: "Pilih Kabupaten/Kota", value: ""},
@@ -163,7 +157,6 @@ export default function StoreSettingScreen() {
           if (found && found.value) {
             setSelectedCity(found);
             setCityQuery(found.label);
-            console.log("✅ Auto-selected city:", found);
           }
           pendingCityId.current = null;
         }
@@ -185,13 +178,11 @@ export default function StoreSettingScreen() {
 
     const fetchSubdistricts = async () => {
       try {
-        console.log("🔄 Fetching subdistricts for city:", selectedCity.value);
         const res = await axios.get(
           `${WILAYAH_API_BASE}/districts/${selectedCity.value}.json`,
           {timeout: 10000, headers: {Accept: "application/json"}}
         );
         const data = Array.isArray(res.data.data) ? res.data.data : [];
-        console.log("✅ Subdistricts count:", data.length);
 
         const options = [
           {label: "Pilih Kecamatan", value: ""},
@@ -210,7 +201,6 @@ export default function StoreSettingScreen() {
           if (found && found.value) {
             setSelectedSubdistrict(found);
             setSubdistrictQuery(found.label);
-            console.log("✅ Auto-selected subdistrict:", found);
           }
           pendingSubdistrictId.current = null;
         }
@@ -232,13 +222,11 @@ export default function StoreSettingScreen() {
 
     const fetchVillages = async () => {
       try {
-        console.log("🔄 Fetching villages for subdistrict:", selectedSubdistrict.value);
         const res = await axios.get(
           `${WILAYAH_API_BASE}/villages/${selectedSubdistrict.value}.json`,
           {timeout: 10000, headers: {Accept: "application/json"}}
         );
         const data = Array.isArray(res.data.data) ? res.data.data : [];
-        console.log("✅ Villages count:", data.length);
 
         const options = [
           {label: "Pilih Kelurahan", value: ""},
@@ -257,7 +245,6 @@ export default function StoreSettingScreen() {
           if (found && found.value) {
             setSelectedVillage(found);
             setVillageQuery(found.label);
-            console.log("✅ Auto-selected village:", found);
           }
           pendingVillageId.current = null;
         }
@@ -275,52 +262,59 @@ export default function StoreSettingScreen() {
   const loadStoreData = async () => {
     try {
       const response = await settingsApi.getStoreInfo();
-      console.log(JSON.stringify(response.data))
-      if (response.data) {
-        const storeData = response.data;
-        setStore(storeData);
-        setBusinessType(storeData.bussiness_type || "");
-        setStoreName(storeData.owner_name || "");
-        setDefaultTax(storeData.tax?.toString() || "0");
-        setOwnerName(storeData.owner_name || "");
-        setPhone(storeData.owner_phone || "");
-        setLanguage(storeData.language || "id");
-        setCurrency(storeData.curency || "IDR");
-        setAddress(storeData.address || "");
-        setCountry(storeData.country || "Indonesia");
-        setPhotoUri(storeData.photo);
+      
+      if (!response.data) {
+        return;
+      }
+      
+      const storeData = response.data;
+      setStore(storeData);
+      setBusinessType(storeData.bussiness_type || "");
+      setStoreName(storeData.branches?.[0].name || "");
+      setDefaultTax(storeData.tax?.toString() || "0");
+      setOwnerName(storeData.owner_name || "");
+      setPhone(storeData.owner_phone || "");
+      setLanguage(storeData.language || "id");
+      setCurrency(storeData.curency || "IDR");
+      setAddress(storeData.address || "");
+      setCountry(storeData.country || "Indonesia");
+      setPhotoUri(storeData.photo);
 
+      // Determine location data source - use branch data if store-level is empty
+      const locationSource = storeData.province?.id ? storeData : storeData.branches?.[0];
+      
+      if (locationSource) {
         // Handle province auto-select
-        if (storeData.province) {
-          const provinceId = String(storeData.province.id || "");
-          const provinceName = storeData.province.name || "";
+        if (locationSource?.province) {
+          const provinceId = String(locationSource.province.id || "");
+          const provinceName = locationSource.province.name || "";
           pendingProvinceId.current = provinceId;
           setProvinceQuery(provinceName);
           setSelectedProvince({label: provinceName, value: provinceId});
         }
 
         // Handle city auto-select
-        if (storeData.city) {
-          const cityId = String(storeData.city.id || "");
-          const cityName = storeData.city.name || "";
+        if (locationSource?.city) {
+          const cityId = String(locationSource.city.id || "");
+          const cityName = locationSource.city.name || "";
           pendingCityId.current = cityId;
           setCityQuery(cityName);
           setSelectedCity({label: cityName, value: cityId});
         }
 
         // Handle subdistrict auto-select
-        if (storeData.subdistrict) {
-          const subdistrictId = String(storeData.subdistrict.id || "");
-          const subdistrictName = storeData.subdistrict.name || "";
+        if (locationSource?.subdistrict) {
+          const subdistrictId = String(locationSource.subdistrict.id || "");
+          const subdistrictName = locationSource.subdistrict.name || "";
           pendingSubdistrictId.current = subdistrictId;
           setSubdistrictQuery(subdistrictName);
           setSelectedSubdistrict({label: subdistrictName, value: subdistrictId});
         }
 
         // Handle village auto-select
-        if (storeData.village) {
-          const villageId = String(storeData.village.id || "");
-          const villageName = storeData.village.name || "";
+        if (locationSource?.village) {
+          const villageId = String(locationSource.village.id || "");
+          const villageName = locationSource.village.name || "";
           pendingVillageId.current = villageId;
           setVillageQuery(villageName);
           setSelectedVillage({label: villageName, value: villageId});
@@ -346,9 +340,11 @@ export default function StoreSettingScreen() {
     }
 
     setIsSaving(true);
+    
     try {
       const updateData: any = {
         owner_name: ownerName.trim(),
+        business_name: storeName,
         bussiness_type: businessType,
         tax: parseFloat(defaultTax) || 0,
         language: language,
@@ -387,8 +383,8 @@ export default function StoreSettingScreen() {
           name: selectedVillage.label,
         };
       }
-
-      await settingsApi.updateStore(updateData);
+      
+      const response = await settingsApi.updateStore(updateData);
       setShowSuccessPopup(true);
       setConfirmOpen(false);
       loadStoreData();
@@ -414,8 +410,12 @@ export default function StoreSettingScreen() {
   }
 
   return (
-    <View style={styles.container}>
-      <Header title="Store" showHelp={false} />
+    <KeyboardAvoidingView 
+      style={styles.container}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
+    >
+      <Header title="Toko" showHelp={false} />
       <ScrollView
         contentContainerStyle={styles.scrollContainer}
         showsVerticalScrollIndicator={false}
@@ -424,53 +424,47 @@ export default function StoreSettingScreen() {
 
           <View style={styles.sectionCard}>
             <ThemedText type="subtitle-2" style={{ marginBottom: 12 }}>
-              Store or Business Data
+              Data Toko atau Bisnis
             </ThemedText>
             <ComboInput
-              label="Business Type"
+              label="Jenis Bisnis"
+              disableAutoComplete={true}
               value={businessType}
               onChangeText={setBusinessType}
-              items={[
-                { label: "Jasa/Service Lainnya", value: "services_other" },
-                { label: "Makanan/Minuman", value: "food_beverage" },
-                { label: "Retail", value: "retail" },
-                { label: "Restoran", value: "restoran" },
-              ]}
-            />
+                items={[
+                  { label: "Pilih Jenis Bisnis", value: "" },
+                  { label: "Jasa/Service Lainnya", value: "services_other" },
+                  { label: "Makanan/Minuman", value: "food_beverage" },
+                  { label: "Retail", value: "retail" },
+                  { label: "Restoran", value: "restoran" },
+                ]}
+              />
+            </View>
             <ThemedInput
-              label="Store Business Name"
+              label="Nama Bisnis Toko"
               value={storeName}
               onChangeText={setStoreName}
             />
             <ThemedInput
-              label="Default Tax"
+              label="Pajak Default"
               value={defaultTax}
               onChangeText={setDefaultTax}
               keyboardType="decimal-pad"
+              rightIcon={<ThemedText type="default">%</ThemedText>}
             />
             <ThemedInput
-              label="Owner Name"
+              label="Nama Pemilik"
               value={ownerName}
               onChangeText={setOwnerName}
             />
-            <ThemedInput label="Mobile Number" value={phone} editable={false} />
+            <ThemedInput label="Nomor Telepon" value={phone} editable={false} />
             {/* <ThemedText style={{color: "red"}}>
             * Have not verified yet
           </ThemedText> */}
           </View>
 
           <View style={styles.sectionCard}>
-            <ThemedText type="subtitle-2">Lokasi Toko</ThemedText>
-            <ComboInput
-              label="Negara"
-              value={country}
-              onChangeText={setCountry}
-              items={[
-                { label: "Indonesia", value: "id" },
-                { label: "Malaysia", value: "my" },
-                { label: "Singapore", value: "sg" },
-              ]}
-            />
+            <ThemedText type="subtitle-2" style={{marginBottom:10}}>Lokasi Toko</ThemedText>
             <ComboInput
               label="Provinsi"
               value={provinceQuery}
@@ -571,9 +565,9 @@ export default function StoreSettingScreen() {
             onConfirm={() => setShowSuccessPopup(false)}
             onCancel={() => setShowSuccessPopup(false)}
           />
-        </View>
-      </ScrollView>
-    </View>
+
+      </ScrollView> 
+    </KeyboardAvoidingView>
   );
 }
 

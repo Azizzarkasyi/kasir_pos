@@ -60,7 +60,7 @@ export const getDashboardRouteForKey = (key: DashboardMenuKey): string | null =>
     case "history":
       return "/dashboard/transaction/history";
     case "reports":
-      return "/dashboard/reports";
+      return "/dashboard/home/report";
     case "employees":
       return "/dashboard/employee";
     case "outlets":

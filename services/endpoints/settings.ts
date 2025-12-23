@@ -40,6 +40,29 @@ export interface StoreInfo {
   address: string;
   owner_phone: string;
   photo?: string;
+  branches?: Array<{
+    id: string;
+    name: string;
+    phone: string;
+    address: string;
+    status: string;
+    province?: {
+      id: string;
+      name: string;
+    };
+    city?: {
+      id: string;
+      name: string;
+    };
+    subdistrict?: {
+      id: string;
+      name: string;
+    };
+    village?: {
+      id: string;
+      name: string;
+    };
+  }>;
 }
 
 export interface UpdateStoreRequest {

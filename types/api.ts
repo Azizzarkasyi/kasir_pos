@@ -236,7 +236,7 @@ export interface TransactionItem {
 }
 
 export interface CreateTransactionRequest {
-  payment_method: "cash" | "debt";
+  payment_method?: "cash" | "debt" | "qris" | "grab" | "shopee_food" | "bank_transfer" | "e_wallet" | "credit_card" | "debit_card";
   items: {
     product_id: string;
     variant_id?: string;

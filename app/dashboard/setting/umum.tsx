@@ -1,8 +1,5 @@
 import ConfirmPopup from "@/components/atoms/confirm-popup";
 import SectionDivider from "@/components/atoms/section-divider";
-import SelectLanguageModal, {
-  LanguageValue,
-} from "@/components/drawers/select-language-modal";
 import Header from "@/components/header";
 import MenuRow from "@/components/menu-row";
 import { ThemedButton } from "@/components/themed-button";
@@ -36,11 +33,9 @@ export default function GeneralSettingScreen() {
   const { savedDevice: printerDevice, getDisplayName: getPrinterDisplayName } = usePrinterStore();
   const { savedDevice: scannerDevice, getDisplayName: getScannerDisplayName } = useScannerStore();
   const { isBasic } = useUserPlan();
-  const [language, setLanguage] = useState<LanguageValue>("id");
-  const [showSuccessPopup, setShowSuccessPopup] = useState(false);
-  const [showLanguageModal, setShowLanguageModal] = useState(false);
   const [lastSync, setLastSync] = useState<string>("Belum pernah");
   const [isSyncing, setIsSyncing] = useState(false);
+  const [showSuccessPopup, setShowSuccessPopup] = useState(false);
 
   useEffect(() => {
     loadLastSync();
@@ -144,23 +139,7 @@ export default function GeneralSettingScreen() {
         </View>
         <SectionDivider />
 
-        <View style={styles.contentWrapper}>
-          <View style={styles.sectionCard}>
-            <ThemedText type="subtitle-2" style={styles.sectionTitle}>
-              Umum
-            </ThemedText>
-            <MenuRow
-              title="Bahasa"
-              rightText={language === "en" ? "English" : "Indonesia"}
-              variant="link"
-              style={styles.menuRowTitle}
-              showTopBorder={false}
-              showBottomBorder={false}
-              onPress={() => setShowLanguageModal(true)}
-            />
-          </View>
-        </View>
-        <SectionDivider />
+      
 
         <View style={styles.contentWrapper}>
           <View style={styles.sectionCard}>
@@ -221,15 +200,6 @@ export default function GeneralSettingScreen() {
         </View>
       </ScrollView>
 
-      <SelectLanguageModal
-        visible={showLanguageModal}
-        value={language}
-        onChange={next => {
-          setLanguage(next);
-          setShowLanguageModal(false);
-        }}
-        onClose={() => setShowLanguageModal(false)}
-      />
 
       <ConfirmPopup
         visible={showSuccessPopup}

@@ -300,7 +300,7 @@ const RegisterScreen = () => {
 
   return (
     <View style={styles.container}>
-      <Header title="Daftar" />
+      <Header title="Daftar" onHelpPress={() => router.push('/dashboard/help')} />
       <KeyboardAwareScrollView
         contentContainerStyle={[
           styles.scrollContainer,

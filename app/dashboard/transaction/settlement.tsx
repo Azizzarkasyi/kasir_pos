@@ -123,8 +123,22 @@ export default function TransactionSettlementPage() {
     }
   }, [transaction, currentBranchId]);
 
-  const paymentMethod =
-    transaction?.paymentMethod === "cash" ? "Tunai" : "Hutang";
+  const getPaymentMethodLabel = (method: string): string => {
+    const labels: Record<string, string> = {
+      cash: "Tunai",
+      debt: "Utang",
+      qris: "QRIS",
+      grab: "Grab",
+      shopee_food: "ShopeeFood",
+      bank_transfer: "Transfer Bank",
+      e_wallet: "E-Wallet",
+      credit_card: "Kartu Kredit",
+      debit_card: "Kartu Debit",
+    };
+    return labels[method] || method;
+  };
+
+  const paymentMethod = getPaymentMethodLabel(transaction?.paymentMethod || "");
   const totalTagihan = transaction?.totalAmount || 0;
   const subtotal = (transaction as any)?.sub_total || totalTagihan; // Use sub_total if available
   const diterima = transaction?.paidAmount || 0;

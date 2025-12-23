@@ -2,9 +2,12 @@ import Header from "@/components/header";
 import { ThemedText } from "@/components/themed-text";
 import { Colors } from "@/constants/theme";
 import { useColorScheme } from "@/hooks/use-color-scheme";
+import { faqService } from "@/services/endpoints/faqs";
+import { FAQ } from "@/types/faq";
 import { Ionicons } from "@expo/vector-icons";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
+    ActivityIndicator,
     LayoutAnimation,
     Platform,
     ScrollView,
@@ -22,44 +25,6 @@ if (
     UIManager.setLayoutAnimationEnabledExperimental(true);
 }
 
-interface FAQItem {
-    id: string;
-    question: string;
-    answer: string;
-}
-
-const FAQS: FAQItem[] = [
-    {
-        id: "1",
-        question: "Bagaimana cara menghubungkan printer bluetooth?",
-        answer:
-            "Masuk ke menu Pengaturan > Printer. Pastikan bluetooth perangkat Anda menyala, lalu pindai perangkat printer yang tersedia dan pilih untuk menghubungkan.",
-    },
-    {
-        id: "2",
-        question: "Bagaimana cara mengubah profil toko?",
-        answer:
-            "Anda dapat mengubah profil toko melalui menu Pengaturan > Toko. Di sana Anda dapat mengubah nama toko, alamat, dan logo.",
-    },
-    {
-        id: "3",
-        question: "Apakah bisa menggunakan scanner barcode?",
-        answer:
-            "Ya, aplikasi ini mendukung penggunaan barcode scanner bluetooth maupun scanner bawaan kamera perangkat.",
-    },
-    {
-        id: "4",
-        question: "Bagaimana cara melihat laporan laba rugi?",
-        answer:
-            "Laporan laba rugi dapat dilihat pada menu Laporan. Anda dapat memfilter laporan berdasarkan periode harian, mingguan, atau bulanan.",
-    },
-    {
-        id: "5",
-        question: "Bagaimana cara menambah pegawai?",
-        answer:
-            "Masuk ke menu Pegawai, lalu tekan tombol tambah (+) di pojok kanan atas atau tombol 'Tambah Pegawai'. Isi data pegawai dan hak akses yang diinginkan.",
-    },
-];
 
 const HelpScreen = () => {
     const colorScheme = useColorScheme() ?? "light";
@@ -70,6 +35,28 @@ const HelpScreen = () => {
     const styles = createStyles(colorScheme, isTablet, isTabletLandscape);
 
     const [expandedId, setExpandedId] = useState<string | null>(null);
+    const [faqs, setFaqs] = useState<FAQ[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+
+    useEffect(() => {
+        fetchFAQs();
+    }, []);
+
+    const fetchFAQs = async () => {
+        try {
+            setLoading(true);
+            setError(null);
+            const response = await faqService.getActive() as any;
+            const sortedFaqs = response.sort((a: FAQ, b: FAQ) => a.order - b.order);
+            setFaqs(sortedFaqs);
+        } catch (err) {
+            setError("Gagal memuat data FAQ. Silakan coba lagi.");
+            console.error("Error fetching FAQs:", err);
+        } finally {
+            setLoading(false);
+        }
+    };
 
     const toggleExpand = (id: string) => {
         LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
@@ -93,36 +80,59 @@ const HelpScreen = () => {
                         </ThemedText>
                     </View>
 
-                    <View style={styles.faqList}>
-                        {FAQS.map((item) => {
-                            const isExpanded = expandedId === item.id;
-                            return (
-                                <View key={item.id} style={styles.faqItem}>
-                                    <TouchableOpacity
-                                        style={styles.questionButton}
-                                        onPress={() => toggleExpand(item.id)}
-                                        activeOpacity={0.7}
-                                    >
-                                        <ThemedText style={styles.questionText}>
-                                            {item.question}
-                                        </ThemedText>
-                                        <Ionicons
-                                            name={isExpanded ? "chevron-up" : "chevron-down"}
-                                            size={20}
-                                            color={Colors[colorScheme].icon}
-                                        />
-                                    </TouchableOpacity>
-                                    {isExpanded && (
-                                        <View style={styles.answerContainer}>
-                                            <ThemedText style={styles.answerText}>
-                                                {item.answer}
+                    {loading ? (
+                        <View style={styles.loadingContainer}>
+                            <ActivityIndicator size="large" color={Colors[colorScheme].primary} />
+                            <ThemedText style={styles.loadingText}>Memuat data FAQ...</ThemedText>
+                        </View>
+                    ) : error ? (
+                        <View style={styles.errorContainer}>
+                            <Ionicons name="alert-circle-outline" size={48} color={Colors[colorScheme].danger} />
+                            <ThemedText style={styles.errorText}>{error}</ThemedText>
+                            <TouchableOpacity style={styles.retryButton} onPress={fetchFAQs}>
+                                <ThemedText style={styles.retryButtonText}>Coba Lagi</ThemedText>
+                            </TouchableOpacity>
+                        </View>
+                    ) : faqs.length === 0 ? (
+                        <View style={styles.emptyContainer}>
+                            <Ionicons name="help-circle-outline" size={64} color={Colors[colorScheme].icon} />
+                            <ThemedText style={styles.emptyTitle}>Belum ada FAQ</ThemedText>
+                            <ThemedText style={styles.emptySubtitle}>
+                                Pertanyaan yang sering diajukan belum tersedia saat ini.
+                            </ThemedText>
+                        </View>
+                    ) : (
+                        <View style={styles.faqList}>
+                            {faqs.map((item) => {
+                                const isExpanded = expandedId === item.id;
+                                return (
+                                    <View key={item.id} style={styles.faqItem}>
+                                        <TouchableOpacity
+                                            style={styles.questionButton}
+                                            onPress={() => toggleExpand(item.id)}
+                                            activeOpacity={0.7}
+                                        >
+                                            <ThemedText style={styles.questionText}>
+                                                {item.question}
                                             </ThemedText>
-                                        </View>
-                                    )}
-                                </View>
-                            );
-                        })}
-                    </View>
+                                            <Ionicons
+                                                name={isExpanded ? "chevron-up" : "chevron-down"}
+                                                size={20}
+                                                color={Colors[colorScheme].icon}
+                                            />
+                                        </TouchableOpacity>
+                                        {isExpanded && (
+                                            <View style={styles.answerContainer}>
+                                                <ThemedText style={styles.answerText}>
+                                                    {item.answer}
+                                                </ThemedText>
+                                            </View>
+                                        )}
+                                    </View>
+                                );
+                            })}
+                        </View>
+                    )}
 
                     <View style={styles.contactSection}>
                         <ThemedText style={styles.contactTitle}>
@@ -244,6 +254,63 @@ const createStyles = (
             color: "white",
             fontWeight: "600",
             fontSize: isTablet ? 16 : 14,
+        },
+        loadingContainer: {
+            flex: 1,
+            justifyContent: "center",
+            alignItems: "center",
+            paddingVertical: 60,
+            gap: 16,
+        },
+        loadingText: {
+            fontSize: isTablet ? 16 : 14,
+            color: Colors[colorScheme].icon,
+            marginTop: 8,
+        },
+        errorContainer: {
+            flex: 1,
+            justifyContent: "center",
+            alignItems: "center",
+            paddingVertical: 60,
+            gap: 16,
+        },
+        errorText: {
+            fontSize: isTablet ? 16 : 14,
+            color: Colors[colorScheme].danger,
+            textAlign: "center",
+            marginTop: 8,
+        },
+        retryButton: {
+            backgroundColor: Colors[colorScheme].primary,
+            paddingHorizontal: 24,
+            paddingVertical: 10,
+            borderRadius: 8,
+            marginTop: 8,
+        },
+        retryButtonText: {
+            color: "white",
+            fontWeight: "600",
+            fontSize: isTablet ? 14 : 12,
+        },
+        emptyContainer: {
+            flex: 1,
+            justifyContent: "center",
+            alignItems: "center",
+            paddingVertical: 80,
+            paddingHorizontal: 40,
+        },
+        emptyTitle: {
+            fontSize: isTablet ? 20 : 18,
+            fontWeight: "600",
+            color: Colors[colorScheme].text,
+            marginTop: 16,
+            marginBottom: 8,
+        },
+        emptySubtitle: {
+            fontSize: isTablet ? 16 : 14,
+            color: Colors[colorScheme].icon,
+            textAlign: "center",
+            lineHeight: isTablet ? 24 : 20,
         },
     });
 

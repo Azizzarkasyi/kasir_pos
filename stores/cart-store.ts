@@ -170,13 +170,17 @@ export const useCartStore = create<CartStore>((set, get) => ({
 
   getTaxAmount: () => {
     const subtotal = get().getSubtotal();
+    const discount = get().discount;
     const taxRate = useTaxStore.getState().taxRate;
-    return Math.round((subtotal * taxRate) / 100);
+    // Tax is calculated on subtotal after discount (matching backend logic)
+    return Math.round(((subtotal - discount) * taxRate) / 100);
   },
 
   getTotalWithTax: () => {
     const totalAmount = get().getTotalAmount();
     const taxAmount = get().getTaxAmount();
+    console.log("total ammount", totalAmount)
+    console.log("total tax", taxAmount)
     return totalAmount + taxAmount;
   },
 }));

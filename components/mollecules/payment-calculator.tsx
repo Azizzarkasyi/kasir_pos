@@ -6,16 +6,17 @@ import { useColorScheme } from "@/hooks/use-color-scheme";
 import { Ionicons } from "@expo/vector-icons";
 import React from "react";
 import {
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  useWindowDimensions,
-  View,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    useWindowDimensions,
+    View,
 } from "react-native";
 
 type PaymentCalculatorProps = {
   value?: string;
   onChangeValue?: (value: string) => void;
+  paymentMethodBadge?: React.ReactNode;
 };
 
 export type PaymentCalculatorMode = "auto" | "nominal";
@@ -33,6 +34,7 @@ const QUICK_AMOUNTS = [
 const PaymentCalculator: React.FC<PaymentCalculatorProps> = ({
   value,
   onChangeValue,
+  paymentMethodBadge,
 }) => {
   const colorScheme = useColorScheme() ?? "light";
   const { width, height } = useWindowDimensions();
@@ -75,6 +77,11 @@ const PaymentCalculator: React.FC<PaymentCalculatorProps> = ({
             color={Colors[colorScheme].primary}
           />
         </TouchableOpacity>
+        {paymentMethodBadge && (
+          <View style={styles.paymentMethodBadgeContainer}>
+            {paymentMethodBadge}
+          </View>
+        )}
       </View>
 
       {mode === "auto" ? (
@@ -121,6 +128,10 @@ const createStyles = (colorScheme: "light" | "dark", isTablet: boolean, isTablet
       paddingHorizontal: isTablet ? 24 : 16,
       paddingTop: isTablet ? 12 : 6,
       paddingBottom: isTablet ? 6 : 4,
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+      gap: isTablet ? 12 : 8,
     },
     typeNominalBadge: {
       flexDirection: "row",
@@ -162,6 +173,10 @@ const createStyles = (colorScheme: "light" | "dark", isTablet: boolean, isTablet
     quickButtonText: {
       fontSize: isTablet ? 18 : 14,
       fontWeight: "600",
+    },
+    paymentMethodBadgeContainer: {
+      flex: 1,
+      alignItems: "flex-end",
     },
   });
 

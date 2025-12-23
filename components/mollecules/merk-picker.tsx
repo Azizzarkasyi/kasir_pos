@@ -3,7 +3,6 @@ import { useColorScheme } from "@/hooks/use-color-scheme";
 import { merkApi } from "@/services";
 import { Merk } from "@/types/api";
 import { AntDesign, Ionicons } from "@expo/vector-icons";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import React, { useEffect, useRef } from "react";
 import {
   ActivityIndicator,
@@ -33,7 +32,7 @@ const MerkPicker: React.FC<MerkPickerProps> = ({
   size = "md",
 }) => {
   const colorScheme = useColorScheme() ?? "light";
-  const {width, height} = useWindowDimensions();
+  const { width, height } = useWindowDimensions();
   const isTablet = Math.min(width, height) >= 600;
   const styles = createStyles(colorScheme, size, isTablet);
   const [visible, setVisible] = React.useState(false);
@@ -60,9 +59,8 @@ const MerkPicker: React.FC<MerkPickerProps> = ({
   const loadMerks = React.useCallback(async () => {
     try {
       setLoading(true);
-      const storeId = await AsyncStorage.getItem("current_branch_id");
-      const params = storeId ? { store_id: storeId } : undefined;
-      const response = await merkApi.getMerks(params);
+      const response = await merkApi.getMerks();
+      console.log("merks", response.data)
       if (response.data) {
         setMerkList(response.data);
       }
@@ -106,7 +104,7 @@ const MerkPicker: React.FC<MerkPickerProps> = ({
         }
       } else {
         // Create new merk
-        const response = await merkApi.createMerk({name: merkName});
+        const response = await merkApi.createMerk({ name: merkName });
         if (response.data) {
           await loadMerks();
           onChange(response.data.id);
@@ -145,10 +143,10 @@ const MerkPicker: React.FC<MerkPickerProps> = ({
     size === "sm"
       ? isTablet ? [18, 14] : [14, 12]
       : size === "md"
-      ? isTablet ? [20, 14] : [15, 12]
-      : isTablet
-      ? [22, 14]
-      : [16, 12];
+        ? isTablet ? [20, 14] : [15, 12]
+        : isTablet
+          ? [22, 14]
+          : [16, 12];
 
   const labelStyle = {
     top: focusAnim.interpolate({
@@ -239,7 +237,7 @@ const MerkPicker: React.FC<MerkPickerProps> = ({
                 <Text
                   style={[
                     styles.listItemText,
-                    {textAlign: "center", paddingVertical: 20},
+                    { textAlign: "center", paddingVertical: 20 },
                   ]}
                 >
                   Belum ada merk

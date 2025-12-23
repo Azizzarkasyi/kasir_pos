@@ -90,9 +90,11 @@ export default function PaymentPage() {
   const [selectedProductForCustomQty, setSelectedProductForCustomQty] =
     useState<Product | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-    const {
-      clearCart,
-    } = useCartStore();
+  const {
+    clearCart,
+    updateItemQuantity,
+    updateItemNote,
+  } = useCartStore();
 
   // Get current branch from store
   const { currentBranchId } = useBranchStore();
@@ -412,15 +414,17 @@ export default function PaymentPage() {
   };
 
   const getProductQuantity = (productId: string) => {
-    return checkoutProducts
+    // Read from cart store instead of local state for proper sync
+    return cartItems
       .filter(item => item.productId === productId)
       .reduce((sum, item) => sum + item.quantity, 0);
   };
 
   const getProductNote = (productId: string) => {
-    const item = checkoutProducts.find(
-      checkoutItem =>
-        checkoutItem.productId === productId && !checkoutItem.variantId
+    // Read from cart store instead of local state for proper sync
+    const item = cartItems.find(
+      cartItem =>
+        cartItem.productId === productId && !cartItem.variantId
     );
     return item?.note ?? "";
   };
@@ -430,13 +434,85 @@ export default function PaymentPage() {
     note: string;
   }) => {
     const { quantity, note } = payload;
+    console.log("🔢 handleConfirmCustomQuantity called with:", { quantity, note });
+
     if (!selectedProductForCustomQty) {
       setCustomQtyModalVisible(false);
       return;
     }
 
-    const productId = selectedProductForCustomQty.id;
+    const product = selectedProductForCustomQty;
+    const productId = product.id;
+    console.log("🔢 productId:", productId);
 
+    // Get latest state directly to avoid stale closure issue
+    const { items: currentCartItems, addItem, removeItem, updateItemQuantity: storeUpdateQty, updateItemNote: storeUpdateNote } = useCartStore.getState();
+
+    console.log("🔢 currentCartItems:", JSON.stringify(currentCartItems, null, 2));
+
+    // Check if item exists in cart store - find ANY item with this productId
+    // This handles both products with variants and without variants
+    const existingItem = currentCartItems.find(
+      i => i.productId === productId
+    );
+
+    console.log("🔢 existingItem:", existingItem ? JSON.stringify(existingItem) : "NOT FOUND");
+
+    // Determine the variantId to use - if existing item has variant, use that; otherwise check product variants
+    let targetVariantId: string | null = null;
+    let targetVariantName: string | null = null;
+    let targetUnitPrice = product.price || 0;
+
+    if (existingItem) {
+      // Use existing item's variant info
+      targetVariantId = existingItem.variantId ?? null;
+      targetVariantName = existingItem.variantName ?? null;
+      targetUnitPrice = existingItem.unitPrice;
+    } else if (product.variants && product.variants.length === 1) {
+      // Product has single variant, use that
+      const variant = product.variants[0];
+      targetVariantId = variant.id;
+      targetVariantName = variant.name;
+      targetUnitPrice = variant.price;
+    }
+
+    console.log("🔢 targetVariantId:", targetVariantId, "targetUnitPrice:", targetUnitPrice);
+
+    // Update cart store
+    if (quantity <= 0) {
+      console.log("🔢 Removing item (quantity <= 0)");
+      // Remove item if quantity is 0 or less
+      if (existingItem) {
+        removeItem(productId, existingItem.variantId ?? null);
+      }
+    } else if (existingItem) {
+      console.log("🔢 Updating existing item to quantity:", quantity);
+      // Update existing item with exact quantity
+      storeUpdateQty(productId, existingItem.variantId ?? null, quantity);
+      storeUpdateNote(productId, existingItem.variantId ?? null, note);
+
+      // Log the result
+      const afterUpdate = useCartStore.getState().items;
+      console.log("🔢 Cart after update:", JSON.stringify(afterUpdate, null, 2));
+    } else {
+      console.log("🔢 Adding NEW item with quantity:", quantity);
+      // Add new item with exact quantity
+      addItem({
+        productId: product.id,
+        productName: product.name,
+        variantId: targetVariantId,
+        variantName: targetVariantName,
+        quantity: quantity,
+        unitPrice: targetUnitPrice,
+        note: note,
+      });
+
+      // Log the result
+      const afterAdd = useCartStore.getState().items;
+      console.log("🔢 Cart after add:", JSON.stringify(afterAdd, null, 2));
+    }
+
+    // Also update local state for backward compatibility
     setCheckoutProducts(prev => {
       const index = prev.findIndex(
         item => item.productId === productId && !item.variantId
@@ -847,7 +923,7 @@ export default function PaymentPage() {
                   if (activeTab !== "manual" && checkoutItemsCount === 0) {
                     return;
                   }
-                  router.replace("/dashboard/transaction/summary");
+                  router.push("/dashboard/transaction/summary");
                 }}
               >
                 <Text

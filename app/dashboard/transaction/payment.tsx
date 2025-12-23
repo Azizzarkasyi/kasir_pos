@@ -1,21 +1,45 @@
 "use client";
 
+import ConfirmationDialog, {
+  ConfirmationDialogHandle,
+} from "@/components/drawers/confirmation-dialog";
+import PaymentMethodModal from "@/components/drawers/payment-method-modal";
 import Header from "@/components/header";
 import PaymentCalculator from "@/components/mollecules/payment-calculator";
 import { Colors } from "@/constants/theme";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { transactionApi } from "@/services/endpoints/transactions";
 import { useCartStore } from "@/stores/cart-store";
-import { useRouter } from "expo-router";
-import React, { useState } from "react";
+import { useTaxStore } from "@/stores/tax-store";
+import { Ionicons } from "@expo/vector-icons";
+import { useNavigation, useRouter } from "expo-router";
+import React, { useEffect, useRef, useState } from "react";
 import {
-    Alert,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity, useWindowDimensions,
-    View,
+  ActivityIndicator,
+  Alert,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity, useWindowDimensions,
+  View
 } from "react-native";
+
+type PaymentMethod = "cash" | "debt" | "qris" | "grab" | "shopee_food" | "bank_transfer" | "e_wallet" | "credit_card" | "debit_card";
+
+const getPaymentMethodLabel = (method: PaymentMethod): string => {
+  const labels: Record<PaymentMethod, string> = {
+    cash: "Tunai",
+    debt: "Utang",
+    qris: "QRIS",
+    grab: "Grab",
+    shopee_food: "ShopeeFood",
+    bank_transfer: "Transfer Bank",
+    e_wallet: "E-Wallet",
+    credit_card: "Kartu Kredit",
+    debit_card: "Kartu Debit",
+  };
+  return labels[method] || method;
+};
 
 export default function PaymentPage() {
   const colorScheme = useColorScheme() ?? "light";
@@ -25,6 +49,8 @@ export default function PaymentPage() {
   const isTabletLandscape = isTablet && isLandscape;
   const styles = createStyles(colorScheme, isTablet, isTabletLandscape);
   const router = useRouter();
+  const navigation = useNavigation();
+  const confirmationRef = useRef<ConfirmationDialogHandle | null>(null);
 
   const {
     items: cartItems,
@@ -38,16 +64,65 @@ export default function PaymentPage() {
     setNote,
     clearCart,
   } = useCartStore();
+  
+  const { taxRate, isLoading: isTaxLoading, fetchTaxRate } = useTaxStore();
+  const [isInitializing, setIsInitializing] = useState(true);
 
   const [amount, setAmount] = useState<string>("0");
   const [receiptNote, setReceiptNote] = useState<string>(cartNote || "");
   const [customerName, setCustomerNameLocal] = useState<string>(
     cartCustomerName || ""
   );
-  const [paymentMethod, setPaymentMethod] = useState<"cash" | "debt">("cash");
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("cash");
+  const [showPaymentMethodModal, setShowPaymentMethodModal] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
 
   const totalAmount = getTotalWithTax();
+
+  useEffect(() => {
+    const initializeTax = async () => {
+      try {
+        // Fetch tax rate if not loaded
+        if (taxRate === 0 && !isTaxLoading) {
+          await fetchTaxRate();
+        }
+      } catch (error) {
+        console.error('Failed to fetch tax rate:', error);
+      } finally {
+        setIsInitializing(false);
+      }
+    };
+
+    initializeTax();
+  }, [taxRate, isTaxLoading, fetchTaxRate]);
+
+  // Add back navigation confirmation
+  useEffect(() => {
+    const sub = navigation.addListener("beforeRemove", (e) => {
+      // Allow navigation if going forward to settlement
+      const action = e.data.action;
+      
+      // Check if the navigation is going forward (to settlement)
+      if (action.type === 'NAVIGATE' && (action.payload as any)?.name === '/dashboard/transaction/settlement') {
+        return;
+      }
+      
+      e.preventDefault();
+
+      confirmationRef.current?.showConfirmationDialog({
+        title: "Konfirmasi",
+        message: "Anda yakin ingin kembali? Data pembayaran akan hilang.",
+        onCancel: () => {
+          // Stay on the page
+        },
+        onConfirm: () => {
+          navigation.dispatch(action);
+        },
+      });
+    });
+
+    return sub;
+  }, [navigation]);
 
   const formatCurrency = (value: string | number) => {
     if (!value) return "0";
@@ -117,7 +192,7 @@ export default function PaymentPage() {
         clearCart();
 
         // Navigate to settlement page
-        router.replace({
+        router.push({
           pathname: "/dashboard/transaction/settlement",
           params: {
             transaction: JSON.stringify(transactionResult),
@@ -157,8 +232,17 @@ export default function PaymentPage() {
 
       {/* Content */}
       <View style={styles.mainWrapper}>
-        {/* Left Column - Amount & Inputs */}
-        <View style={styles.leftColumn}>
+        {isInitializing ? (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color={Colors[colorScheme].primary} />
+            <Text style={styles.loadingText}>Memuat data pajak...</Text>
+            <Text style={styles.loadingSubtext}>Mohon tunggu sebentar</Text>
+          </View>
+        ) : (
+          <>
+            {/* Left Column - Amount & Inputs */}
+            <View style={styles.leftColumn}>
+          {/* Payment Method Badge */}
           <View style={styles.amountWrapper}>
             <Text
               style={[styles.amountLabel, { color: Colors[colorScheme].icon }]}
@@ -212,11 +296,43 @@ export default function PaymentPage() {
           </View>
 
           {/* Calculator */}
-          <PaymentCalculator value={amount} onChangeValue={setAmount} />
-        </View>
+          <View style={styles.calculatorWrapper}>
+            <PaymentCalculator 
+              value={amount} 
+              onChangeValue={(value) => {
+                if (value === "exact") {
+                  // Set amount to total bill when "Uang Pas" is clicked
+                  setAmount(totalAmount.toString());
+                } else {
+                  setAmount(value);
+                }
+              }}
+              paymentMethodBadge={
+                <TouchableOpacity
+                  style={styles.paymentMethodBadge}
+                  onPress={() => setShowPaymentMethodModal(true)}
+                >
+                  <Ionicons
+                    name="wallet-outline"
+                    size={isTablet ? 18 : 14}
+                    color={Colors[colorScheme].text}
+                  />
+                  <Text style={styles.paymentMethodText}>
+                    {getPaymentMethodLabel(paymentMethod)}
+                  </Text>
+                  <Ionicons
+                    name="chevron-down-outline"
+                    size={isTablet ? 12 : 10}
+                    color={Colors[colorScheme].icon}
+                  />
+                </TouchableOpacity>
+              }
+            />
+          </View>
+            </View>
 
-        {/* Bottom continue button */}
-        <View style={styles.bottomWrapper}>
+            {/* Bottom continue button */}
+            <View style={styles.bottomWrapper}>
           <TouchableOpacity
             style={[
               styles.continueButton,
@@ -239,7 +355,18 @@ export default function PaymentPage() {
             </Text>
           </TouchableOpacity>
         </View>
+          </>
+        )}
       </View>
+      
+      <PaymentMethodModal
+        visible={showPaymentMethodModal}
+        onClose={() => setShowPaymentMethodModal(false)}
+        onSelect={setPaymentMethod}
+        selectedMethod={paymentMethod}
+        colorScheme={colorScheme}
+      />
+      <ConfirmationDialog ref={confirmationRef} />
     </View>
   );
 }
@@ -394,5 +521,48 @@ const createStyles = (colorScheme: "light" | "dark", isTablet: boolean, isTablet
     continueButtonText: {
       fontSize: isTablet ? 20 : 16,
       fontWeight: "600",
+    },
+    loadingContainer: {
+      flex: 1,
+      justifyContent: "center",
+      alignItems: "center",
+      paddingVertical: 60,
+    },
+    loadingText: {
+      fontSize: isTablet ? 16 : 14,
+      color: Colors[colorScheme].icon,
+      marginTop: 16,
+    },
+    loadingSubtext: {
+      fontSize: isTablet ? 14 : 12,
+      color: Colors[colorScheme].icon,
+      marginTop: 8,
+      opacity: 0.7,
+    },
+    calculatorWrapper: {
+      marginTop: isTablet ? 20 : 16,
+    },
+    paymentMethodBadge: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: isTablet ? 8 : 6,
+      backgroundColor: Colors[colorScheme].secondary,
+      paddingHorizontal: isTablet ? 16 : 12,
+      paddingVertical: isTablet ? 10 : 6,
+      borderRadius: 100,
+      borderWidth: 1,
+      borderColor: Colors[colorScheme].border,
+    },
+    paymentMethodIcon: {
+      marginRight: 6,
+    },
+    paymentMethodText: {
+      fontSize: isTablet ? 18 : 14,
+      fontWeight: "500",
+      color: Colors[colorScheme].text,
+      flex: 1,
+    },
+    paymentMethodArrow: {
+      marginLeft: 6,
     },
   });
