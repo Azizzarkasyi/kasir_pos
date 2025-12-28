@@ -54,16 +54,16 @@ const SidebarItem: React.FC<SidebarItemProps> = ({
               name={icon}
               size={iconSize}
               color={
-                disabled 
-                  ? Colors["light"].icon 
-                  : active 
-                    ? styles.itemActiveIcon.color 
+                disabled
+                  ? Colors["light"].icon
+                  : active
+                    ? styles.itemActiveIcon.color
                     : styles.itemIcon.color
               }
             />
           </View>
           <Text style={[
-            styles.itemLabel, 
+            styles.itemLabel,
             active && styles.itemLabelActive,
             disabled && styles.itemLabelDisabled
           ]}>
@@ -99,7 +99,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   onSelect,
 }) => {
   const colorScheme = useColorScheme() ?? "light";
-  const {width, height} = useWindowDimensions();
+  const { width, height } = useWindowDimensions();
   const isTablet = Math.min(width, height) >= 600;
   const styles = createStyles(colorScheme, isTablet);
   const router = useRouter();
@@ -131,7 +131,7 @@ const Sidebar: React.FC<SidebarProps> = ({
       const branchId = await AsyncStorage.getItem("current_branch_id");
       const branchName = await AsyncStorage.getItem("current_branch_name");
       if (branchId && branchName) {
-        setCurrentBranch({id: branchId, name: branchName});
+        setCurrentBranch({ id: branchId, name: branchName });
       }
 
       // Get branches to get current branch name if not in storage
@@ -144,7 +144,7 @@ const Sidebar: React.FC<SidebarProps> = ({
               (b: any) => b.id === branchId
             );
             if (currentBranchData) {
-              setCurrentBranch({id: branchId, name: currentBranchData.name});
+              setCurrentBranch({ id: branchId, name: currentBranchData.name });
               await AsyncStorage.setItem(
                 "current_branch_name",
                 currentBranchData.name
@@ -220,17 +220,17 @@ const Sidebar: React.FC<SidebarProps> = ({
                   </Text>
                 </View>
               </View>
-              <View style={{flex: 1}}>
+              <View style={{ flex: 1 }}>
                 {isLoading ? (
                   <View>
-                    <Skeleton 
-                      width={isTablet ? 120 : 80} 
-                      height={isTablet ? 22 : 14} 
-                      style={{marginBottom: 2}}
+                    <Skeleton
+                      width={isTablet ? 120 : 80}
+                      height={isTablet ? 22 : 14}
+                      style={{ marginBottom: 2 }}
                     />
-                    <Skeleton 
-                      width={isTablet ? 60 : 40} 
-                      height={isTablet ? 18 : 12} 
+                    <Skeleton
+                      width={isTablet ? 60 : 40}
+                      height={isTablet ? 18 : 12}
                     />
                   </View>
                 ) : (
@@ -254,61 +254,61 @@ const Sidebar: React.FC<SidebarProps> = ({
             </TouchableOpacity>
 
             {isPro && (
-            <View style={styles.outletRow}>
-              <View style={{flex: 1}}>
-                {isLoading ? (
-                  <View>
-                    <Skeleton 
-                      width={isTablet ? 100 : 70} 
-                      height={isTablet ? 18 : 14} 
-                      style={{marginBottom: 2}}
-                    />
-                    <Skeleton 
-                      width={isTablet ? 80 : 60} 
-                      height={isTablet ? 16 : 12} 
-                    />
-                  </View>
-                ) : (
-                  <>
-                    <Text style={[
-                      styles.outletName, 
-                    ]} numberOfLines={1}>
-                      {currentBranch?.name || "Outlet"}
-                    </Text>
-                    <Text style={[
-                      styles.outletLocation,
-                    ]}>
-                      {currentBranch ? "Outlet Aktif" : "Pilih Outlet"}
-                    </Text>
-                  </>
-                )}
+              <View style={styles.outletRow}>
+                <View style={{ flex: 1 }}>
+                  {isLoading ? (
+                    <View>
+                      <Skeleton
+                        width={isTablet ? 100 : 70}
+                        height={isTablet ? 18 : 14}
+                        style={{ marginBottom: 2 }}
+                      />
+                      <Skeleton
+                        width={isTablet ? 80 : 60}
+                        height={isTablet ? 16 : 12}
+                      />
+                    </View>
+                  ) : (
+                    <>
+                      <Text style={[
+                        styles.outletName,
+                      ]} numberOfLines={1}>
+                        {currentBranch?.name || "Outlet"}
+                      </Text>
+                      <Text style={[
+                        styles.outletLocation,
+                      ]}>
+                        {currentBranch ? "Outlet Aktif" : "Pilih Outlet"}
+                      </Text>
+                    </>
+                  )}
+                </View>
+                <TouchableOpacity
+                  style={[
+                    styles.outletButton,
+                  ]}
+                  onPress={() => {
+                    const outletRoute = "/dashboard/select-branch";
+                    if (pathname !== outletRoute) {
+                      router.push(outletRoute as never);
+                    }
+                    onClose?.();
+                  }}
+                >
+                  <Text style={[
+                    styles.outletButtonText,
+                  ]}>
+                    Pilih Outlet
+                  </Text>
+                </TouchableOpacity>
               </View>
-              <TouchableOpacity
-                style={[
-                  styles.outletButton,
-                ]}
-                onPress={() => {
-                  const outletRoute = "/dashboard/select-branch";
-                  if (pathname !== outletRoute) {
-                    router.push(outletRoute as never);
-                  }
-                  onClose?.();
-                }}
-              >
-                <Text style={[
-                  styles.outletButtonText,
-                ]}>
-                  Pilih Outlet
-                </Text>
-              </TouchableOpacity>
-            </View>
             )}
           </View>
 
           <ScrollView contentContainerStyle={styles.scrollContent}>
             {DASHBOARD_MENU_ITEMS.filter(item => {
               if (item.key === 'help' || item.key === 'bio-link') return true;
-              if (item.key === 'outlets') return isPro;
+              if (item.key === 'outlets') return true; // Always show outlets, just disable if not Pro
               if (item.permissionKey) {
                 return hasPermission(item.permissionKey);
               }
@@ -322,7 +322,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                 onPress={() => handleSelectItem(item.key)}
                 styles={styles}
                 iconSize={isTablet ? 26 : 20}
-                disabled={item.key === 'bio-link' ? true : item.key === 'stock-history' ? isBasic : false}
+                disabled={item.key === 'bio-link' ? true : item.key === 'stock-history' ? isBasic : item.key === 'outlets' ? !isPro : false}
                 soonBadge={item.key === 'bio-link' ? true : false}
               />
             ))}
@@ -473,7 +473,7 @@ const createStyles = (colorScheme: "light" | "dark", isTablet: boolean) =>
       color: Colors[colorScheme].text,
     },
     profileRole: {
-      fontSize: isTablet? 18: 12,
+      fontSize: isTablet ? 18 : 12,
       color: Colors[colorScheme].icon,
       marginTop: 2,
     },

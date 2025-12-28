@@ -411,13 +411,14 @@ const DashboardScreen = () => {
                 }}
               />
             )}
-            {hasPermission('outlets') && isPro && (
+            {hasPermission('outlets') && (
               <MenuItem
                 label="Outlet"
                 icon="storefront-outline"
                 onPress={() => {
                   router.push("/dashboard/outlet" as never);
                 }}
+                disabled={!isPro}
               />
             )}
             <MenuItem
