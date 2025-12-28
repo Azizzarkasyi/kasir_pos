@@ -54,7 +54,8 @@ export interface User {
   email?: string;
   role?: string;
   plan?: string;
-  is_verified?: boolean
+  is_verified?: boolean;
+  is_disabled?: boolean;
 }
 
 // Product Types

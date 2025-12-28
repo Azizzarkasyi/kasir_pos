@@ -10,6 +10,7 @@ import CalculatorInput from "@/components/mollecules/calculator-input";
 import { Colors } from "@/constants/theme";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { useScannerDevice } from "@/hooks/use-scanner-device";
+import { useUserPlan } from "@/hooks/use-user-plan";
 import { categoryApi } from "@/services/endpoints/categories";
 import { productApi } from "@/services/endpoints/products";
 import { useBranchStore } from "@/stores/branch-store";
@@ -59,6 +60,7 @@ export default function PaymentPage() {
   const isTabletLandscape = isTablet && isLandscape;
   const styles = createStyles(colorScheme, isTablet, isTabletLandscape);
   const router = useRouter();
+  const { isPro, isDisabled } = useUserPlan();
 
   const [activeTab, setActiveTab] = useState<"manual" | "product" | "favorite">(
     "product"
@@ -104,21 +106,21 @@ export default function PaymentPage() {
   }, [])
 
   useEffect(() => {
-    if (savedDevice?.connectionType === "usb") {
+    if (isPro && savedDevice?.connectionType === "usb") {
       textInputRef.current?.focus();
       const timer = setTimeout(() => {
         textInputRef.current?.focus();
       }, 500);
       return () => clearTimeout(timer);
     }
-  }, [savedDevice]);
+  }, [savedDevice, isPro]);
 
   useEffect(() => {
-    if (lastScannedBarcode) {
+    if (isPro && lastScannedBarcode) {
       handleScannedBarcode(lastScannedBarcode);
       clearLastBarcode();
     }
-  }, [lastScannedBarcode]);
+  }, [lastScannedBarcode, isPro]);
 
   // Cart store
   const {
@@ -622,9 +624,11 @@ export default function PaymentPage() {
       style={[
         styles.container,
         { backgroundColor: Colors[colorScheme].background },
+        isDisabled && styles.disabledContainer,
       ]}
+      pointerEvents={isDisabled ? "none" : "auto"}
     >
-      {savedDevice?.connectionType === "usb" && (
+      {isPro && savedDevice?.connectionType === "usb" && (
         <TextInput
           ref={textInputRef}
           value={usbInputBuffer}
@@ -1079,6 +1083,9 @@ const createStyles = (colorScheme: "light" | "dark", isTablet: boolean, isTablet
     container: {
       flex: 1,
       backgroundColor: Colors[colorScheme].background,
+    },
+    disabledContainer: {
+      opacity: 0.5,
     },
     header: {
       paddingHorizontal: isTablet ? 24 : 16,

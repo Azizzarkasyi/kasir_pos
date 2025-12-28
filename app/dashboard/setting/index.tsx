@@ -29,7 +29,13 @@ export default function SettingScreen() {
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [showLogoutPopup, setShowLogoutPopup] = useState(false);
   const { userRole } = usePermissions();
-  const { isBasic, isPro } = useUserPlan();
+  const { isBasic, isPro, isTrial, plan } = useUserPlan();
+
+  const getPlanDisplayName = () => {
+    if (isPro) return "PRO";
+    if (isTrial) return "TRIAL";
+    return "Basic";
+  };
 
   useEffect(() => {
     loadProfile();
@@ -91,9 +97,9 @@ export default function SettingScreen() {
           <View style={styles.infoCardRow}>
             <View style={styles.iconSquare}>
               <SmallLogo />
-              {isPro && (
-                <View style={styles.badgePro}>
-                  <ThemedText style={styles.badgeProText}>PRO</ThemedText>
+              {(isPro || isTrial) && (
+                <View style={[styles.badgePro, isTrial && styles.badgeTrial]}>
+                  <ThemedText style={styles.badgeProText}>{getPlanDisplayName()}</ThemedText>
                 </View>
               )}
               {isBasic && (
@@ -114,7 +120,7 @@ export default function SettingScreen() {
                     {profile?.email || profile?.phone || "User"}
                   </ThemedText>
                   <ThemedText style={styles.infoVersion}>
-                    Version {VERSION} • {profile?.role || "User"} • {isPro ? "PRO" : "Basic"}
+                    Version {VERSION} • {profile?.role || "User"} • {getPlanDisplayName()}
                   </ThemedText>
                 </>
               )}
@@ -247,6 +253,9 @@ const createStyles = (colorScheme: "light" | "dark", isTablet: boolean, isTablet
       paddingVertical: isTablet ? 2 : 0,
       borderRadius: isTablet ? 14 : 10,
       backgroundColor: '#4CAF50',
+    },
+    badgeTrial: {
+      backgroundColor: '#FF9800',
     },
     badgeProText: {
       fontSize: isTablet ? 12 : 8,

@@ -111,7 +111,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   } | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const { hasPermission } = usePermissions();
-  const { isBasic } = useUserPlan();
+  const { isBasic, isTrial, isPro } = useUserPlan();
 
   useEffect(() => {
     if (isOpen) {
@@ -166,7 +166,7 @@ const Sidebar: React.FC<SidebarProps> = ({
     onSelect?.(key);
 
     if (key === "outlet") {
-      if (isBasic) return;
+      if (!isPro) return;
       const outletRoute = "/dashboard/select-branch";
       if (pathname !== outletRoute) {
         router.push(outletRoute as never);
@@ -216,7 +216,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                 )}
                 <View style={[styles.badgeFree, !isBasic && styles.badgePro]}>
                   <Text style={[styles.badgeFreeText, !isBasic && styles.badgeProText]}>
-                    {isBasic ? "BASIC" : "PRO"}
+                    {isBasic ? "BASIC" : isTrial ? "TRIAL" : "PRO"}
                   </Text>
                 </View>
               </View>
@@ -253,6 +253,7 @@ const Sidebar: React.FC<SidebarProps> = ({
               />
             </TouchableOpacity>
 
+            {isPro && (
             <View style={styles.outletRow}>
               <View style={{flex: 1}}>
                 {isLoading ? (
@@ -271,13 +272,11 @@ const Sidebar: React.FC<SidebarProps> = ({
                   <>
                     <Text style={[
                       styles.outletName, 
-                      isBasic && styles.disabledText
                     ]} numberOfLines={1}>
                       {currentBranch?.name || "Outlet"}
                     </Text>
                     <Text style={[
                       styles.outletLocation,
-                      isBasic && styles.disabledText
                     ]}>
                       {currentBranch ? "Outlet Aktif" : "Pilih Outlet"}
                     </Text>
@@ -287,43 +286,32 @@ const Sidebar: React.FC<SidebarProps> = ({
               <TouchableOpacity
                 style={[
                   styles.outletButton,
-                  isBasic && styles.disabledOutletButton
                 ]}
                 onPress={() => {
-                  if (!isBasic) {
-                    const outletRoute = "/dashboard/select-branch";
-                    if (pathname !== outletRoute) {
-                      router.push(outletRoute as never);
-                    }
-                    onClose?.();
+                  const outletRoute = "/dashboard/select-branch";
+                  if (pathname !== outletRoute) {
+                    router.push(outletRoute as never);
                   }
+                  onClose?.();
                 }}
-                disabled={isBasic}
               >
                 <Text style={[
                   styles.outletButtonText,
-                  isBasic && styles.disabledButtonText
                 ]}>
                   Pilih Outlet
                 </Text>
-                {isBasic && (
-                  <View style={styles.proBadgeAbsolute}>
-                    <ProBadge size="small" />
-                  </View>
-                )}
               </TouchableOpacity>
             </View>
+            )}
           </View>
 
           <ScrollView contentContainerStyle={styles.scrollContent}>
             {DASHBOARD_MENU_ITEMS.filter(item => {
-              // Always show help menu and bio-link menu
               if (item.key === 'help' || item.key === 'bio-link') return true;
-              // Check permission if permissionKey is defined
+              if (item.key === 'outlets') return isPro;
               if (item.permissionKey) {
                 return hasPermission(item.permissionKey);
               }
-              // Default to false for items without permission
               return false;
             }).map(item => (
               <SidebarItem
@@ -334,7 +322,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                 onPress={() => handleSelectItem(item.key)}
                 styles={styles}
                 iconSize={isTablet ? 26 : 20}
-                disabled={item.key === 'outlets' ? isBasic : item.key === 'bio-link' ? true : item.key === 'stock-history' ? isBasic : false}
+                disabled={item.key === 'bio-link' ? true : item.key === 'stock-history' ? isBasic : false}
                 soonBadge={item.key === 'bio-link' ? true : false}
               />
             ))}

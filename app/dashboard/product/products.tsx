@@ -7,6 +7,7 @@ import { ThemedInput } from "@/components/themed-input";
 import { ThemedText } from "@/components/themed-text";
 import { Colors } from "@/constants/theme";
 import { useColorScheme } from "@/hooks/use-color-scheme";
+import { useUserPlan } from "@/hooks/use-user-plan";
 import categoryApi from "@/services/endpoints/categories";
 import productApi from "@/services/endpoints/products";
 import { useBranchStore } from "@/stores/branch-store";
@@ -36,6 +37,7 @@ export default function ProductsScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const {reset} = useProductFormStore();
+  const { isDisabled } = useUserPlan();
 
   const [activeTab, setActiveTab] = useState<"produk" | "kategori">("produk");
   const [search, setSearch] = useState("");
@@ -167,6 +169,7 @@ export default function ProductsScreen() {
   };
 
   const goAdd = () => {
+    if (isDisabled) return;
     if (activeTab === "kategori") {
       handleOpenAddCategory();
       return;
@@ -179,10 +182,10 @@ export default function ProductsScreen() {
   return (
     <View style={{flex: 1, backgroundColor: Colors[colorScheme].background}}>
       <Header title="Kelola Produk" showHelp={false} />
+      <View style={isDisabled ? styles.disabledOverlay : undefined} pointerEvents={isDisabled ? "none" : "auto"}>
       <KeyboardAwareScrollView
         contentContainerStyle={{
           paddingBottom: insets.bottom + 100,
-          // PENTING: Jangan ada paddingHorizontal di sini agar Tab bisa full width
           paddingTop: 0,
         }}
         enableOnAndroid
@@ -331,15 +334,21 @@ export default function ProductsScreen() {
           </View>
         </View>
       </KeyboardAwareScrollView>
+      </View>
 
       <TouchableOpacity
-        style={[styles.fab, {bottom: insets.bottom + (isTablet ? 32 : 24)}]}
+        style={[
+          styles.fab, 
+          {bottom: insets.bottom + (isTablet ? 32 : 24)},
+          isDisabled && styles.disabledFab
+        ]}
         onPress={goAdd}
+        disabled={isDisabled}
       >
         <Ionicons
           name="add"
           size={isTablet ? 36 : 28}
-          color={Colors[colorScheme].background}
+          color={isDisabled ? Colors[colorScheme].icon : Colors[colorScheme].background}
         />
       </TouchableOpacity>
 
@@ -441,5 +450,15 @@ const createStyles = (
       justifyContent: "center",
       backgroundColor: Colors[colorScheme].primary,
       elevation: 6,
+    },
+    disabledFab: {
+      backgroundColor: Colors[colorScheme].secondary,
+      borderWidth: 1,
+      borderColor: Colors[colorScheme].border,
+      elevation: 0,
+    },
+    disabledOverlay: {
+      opacity: 0.5,
+      flex: 1,
     },
   });

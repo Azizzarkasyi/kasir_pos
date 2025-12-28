@@ -39,7 +39,7 @@ const DashboardScreen = () => {
   const [isDrawerOpen, setIsDrawerOpen] = React.useState(false);
   const [hasScrolledDown, setHasScrolledDown] = React.useState(false);
   const { hasPermission } = usePermissions();
-  const { isBasic } = useUserPlan();
+  const { isBasic, isPro, isTrial } = useUserPlan();
   const [salesStats, setSalesStats] = React.useState<{
     current_month_sales: number;
     current_month_percentage: number;
@@ -239,34 +239,27 @@ const DashboardScreen = () => {
               style={styles.bannerImage}
             />
           </View>
-          {isPhone && (
+          {isPhone && isPro && (
             <View style={styles.activeOutletWrapper}>
               <View style={styles.sectionHeader}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                   <ThemedText type="subtitle-2" style={[
                     styles.activeOutletTitle,
-                    isBasic && styles.disabledText
                   ]}>
                     Outlet Aktif
                   </ThemedText>
-                  {isBasic && <ProBadge size="small" />}
                 </View>
                 <TouchableOpacity
                   onPress={() => {
-                    if (!isBasic) {
-                      router.push("/dashboard/select-branch" as never);
-                    }
+                    router.push("/dashboard/select-branch" as never);
                   }}
                   style={[
                     styles.linkContainer,
-                    isBasic && styles.disabledLink
                   ]}
-                  disabled={isBasic}
                 >
                   <ThemedText 
                     style={[
                       styles.outletNameText,
-                      isBasic && styles.disabledText
                     ]}
                   >
                     {currentBranchName 
@@ -278,7 +271,7 @@ const DashboardScreen = () => {
                   <Ionicons
                     name="chevron-forward-outline"
                     size={18}
-                    color={isBasic ? Colors[colorScheme].icon : Colors[colorScheme].icon}
+                    color={Colors[colorScheme].icon}
                   />
                 </TouchableOpacity>
               </View>
@@ -418,16 +411,13 @@ const DashboardScreen = () => {
                 }}
               />
             )}
-            {hasPermission('outlets') && (
+            {hasPermission('outlets') && isPro && (
               <MenuItem
                 label="Outlet"
                 icon="storefront-outline"
                 onPress={() => {
-                  if (!isBasic) {
-                    router.push("/dashboard/outlet" as never);
-                  }
+                  router.push("/dashboard/outlet" as never);
                 }}
-                disabled={isBasic}
               />
             )}
             <MenuItem

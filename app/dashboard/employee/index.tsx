@@ -30,7 +30,7 @@ export default function EmployeeScreen() {
   const styles = createStyles(colorScheme, isTablet, isTabletLandscape);
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const { isBasic } = useUserPlan();
+  const { isBasic, isDisabled } = useUserPlan();
   const {currentBranchId} = useBranchStore()
 
   const [search, setSearch] = useState("");
@@ -69,7 +69,6 @@ export default function EmployeeScreen() {
     }
   };
 
-  // Debounce search
   React.useEffect(() => {
     const timer = setTimeout(() => {
       if (search !== undefined) {
@@ -81,12 +80,14 @@ export default function EmployeeScreen() {
   }, [search]);
 
   const goAdd = () => {
-    if (isBasic) {
-      Alert.alert(
-        "Fitur Terkunci",
-        "Untuk menambah pegawai, silakan upgrade ke paket PRO.",
-        [{ text: "OK" }]
-      );
+    if (isBasic || isDisabled) {
+      if (isBasic) {
+        Alert.alert(
+          "Fitur Terkunci",
+          "Untuk menambah pegawai, silakan upgrade ke paket PRO.",
+          [{ text: "OK" }]
+        );
+      }
       return;
     }
     router.push("/dashboard/employee/add" as never);
@@ -95,7 +96,7 @@ export default function EmployeeScreen() {
   return (
     <View style={{ flex: 1, backgroundColor: Colors[colorScheme].background }}>
       <Header title="Pegawai" showHelp={false} />
-      <View style={[styles.contentContainer]}>
+      <View style={[styles.contentContainer, isDisabled && styles.disabledOverlay]} pointerEvents={isDisabled ? "none" : "auto"}>
         <View style={styles.contentWrapper}>
           <View style={[styles.searchRow, { paddingHorizontal: isTablet ? 40 : 20 }]}>
             <View style={{ flex: 1 }}>
@@ -108,6 +109,7 @@ export default function EmployeeScreen() {
                 width="100%"
                 showLabel={false}
                 placeholder="Cari Pegawai"
+                editable={!isDisabled}
               />
             </View>
           </View>
@@ -134,6 +136,7 @@ export default function EmployeeScreen() {
                 phone={item.phone || "-"}
                 role={item.role || "Staff"}
                 onPress={() => {
+                  if (isDisabled) return;
                   router.push({
                     pathname: "/dashboard/employee/edit",
                     params: {
@@ -160,20 +163,20 @@ export default function EmployeeScreen() {
       <View style={[
         styles.fab, 
         { bottom: insets.bottom + (isTablet ? 40 : 24) },
-        isBasic && styles.disabledFab
+        (isBasic || isDisabled) && styles.disabledFab
       ]}>
         <TouchableOpacity
           onPress={goAdd}
-          disabled={isBasic}
+          disabled={isBasic || isDisabled}
           style={[
             styles.fabButton,
-            isBasic && styles.disabledFabButton
+            (isBasic || isDisabled) && styles.disabledFabButton
           ]}
         >
           <Ionicons 
             name="add" 
             size={isTablet ? 36 : 28} 
-            color={isBasic ? Colors[colorScheme].icon : Colors[colorScheme].background} 
+            color={(isBasic || isDisabled) ? Colors[colorScheme].icon : Colors[colorScheme].background} 
           />
           {isBasic && (
             <View style={styles.fabBadge}>
@@ -235,5 +238,8 @@ const createStyles = (colorScheme: "light" | "dark", isTablet: boolean, isTablet
       top: -4,
       right: -4,
       zIndex: 1,
+    },
+    disabledOverlay: {
+      opacity: 0.5,
     },
   });

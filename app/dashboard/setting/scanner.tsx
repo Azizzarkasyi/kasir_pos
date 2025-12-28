@@ -3,10 +3,13 @@ import SelectScannerTypeModal, { type ScannerTypeValue } from "@/components/draw
 import Header from "@/components/header";
 import { ThemedButton } from "@/components/themed-button";
 import { ThemedText } from "@/components/themed-text";
+import ProBadge from "@/components/ui/pro-badge";
 import { Colors } from "@/constants/theme";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { useScannerDevice } from "@/hooks/use-scanner-device";
+import { useUserPlan } from "@/hooks/use-user-plan";
 import { Ionicons } from "@expo/vector-icons";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNavigation } from "@react-navigation/native";
 import { useRouter } from "expo-router";
 import React from "react";
@@ -21,6 +24,7 @@ export default function ScannerScreen() {
   const styles = createStyles(colorScheme, isTablet, isTabletLandscape);
   const navigation = useNavigation();
   const router = useRouter();
+  const { isPro } = useUserPlan();
   const {
     devices,
     startScan,
@@ -34,12 +38,40 @@ export default function ScannerScreen() {
   const [showScan, setShowScan] = React.useState(false);
   const [showTypeModal, setShowTypeModal] = React.useState(false);
   const [selectedType, setSelectedType] = React.useState<ScannerTypeValue | null>(null);
+  const [hasConnectedPrinter, setHasConnectedPrinter] = React.useState(false);
+  const [isCheckingPrinter, setIsCheckingPrinter] = React.useState(true);
+
+  React.useEffect(() => {
+    checkConnectedPrinter();
+  }, []);
+
+  const checkConnectedPrinter = async () => {
+    try {
+      const printerData = await AsyncStorage.getItem("connected_printer");
+      setHasConnectedPrinter(!!printerData);
+    } catch (error) {
+      console.error("Error checking connected printer:", error);
+      setHasConnectedPrinter(false);
+    } finally {
+      setIsCheckingPrinter(false);
+    }
+  };
+
+  const canUseScanner = isPro || hasConnectedPrinter;
 
   const refresh = React.useCallback(() => {
     startScan();
   }, [startScan]);
 
   const handleAddScanner = () => {
+    if (!canUseScanner) {
+      Alert.alert(
+        "Fitur Terbatas",
+        "Untuk menggunakan scanner, silakan upgrade ke paket PRO atau hubungkan printer terlebih dahulu.",
+        [{ text: "OK" }]
+      );
+      return;
+    }
     setShowTypeModal(true);
   };
 
@@ -51,7 +83,6 @@ export default function ScannerScreen() {
       setShowScan(true);
       startScan();
     } else {
-      // USB - just save as connected (USB scanners work as keyboard)
       handleUsbConnect();
     }
   };
@@ -72,7 +103,6 @@ export default function ScannerScreen() {
       stopScan();
       router.replace("/dashboard/setting/scanner-test" as never);
     } catch {
-      // error sudah ditangani di hook
     }
   };
 
@@ -91,14 +121,37 @@ export default function ScannerScreen() {
     });
   }, [navigation, showScan, colorScheme, refresh]);
 
+  if (isCheckingPrinter) {
+    return (
+      <>
+        <Header title="Scanner" showHelp={false} />
+        <View style={[styles.container, { justifyContent: "center", alignItems: "center" }]}>
+          <ActivityIndicator color={Colors[colorScheme].primary} size="large" />
+        </View>
+      </>
+    );
+  }
+
   return (
     <>
       <Header title="Scanner" showHelp={false} />
       <View style={styles.container}>
         <View style={styles.contentWrapper}>
+          {!canUseScanner && (
+            <View style={styles.restrictedBanner}>
+              <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+                <Ionicons name="lock-closed" size={isTablet ? 24 : 18} color={Colors[colorScheme].icon} />
+                <ThemedText style={styles.restrictedText}>
+                  Fitur scanner memerlukan paket PRO atau printer terhubung
+                </ThemedText>
+              </View>
+              <ProBadge size="small" />
+            </View>
+          )}
+
           {!savedDevice && !showScan ? (
-            <View style={styles.emptyStateWrapper}>
-              <View style={{ flexDirection: "column", alignItems: "center" }}>
+            <View style={[styles.emptyStateWrapper, !canUseScanner && styles.disabledSection]}>
+              <View style={{ flexDirection: "column", alignItems: "center" }} pointerEvents={canUseScanner ? "auto" : "none"}>
                 <Image
                   source={require("@/assets/ilustrations/empty.jpg")}
                   style={styles.emptyImage}
@@ -114,6 +167,7 @@ export default function ScannerScreen() {
                     title="Tambah Scanner"
                     size={isTablet ? "base" : "medium"}
                     onPress={handleAddScanner}
+                    disabled={!canUseScanner}
                   />
                 </View>
               </View>
@@ -224,5 +278,22 @@ const createStyles = (colorScheme: "light" | "dark", isTablet: boolean, isTablet
       fontSize: isTablet ? 18 : 15,
       textAlign: "center",
       color: Colors[colorScheme].icon,
+    },
+    restrictedBanner: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      backgroundColor: Colors[colorScheme].secondary,
+      padding: isTablet ? 16 : 12,
+      borderRadius: isTablet ? 12 : 8,
+      marginTop: isTablet ? 16 : 12,
+    },
+    restrictedText: {
+      fontSize: isTablet ? 16 : 13,
+      color: Colors[colorScheme].icon,
+      flex: 1,
+    },
+    disabledSection: {
+      opacity: 0.5,
     },
   });

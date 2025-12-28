@@ -9,6 +9,7 @@ import { ThemedInput } from "@/components/themed-input";
 import { ThemedText } from "@/components/themed-text";
 import { Colors } from "@/constants/theme";
 import { useColorScheme } from "@/hooks/use-color-scheme";
+import { useUserPlan } from "@/hooks/use-user-plan";
 import { useProductFormStore } from "@/stores/product-form-store";
 import { useNavigation, useRouter } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
@@ -26,6 +27,7 @@ export default function StockSettingsScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const navigation = useNavigation();
+  const { isDisabled } = useUserPlan();
 
   const stockFromStore = useProductFormStore(state => state.stock);
   const setStockInStore = useProductFormStore(state => state.setStock);
@@ -43,10 +45,10 @@ export default function StockSettingsScreen() {
   const [isSubmit, setIsSubmit] = useState(false);
 
   const handleSave = async () => {
+    if (isDisabled) return;
     try {
       setIsSubmit(true);
 
-      // Save to store first for UI state
       setStockInStore({
         offlineStock,
         unit,
@@ -77,7 +79,6 @@ export default function StockSettingsScreen() {
         title: "Konfirmasi",
         message: "Data belum disimpan. Yakin ingin keluar dari halaman ini?",
         onCancel: () => {
-          // Tetap di sini
         },
         onConfirm: () => {
           navigation.dispatch(action);
@@ -92,6 +93,7 @@ export default function StockSettingsScreen() {
     <View style={{flex: 1, backgroundColor: Colors[colorScheme].background}}>
       <Header title="Kelola Stok" showHelp={false} />
 
+      <View style={isDisabled ? styles.disabledOverlay : undefined} pointerEvents={isDisabled ? "none" : "auto"}>
       <KeyboardAwareScrollView
         contentContainerStyle={{
           paddingVertical: isTablet ? 44 : 40,
@@ -109,6 +111,7 @@ export default function StockSettingsScreen() {
           value={String(offlineStock)}
           onChangeText={v => setOfflineStock(Number(v))}
           numericOnly
+          editable={!isDisabled}
         />
 
         <UnitPicker
@@ -122,23 +125,25 @@ export default function StockSettingsScreen() {
           value={String(minStock)}
           onChangeText={v => setMinStock(Number(v))}
           numericOnly
+          editable={!isDisabled}
         />
 
           <View style={styles.row}>
-            <Checkbox checked={notifyMin} onChange={setNotifyMin} />
+            <Checkbox checked={notifyMin} onChange={isDisabled ? () => {} : setNotifyMin} />
             <ThemedText style={styles.rowText}>
               Kirimkan notifikasi saat stok mencapai batas minimum
             </ThemedText>
           </View>
         </View>
       </KeyboardAwareScrollView>
+      </View>
 
       <View style={styles.bottomBar}>
         <ThemedButton
           title="Simpan"
           variant="primary"
           onPress={handleSave}
-          disabled={isSubmit}
+          disabled={isSubmit || isDisabled}
         />
       </View>
 
@@ -185,5 +190,9 @@ const createStyles = (colorScheme: "light" | "dark", isTablet: boolean, isTablet
       paddingBottom: isTablet ? 22 : 16,
       paddingTop: isTablet ? 12 : 8,
       backgroundColor: Colors[colorScheme].background,
+    },
+    disabledOverlay: {
+      opacity: 0.5,
+      flex: 1,
     },
   });

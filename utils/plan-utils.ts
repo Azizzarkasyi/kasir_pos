@@ -38,7 +38,7 @@ export const getUserRole = async (): Promise<string | null> => {
 
 export const isProPlan = async (): Promise<boolean> => {
   const plan = await getUserPlan();
-  return plan !== null && plan !== undefined;
+  return plan === 'pro' || plan === 'trial';
 };
 
 export const saveUserData = async (userData: UserData): Promise<void> => {
