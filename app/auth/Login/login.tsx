@@ -7,6 +7,7 @@ import { ThemedText } from "@/components/themed-text";
 import { Colors } from "@/constants/theme";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { useBranchStore } from "@/stores/branch-store";
+import { useTaxStore } from "@/stores/tax-store";
 import { useUserStore } from "@/stores/user-store";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
@@ -153,6 +154,9 @@ export default function LoginScreen() {
         
         // Start periodic user data fetching
         startPeriodicFetch();
+        
+        // Fetch tax rate after successful login
+        useTaxStore.getState().fetchTaxRate();
         
         router.replace("/dashboard/home" as never);
       } catch (error: any) {

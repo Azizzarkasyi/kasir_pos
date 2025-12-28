@@ -40,6 +40,8 @@ export default function EditRecipeScreen() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [showSuccessPopup, setShowSuccessPopup] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleteIndex, setDeleteIndex] = useState<number | null>(null);
 
   const {id} = useLocalSearchParams<{id?: string}>();
 
@@ -51,6 +53,8 @@ export default function EditRecipeScreen() {
   const setCategory = useRecipeFormStore(state => state.setCategory);
   const setImageUri = useRecipeFormStore(state => state.setImageUri);
   const setIngredients = useRecipeFormStore(state => state.setIngredients);
+  const removeIngredient = useRecipeFormStore(state => state.removeIngredient);
+  const setEditingIngredientIndex = useRecipeFormStore(state => state.setEditingIngredientIndex);
   const resetForm = useRecipeFormStore(state => state.reset);
 
   // Load recipe data
@@ -74,7 +78,7 @@ export default function EditRecipeScreen() {
             ingredient: {
               id: item.product_id,
               name: item.productVariant?.product?.name || "",
-              variant_id: item.productVariantId,
+              variant_id: item.productVariantId ?? undefined,
               variant_name: item.productVariant?.name || "",
             },
             amount: item.quantity,
@@ -251,7 +255,18 @@ export default function EditRecipeScreen() {
                     variantName={v.ingredient.variant_name || ""}
                     count={v.amount}
                     unitName={v.unit?.name}
-                    onPress={() => {}}
+                    onPress={() => {
+                      // Set editing index and navigate to ingredients page
+                      setEditingIngredientIndex(idx);
+                      router.push(
+                        "/dashboard/recipe-and-materials/ingredients" as never
+                      );
+                    }}
+                    onLongPress={() => {
+                      // Show delete confirmation
+                      setDeleteIndex(idx);
+                      setShowDeleteConfirm(true);
+                    }}
                   />
                 ))}
               </>
@@ -299,6 +314,22 @@ export default function EditRecipeScreen() {
           setShowSuccessPopup(false);
           resetForm();
           router.back();
+        }}
+      />
+      <ConfirmPopup
+        visible={showDeleteConfirm}
+        title="Hapus Bahan"
+        message="Apakah Anda yakin ingin menghapus bahan ini dari resep?"
+        onConfirm={() => {
+          if (deleteIndex !== null) {
+            removeIngredient(deleteIndex);
+          }
+          setShowDeleteConfirm(false);
+          setDeleteIndex(null);
+        }}
+        onCancel={() => {
+          setShowDeleteConfirm(false);
+          setDeleteIndex(null);
         }}
       />
     </View>

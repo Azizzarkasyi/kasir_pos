@@ -315,12 +315,6 @@ export default function AddProductScreen() {
               size="md"
               onChange={setBrand}
             />
-            <CategoryPicker
-              label="Pilih Kategori"
-              value={category}
-              size="md"
-              onChange={setCategory}
-            />
             <ThemedInput
               label="Harga Modal"
               value={capitalPrice ? String(capitalPrice) : ""}

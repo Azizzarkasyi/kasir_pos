@@ -46,6 +46,13 @@ export default function IngredientsScreen() {
   const navigation = useNavigation();
 
   const addIngredient = useRecipeFormStore(state => state.addIngredient);
+  const updateIngredient = useRecipeFormStore(state => state.updateIngredient);
+  const editingIndex = useRecipeFormStore(state => state.editingIngredientIndex);
+  const storeIngredients = useRecipeFormStore(state => state.ingredients);
+  const setEditingIngredientIndex = useRecipeFormStore(state => state.setEditingIngredientIndex);
+
+  const isEditMode = editingIndex !== null;
+  const editingIngredient = isEditMode ? storeIngredients[editingIndex] : null;
 
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [pendingNavigation, setPendingNavigation] = useState<any>(null);
@@ -95,6 +102,25 @@ export default function IngredientsScreen() {
               "⚠️ No ingredients found. Make sure products have is_ingredient=true"
             );
           }
+
+          // Pre-fill data if in edit mode
+          if (editingIngredient && response.data.length > 0) {
+            const productId = editingIngredient.ingredient.id;
+            setSelectedProductId(productId);
+            setQuantity(String(editingIngredient.amount));
+            
+            const found = response.data.find((p: Product) => p.id === productId);
+            if (found) {
+              setSelectedUnit({id: "pcs", name: "Pcs"});
+              const vars = found.variants || [];
+              setAvailableVariants(vars);
+              if (editingIngredient.ingredient.variant_id) {
+                setSelectedVariantId(editingIngredient.ingredient.variant_id);
+              } else if (vars.length === 1) {
+                setSelectedVariantId(vars[0].id);
+              }
+            }
+          }
         }
       } catch (error: any) {
         console.error("❌ Failed to load ingredients:", error);
@@ -117,18 +143,41 @@ export default function IngredientsScreen() {
         name: found.name,
         variants: found.variants?.length,
       });
-      // Set unit (default to pcs if not available)
-      setSelectedUnit({id: "pcs", name: "Pcs"});
-
+      
       // Set available variants
       const vars = found.variants || [];
       setAvailableVariants(vars);
-      setSelectedVariantId(vars.length === 1 ? vars[0].id : "");
+      
+      // Auto-select variant if only one, and get unit from it
+      if (vars.length === 1) {
+        setSelectedVariantId(vars[0].id);
+        // Get unit from variant
+        const variantUnit = vars[0].unit;
+        if (variantUnit) {
+          setSelectedUnit({id: variantUnit.id, name: variantUnit.name});
+        } else {
+          setSelectedUnit({id: "pcs", name: "Pcs"});
+        }
+      } else if (vars.length > 1) {
+        setSelectedVariantId("");
+        setSelectedUnit({id: "pcs", name: "Pcs"});
+      } else {
+        setSelectedUnit({id: "pcs", name: "Pcs"});
+      }
     } else {
       console.log("❌ Product not found in list");
       setSelectedUnit(null);
       setAvailableVariants([]);
       setSelectedVariantId("");
+    }
+  };
+
+  // Update unit when variant changes
+  const handleChangeVariant = (variantId: string) => {
+    setSelectedVariantId(variantId);
+    const variant = availableVariants.find(v => v.id === variantId);
+    if (variant?.unit) {
+      setSelectedUnit({id: variant.unit.id, name: variant.unit.name});
     }
   };
 
@@ -150,6 +199,8 @@ export default function IngredientsScreen() {
         ? {id: selectedVariant.id, name: selectedVariant.name}
         : null,
       quantity: qtyNum,
+      isEditMode,
+      editingIndex,
     });
 
     if (!selectedProduct || Number.isNaN(qtyNum) || qtyNum <= 0) {
@@ -157,25 +208,29 @@ export default function IngredientsScreen() {
       return;
     }
 
-    addIngredient({
+    const ingredientData = {
       ingredient: {
         id: selectedProduct.id,
         name: selectedProduct.name,
         variant_id: selectedVariant?.id,
+        variant_name: selectedVariant?.name,
       },
       unit: selectedUnit
         ? {id: selectedUnit.id, name: selectedUnit.name}
         : undefined,
       amount: qtyNum,
-    });
+    };
 
-    console.log("✅ Ingredient added:", {
-      productId: selectedProduct.id,
-      product: selectedProduct.name,
-      variantId: selectedVariant?.id,
-      variant: selectedVariant?.name,
-      quantity: qtyNum,
-    });
+    if (isEditMode && editingIndex !== null) {
+      updateIngredient(editingIndex, ingredientData);
+      console.log("✅ Ingredient updated:", ingredientData);
+    } else {
+      addIngredient(ingredientData);
+      console.log("✅ Ingredient added:", ingredientData);
+    }
+
+    // Clear editing index
+    setEditingIngredientIndex(null);
 
     router.back();
   };
@@ -184,6 +239,9 @@ export default function IngredientsScreen() {
 
   useEffect(() => {
     const sub = navigation.addListener("beforeRemove", e => {
+      // Clear editing index when leaving
+      setEditingIngredientIndex(null);
+      
       if (!isDirty) {
         return;
       }
@@ -200,6 +258,7 @@ export default function IngredientsScreen() {
 
   const handleConfirmExit = () => {
     setShowConfirmation(false);
+    setEditingIngredientIndex(null);
     if (pendingNavigation) {
       navigation.dispatch(pendingNavigation);
     }
@@ -214,7 +273,7 @@ export default function IngredientsScreen() {
     <View style={{flex: 1, backgroundColor: Colors[colorScheme].background}}>
       <Header
         showHelp={false}
-        title="Tambah Bahan Resep"
+        title={isEditMode ? "Edit Bahan Resep" : "Tambah Bahan Resep"}
         withNotificationButton={false}
       />
       <KeyboardAwareScrollView
@@ -245,9 +304,15 @@ export default function IngredientsScreen() {
           <>
             <ComboInput
               label="Pilih Bahan"
+              disableAutoComplete
               value={
                 ingredients.find(p => p.id === selectedProductId)?.name ?? ""
               }
+              onChange={item => {
+                if (item.value) {
+                  handleChangeIngredient(item.value);
+                }
+              }}
               onChangeText={text => {
                 const found = ingredients.find(p => p.name === text);
                 if (found) {
@@ -271,7 +336,9 @@ export default function IngredientsScreen() {
                 }
                 onChangeText={text => {
                   const found = availableVariants.find(v => v.name === text);
-                  setSelectedVariantId(found ? found.id : "");
+                  if (found) {
+                    handleChangeVariant(found.id);
+                  }
                 }}
                 items={availableVariants.map(v => ({
                   label: v.name,

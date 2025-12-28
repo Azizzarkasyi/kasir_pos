@@ -46,5 +46,5 @@ export const useTaxStore = create<TaxStore>()(
   )
 );
 
-// Initialize tax rate from store on app start
-useTaxStore.getState().fetchTaxRate();
+// Note: Tax rate should be fetched after user logs in, 
+// not on app start to avoid 401 errors when not authenticated

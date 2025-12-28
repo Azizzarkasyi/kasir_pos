@@ -34,6 +34,8 @@ export default function AddProductScreen() {
   const confirmationRef = useRef<ConfirmationDialogHandle | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [showSuccessPopup, setShowSuccessPopup] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleteIndex, setDeleteIndex] = useState<number | null>(null);
 
   const name = useRecipeFormStore(state => state.name);
   const category = useRecipeFormStore(state => state.category);
@@ -42,7 +44,14 @@ export default function AddProductScreen() {
   const setName = useRecipeFormStore(state => state.setName);
   const setCategory = useRecipeFormStore(state => state.setCategory);
   const setImageUri = useRecipeFormStore(state => state.setImageUri);
+  const removeIngredient = useRecipeFormStore(state => state.removeIngredient);
+  const setEditingIngredientIndex = useRecipeFormStore(state => state.setEditingIngredientIndex);
   const resetForm = useRecipeFormStore(state => state.reset);
+
+  // Reset form when entering add recipe page
+  useEffect(() => {
+    resetForm();
+  }, []);
 
   const isDirty =
     name.trim() !== "" ||
@@ -150,18 +159,6 @@ export default function AddProductScreen() {
               onChangeText={setName}
             />
 
-            <ComboInput
-              label="Pilih Kategori"
-              value={category}
-              onChangeText={setCategory}
-              items={[
-                {label: "Pilih Kategori", value: ""},
-                {label: "Umum", value: "umum"},
-                {label: "Minuman", value: "minuman"},
-                {label: "Makanan", value: "makanan"},
-              ]}
-            />
-
             <View style={styles.sectionDivider} />
 
             <ThemedText type="subtitle-2">Bahan</ThemedText>
@@ -176,10 +173,21 @@ export default function AddProductScreen() {
                       .slice(0, 2)
                       .toUpperCase()}
                     name={v.ingredient.name}
-                    variantName={v.ingredient.name}
+                    variantName={v.ingredient.variant_name || ""}
                     count={v.amount}
                     unitName={v.unit?.name}
-                    onPress={() => {}}
+                    onPress={() => {
+                      // Set editing index and navigate to ingredients page
+                      setEditingIngredientIndex(idx);
+                      router.push(
+                        "/dashboard/recipe-and-materials/ingredients" as never
+                      );
+                    }}
+                    onLongPress={() => {
+                      // Show delete confirmation
+                      setDeleteIndex(idx);
+                      setShowDeleteConfirm(true);
+                    }}
                   />
                 ))}
               </>
@@ -227,6 +235,22 @@ export default function AddProductScreen() {
           setShowSuccessPopup(false);
           resetForm();
           router.back();
+        }}
+      />
+      <ConfirmPopup
+        visible={showDeleteConfirm}
+        title="Hapus Bahan"
+        message="Apakah Anda yakin ingin menghapus bahan ini dari resep?"
+        onConfirm={() => {
+          if (deleteIndex !== null) {
+            removeIngredient(deleteIndex);
+          }
+          setShowDeleteConfirm(false);
+          setDeleteIndex(null);
+        }}
+        onCancel={() => {
+          setShowDeleteConfirm(false);
+          setDeleteIndex(null);
         }}
       />
     </View>

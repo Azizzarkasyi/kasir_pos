@@ -65,6 +65,7 @@ export interface ProductVariant {
   price: number;
   stock?: number;
   unit_id?: string;
+  unit?: { id: string; name: string };
   notify_on_stock_ronouts?: boolean;
   is_stock_active?: boolean;
   min_stock?: number;

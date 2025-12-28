@@ -11,6 +11,7 @@ type Props = {
   count?: number;
   unitName?: string;
   onPress?: () => void;
+  onLongPress?: () => void;
 };
 
 export default function RecipeIngredientItem({
@@ -20,6 +21,7 @@ export default function RecipeIngredientItem({
   count,
   unitName,
   onPress,
+  onLongPress,
 }: Props) {
   const colorScheme = useColorScheme() ?? "light";
   const {width, height} = useWindowDimensions();
@@ -27,7 +29,12 @@ export default function RecipeIngredientItem({
   const styles = createStyles(colorScheme, isTablet);
 
   return (
-    <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.8}>
+    <TouchableOpacity 
+      style={styles.card} 
+      onPress={onPress} 
+      onLongPress={onLongPress}
+      activeOpacity={0.8}
+    >
       <View style={styles.avatar}>
         <ThemedText style={styles.avatarText}>{initials}</ThemedText>
       </View>

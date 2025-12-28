@@ -95,9 +95,9 @@ const StockHistoryCard: React.FC<StockHistoryCardProps> = ({
           </View>
         </View>
         <View style={styles.rightSection}>
-          <View style={[styles.actionBadge, { backgroundColor: actionConfig.color }]}>
-            <Ionicons name={actionConfig.icon as any} size={14} color="white" />
-            <ThemedText style={styles.actionLabel}>{actionConfig.label}</ThemedText>
+          <View style={styles.actionIndicator}>
+            <Ionicons name={actionConfig.icon as any} size={14} color={actionConfig.color} />
+            <ThemedText style={[styles.actionLabel, { color: actionConfig.color }]}>{actionConfig.label}</ThemedText>
           </View>
           <ThemedText style={styles.date}>{formatDate(createdAt)}</ThemedText>
         </View>
@@ -186,18 +186,14 @@ const useStockHistoryCardStyles = (colorScheme: "light" | "dark") => {
           fontSize: isTablet ? 12 : 11,
           fontWeight: "600",
         },
-        actionBadge: {
+        actionIndicator: {
           flexDirection: "row",
           alignItems: "center",
-          paddingHorizontal: isTablet ? 11 : 9,
-          paddingVertical: isTablet ? 6 : 5,
-          borderRadius: 16,
-          gap: 3,
+          gap: 4,
         },
         actionLabel: {
           fontSize: isTablet ? 12 : 11,
           fontWeight: "600",
-          color: "white",
         },
         date: {
           fontSize: isTablet ? 11 : 10,

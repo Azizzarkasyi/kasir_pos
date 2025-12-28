@@ -78,19 +78,14 @@ const StockHistoryDetail: React.FC<StockHistoryDetailProps> = ({
     <View style={styles.container}>
       {/* Hero Header with Neutral Color */}
       <View style={[styles.heroSection, { backgroundColor: colorScheme === "dark" ? "#1a1d1f" : Colors[colorScheme].secondary }]}>
-        <View style={styles.heroPattern}>
-          {[...Array(6)].map((_, i) => (
-            <View key={i} style={[styles.patternCircle, { backgroundColor: actionConfig.color }]} />
-          ))}
-        </View>
         <View style={styles.heroContent}>
           <View style={styles.productHeader}>
             <ThemedText style={styles.productName}>{productName}</ThemedText>
             <ThemedText style={styles.variantName}>{variantName}</ThemedText>
           </View>
-          <View style={[styles.actionBadge, { backgroundColor: actionConfig.color }]}>
-            <Ionicons name={actionConfig.icon as any} size={24} color="white" />
-            <ThemedText style={styles.actionLabel}>{actionConfig.label}</ThemedText>
+          <View style={styles.actionIndicator}>
+            <Ionicons name={actionConfig.icon as any} size={20} color={actionConfig.color} />
+            <ThemedText style={[styles.actionLabel, { color: actionConfig.color }]}>{actionConfig.label}</ThemedText>
           </View>
         </View>
       </View>
@@ -214,33 +209,11 @@ const useStockHistoryDetailStyles = (colorScheme: "light" | "dark") => {
           paddingHorizontal: isTablet ? 24 : 20,
           borderBottomLeftRadius: 30,
           borderBottomRightRadius: 30,
-          position: "relative",
-          overflow: "hidden",
-        },
-        heroPattern: {
-          position: "absolute",
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          flexDirection: "row",
-          flexWrap: "wrap",
-          justifyContent: "space-around",
-          alignItems: "center",
-          opacity: 0.1,
-        },
-        patternCircle: {
-          width: isTablet ? 80 : 60,
-          height: isTablet ? 80 : 60,
-          borderRadius: isTablet ? 40 : 30,
-          backgroundColor: "white",
-          margin: isTablet ? 20 : 15,
         },
         heroContent: {
           flexDirection: "row",
           justifyContent: "space-between",
           alignItems: "flex-start",
-          marginTop: isTablet ? 20 : 10,
         },
         productHeader: {
           flex: 1,
@@ -256,18 +229,14 @@ const useStockHistoryDetailStyles = (colorScheme: "light" | "dark") => {
           fontSize: isTablet ? 16 : 14,
           color: Colors[colorScheme].icon,
         },
-        actionBadge: {
+        actionIndicator: {
           flexDirection: "row",
           alignItems: "center",
-          paddingHorizontal: isTablet ? 16 : 12,
-          paddingVertical: isTablet ? 12 : 8,
-          borderRadius: 25,
-          gap: 8,
+          gap: 6,
         },
         actionLabel: {
-          fontSize: isTablet ? 16 : 14,
+          fontSize: isTablet ? 14 : 12,
           fontWeight: "600",
-          color: "white",
         },
         stockCard: {
           marginHorizontal: isTablet ? 24 : 20,

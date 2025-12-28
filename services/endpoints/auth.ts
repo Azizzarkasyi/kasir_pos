@@ -97,6 +97,9 @@ export const authApi = {
       "user_role",
       "printer_saved_device",
       "scanner_saved_device",
+      // Zustand persist storage keys
+      "tax-storage",
+      "user-store-storage",
     ]);
 
     // Reset Zustand store state
@@ -104,6 +107,10 @@ export const authApi = {
     useScannerStore.getState().clearSavedDevice();
     useUserStore.getState().clearUser();
     useUserStore.getState().stopPeriodicFetch();
+    
+    // Reset tax store
+    const { useTaxStore } = await import("../../stores/tax-store");
+    useTaxStore.getState().setTaxRate(0);
     
     // Also reset branch store
     const { useBranchStore } = await import("../../stores/branch-store");

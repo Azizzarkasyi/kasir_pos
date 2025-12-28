@@ -8,7 +8,7 @@ import { ApiError, ApiResponse } from "../types/api";
 import { APP_EVENTS, appEvents } from "./event-emitter";
 
 // Baca dari environment variable, fallback ke localhost jika tidak ada
-const API_URL = process.env.API_URL || "http://192.168.1.4:3001";
+const API_URL = process.env.API_URL || "http://localhost:3001";
 // const API_URL = process.env.API_URL || "https://ad112ca513aa.ngrok-free.app";
 
 console.log("🔧 API Configuration:", { API_URL });
