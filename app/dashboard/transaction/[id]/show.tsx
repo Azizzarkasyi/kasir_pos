@@ -8,7 +8,7 @@ import { useColorScheme } from "@/hooks/use-color-scheme";
 import { usePrinterDevice } from "@/hooks/use-printer-device";
 import { settingsApi, StoreInfo, StruckConfig } from "@/services";
 import { transactionApi } from "@/services/endpoints/transactions";
-import { printReceipt } from "@/services/receipt";
+import { printKitchenReceipt, printReceipt } from "@/services/receipt";
 import { useBranchStore } from "@/stores/branch-store";
 import { Transaction } from "@/types/api";
 import { Ionicons } from "@expo/vector-icons";
@@ -94,7 +94,7 @@ export default function TransactionDetailPage() {
                     console.log("No branchId found, skipping struck config fetch");
                     return;
                 }
-                
+
                 const response = await settingsApi.getStruckConfig(currentBranchId);
                 if (response.data) {
                     setStruckConfig(response.data);
@@ -141,6 +141,58 @@ export default function TransactionDetailPage() {
 
     const paymentMethod =
         transaction?.paymentMethod === "cash" ? "Tunai" : "Hutang";
+
+    const handlePrintKitchen = async () => {
+        if (!transaction) {
+            return;
+        }
+
+        if (!savedDevice) {
+            Alert.alert(
+                "Error",
+                "Printer belum dipilih. Silakan pilih dan simpan printer terlebih dahulu.",
+            );
+            return;
+        }
+
+        if (!BluetoothManager) {
+            Alert.alert(
+                "Error",
+                "Module Bluetooth tidak tersedia. Pastikan native module sudah ter-link.",
+            );
+            return;
+        }
+
+        setIsPrinting(true);
+
+        try {
+            const isConnected = await BluetoothManager.isBluetoothEnabled();
+            if (!isConnected) {
+                await BluetoothManager.enableBluetooth();
+            }
+
+            await BluetoothManager.connect(savedDevice.address);
+
+            await printKitchenReceipt({
+                transaction,
+                store,
+                transactionDate,
+                paymentMethod,
+                formatCurrency,
+                struckConfig
+            });
+
+            Alert.alert("Berhasil", "Struk dapur berhasil dikirim ke printer.");
+        } catch (e: any) {
+            console.error("[TransactionDetailPage] Print kitchen error:", e);
+            Alert.alert(
+                "Gagal",
+                e?.message ?? "Gagal mencetak. Pastikan printer terhubung dengan benar.",
+            );
+        } finally {
+            setIsPrinting(false);
+        }
+    };
 
     const handlePrintReceipt = async () => {
         if (!transaction) {
@@ -321,6 +373,13 @@ export default function TransactionDetailPage() {
                                 }
                             />
                             <ThemedButton
+                                title={isPrinting ? "Mencetak..." : "Cetak Struk Dapur"}
+                                size="medium"
+                                variant="secondary"
+                                onPress={handlePrintKitchen}
+                                disabled={isPrinting}
+                            />
+                            <ThemedButton
                                 title={isPrinting ? "Mencetak..." : "Cetak Struk"}
                                 size="medium"
                                 variant="primary"
@@ -369,8 +428,44 @@ export default function TransactionDetailPage() {
                                         isTablet={isTablet}
                                     />
                                 ))}
-                            </View>
 
+                                {/* Biaya Tambahan (fees + ingredients) */}
+                                {((transaction?.additional_fees && transaction.additional_fees.length > 0) ||
+                                    (transaction?.additional_ingredients && transaction.additional_ingredients.length > 0)) ? (
+                                    <>
+                                        <View style={styles.sectionDivider}>
+                                            <Text style={styles.sectionDividerText}>Biaya Tambahan</Text>
+                                        </View>
+                                        {transaction?.additional_fees?.map((fee, index) => (
+                                            <CheckoutItem
+                                                key={`fee-${index}`}
+                                                index={items.length + index + 1}
+                                                name={fee.name}
+                                                quantity={1}
+                                                unitPrice={fee.amount}
+                                                hideDeleteButton
+                                                isTablet={isTablet}
+                                            />
+                                        ))}
+                                        {transaction?.additional_ingredients?.map((ing, index) => {
+                                            const ingredientName = ing.variant?.product?.name !== ing.variant?.name
+                                                ? `${ing.variant?.product?.name} - ${ing.variant?.name}`
+                                                : ing.variant?.product?.name || ing.variant?.name || 'Bahan';
+                                            return (
+                                                <CheckoutItem
+                                                    key={`ing-${ing.id || index}`}
+                                                    index={items.length + (transaction?.additional_fees?.length || 0) + index + 1}
+                                                    name={ingredientName}
+                                                    quantity={ing.quantity}
+                                                    unitPrice={ing.price}
+                                                    hideDeleteButton
+                                                    isTablet={isTablet}
+                                                />
+                                            );
+                                        })}
+                                    </>
+                                ) : null}
+                            </View>
                             <View style={styles.summaryWrapper}>
                                 <View style={styles.summaryRow}>
                                     <Text style={styles.summaryLabel}>Subtotal</Text>
@@ -519,6 +614,16 @@ const createStyles = (colorScheme: "light" | "dark", isTablet: boolean) =>
         primaryButtonText: {
             fontSize: isTablet ? 20 : 14,
             fontWeight: "600",
+        },
+        sectionDivider: {
+            paddingVertical: isTablet ? 12 : 8,
+            paddingLeft: isTablet ? 12 : 8,
+            marginTop: isTablet ? 8 : 0,
+        },
+        sectionDividerText: {
+            fontSize: isTablet ? 16 : 12,
+            fontWeight: "600",
+            color: Colors[colorScheme].icon,
         },
         itemsWrapper: {
             marginTop: isTablet ? 12 : 8,

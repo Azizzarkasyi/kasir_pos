@@ -55,6 +55,7 @@ export default function PaymentPage() {
   const {
     items: cartItems,
     additionalFees,
+    additionalIngredients,
     discount,
     customerName: cartCustomerName,
     note: cartNote,
@@ -64,7 +65,7 @@ export default function PaymentPage() {
     setNote,
     clearCart,
   } = useCartStore();
-  
+
   const { taxRate, isLoading: isTaxLoading, fetchTaxRate } = useTaxStore();
   const [isInitializing, setIsInitializing] = useState(true);
 
@@ -82,10 +83,7 @@ export default function PaymentPage() {
   useEffect(() => {
     const initializeTax = async () => {
       try {
-        // Fetch tax rate if not loaded
-        if (taxRate === 0 && !isTaxLoading) {
-          await fetchTaxRate();
-        }
+        await fetchTaxRate();
       } catch (error) {
         console.error('Failed to fetch tax rate:', error);
       } finally {
@@ -94,19 +92,19 @@ export default function PaymentPage() {
     };
 
     initializeTax();
-  }, [taxRate, isTaxLoading, fetchTaxRate]);
+  }, []);
 
   // Add back navigation confirmation
   useEffect(() => {
     const sub = navigation.addListener("beforeRemove", (e) => {
       // Allow navigation if going forward to settlement
       const action = e.data.action;
-      
+
       // Check if the navigation is going forward (to settlement)
       if (action.type === 'NAVIGATE' && (action.payload as any)?.name === '/dashboard/transaction/settlement') {
         return;
       }
-      
+
       e.preventDefault();
 
       confirmationRef.current?.showConfirmationDialog({
@@ -169,6 +167,10 @@ export default function PaymentPage() {
         additional_fees: additionalFees.map(fee => ({
           name: fee.name,
           amount: fee.amount,
+        })),
+        additional_ingredients: additionalIngredients.map(ing => ({
+          variant_id: ing.variantId,
+          quantity: ing.quantity,
         })),
       };
 
@@ -242,123 +244,123 @@ export default function PaymentPage() {
           <>
             {/* Left Column - Amount & Inputs */}
             <View style={styles.leftColumn}>
-          {/* Payment Method Badge */}
-          <View style={styles.amountWrapper}>
-            <Text
-              style={[styles.amountLabel, { color: Colors[colorScheme].icon }]}
-            >
-              Total Tagihan
-            </Text>
-            <Text
-              style={[
-                styles.amountValue,
-                {
-                  color: Colors[colorScheme].text,
-                  fontSize: isTablet ? 32 : 22,
-                },
-              ]}
-            >
-              Rp {formatCurrency(totalAmount)}
-            </Text>
-
-            <Text
-              style={[styles.amountLabel, { color: Colors[colorScheme].icon }]}
-            >
-              Jumlah Dibayar
-            </Text>
-            <Text
-              style={[styles.amountValue, { color: Colors[colorScheme].text }]}
-            >
-              Rp {formatCurrency(amount)}
-            </Text>
-
-        
-          </View>
-
-          {/* Input catatan */}
-          <View style={styles.noteWrapper}>
-            <TextInput
-              value={receiptNote}
-              onChangeText={setReceiptNote}
-              placeholder="Catatan struk"
-              placeholderTextColor={Colors[colorScheme].icon}
-              style={styles.noteInput}
-            />
-          </View>
-          <View style={styles.noteWrapper}>
-            <TextInput
-              value={customerName}
-              onChangeText={setCustomerNameLocal}
-              placeholder="Nama Customer (opsional)"
-              placeholderTextColor={Colors[colorScheme].icon}
-              style={styles.noteInput}
-            />
-          </View>
-
-          {/* Calculator */}
-          <View style={styles.calculatorWrapper}>
-            <PaymentCalculator 
-              value={amount} 
-              onChangeValue={(value) => {
-                if (value === "exact") {
-                  // Set amount to total bill when "Uang Pas" is clicked
-                  setAmount(totalAmount.toString());
-                } else {
-                  setAmount(value);
-                }
-              }}
-              paymentMethodBadge={
-                <TouchableOpacity
-                  style={styles.paymentMethodBadge}
-                  onPress={() => setShowPaymentMethodModal(true)}
+              {/* Payment Method Badge */}
+              <View style={styles.amountWrapper}>
+                <Text
+                  style={[styles.amountLabel, { color: Colors[colorScheme].icon }]}
                 >
-                  <Ionicons
-                    name="wallet-outline"
-                    size={isTablet ? 18 : 14}
-                    color={Colors[colorScheme].text}
-                  />
-                  <Text style={styles.paymentMethodText}>
-                    {getPaymentMethodLabel(paymentMethod)}
-                  </Text>
-                  <Ionicons
-                    name="chevron-down-outline"
-                    size={isTablet ? 12 : 10}
-                    color={Colors[colorScheme].icon}
-                  />
-                </TouchableOpacity>
-              }
-            />
-          </View>
+                  Total Tagihan
+                </Text>
+                <Text
+                  style={[
+                    styles.amountValue,
+                    {
+                      color: Colors[colorScheme].text,
+                      fontSize: isTablet ? 32 : 22,
+                    },
+                  ]}
+                >
+                  Rp {formatCurrency(totalAmount)}
+                </Text>
+
+                <Text
+                  style={[styles.amountLabel, { color: Colors[colorScheme].icon }]}
+                >
+                  Jumlah Dibayar
+                </Text>
+                <Text
+                  style={[styles.amountValue, { color: Colors[colorScheme].text }]}
+                >
+                  Rp {formatCurrency(amount)}
+                </Text>
+
+
+              </View>
+
+              {/* Input catatan */}
+              <View style={styles.noteWrapper}>
+                <TextInput
+                  value={receiptNote}
+                  onChangeText={setReceiptNote}
+                  placeholder="Catatan struk"
+                  placeholderTextColor={Colors[colorScheme].icon}
+                  style={styles.noteInput}
+                />
+              </View>
+              <View style={styles.noteWrapper}>
+                <TextInput
+                  value={customerName}
+                  onChangeText={setCustomerNameLocal}
+                  placeholder="Nama Customer (opsional)"
+                  placeholderTextColor={Colors[colorScheme].icon}
+                  style={styles.noteInput}
+                />
+              </View>
+
+              {/* Calculator */}
+              <View style={styles.calculatorWrapper}>
+                <PaymentCalculator
+                  value={amount}
+                  onChangeValue={(value) => {
+                    if (value === "exact") {
+                      // Set amount to total bill when "Uang Pas" is clicked
+                      setAmount(totalAmount.toString());
+                    } else {
+                      setAmount(value);
+                    }
+                  }}
+                  paymentMethodBadge={
+                    <TouchableOpacity
+                      style={styles.paymentMethodBadge}
+                      onPress={() => setShowPaymentMethodModal(true)}
+                    >
+                      <Ionicons
+                        name="wallet-outline"
+                        size={isTablet ? 18 : 14}
+                        color={Colors[colorScheme].text}
+                      />
+                      <Text style={styles.paymentMethodText}>
+                        {getPaymentMethodLabel(paymentMethod)}
+                      </Text>
+                      <Ionicons
+                        name="chevron-down-outline"
+                        size={isTablet ? 12 : 10}
+                        color={Colors[colorScheme].icon}
+                      />
+                    </TouchableOpacity>
+                  }
+                />
+              </View>
             </View>
 
             {/* Bottom continue button */}
             <View style={styles.bottomWrapper}>
-          <TouchableOpacity
-            style={[
-              styles.continueButton,
-              {
-                backgroundColor:
-                  isProcessing || Number(amount) < totalAmount
-                    ? Colors[colorScheme].border
-                    : Colors[colorScheme].primary,
-              },
-            ]}
-            onPress={handlePayment}
-            disabled={isProcessing || Number(amount) < totalAmount}
-          >
-            <Text style={[styles.continueButtonText, { color: "white" }]}>
-              {isProcessing
-                ? "Memproses..."
-                : Number(amount) < totalAmount
-                  ? "Jumlah Bayar Kurang"
-                  : "Proses Pembayaran"}
-            </Text>
-          </TouchableOpacity>
-        </View>
+              <TouchableOpacity
+                style={[
+                  styles.continueButton,
+                  {
+                    backgroundColor:
+                      isProcessing || Number(amount) < totalAmount
+                        ? Colors[colorScheme].border
+                        : Colors[colorScheme].primary,
+                  },
+                ]}
+                onPress={handlePayment}
+                disabled={isProcessing || Number(amount) < totalAmount}
+              >
+                <Text style={[styles.continueButtonText, { color: "white" }]}>
+                  {isProcessing
+                    ? "Memproses..."
+                    : Number(amount) < totalAmount
+                      ? "Jumlah Bayar Kurang"
+                      : "Proses Pembayaran"}
+                </Text>
+              </TouchableOpacity>
+            </View>
           </>
         )}
       </View>
-      
+
       <PaymentMethodModal
         visible={showPaymentMethodModal}
         onClose={() => setShowPaymentMethodModal(false)}

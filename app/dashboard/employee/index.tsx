@@ -31,7 +31,7 @@ export default function EmployeeScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { isBasic, isDisabled } = useUserPlan();
-  const {currentBranchId} = useBranchStore()
+  const { currentBranchId } = useBranchStore()
 
   const [search, setSearch] = useState("");
   const [employees, setEmployees] = useState<Employee[]>([]);
@@ -113,55 +113,56 @@ export default function EmployeeScreen() {
               />
             </View>
           </View>
-  
-        {loading && !refreshing ? (
-          <View
-            style={{ flex: 1, justifyContent: "center", alignItems: "center" }}
-          >
-            <ActivityIndicator
-              size="large"
-              color={Colors[colorScheme].primary}
-            />
-          </View>
-        ) : (
-          <FlatList
-            data={employees}
-            keyExtractor={item => String(item.id)}
-            refreshing={refreshing}
-            onRefresh={() => loadEmployees(true)}
-            renderItem={({ item }) => (
-              <EmployeeCard
-                initials={item.name.slice(0, 2).toUpperCase()}
-                name={item.name}
-                phone={item.phone || "-"}
-                role={item.role || "Staff"}
-                onPress={() => {
-                  if (isDisabled) return;
-                  router.push({
-                    pathname: "/dashboard/employee/edit",
-                    params: {
-                      id: String(item.id),
-                    },
-                  } as never);
-                }}
+
+          {loading && !refreshing ? (
+            <View
+              style={{ flex: 1, justifyContent: "center", alignItems: "center" }}
+            >
+              <ActivityIndicator
+                size="large"
+                color={Colors[colorScheme].primary}
               />
-            )}
-            ListEmptyComponent={
-              <View style={{ alignItems: "center", marginTop: 40 }}>
-                <Ionicons
-                  name="people-outline"
-                  size={48}
-                  color={Colors[colorScheme].icon}
+            </View>
+          ) : (
+            <FlatList
+              data={employees}
+              keyExtractor={item => String(item.id)}
+              refreshing={refreshing}
+              onRefresh={() => loadEmployees(true)}
+              renderItem={({ item }) => (
+                <EmployeeCard
+                  initials={item.name.slice(0, 2).toUpperCase()}
+                  name={item.name}
+                  phone={item.phone || "-"}
+                  role={item.role || "Staff"}
+                  isDisabled={item.is_disabled}
+                  onPress={() => {
+                    if (isDisabled || item.is_disabled) return;
+                    router.push({
+                      pathname: "/dashboard/employee/edit",
+                      params: {
+                        id: String(item.id),
+                      },
+                    } as never);
+                  }}
                 />
-              </View>
-            }
-          />
-        )}
+              )}
+              ListEmptyComponent={
+                <View style={{ alignItems: "center", marginTop: 40 }}>
+                  <Ionicons
+                    name="people-outline"
+                    size={48}
+                    color={Colors[colorScheme].icon}
+                  />
+                </View>
+              }
+            />
+          )}
         </View>
       </View>
 
       <View style={[
-        styles.fab, 
+        styles.fab,
         { bottom: insets.bottom + (isTablet ? 40 : 24) },
         (isBasic || isDisabled) && styles.disabledFab
       ]}>
@@ -173,10 +174,10 @@ export default function EmployeeScreen() {
             (isBasic || isDisabled) && styles.disabledFabButton
           ]}
         >
-          <Ionicons 
-            name="add" 
-            size={isTablet ? 36 : 28} 
-            color={(isBasic || isDisabled) ? Colors[colorScheme].icon : Colors[colorScheme].background} 
+          <Ionicons
+            name="add"
+            size={isTablet ? 36 : 28}
+            color={(isBasic || isDisabled) ? Colors[colorScheme].icon : Colors[colorScheme].background}
           />
           {isBasic && (
             <View style={styles.fabBadge}>

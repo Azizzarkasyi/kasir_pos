@@ -7,6 +7,7 @@ type ProductItemProps = {
     remaining: number;
     price: number;
     quantity?: number;
+    isDisabled?: boolean;
     onPress?: () => void;
     onLongPress?: () => void;
 };
@@ -16,6 +17,7 @@ export default function ProductItem({
     remaining,
     price,
     quantity = 0,
+    isDisabled = false,
     onPress,
     onLongPress,
 }: ProductItemProps) {
@@ -42,7 +44,13 @@ export default function ProductItem({
         .trim();
 
     return (
-        <TouchableOpacity style={styles.container} onLongPress={onLongPress} onPress={onPress} activeOpacity={0.7}>
+        <TouchableOpacity
+            style={[styles.container, isDisabled && styles.disabledContainer]}
+            onLongPress={isDisabled ? undefined : onLongPress}
+            onPress={isDisabled ? undefined : onPress}
+            activeOpacity={isDisabled ? 1 : 0.7}
+            disabled={isDisabled}
+        >
             <View style={styles.avatar}>
                 <Text style={styles.avatarText}>{initials}</Text>
             </View>
@@ -56,9 +64,15 @@ export default function ProductItem({
                 </Text>
             </View>
 
-            <View style={styles.quantityBadge}>
-                <Text style={styles.quantityText}>{quantity}</Text>
-            </View>
+            {isDisabled ? (
+                <View style={styles.disabledBadge}>
+                    <Text style={styles.disabledBadgeText}>Nonaktif</Text>
+                </View>
+            ) : (
+                <View style={styles.quantityBadge}>
+                    <Text style={styles.quantityText}>{quantity}</Text>
+                </View>
+            )}
         </TouchableOpacity>
     );
 }
@@ -73,6 +87,9 @@ const createStyles = (colorScheme: "light" | "dark", isTablet: boolean) => Style
         paddingHorizontal: isTablet ? 16 : 12,
         backgroundColor: Colors[colorScheme].background,
         borderRadius: isTablet ? 10 : 8,
+    },
+    disabledContainer: {
+        opacity: 0.5,
     },
     avatar: {
         width: isTablet ? 52 : 40,
@@ -116,5 +133,17 @@ const createStyles = (colorScheme: "light" | "dark", isTablet: boolean) => Style
         fontSize: isTablet ? 18 : 14,
         fontWeight: "500",
         color: Colors[colorScheme].text,
+    },
+    disabledBadge: {
+        backgroundColor: Colors[colorScheme].border,
+        paddingHorizontal: isTablet ? 12 : 8,
+        paddingVertical: isTablet ? 6 : 4,
+        borderRadius: isTablet ? 6 : 4,
+        marginLeft: isTablet ? 16 : 12,
+    },
+    disabledBadgeText: {
+        color: Colors[colorScheme].icon,
+        fontSize: isTablet ? 14 : 10,
+        fontWeight: "600",
     },
 });
