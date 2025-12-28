@@ -6,7 +6,7 @@ import { useColorScheme } from "@/hooks/use-color-scheme";
 import { usePrinterDevice } from "@/hooks/use-printer-device";
 import { settingsApi, StoreInfo, StruckConfig } from "@/services";
 import { transactionApi } from "@/services/endpoints/transactions";
-import { printReceipt } from "@/services/receipt";
+import { printKitchenReceipt, printReceipt } from "@/services/receipt";
 import { useBranchStore } from "@/stores/branch-store";
 import { useCartStore } from "@/stores/cart-store";
 import { Transaction } from "@/types/api";
@@ -102,7 +102,7 @@ export default function TransactionSettlementPage() {
           console.log("No branchId found, skipping struck config fetch");
           return;
         }
-        
+
         const response = await settingsApi.getStruckConfig(currentBranchId);
         console.log("struk config", response.data)
         if (response.data) {
@@ -222,6 +222,58 @@ export default function TransactionSettlementPage() {
     }
   };
 
+  const handlePrintKitchenReceipt = async () => {
+    if (!transaction) {
+      return;
+    }
+
+    if (!savedDevice) {
+      Alert.alert(
+        "Error",
+        "Printer belum dipilih. Silakan pilih dan simpan printer terlebih dahulu.",
+      );
+      return;
+    }
+
+    if (!BluetoothManager) {
+      Alert.alert(
+        "Error",
+        "Module Bluetooth tidak tersedia. Pastikan native module sudah ter-link.",
+      );
+      return;
+    }
+
+    setIsPrinting(true);
+
+    try {
+      const isConnected = await BluetoothManager.isBluetoothEnabled();
+      if (!isConnected) {
+        await BluetoothManager.enableBluetooth();
+      }
+
+      await BluetoothManager.connect(savedDevice.address).then(async () => {
+        await printKitchenReceipt({
+          transaction,
+          store,
+          transactionDate,
+          paymentMethod,
+          formatCurrency,
+          struckConfig,
+        });
+      });
+
+      Alert.alert("Berhasil", "Struk dapur berhasil dikirim ke printer.");
+    } catch (e: any) {
+      console.error("[TransactionSettlementPage] Print kitchen error:", e);
+      Alert.alert(
+        "Gagal",
+        e?.message ?? "Gagal mencetak. Pastikan printer terhubung dengan benar.",
+      );
+    } finally {
+      setIsPrinting(false);
+    }
+  };
+
   const handleShareReceipt = async () => {
     try {
       const message = `Transaksi Berhasil\n\nNo: ${transaction?.invoiceNumber || "-"
@@ -302,6 +354,16 @@ export default function TransactionSettlementPage() {
           </View>
 
           <View style={styles.bottomWrapper}>
+            <View style={[styles.topButtonsRow, { marginBottom: 16 }]}>
+              <TouchableOpacity
+                style={styles.secondaryButton}
+                onPress={() => {
+                  handlePrintKitchenReceipt();
+                }}
+              >
+                <Text style={styles.secondaryButtonText}>{isPrinting ? "Mencetak..." : "Cetak Struk Dapur"}</Text>
+              </TouchableOpacity>
+            </View>
             <View style={styles.topButtonsRow}>
               <TouchableOpacity
                 style={styles.secondaryButton}

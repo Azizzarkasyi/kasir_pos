@@ -11,6 +11,7 @@ type StockProductItemProps = {
   quantity: number | string;
   onPress?: () => void;
   isTablet?: boolean;
+  isDisabled?: boolean;
 };
 
 const StockProductItem: React.FC<StockProductItemProps> = ({
@@ -19,6 +20,7 @@ const StockProductItem: React.FC<StockProductItemProps> = ({
   quantity,
   onPress,
   isTablet = false,
+  isDisabled = false,
 }) => {
   const colorScheme = useColorScheme() ?? "light";
   const styles = createStyles(colorScheme, isTablet);
@@ -34,9 +36,10 @@ const StockProductItem: React.FC<StockProductItemProps> = ({
 
   return (
     <TouchableOpacity
-      style={styles.container}
-      onPress={onPress}
-      activeOpacity={0.8}
+      style={[styles.container, isDisabled && styles.disabledContainer]}
+      onPress={isDisabled ? undefined : onPress}
+      activeOpacity={isDisabled ? 1 : 0.8}
+      disabled={isDisabled}
     >
       <View style={styles.leftBox}>
         <ThemedText style={styles.initials}>{initials}</ThemedText>
@@ -56,9 +59,15 @@ const StockProductItem: React.FC<StockProductItemProps> = ({
         )}
       </View>
 
-      <View style={styles.qtyBox}>
-        <ThemedText style={styles.qtyText}>{quantity}</ThemedText>
-      </View>
+      {isDisabled ? (
+        <View style={styles.disabledBadge}>
+          <ThemedText style={styles.disabledBadgeText}>Nonaktif</ThemedText>
+        </View>
+      ) : (
+        <View style={styles.qtyBox}>
+          <ThemedText style={styles.qtyText}>{quantity}</ThemedText>
+        </View>
+      )}
     </TouchableOpacity>
   );
 };
@@ -73,6 +82,9 @@ const createStyles = (colorScheme: "light" | "dark", isTablet: boolean) =>
       borderBottomWidth: 1,
       borderBottomColor: Colors[colorScheme].border,
       backgroundColor: Colors[colorScheme].background,
+    },
+    disabledContainer: {
+      opacity: 0.5,
     },
     leftBox: {
       width: isTablet ? 64 : 40,
@@ -114,6 +126,17 @@ const createStyles = (colorScheme: "light" | "dark", isTablet: boolean) =>
       fontWeight: "600",
       fontSize: isTablet ? 20 : 12,
       color: Colors[colorScheme].text,
+    },
+    disabledBadge: {
+      backgroundColor: Colors[colorScheme].border,
+      paddingHorizontal: isTablet ? 12 : 8,
+      paddingVertical: isTablet ? 6 : 4,
+      borderRadius: isTablet ? 6 : 4,
+    },
+    disabledBadgeText: {
+      color: Colors[colorScheme].icon,
+      fontSize: isTablet ? 14 : 10,
+      fontWeight: "600",
     },
   });
 

@@ -91,6 +91,7 @@ export interface Product {
   stock?: number;
   min_stock?: number;
   photo_url?: string;
+  is_disabled?: boolean;
   variants?: ProductVariant[];
   merk?: { id: string; name: string };
   category?: { id: string; name: string };
@@ -182,6 +183,7 @@ export interface Employee {
   salary?: number;
   joinDate?: string;
   status?: "active" | "inactive";
+  is_disabled?: boolean;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -201,6 +203,23 @@ export interface UpdateEmployeeRequest extends Partial<CreateEmployeeRequest> {
 }
 
 // Transaction Types
+export interface AdditionalTransactionIngredient {
+  id: string;
+  transaction_id: string;
+  variant_id: string;
+  quantity: number;
+  price: number;
+  variant: {
+    id: string;
+    name: string;
+    product: {
+      id: string;
+      name: string;
+      is_ingredient: boolean;
+    }
+  }
+}
+
 export interface Transaction {
   id: number;
   invoiceNumber: string;
@@ -223,6 +242,7 @@ export interface Transaction {
     name: string;
     amount: number;
   }[];
+  additional_ingredients: AdditionalTransactionIngredient[];
   notes?: string;
   createdAt: string;
   updatedAt?: string;
@@ -252,6 +272,10 @@ export interface CreateTransactionRequest {
   additional_fees?: {
     name: string;
     amount: number;
+  }[];
+  additional_ingredients?: {
+    variant_id: string;
+    quantity: number;
   }[];
 }
 

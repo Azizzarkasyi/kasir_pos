@@ -10,6 +10,7 @@ type Props = {
   phone?: string;
   role?: string;
   isTablet?: boolean;
+  isDisabled?: boolean;
   onPress?: () => void;
 };
 
@@ -19,13 +20,19 @@ export default function EmployeeCard({
   phone,
   role,
   isTablet = false,
+  isDisabled = false,
   onPress,
 }: Props) {
   const colorScheme = useColorScheme() ?? "light";
   const styles = createStyles(colorScheme, isTablet);
 
   return (
-    <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.8}>
+    <TouchableOpacity
+      style={[styles.card, isDisabled && styles.disabledCard]}
+      onPress={isDisabled ? undefined : onPress}
+      activeOpacity={isDisabled ? 1 : 0.8}
+      disabled={isDisabled}
+    >
       <View style={styles.avatar}>
         <ThemedText style={styles.avatarText}>{initials}</ThemedText>
       </View>
@@ -33,7 +40,13 @@ export default function EmployeeCard({
         <ThemedText style={styles.nameText}>{name}</ThemedText>
         {phone && <ThemedText style={styles.subText}>{phone}</ThemedText>}
       </View>
-      <ThemedText style={styles.subText}>{role}</ThemedText>
+      {isDisabled ? (
+        <View style={styles.disabledBadge}>
+          <ThemedText style={styles.disabledBadgeText}>Nonaktif</ThemedText>
+        </View>
+      ) : (
+        <ThemedText style={styles.subText}>{role}</ThemedText>
+      )}
     </TouchableOpacity>
   );
 }
@@ -50,6 +63,9 @@ const createStyles = (colorScheme: "light" | "dark", isTablet: boolean) =>
       borderRadius: isTablet ? 12 : 8,
       paddingVertical: isTablet ? 20 : 14,
       backgroundColor: Colors[colorScheme].background,
+    },
+    disabledCard: {
+      opacity: 0.5,
     },
     avatar: {
       width: isTablet ? 64 : 42,
@@ -73,5 +89,16 @@ const createStyles = (colorScheme: "light" | "dark", isTablet: boolean) =>
     subText: {
       color: Colors[colorScheme].icon,
       fontSize: isTablet ? 18 : 14,
+    },
+    disabledBadge: {
+      backgroundColor: Colors[colorScheme].border,
+      paddingHorizontal: isTablet ? 12 : 8,
+      paddingVertical: isTablet ? 6 : 4,
+      borderRadius: isTablet ? 6 : 4,
+    },
+    disabledBadgeText: {
+      color: Colors[colorScheme].icon,
+      fontSize: isTablet ? 14 : 10,
+      fontWeight: "600",
     },
   });

@@ -2,6 +2,7 @@
 
 import CheckoutItem from "@/components/atoms/checkout-item";
 import AddAdditionalCostModal from "@/components/drawers/add-addditional-cost-modal";
+import AddIngredientModal from "@/components/drawers/add-ingredient-modal";
 import ConfirmationDialog, {
   ConfirmationDialogHandle,
 } from "@/components/drawers/confirmation-dialog";
@@ -36,9 +37,12 @@ export default function TransactionSummaryPage() {
   const {
     items: cartItems,
     additionalFees,
+    additionalIngredients,
     removeItem,
     addFee,
     removeFee,
+    addIngredient,
+    removeIngredient,
     getSubtotal,
     getTotalFees,
     getTotalAmount,
@@ -47,9 +51,10 @@ export default function TransactionSummaryPage() {
   } = useCartStore();
 
   const [isCostModalVisible, setIsCostModalVisible] = useState(false);
+  const [isIngredientModalVisible, setIsIngredientModalVisible] = useState(false);
 
   // Check if cart has items (for confirmation dialog)
-  const hasItemsInCart = cartItems.length > 0 || additionalFees.length > 0;
+  const hasItemsInCart = cartItems.length > 0 || additionalFees.length > 0 || additionalIngredients.length > 0;
 
   useEffect(() => {
     // Cek jika cart kosong hanya saat pertama kali mount
@@ -200,8 +205,48 @@ export default function TransactionSummaryPage() {
               onRemove={() => removeFee(fee.id)}
             />
           </View>
-  ))
-}
+        ))}
+
+        {/* Additional Ingredients */}
+        {additionalIngredients.length > 0 && (
+          <View style={styles.sectionHeader}>
+            <Text style={[styles.sectionHeaderText, { color: Colors[colorScheme].icon }]}>
+              Bahan Tambahan
+            </Text>
+          </View>
+        )}
+        {additionalIngredients.map((ingredient, index) => {
+          const displayName = ingredient.variantName !== ingredient.productName
+            ? `${ingredient.productName} - ${ingredient.variantName}`
+            : ingredient.productName;
+
+          return (
+            <View key={ingredient.id} style={styles.itemContainer}>
+              <CheckoutItem
+                index={cartItems.length + additionalFees.length + index + 1}
+                name={displayName}
+                quantity={ingredient.quantity}
+                unitPrice={ingredient.unitPrice}
+                onRemove={() => removeIngredient(ingredient.id)}
+              />
+            </View>
+          );
+        })}
+
+        {/* Add Ingredient Button */}
+        <TouchableOpacity
+          style={styles.addIngredientButton}
+          onPress={() => setIsIngredientModalVisible(true)}
+        >
+          <Ionicons
+            name="add-circle-outline"
+            size={isTablet ? 24 : 20}
+            color={Colors[colorScheme].primary}
+          />
+          <Text style={[styles.addIngredientButtonText, { color: Colors[colorScheme].primary }]}>
+            Tambahkan Bahan Lain
+          </Text>
+        </TouchableOpacity>
       </ScrollView >
 
 
@@ -272,6 +317,14 @@ export default function TransactionSummaryPage() {
         visible={isCostModalVisible}
         onClose={() => setIsCostModalVisible(false)}
         onConfirm={({ name, price }) => handleAddFee({ name, price })}
+      />
+
+      <AddIngredientModal
+        visible={isIngredientModalVisible}
+        onClose={() => setIsIngredientModalVisible(false)}
+        onConfirm={(payload) => {
+          addIngredient(payload);
+        }}
       />
 
       <ConfirmationDialog ref={confirmationRef} />
@@ -352,6 +405,20 @@ const createStyles = (colorScheme: "light" | "dark", isTablet: boolean, isTablet
       fontSize: 12,
       color: Colors[colorScheme].icon,
     },
+    headerButtonsRow: {
+      flexDirection: "row",
+      columnGap: isTablet ? 12 : 8,
+    },
+    sectionHeader: {
+      paddingHorizontal: isTablet ? 24 : 16,
+      paddingVertical: isTablet ? 12 : 8,
+      marginTop: isTablet ? 16 : 12,
+    },
+    sectionHeaderText: {
+      fontSize: isTablet ? 16 : 14,
+      fontWeight: "600",
+      color: Colors[colorScheme].icon,
+    },
     feeButton: {
       flexDirection: "row",
       alignItems: "center",
@@ -372,6 +439,24 @@ const createStyles = (colorScheme: "light" | "dark", isTablet: boolean, isTablet
     },
     listContent: {
       paddingVertical: isTablet ? 12 : 8,
+    },
+    addIngredientButton: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "center",
+      paddingVertical: isTablet ? 16 : 12,
+      marginHorizontal: isTablet ? 24 : 16,
+      marginTop: isTablet ? 12 : 8,
+      borderRadius: isTablet ? 10 : 8,
+      borderWidth: 1,
+      borderStyle: "dashed",
+      borderColor: Colors[colorScheme].primary,
+      backgroundColor: Colors[colorScheme].background,
+      columnGap: isTablet ? 8 : 6,
+    },
+    addIngredientButtonText: {
+      fontSize: isTablet ? 16 : 14,
+      fontWeight: "500",
     },
     itemContainer: {
       borderBottomWidth: 1,

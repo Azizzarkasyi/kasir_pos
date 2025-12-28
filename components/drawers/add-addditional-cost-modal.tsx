@@ -41,7 +41,7 @@ const AddAdditionalCostModal: React.FC<AddAdditionalCostModalProps> = ({
     const parsed = parseInt(nominal.replace(/\D/g, ""), 10);
     const value = Number.isNaN(parsed) ? 0 : parsed;
     onConfirm({
-      name: name.trim() || "Fee",
+      name: name.trim() || "Biaya",
       price: value,
     });
   };
@@ -56,13 +56,13 @@ const AddAdditionalCostModal: React.FC<AddAdditionalCostModalProps> = ({
       <View style={styles.backdrop}>
         <View style={styles.card}>
           <View style={styles.cardContent}>
-            <Text style={styles.title}>COST MODULE</Text>
+            <Text style={styles.title}>BIAYA TAMBAHAN</Text>
 
             <View style={styles.section}>
-              <Text style={styles.label}>Fee Name (Ex: Wrap, Sticker, etc)</Text>
+              <Text style={styles.label}>Nama Biaya (Cth: Bungkus, Stiker, dll)</Text>
               <TextInput
                 style={styles.input}
-                placeholder="Fee Name (Ex: Wrap, Sticker, etc)"
+                placeholder="Nama Biaya (Cth: Bungkus, Stiker, dll)"
                 value={name}
                 onChangeText={setName}
               />
@@ -71,14 +71,14 @@ const AddAdditionalCostModal: React.FC<AddAdditionalCostModalProps> = ({
             <View style={styles.section}>
               <Text style={styles.label}>Nominal</Text>
               <View style={styles.nominalRow}>
-               
+
                 <TextInput
                   style={[styles.input, styles.nominalInput]}
                   keyboardType="numeric"
                   value={nominal}
                   onChangeText={setNominal}
                 />
-                 <View style={styles.currencyPill}>
+                <View style={styles.currencyPill}>
                   <Text style={styles.currencyText}>Rp</Text>
                 </View>
               </View>
@@ -89,13 +89,13 @@ const AddAdditionalCostModal: React.FC<AddAdditionalCostModalProps> = ({
                 style={[styles.footerButton, styles.footerButtonSecondary]}
                 onPress={onClose}
               >
-                <Text style={styles.footerButtonSecondaryText}>CANCEL</Text>
+                <Text style={styles.footerButtonSecondaryText}>BATAL</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.footerButton, styles.footerButtonPrimary]}
                 onPress={handleConfirm}
               >
-                <Text style={styles.footerButtonPrimaryText}>OK</Text>
+                <Text style={styles.footerButtonPrimaryText}>TAMBAH</Text>
               </TouchableOpacity>
             </View>
           </View>

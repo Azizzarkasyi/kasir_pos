@@ -29,8 +29,8 @@ const transformTransaction = (data: any): Transaction => {
     paymentMethod: (
       data.payment_method || data.paymentMethod
     )?.toLowerCase() as any,
-    paymentStatus: 
-      data.status  as any,
+    paymentStatus:
+      data.status as any,
     items: (data.items || []).map((item: any) => ({
       id: item.id,
       productId: item.product_id || item.productId,
@@ -44,6 +44,22 @@ const transformTransaction = (data: any): Transaction => {
     employeeId: data.employee_id || data.cashier_id || data.employeeId,
     notes: data.notes || data.note || "",
     tax: data.tax || data.taxAmount || 0,
+    additional_ingredients: (data.additional_ingredients || []).map((ing: any) => ({
+      id: ing.id,
+      transaction_id: ing.transaction_id,
+      variant_id: ing.variant_id,
+      quantity: ing.quantity,
+      price: ing.price,
+      variant: {
+        id: ing.variant?.id,
+        name: ing.variant?.name,
+        product: {
+          id: ing.variant?.product?.id,
+          name: ing.variant?.product?.name,
+          is_ingredient: ing.variant?.product?.is_ingredient,
+        }
+      }
+    })),
     createdAt: data.created_at || data.createdAt || new Date().toISOString(),
     updatedAt: data.updated_at || data.updatedAt,
   };

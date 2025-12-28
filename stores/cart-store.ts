@@ -17,9 +17,19 @@ export type AdditionalFee = {
   amount: number;
 };
 
+export type AdditionalIngredient = {
+  id: string;
+  variantId: string;
+  variantName: string;
+  productName: string;
+  quantity: number;
+  unitPrice: number;
+};
+
 type CartStore = {
   items: CartItem[];
   additionalFees: AdditionalFee[];
+  additionalIngredients: AdditionalIngredient[];
   discount: number;
   customerName: string;
   note: string;
@@ -42,6 +52,10 @@ type CartStore = {
   addFee: (fee: AdditionalFee) => void;
   removeFee: (id: string) => void;
 
+  addIngredient: (ingredient: Omit<AdditionalIngredient, 'id'>) => void;
+  removeIngredient: (id: string) => void;
+  updateIngredientQuantity: (id: string, quantity: number) => void;
+
   setDiscount: (discount: number) => void;
   setCustomerName: (name: string) => void;
   setNote: (note: string) => void;
@@ -58,6 +72,7 @@ type CartStore = {
 export const useCartStore = create<CartStore>((set, get) => ({
   items: [],
   additionalFees: [],
+  additionalIngredients: [],
   discount: 0,
   customerName: "",
   note: "",
@@ -75,10 +90,10 @@ export const useCartStore = create<CartStore>((set, get) => ({
           quantity: updated[existingIndex].quantity + item.quantity,
           note: item.note || updated[existingIndex].note,
         };
-        return {items: updated};
+        return { items: updated };
       }
 
-      return {items: [...state.items, item]};
+      return { items: [...state.items, item] };
     });
   },
 
@@ -95,7 +110,7 @@ export const useCartStore = create<CartStore>((set, get) => ({
       return {
         items: state.items.map(i =>
           i.productId === productId && i.variantId === variantId
-            ? {...i, quantity}
+            ? { ...i, quantity }
             : i
         ),
       };
@@ -106,7 +121,7 @@ export const useCartStore = create<CartStore>((set, get) => ({
     set(state => ({
       items: state.items.map(i =>
         i.productId === productId && i.variantId === variantId
-          ? {...i, note}
+          ? { ...i, note }
           : i
       ),
     }));
@@ -124,6 +139,7 @@ export const useCartStore = create<CartStore>((set, get) => ({
     set({
       items: [],
       additionalFees: [],
+      additionalIngredients: [],
       discount: 0,
       customerName: "",
       note: "",
@@ -142,9 +158,54 @@ export const useCartStore = create<CartStore>((set, get) => ({
     }));
   },
 
-  setDiscount: discount => set({discount}),
-  setCustomerName: customerName => set({customerName}),
-  setNote: note => set({note}),
+  addIngredient: ingredient => {
+    set(state => {
+      const existingIndex = state.additionalIngredients.findIndex(
+        i => i.variantId === ingredient.variantId
+      );
+
+      if (existingIndex >= 0) {
+        const updated = [...state.additionalIngredients];
+        updated[existingIndex] = {
+          ...updated[existingIndex],
+          quantity: updated[existingIndex].quantity + ingredient.quantity,
+        };
+        return { additionalIngredients: updated };
+      }
+
+      return {
+        additionalIngredients: [
+          ...state.additionalIngredients,
+          { ...ingredient, id: `ing-${Date.now()}` },
+        ],
+      };
+    });
+  },
+
+  removeIngredient: id => {
+    set(state => ({
+      additionalIngredients: state.additionalIngredients.filter(i => i.id !== id),
+    }));
+  },
+
+  updateIngredientQuantity: (id, quantity) => {
+    set(state => {
+      if (quantity <= 0) {
+        return {
+          additionalIngredients: state.additionalIngredients.filter(i => i.id !== id),
+        };
+      }
+      return {
+        additionalIngredients: state.additionalIngredients.map(i =>
+          i.id === id ? { ...i, quantity } : i
+        ),
+      };
+    });
+  },
+
+  setDiscount: discount => set({ discount }),
+  setCustomerName: customerName => set({ customerName }),
+  setNote: note => set({ note }),
 
   getTotalItems: () => {
     return get().items.reduce((sum, item) => sum + item.quantity, 0);
@@ -179,8 +240,6 @@ export const useCartStore = create<CartStore>((set, get) => ({
   getTotalWithTax: () => {
     const totalAmount = get().getTotalAmount();
     const taxAmount = get().getTaxAmount();
-    console.log("total ammount", totalAmount)
-    console.log("total tax", taxAmount)
     return totalAmount + taxAmount;
   },
 }));

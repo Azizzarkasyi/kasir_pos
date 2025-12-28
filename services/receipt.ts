@@ -77,7 +77,7 @@ export async function printReceipt(params: {
     const storeAddress = store?.address || "";
     const storePhone = store?.owner_phone || "";
     const storeLogo = struckConfig?.logo_url || null;
-    
+
     // Use struck config or fallback to defaults
     const headerDescription = struckConfig?.header_description || "";
     const footerDescription = struckConfig?.footer_description || "Powered by ELBIC";
@@ -91,6 +91,10 @@ export async function printReceipt(params: {
     const additionalFees =
         transaction.additional_fees?.length > 0
             ? transaction.additional_fees
+            : [];
+    const additionalIngredients =
+        transaction.additional_ingredients?.length > 0
+            ? transaction.additional_ingredients
             : [];
     const transactionSubtotal = (transaction as any)?.sub_total || 0;
     const total = (transaction as any)?.total || transactionSubtotal;
@@ -195,8 +199,8 @@ export async function printReceipt(params: {
         }
     }
 
-    // --- Additional Fees ---
-    if (additionalFees.length > 0) {
+    // --- Biaya Tambahan (fees + ingredients) ---
+    if (additionalFees.length > 0 || additionalIngredients.length > 0) {
         await BluetoothEscposPrinter.printText(separator, {});
         await BluetoothEscposPrinter.printerAlign(
             BluetoothEscposPrinter.ALIGN.CENTER
@@ -207,11 +211,29 @@ export async function printReceipt(params: {
             BluetoothEscposPrinter.ALIGN.LEFT
         );
 
-        additionalFees.forEach((fee, i) => {
+        let itemIndex = 1;
+        additionalFees.forEach((fee) => {
             BluetoothEscposPrinter.printText(
-                `${i + 1}. ${fee.name}: Rp ${formatCurrency(fee.amount || 0)}\n\r`,
+                `${formatKeyValue(`${itemIndex}. ${fee.name}`, `Rp ${formatCurrency(fee.amount || 0)}`)}\n\r`,
                 {}
             );
+            itemIndex++;
+        });
+
+        additionalIngredients.forEach((ing) => {
+            const ingredientName = ing.variant?.product?.name !== ing.variant?.name
+                ? `${ing.variant?.product?.name} - ${ing.variant?.name}`
+                : ing.variant?.product?.name || ing.variant?.name || 'Bahan';
+            const lineTotal = ing.quantity * ing.price;
+            BluetoothEscposPrinter.printText(
+                `${itemIndex}. ${ingredientName}\n\r`,
+                {}
+            );
+            BluetoothEscposPrinter.printText(
+                `${formatKeyValue(`   ${formatCurrency(ing.price)} x ${ing.quantity}`, formatCurrency(lineTotal))}\n\r`,
+                {}
+            );
+            itemIndex++;
         });
     }
 
@@ -265,6 +287,95 @@ export async function printReceipt(params: {
     await BluetoothEscposPrinter.printText("\n\n" + footerDescription + "\n\r", {});
     await BluetoothEscposPrinter.printText("Powered by ELBIC\n\r", {});
     await BluetoothEscposPrinter.printText("www.elbic.id\n\r\n\r", {});
+
+    // Feed
+    await BluetoothEscposPrinter.printText("\n\r\n\r", {});
+}
+
+export async function printKitchenReceipt(params: {
+    transaction: Transaction;
+    store: StoreInfo | null;
+    transactionDate: string;
+    paymentMethod: string;
+    struckConfig?: StruckConfig | null;
+    formatCurrency: (value: number) => string;
+}) {
+    if (!BluetoothEscposPrinter) {
+        throw new Error("Printer module tidak tersedia. Pastikan native module sudah ter-link.");
+    }
+
+    const {
+        transaction,
+        store,
+        transactionDate,
+        paymentMethod,
+        struckConfig,
+        formatCurrency,
+    } = params;
+
+    const storeName = store?.owner_name || "Basofi Rswt";
+    const storeBranch = store?.province?.name || "Pusat";
+    const separator = "-".repeat(LINE_WIDTH) + "\n\r";
+    const items = transaction.items || [];
+    const displayRunningNumbers = struckConfig?.display_running_number ?? false;
+
+    // --- HEADER ---
+    await BluetoothEscposPrinter.printerAlign(
+        BluetoothEscposPrinter.ALIGN.CENTER
+    );
+
+    await BluetoothEscposPrinter.printText(
+        `${storeName}${storeBranch ? " - " + storeBranch : ""}\n\r`,
+        { widthtimes: 1, heigthtimes: 1 }
+    );
+    await BluetoothEscposPrinter.printText("\nSTRUK DAPUR\n\r", {});
+
+    // --- INFO STRUK ---
+    await BluetoothEscposPrinter.printText(separator, {});
+    await BluetoothEscposPrinter.printerAlign(
+        BluetoothEscposPrinter.ALIGN.LEFT
+    );
+
+    await BluetoothEscposPrinter.printText(
+        `${formatKeyValue("No. Struk", transaction.invoiceNumber || "-")}\n\r`,
+        {}
+    );
+    await BluetoothEscposPrinter.printText(
+        `${formatKeyValue("Waktu", transactionDate)}\n\r`,
+        {}
+    );
+    await BluetoothEscposPrinter.printText(
+        `${formatKeyValue("Pembayaran", paymentMethod)}\n\r`,
+        {}
+    );
+    await BluetoothEscposPrinter.printText(separator, {});
+
+    // --- ITEMS (Nama + Qty Only) ---
+    for (let i = 0; i < items.length; i++) {
+        const item = items[i];
+        const itemNumber = `${i + 1}. `;
+
+        let qtyDisplay = `x ${item.quantity}`;
+        if ((item as any).unit) {
+            qtyDisplay = `x ${item.quantity} ${(item as any).unit}`;
+        }
+
+        // Format: "1. Nama Produk       x 1"
+        // We use formatKeyValue to align the name (left) and qty (right)
+        const lineText = formatKeyValue(
+            `${itemNumber}${item.productName}`,
+            qtyDisplay
+        );
+
+        await BluetoothEscposPrinter.printText(`${lineText}\n\r`, {});
+    }
+
+    // --- FOOTER ---
+    await BluetoothEscposPrinter.printText(separator, {});
+    await BluetoothEscposPrinter.printerAlign(
+        BluetoothEscposPrinter.ALIGN.CENTER
+    );
+    await BluetoothEscposPrinter.printText("Powered by ELBIC\n\r", {});
 
     // Feed
     await BluetoothEscposPrinter.printText("\n\r\n\r", {});
@@ -346,8 +457,8 @@ export async function generateReceiptHTML(params: ReceiptPDFParams): Promise<str
             const unitPrice = item.price || (item.subtotal ? item.subtotal / item.quantity : 0);
             const lineTotal = item.subtotal || item.price * item.quantity;
             const itemNumber = displayRunningNumbers ? `${index + 1}. ` : "";
-            const qtyWithUnit = (displayUnitNextToQty && (item as any).unit) 
-                ? `${item.quantity} ${(item as any).unit}` 
+            const qtyWithUnit = (displayUnitNextToQty && (item as any).unit)
+                ? `${item.quantity} ${(item as any).unit}`
                 : `${item.quantity}`;
             return `
                 <div class="item-row">
@@ -377,6 +488,28 @@ export async function generateReceiptHTML(params: ReceiptPDFParams): Promise<str
                 .join("")
             : "";
 
+    const additionalIngredients = transaction?.additional_ingredients || [];
+    const additionalIngredientsHTML =
+        additionalIngredients.length > 0
+            ? additionalIngredients
+                .map((ing) => {
+                    const ingredientName = ing.variant?.product?.name !== ing.variant?.name
+                        ? `${ing.variant?.product?.name} - ${ing.variant?.name}`
+                        : ing.variant?.product?.name || ing.variant?.name || 'Bahan';
+                    const lineTotal = ing.quantity * ing.price;
+                    return `
+                        <div class="item-row">
+                            <div class="item-left">
+                                <div class="item-name">${ingredientName}</div>
+                                <div class="item-sub">${formatCurrency(ing.price)} x ${ing.quantity}</div>
+                            </div>
+                            <div class="item-amount">${formatCurrency(lineTotal)}</div>
+                        </div>
+                    `;
+                })
+                .join("")
+            : "";
+
     return `
         <!DOCTYPE html>
         <html>
@@ -403,105 +536,105 @@ export async function generateReceiptHTML(params: ReceiptPDFParams): Promise<str
                 body {
                     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
                     background-color: #ffffff;
-                    padding: 40px;
+                    padding: 16px;
                 }
                 .receipt {
                     width: 100%;
                     background-color: #ffffff;
-                    padding: 80px 0;
+                    padding: 0;
                 }
                 .store-header {
                     text-align: center;
-                    margin-bottom: 24px;
+                    margin-bottom: 20px;
                 }
                 .store-logo {
                     max-width: 120px;
                     max-height: 120px;
-                    margin-bottom: 16px;
+                    margin-bottom: 12px;
                 }
                 .store-name {
-                    font-size: 42px;
+                    font-size: 52px;
                     font-weight: 600;
                     color: #1a1a1a;
                     margin-bottom: 8px;
                 }
                 .store-info {
-                    font-size: 28px;
+                    font-size: 36px;
                     color: #666;
-                    margin-top: 8px;
+                    margin-top: 6px;
                 }
                 .divider {
                     height: 2px;
                     background-color: #e0e0e0;
-                    margin: 24px 0;
+                    margin: 16px 0;
                 }
                 .info-grid {
                     display: flex;
                     flex-direction: column;
-                    gap: 16px;
+                    gap: 12px;
                 }
                 .info-row {
                     display: flex;
                     justify-content: space-between;
                 }
                 .info-label {
-                    font-size: 28px;
+                    font-size: 36px;
                     color: #666;
                 }
                 .info-value {
-                    font-size: 28px;
+                    font-size: 36px;
                     color: #1a1a1a;
                     font-weight: 500;
                 }
                 .copy-banner {
                     text-align: center;
-                    font-size: 28px;
+                    font-size: 36px;
                     font-weight: 600;
                     color: #1a1a1a;
-                    margin: 24px 0;
+                    margin: 16px 0;
                 }
                 .items-section {
-                    margin-top: 16px;
+                    margin-top: 12px;
                 }
                 .item-row {
                     display: flex;
                     justify-content: space-between;
                     align-items: flex-start;
-                    margin-bottom: 20px;
+                    margin-bottom: 16px;
                 }
                 .item-left {
                     flex-shrink: 1;
-                    padding-right: 16px;
+                    padding-right: 12px;
                 }
                 .item-name {
-                    font-size: 28px;
+                    font-size: 36px;
                     color: #1a1a1a;
-                    margin-bottom: 6px;
+                    margin-bottom: 4px;
                 }
                 .item-sub {
-                    font-size: 24px;
+                    font-size: 32px;
                     color: #666;
                 }
                 .item-amount {
-                    font-size: 28px;
+                    font-size: 36px;
                     color: #1a1a1a;
                     font-weight: 500;
                 }
                 .summary-section {
-                    margin-top: 20px;
+                    margin-top: 16px;
                 }
                 .summary-row {
                     display: flex;
                     justify-content: space-between;
                     align-items: center;
-                    margin-bottom: 12px;
+                    margin-bottom: 10px;
                 }
                 .summary-label {
-                    font-size: 28px;
+                    font-size: 36px;
                     color: #666;
                 }
                 .summary-value {
-                    font-size: 28px;
+                    font-size: 36px;
                     color: #1a1a1a;
                 }
                 .summary-label-strong {
@@ -513,10 +646,10 @@ export async function generateReceiptHTML(params: ReceiptPDFParams): Promise<str
                 }
                 .footer {
                     text-align: center;
-                    margin-top: 36px;
+                    margin-top: 24px;
                 }
                 .footer-text {
-                    font-size: 22px;
+                    font-size: 28px;
                     color: #666;
                     margin-bottom: 4px;
                 }
@@ -565,9 +698,13 @@ export async function generateReceiptHTML(params: ReceiptPDFParams): Promise<str
                     ${itemsHTML}
                 </div>
 
-                ${additionalFeesHTML ? `
-                    <div style="margin-top: 12px;">
+                ${(additionalFeesHTML || additionalIngredientsHTML) ? `
+                    <div class="divider"></div>
+                    <div class="copy-banner">BIAYA TAMBAHAN</div>
+                    <div class="divider"></div>
+                    <div class="items-section">
                         ${additionalFeesHTML}
+                        ${additionalIngredientsHTML}
                     </div>
                 ` : ""}
 
@@ -621,7 +758,8 @@ export async function shareReceiptAsPDF(params: ReceiptPDFParams): Promise<void>
 
     const { uri } = await Print.printToFileAsync({
         html,
-        width: 600,
+        width: 800,
+        height: 1200,
     });
 
     // Rename file to use transaction ID

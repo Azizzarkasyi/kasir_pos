@@ -254,6 +254,9 @@ export default function PaymentPage() {
   };
 
   const handleProductPress = (product: Product) => {
+    // Block disabled products
+    if (product.is_disabled) return;
+
     // Check if product has multiple variants
     if (product.variants && product.variants.length > 1) {
       setSelectedProductForVariant(product);
@@ -276,6 +279,9 @@ export default function PaymentPage() {
   };
 
   const handleProductLongPress = (product: Product) => {
+    // Block disabled products
+    if (product.is_disabled) return;
+
     setSelectedProductForCustomQty(product);
     setCustomQtyModalVisible(true);
   };
@@ -887,6 +893,7 @@ export default function PaymentPage() {
                           : product.price || 0
                       }
                       quantity={getProductQuantity(product.id)}
+                      isDisabled={product.is_disabled}
                       onPress={() => handleProductPress(product)}
                       onLongPress={() => handleProductLongPress(product)}
                     />

@@ -17,26 +17,26 @@ import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect, useRouter } from "expo-router";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
-    ActivityIndicator,
-    Alert,
-    StyleSheet,
-    TouchableOpacity,
-    View,
-    useWindowDimensions,
+  ActivityIndicator,
+  Alert,
+  StyleSheet,
+  TouchableOpacity,
+  View,
+  useWindowDimensions,
 } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function ProductsScreen() {
   const colorScheme = useColorScheme() ?? "light";
-  const {width, height} = useWindowDimensions();
+  const { width, height } = useWindowDimensions();
   const isTablet = Math.min(width, height) >= 600;
   const isLandscape = width > height;
   const isTabletLandscape = isTablet && isLandscape;
   const styles = createStyles(colorScheme, isTablet, isTabletLandscape);
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const {reset} = useProductFormStore();
+  const { reset } = useProductFormStore();
   const { isDisabled } = useUserPlan();
 
   const [activeTab, setActiveTab] = useState<"produk" | "kategori">("produk");
@@ -127,6 +127,8 @@ export default function ProductsScreen() {
 
   const filteredProducts = products;
 
+  console.log(filteredProducts)
+
   const handleEditCategory = (categoryId: string) => {
     const found = categories.find(c => c.id === categoryId);
     setEditingCategoryId(categoryId);
@@ -144,11 +146,11 @@ export default function ProductsScreen() {
     try {
       if (editingCategoryId) {
         // Update existing category
-        await categoryApi.updateCategory(editingCategoryId, {name});
+        await categoryApi.updateCategory(editingCategoryId, { name });
         Alert.alert("Sukses", "Kategori berhasil diperbarui");
       } else {
         // Create new category
-        await categoryApi.createCategory({name});
+        await categoryApi.createCategory({ name });
         Alert.alert("Sukses", "Kategori berhasil ditambahkan");
       }
       await loadCategories();
@@ -160,6 +162,7 @@ export default function ProductsScreen() {
   };
 
   const handlePressProduct = (product: Product) => {
+    if (product.is_disabled) return;
     router.push({
       pathname: "/dashboard/product/edit-product",
       params: {
@@ -180,166 +183,167 @@ export default function ProductsScreen() {
   };
 
   return (
-    <View style={{flex: 1, backgroundColor: Colors[colorScheme].background}}>
+    <View style={{ flex: 1, backgroundColor: Colors[colorScheme].background }}>
       <Header title="Kelola Produk" showHelp={false} />
       <View style={isDisabled ? styles.disabledOverlay : undefined} pointerEvents={isDisabled ? "none" : "auto"}>
-      <KeyboardAwareScrollView
-        contentContainerStyle={{
-          paddingBottom: insets.bottom + 100,
-          paddingTop: 0,
-        }}
-        enableOnAndroid
-        keyboardOpeningTime={0}
-        extraScrollHeight={24}
-        keyboardShouldPersistTaps="handled"
-      >
-        {/* --- 1. TAB SECTION (Full Width) --- */}
-        <View style={styles.tabsRow}>
-          <TouchableOpacity
-            style={styles.tabItem}
-            onPress={() => setActiveTab("produk")}
-          >
-            <ThemedText
-              style={[
-                styles.tabText,
-                activeTab === "produk"
-                  ? {color: Colors[colorScheme].primary}
-                  : {color: Colors[colorScheme].icon},
-              ]}
+        <KeyboardAwareScrollView
+          contentContainerStyle={{
+            paddingBottom: insets.bottom + 100,
+            paddingTop: 0,
+          }}
+          enableOnAndroid
+          keyboardOpeningTime={0}
+          extraScrollHeight={24}
+          keyboardShouldPersistTaps="handled"
+        >
+          {/* --- 1. TAB SECTION (Full Width) --- */}
+          <View style={styles.tabsRow}>
+            <TouchableOpacity
+              style={styles.tabItem}
+              onPress={() => setActiveTab("produk")}
             >
-              Produk
-            </ThemedText>
-            {activeTab === "produk" && <View style={styles.activeTabLine} />}
-          </TouchableOpacity>
+              <ThemedText
+                style={[
+                  styles.tabText,
+                  activeTab === "produk"
+                    ? { color: Colors[colorScheme].primary }
+                    : { color: Colors[colorScheme].icon },
+                ]}
+              >
+                Produk
+              </ThemedText>
+              {activeTab === "produk" && <View style={styles.activeTabLine} />}
+            </TouchableOpacity>
 
-          <TouchableOpacity
-            style={styles.tabItem}
-            onPress={() => setActiveTab("kategori")}
-          >
-            <ThemedText
-              style={[
-                styles.tabText,
-                activeTab === "kategori"
-                  ? {color: Colors[colorScheme].primary}
-                  : {color: Colors[colorScheme].icon},
-              ]}
+            <TouchableOpacity
+              style={styles.tabItem}
+              onPress={() => setActiveTab("kategori")}
             >
-              Kategori
-            </ThemedText>
-            {activeTab === "kategori" && <View style={styles.activeTabLine} />}
-          </TouchableOpacity>
-        </View>
+              <ThemedText
+                style={[
+                  styles.tabText,
+                  activeTab === "kategori"
+                    ? { color: Colors[colorScheme].primary }
+                    : { color: Colors[colorScheme].icon },
+                ]}
+              >
+                Kategori
+              </ThemedText>
+              {activeTab === "kategori" && <View style={styles.activeTabLine} />}
+            </TouchableOpacity>
+          </View>
 
-        {/* --- 2. CONTENT SECTION (Dengan Padding) --- */}
-        <View style={styles.contentWrapper}>
-          <View style={styles.contentContainer}>
-            {activeTab === "produk" ? (
-              <View>
-                <View style={styles.searchRow}>
-                  {/* PENTING: Gunakan View Wrapper dengan flex: 1 untuk Input 
+          {/* --- 2. CONTENT SECTION (Dengan Padding) --- */}
+          <View style={styles.contentWrapper}>
+            <View style={styles.contentContainer}>
+              {activeTab === "produk" ? (
+                <View>
+                  <View style={styles.searchRow}>
+                    {/* PENTING: Gunakan View Wrapper dengan flex: 1 untuk Input 
                    Ini akan memaksa input mengisi sisa ruang kosong secara otomatis
                 */}
-                  <View style={{flex: 1}}>
-                    <ThemedInput
-                      label="Cari Produk"
-                      value={search}
-                      onChangeText={setSearch}
-                      size="sm"
-                      leftIconName="search"
-                      width="100%" // Input mengisi wrapper flex:1 tadi
-                      showLabel={false}
-                      placeholder="Cari Produk"
-                    />
+                    <View style={{ flex: 1 }}>
+                      <ThemedInput
+                        label="Cari Produk"
+                        value={search}
+                        onChangeText={setSearch}
+                        size="sm"
+                        leftIconName="search"
+                        width="100%" // Input mengisi wrapper flex:1 tadi
+                        showLabel={false}
+                        placeholder="Cari Produk"
+                      />
+                    </View>
+
+                    <TouchableOpacity
+                      style={styles.filterButton}
+                      onPress={() => setIsFilterModalVisible(true)}
+                    >
+                      <Ionicons
+                        name="options-outline"
+                        size={isTablet ? 26 : 20}
+                        color={Colors[colorScheme].text}
+                      />
+                    </TouchableOpacity>
                   </View>
 
-                  <TouchableOpacity
-                    style={styles.filterButton}
-                    onPress={() => setIsFilterModalVisible(true)}
-                  >
-                    <Ionicons
-                      name="options-outline"
-                      size={isTablet ? 26 : 20}
-                      color={Colors[colorScheme].text}
-                    />
-                  </TouchableOpacity>
-                </View>
+                  <View style={{ marginTop: 16 }}>
+                    {isLoadingProducts ? (
+                      <View style={{ paddingVertical: 40, alignItems: "center" }}>
+                        <ActivityIndicator
+                          size="large"
+                          color={Colors[colorScheme].primary}
+                        />
+                      </View>
+                    ) : filteredProducts.length === 0 ? (
+                      <View style={{ paddingVertical: 40, alignItems: "center" }}>
+                        <ThemedText style={styles.emptyText}>
+                          {search
+                            ? "Tidak ada produk ditemukan"
+                            : "Belum ada produk"}
+                        </ThemedText>
+                      </View>
+                    ) : (
+                      filteredProducts.map(product => {
+                        // Ambil stock dari variant default
+                        const defaultVariant = product.variants?.find(
+                          (v: any) => v.is_default === true
+                        );
+                        const stockCount = defaultVariant?.stock ?? 0;
 
-                <View style={{marginTop: 16}}>
-                  {isLoadingProducts ? (
-                    <View style={{paddingVertical: 40, alignItems: "center"}}>
+                        return (
+                          <ProductCard
+                            key={product.id}
+                            initials={(product.name || "PR")
+                              .slice(0, 2)
+                              .toUpperCase()}
+                            name={product.name}
+                            variantCount={product.variants?.length ?? 0}
+                            stockCount={stockCount}
+                            photoUrl={product.photo_url}
+                            isDisabled={product.is_disabled}
+                            onPress={() => handlePressProduct(product)}
+                          />
+                        );
+                      })
+                    )}
+                  </View>
+                </View>
+              ) : (
+                <View style={{ marginTop: 20 }}>
+                  {isLoadingCategories ? (
+                    <View style={{ paddingVertical: 40, alignItems: "center" }}>
                       <ActivityIndicator
                         size="large"
                         color={Colors[colorScheme].primary}
                       />
                     </View>
-                  ) : filteredProducts.length === 0 ? (
-                    <View style={{paddingVertical: 40, alignItems: "center"}}>
+                  ) : categories.length === 0 ? (
+                    <View style={{ paddingVertical: 40, alignItems: "center" }}>
                       <ThemedText style={styles.emptyText}>
-                        {search
-                          ? "Tidak ada produk ditemukan"
-                          : "Belum ada produk"}
+                        Belum ada kategori
                       </ThemedText>
                     </View>
                   ) : (
-                    filteredProducts.map(product => {
-                      // Ambil stock dari variant default
-                      const defaultVariant = product.variants?.find(
-                        (v: any) => v.is_default === true
-                      );
-                      const stockCount = defaultVariant?.stock ?? 0;
-
-                      return (
-                        <ProductCard
-                          key={product.id}
-                          initials={(product.name || "PR")
-                            .slice(0, 2)
-                            .toUpperCase()}
-                          name={product.name}
-                          variantCount={product.variants?.length ?? 0}
-                          stockCount={stockCount}
-                          photoUrl={product.photo_url}
-                          onPress={() => handlePressProduct(product)}
-                        />
-                      );
-                    })
+                    categories.map(category => (
+                      <CategoryItem
+                        key={category.id}
+                        title={category.name}
+                        onEdit={() => handleEditCategory(category.id)}
+                      />
+                    ))
                   )}
                 </View>
-              </View>
-            ) : (
-              <View style={{marginTop: 20}}>
-                {isLoadingCategories ? (
-                  <View style={{paddingVertical: 40, alignItems: "center"}}>
-                    <ActivityIndicator
-                      size="large"
-                      color={Colors[colorScheme].primary}
-                    />
-                  </View>
-                ) : categories.length === 0 ? (
-                  <View style={{paddingVertical: 40, alignItems: "center"}}>
-                    <ThemedText style={styles.emptyText}>
-                      Belum ada kategori
-                    </ThemedText>
-                  </View>
-                ) : (
-                  categories.map(category => (
-                    <CategoryItem
-                      key={category.id}
-                      title={category.name}
-                      onEdit={() => handleEditCategory(category.id)}
-                    />
-                  ))
-                )}
-              </View>
-            )}
+              )}
+            </View>
           </View>
-        </View>
-      </KeyboardAwareScrollView>
+        </KeyboardAwareScrollView>
       </View>
 
       <TouchableOpacity
         style={[
-          styles.fab, 
-          {bottom: insets.bottom + (isTablet ? 32 : 24)},
+          styles.fab,
+          { bottom: insets.bottom + (isTablet ? 32 : 24) },
           isDisabled && styles.disabledFab
         ]}
         onPress={goAdd}

@@ -29,6 +29,7 @@ type StockItem = {
   variantName?: string;
   quantity: number;
   unit?: string;
+  isDisabled?: boolean;
 };
 
 export default function ManageStockScreen() {
@@ -70,6 +71,7 @@ export default function ManageStockScreen() {
             variantName: variant.name,
             quantity: variant.stock || 0,
             unit: undefined, // Unit will be loaded from unit_id if needed
+            isDisabled: variant.product?.is_disabled || variant.is_disabled || false,
           });
         });
         setStockItems(items);
@@ -167,7 +169,9 @@ export default function ManageStockScreen() {
                   name={item.productName}
                   variant={item.variantName}
                   quantity={item.quantity}
+                  isDisabled={item.isDisabled}
                   onPress={() => {
+                    if (item.isDisabled) return;
                     setEditingItem(item);
                   }}
                 />
@@ -198,7 +202,7 @@ export default function ManageStockScreen() {
           try {
             setIsUpdatingStock(true);
 
-        
+
 
             console.log("📦 Updating stock:", {
               mode,

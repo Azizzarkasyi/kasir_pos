@@ -156,6 +156,11 @@ export default function ShareStruckPage() {
             ? transaction.additional_fees
             : additionalFees || [];
 
+    const additionalIngredientsList =
+        transaction?.additional_ingredients && transaction.additional_ingredients.length > 0
+            ? transaction.additional_ingredients
+            : [];
+
     const handleShare = async () => {
         try {
             const storeLine = `${storeName}${storeBranch ? " - " + storeBranch : ""}`;
@@ -274,8 +279,8 @@ export default function ShareStruckPage() {
                     <View style={styles.receiptCard}>
                         <View style={styles.storeHeaderWrapper}>
                             {storeLogo && (
-                                <Image 
-                                    source={{ uri: storeLogo }} 
+                                <Image
+                                    source={{ uri: storeLogo }}
                                     style={styles.storeLogo}
                                     resizeMode="contain"
                                 />
@@ -355,23 +360,49 @@ export default function ShareStruckPage() {
                             })}
                         </View>
 
-                        {additionalFeesList && additionalFeesList.length > 0 && (
-                            <View style={[styles.itemsSection, { marginTop: isTablet ? 12 : 8 }]}>
-                                {additionalFeesList.map((fee, index) => (
-                                    <View key={`fee-${index}`} style={styles.itemRow}>
-                                        <View style={styles.itemLeft}>
-                                            <Text style={styles.itemName}>{fee.name}</Text>
+                        {/* Biaya Tambahan (fees + ingredients) */}
+                        {((additionalFeesList && additionalFeesList.length > 0) ||
+                            (additionalIngredientsList && additionalIngredientsList.length > 0)) ? (
+                            <>
+                                <View style={styles.sectionDivider} />
+                                <View style={styles.copyBannerWrapper}>
+                                    <Text style={styles.copyBannerText}>BIAYA TAMBAHAN</Text>
+                                </View>
+                                <View style={styles.sectionDivider} />
+                                <View style={styles.itemsSection}>
+                                    {additionalFeesList?.map((fee, index) => (
+                                        <View key={`fee-${index}`} style={styles.itemRow}>
+                                            <View style={styles.itemLeft}>
+                                                <Text style={styles.itemName}>{fee.name}</Text>
+                                            </View>
+                                            <Text style={styles.itemAmount}>
+                                                {formatCurrency(fee.amount || 0)}
+                                            </Text>
                                         </View>
-                                        <Text style={styles.itemAmount}>
-                                            {formatCurrency(fee.amount || 0)}
-                                        </Text>
-                                    </View>
-                                ))}
-                            </View>
-                        )}
-
+                                    ))}
+                                    {additionalIngredientsList?.map((ing, index) => {
+                                        const ingredientName = ing.variant?.product?.name !== ing.variant?.name
+                                            ? `${ing.variant?.product?.name} - ${ing.variant?.name}`
+                                            : ing.variant?.product?.name || ing.variant?.name || 'Bahan';
+                                        const lineTotal = ing.quantity * ing.price;
+                                        return (
+                                            <View key={`ing-${index}`} style={styles.itemRow}>
+                                                <View style={styles.itemLeft}>
+                                                    <Text style={styles.itemName}>{ingredientName}</Text>
+                                                    <Text style={styles.itemSubText}>
+                                                        {formatCurrency(ing.price)} x {ing.quantity}
+                                                    </Text>
+                                                </View>
+                                                <Text style={styles.itemAmount}>
+                                                    {formatCurrency(lineTotal)}
+                                                </Text>
+                                            </View>
+                                        );
+                                    })}
+                                </View>
+                            </>
+                        ) : null}
                         <View style={styles.sectionDivider} />
-
                         <View style={styles.summarySection}>
                             <View style={styles.summaryRow}>
                                 <Text style={styles.summaryLabel}>Subtotal</Text>
@@ -379,7 +410,7 @@ export default function ShareStruckPage() {
                                     {formatCurrency(subtotal)}
                                 </Text>
                             </View>
-                            {!struckConfig?.hide_tax_percentage && transaction?.tax && (
+                            {!struckConfig?.hide_tax_percentage && transaction?.tax !== undefined && transaction.tax > 0 && (
                                 <View style={styles.summaryRow}>
                                     <Text style={styles.summaryLabel}>Pajak</Text>
                                     <Text style={styles.summaryValue}>
@@ -549,6 +580,12 @@ const createStyles = (colorScheme: "light" | "dark", isTablet: boolean) =>
             fontSize: isTablet ? 20 : 13,
             color: Colors[colorScheme].text,
             fontWeight: "500",
+        },
+        sectionLabel: {
+            fontSize: isTablet ? 16 : 12,
+            fontWeight: "600",
+            color: Colors[colorScheme].icon,
+            marginBottom: isTablet ? 8 : 4,
         },
         summarySection: {
             marginTop: isTablet ? 14 : 10,
