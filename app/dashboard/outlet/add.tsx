@@ -324,14 +324,10 @@ export default function AddOutletScreen() {
         status: "active",
       };
 
-      // TODO: Add image URL when backend schema supports it
-      // Backend StoreBranch schema doesn't have image_url field yet
+      // Add image URL to payload if uploaded
       if (uploadedImageUrl) {
-        console.log(
-          "🖼️ Image URL saved (not sent to backend):",
-          uploadedImageUrl
-        );
-        // payload.image_url = uploadedImageUrl;
+        console.log("🖼️ Adding image URL to payload:", uploadedImageUrl);
+        payload.image_url = uploadedImageUrl;
       }
 
       console.log("📦 Creating branch:", payload);

@@ -10,6 +10,7 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   FlatList,
+  Image,
   RefreshControl,
   StyleSheet,
   TextInput,
@@ -22,6 +23,7 @@ type OutletItemProps = {
   name: string;
   isPrimary?: boolean;
   address: string;
+  imageUrl?: string | null;
   styles: ReturnType<typeof createStyles>;
   isTablet: boolean;
   onPress?: () => void;
@@ -31,6 +33,7 @@ const OutletItem: React.FC<OutletItemProps> = ({
   name,
   isPrimary,
   address,
+  imageUrl,
   styles,
   isTablet,
   onPress,
@@ -42,11 +45,19 @@ const OutletItem: React.FC<OutletItemProps> = ({
       onPress={onPress}
     >
       <View style={styles.outletIconWrapper}>
-        <AntDesign
-          name="shop"
-          size={isTablet ? 32 : 24}
-          style={styles.outletIcon}
-        />
+        {imageUrl ? (
+          <Image
+            source={{ uri: imageUrl }}
+            style={styles.outletImage}
+            resizeMode="cover"
+          />
+        ) : (
+          <AntDesign
+            name="shop"
+            size={isTablet ? 32 : 24}
+            style={styles.outletIcon}
+          />
+        )}
       </View>
 
       <View style={styles.outletInfoWrapper}>
@@ -184,10 +195,11 @@ const SelectBranchScreen = () => {
               data={branches}
               keyExtractor={item => item.id}
               renderItem={({item}) => (
-                <OutletItem
+              <OutletItem
                   name={item.name}
                   isPrimary={item.status === "primary"}
                   address={`${item.village.name}, ${item.subdistrict.name}, ${item.city.name}`}
+                  imageUrl={item.image_url}
                   styles={styles}
                   isTablet={isTablet}
                   onPress={() =>
@@ -286,6 +298,11 @@ const createStyles = (
     },
     outletIcon: {
       color: Colors[colorScheme].icon,
+    },
+    outletImage: {
+      width: isTablet ? 56 : 40,
+      height: isTablet ? 56 : 40,
+      borderRadius: isTablet ? 12 : 8,
     },
     outletInfoWrapper: {
       flex: 1,

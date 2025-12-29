@@ -236,6 +236,10 @@ export default function EditOutletScreen() {
           });
           setVillageQuery(data.village.name);
           setAddress(data.address);
+          // Load existing image if available
+          if (data.image_url) {
+            setImageUri(data.image_url);
+          }
           console.log("✅ Form fields populated");
         }
       } catch (error: any) {
@@ -299,14 +303,10 @@ export default function EditOutletScreen() {
         address: address.trim(),
       };
 
-      // TODO: Add image URL when backend schema supports it
-      // Backend StoreBranch schema doesn't have image_url field yet
+      // Add image URL to payload if uploaded
       if (uploadedImageUrl) {
-        console.log(
-          "🖼️ Image URL saved (not sent to backend):",
-          uploadedImageUrl
-        );
-        // payload.image_url = uploadedImageUrl;
+        console.log("🖼️ Adding image URL to payload:", uploadedImageUrl);
+        payload.image_url = uploadedImageUrl;
       }
 
       // Only include location if changed (always include all location data)

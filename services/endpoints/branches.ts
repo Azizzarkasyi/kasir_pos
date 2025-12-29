@@ -6,6 +6,7 @@ export interface Branch {
   store_id: string;
   name: string;
   phone: string | null;
+  image_url: string | null;
   province: {id: string | number; name: string};
   city: {id: string | number; name: string};
   subdistrict: {id: string | number; name: string};
@@ -46,6 +47,7 @@ export const branchApi = {
   async createBranch(data: {
     name: string;
     phone?: string;
+    image_url?: string;
     province: {id: string | number; name: string};
     city: {id: string | number; name: string};
     subdistrict: {id: string | number; name: string};
@@ -65,6 +67,7 @@ export const branchApi = {
     data: {
       name?: string;
       phone?: string;
+      image_url?: string;
       province?: {id: string | number; name: string};
       city?: {id: string | number; name: string};
       subdistrict?: {id: string | number; name: string};
