@@ -170,6 +170,7 @@ export default function ManageStockScreen() {
                   variant={item.variantName}
                   quantity={item.quantity}
                   isDisabled={item.isDisabled}
+                  isTablet={isTablet}
                   onPress={() => {
                     if (item.isDisabled) return;
                     setEditingItem(item);
@@ -259,7 +260,7 @@ const createStyles = (
     searchRow: {
       flexDirection: "row",
       alignItems: "center",
-      paddingHorizontal: isTablet ? 32 : 20,
+      paddingHorizontal: isTablet ? 60 : 20,
       marginTop: isTablet ? 16 : 8,
       gap: isTablet ? 16 : 12,
     },
@@ -274,6 +275,7 @@ const createStyles = (
     },
     listContainer: {
       marginTop: 12,
+      paddingHorizontal: isTablet ? 60 : 20,
     },
     loadingContainer: {
       flex: 1,
@@ -284,6 +286,7 @@ const createStyles = (
     loadingText: {
       marginTop: 16,
       color: Colors[colorScheme].icon,
+      fontSize: isTablet ? 18 : 14,
     },
     emptyContainer: {
       paddingTop: 60,
@@ -293,5 +296,6 @@ const createStyles = (
     emptyText: {
       color: Colors[colorScheme].icon,
       textAlign: "center",
+      fontSize: isTablet ? 18 : 14,
     },
   });

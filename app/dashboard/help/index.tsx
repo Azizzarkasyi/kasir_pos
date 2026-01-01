@@ -172,20 +172,20 @@ const createStyles = (
             width: "100%",
             maxWidth: isTabletLandscape ? 960 : undefined,
             alignSelf: "center",
-            paddingHorizontal: isTablet ? 24 : 16,
+            paddingHorizontal: isTablet ? 60 : 16,
             paddingTop: isTablet ? 24 : 16,
         },
         headerSection: {
             marginBottom: isTablet ? 32 : 24,
         },
         sectionTitle: {
-            fontSize: isTablet ? 28 : 22,
+            fontSize: isTablet ? 30 : 22,
             fontWeight: "bold",
             marginBottom: 8,
             color: Colors[colorScheme].text,
         },
         sectionSubtitle: {
-            fontSize: isTablet ? 16 : 14,
+            fontSize: isTablet ? 18 : 14,
             color: Colors[colorScheme].icon,
         },
         faqList: {
@@ -207,7 +207,7 @@ const createStyles = (
             padding: isTablet ? 20 : 16,
         },
         questionText: {
-            fontSize: isTablet ? 18 : 15,
+            fontSize: isTablet ? 20 : 15,
             fontWeight: "600",
             flex: 1,
             marginRight: 16,
@@ -221,9 +221,9 @@ const createStyles = (
             paddingTop: 12,
         },
         answerText: {
-            fontSize: isTablet ? 16 : 14,
+            fontSize: isTablet ? 18 : 14,
             color: Colors[colorScheme].icon,
-            lineHeight: isTablet ? 24 : 20,
+            lineHeight: isTablet ? 26 : 20,
         },
         contactSection: {
             alignItems: "center",

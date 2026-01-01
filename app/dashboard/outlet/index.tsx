@@ -77,7 +77,7 @@ const OutletItem: React.FC<OutletItemProps> = ({
 
 const SelectBranchScreen = () => {
   const colorScheme = useColorScheme() ?? "light";
-  const {width, height} = useWindowDimensions();
+  const { width, height } = useWindowDimensions();
   const isTablet = Math.min(width, height) >= 600;
   const isLandscape = width > height;
   const isTabletLandscape = isTablet && isLandscape;
@@ -173,20 +173,20 @@ const SelectBranchScreen = () => {
           </View>
 
           {isLoading && !refreshing ? (
-            <View style={{paddingVertical: 32, alignItems: "center"}}>
+            <View style={{ paddingVertical: 32, alignItems: "center" }}>
               <ActivityIndicator
                 size="large"
                 color={Colors[colorScheme].primary}
               />
               <ThemedText
-                style={{marginTop: 16, color: Colors[colorScheme].icon}}
+                style={{ marginTop: 16, color: Colors[colorScheme].icon }}
               >
                 Memuat outlet...
               </ThemedText>
             </View>
           ) : branches.length === 0 ? (
-            <View style={{paddingVertical: 32, alignItems: "center"}}>
-              <ThemedText style={{color: Colors[colorScheme].icon}}>
+            <View style={{ paddingVertical: 32, alignItems: "center" }}>
+              <ThemedText style={{ color: Colors[colorScheme].icon }}>
                 {searchQuery ? "Outlet tidak ditemukan" : "Belum ada outlet"}
               </ThemedText>
             </View>
@@ -194,8 +194,8 @@ const SelectBranchScreen = () => {
             <FlatList
               data={branches}
               keyExtractor={item => item.id}
-              renderItem={({item}) => (
-              <OutletItem
+              renderItem={({ item }) => (
+                <OutletItem
                   name={item.name}
                   isPrimary={item.status === "primary"}
                   address={`${item.village.name}, ${item.subdistrict.name}, ${item.city.name}`}
@@ -207,7 +207,7 @@ const SelectBranchScreen = () => {
                   }
                 />
               )}
-              contentContainerStyle={{gap: isTablet ? 12 : 8}}
+              contentContainerStyle={{ gap: isTablet ? 12 : 8 }}
               refreshControl={
                 <RefreshControl
                   refreshing={refreshing}
@@ -244,7 +244,7 @@ const createStyles = (
   StyleSheet.create({
     container: {
       flex: 1,
-      paddingHorizontal: isTablet ? 40 : 16,
+      paddingHorizontal: isTablet ? 60 : 16,
       backgroundColor: Colors[colorScheme].background,
     },
     contentWrapper: {
@@ -344,7 +344,7 @@ const createStyles = (
       justifyContent: "center",
       backgroundColor: Colors[colorScheme].primary,
       shadowColor: Colors[colorScheme].shadow,
-      shadowOffset: {width: 0, height: 4},
+      shadowOffset: { width: 0, height: 4 },
       shadowOpacity: 0.5,
       shadowRadius: 6,
       elevation: 6,

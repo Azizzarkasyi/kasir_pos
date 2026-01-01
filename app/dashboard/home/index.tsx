@@ -257,13 +257,13 @@ const DashboardScreen = () => {
                     styles.linkContainer,
                   ]}
                 >
-                  <ThemedText 
+                  <ThemedText
                     style={[
                       styles.outletNameText,
                     ]}
                   >
-                    {currentBranchName 
-                      ? currentBranchName.length > 20 
+                    {currentBranchName
+                      ? currentBranchName.length > 20
                         ? currentBranchName.substring(0, 20) + "..."
                         : currentBranchName
                       : "Pilih Outlet"}
@@ -476,7 +476,7 @@ const DashboardScreen = () => {
           onClose={closeDrawer}
           onSelect={key => setActiveMenu(key as DashboardMenuKey)}
         />
-       )} 
+      )}
     </View>
   );
 };
@@ -563,23 +563,23 @@ const createStyles = (
     },
     notificationBadge: {
       position: "absolute",
-      top: -2,
-      right: -4,
+      top: isTablet ? -4 : -2,
+      right: isTablet ? -6 : -4,
       backgroundColor: "#FF3B30",
       padding: 0,
-      borderRadius: 8,
-      minWidth: isTablet ? 16 : 14,
+      borderRadius: isTablet ? 11 : 8,
+      minWidth: isTablet ? 22 : 14,
       display: "flex",
-      height: isTablet ? 16 : 14,
+      height: isTablet ? 22 : 14,
       alignItems: "center",
       justifyContent: "center",
-      paddingHorizontal: 3,
+      paddingHorizontal: isTablet ? 5 : 3,
     },
     notificationBadgeText: {
       color: "white",
-      fontSize: isTablet ? 9 : 8,
+      fontSize: isTablet ? 12 : 8,
       fontWeight: "700",
-      lineHeight: isTablet ? 14 : 12,
+      lineHeight: isTablet ? 18 : 12,
       textAlign: "center",
     },
     title: {

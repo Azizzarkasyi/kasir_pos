@@ -1,16 +1,16 @@
-import ComboInput from "@/components/combo-input";
 import ConfirmPopup from "@/components/atoms/confirm-popup";
+import ComboInput from "@/components/combo-input";
 import Header from "@/components/header";
-import {ThemedButton} from "@/components/themed-button";
-import {ThemedInput} from "@/components/themed-input";
-import {ThemedText} from "@/components/themed-text";
-import {Colors} from "@/constants/theme";
-import {useColorScheme} from "@/hooks/use-color-scheme";
+import { ThemedButton } from "@/components/themed-button";
+import { ThemedInput } from "@/components/themed-input";
+import { ThemedText } from "@/components/themed-text";
+import { Colors } from "@/constants/theme";
+import { useColorScheme } from "@/hooks/use-color-scheme";
 import productApi from "@/services/endpoints/products";
-import {useRecipeFormStore} from "@/stores/recipe-form-store";
-import {Product, ProductVariant} from "@/types/api";
-import {useNavigation, useRouter} from "expo-router";
-import React, {useEffect, useRef, useState} from "react";
+import { useRecipeFormStore } from "@/stores/recipe-form-store";
+import { Product, ProductVariant } from "@/types/api";
+import { useNavigation, useRouter } from "expo-router";
+import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   StyleSheet,
@@ -18,8 +18,8 @@ import {
   useWindowDimensions,
   View,
 } from "react-native";
-import {KeyboardAwareScrollView} from "react-native-keyboard-aware-scroll-view";
-import {useSafeAreaInsets} from "react-native-safe-area-context";
+import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 type IngredientVariant = {
   id: string;
@@ -30,13 +30,13 @@ type IngredientVariant = {
 type IngredientOption = {
   label: string;
   value: string;
-  unit: {id: string; name: string};
+  unit: { id: string; name: string };
   variants?: IngredientVariant[];
 };
 
 export default function IngredientsScreen() {
   const colorScheme = useColorScheme() ?? "light";
-  const {width, height} = useWindowDimensions();
+  const { width, height } = useWindowDimensions();
   const isTablet = Math.min(width, height) >= 600;
   const isLandscape = width > height;
   const isTabletLandscape = isTablet && isLandscape;
@@ -47,12 +47,15 @@ export default function IngredientsScreen() {
 
   const addIngredient = useRecipeFormStore(state => state.addIngredient);
   const updateIngredient = useRecipeFormStore(state => state.updateIngredient);
+  const removeIngredient = useRecipeFormStore(state => state.removeIngredient);
   const editingIndex = useRecipeFormStore(state => state.editingIngredientIndex);
   const storeIngredients = useRecipeFormStore(state => state.ingredients);
   const setEditingIngredientIndex = useRecipeFormStore(state => state.setEditingIngredientIndex);
 
   const isEditMode = editingIndex !== null;
   const editingIngredient = isEditMode ? storeIngredients[editingIndex] : null;
+
+
 
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [pendingNavigation, setPendingNavigation] = useState<any>(null);
@@ -69,6 +72,7 @@ export default function IngredientsScreen() {
     []
   );
   const [selectedVariantId, setSelectedVariantId] = useState<string>("");
+  const [isSubmit, setIsSubmit] = useState(false);
 
   // Load ingredients from API
   useEffect(() => {
@@ -94,7 +98,7 @@ export default function IngredientsScreen() {
             "✅ Loaded",
             response.data.length,
             "ingredients for recipe:",
-            response.data.map((p: Product) => ({id: p.id, name: p.name}))
+            response.data.map((p: Product) => ({ id: p.id, name: p.name }))
           );
 
           if (response.data.length === 0) {
@@ -108,10 +112,11 @@ export default function IngredientsScreen() {
             const productId = editingIngredient.ingredient.id;
             setSelectedProductId(productId);
             setQuantity(String(editingIngredient.amount));
-            
+
             const found = response.data.find((p: Product) => p.id === productId);
+            console.log("found", found?.variants?.[0]?.unit);
             if (found) {
-              setSelectedUnit({id: "pcs", name: "Pcs"});
+              setSelectedUnit({ id: found?.variants?.[0]?.unit_id || "", name: found?.variants?.[0]?.unit?.name || "" });
               const vars = found.variants || [];
               setAvailableVariants(vars);
               if (editingIngredient.ingredient.variant_id) {
@@ -143,26 +148,26 @@ export default function IngredientsScreen() {
         name: found.name,
         variants: found.variants?.length,
       });
-      
+
       // Set available variants
       const vars = found.variants || [];
       setAvailableVariants(vars);
-      
+
       // Auto-select variant if only one, and get unit from it
       if (vars.length === 1) {
         setSelectedVariantId(vars[0].id);
         // Get unit from variant
         const variantUnit = vars[0].unit;
         if (variantUnit) {
-          setSelectedUnit({id: variantUnit.id, name: variantUnit.name});
+          setSelectedUnit({ id: variantUnit.id, name: variantUnit.name });
         } else {
-          setSelectedUnit({id: "pcs", name: "Pcs"});
+          setSelectedUnit({ id: "pcs", name: "Pcs" });
         }
       } else if (vars.length > 1) {
         setSelectedVariantId("");
-        setSelectedUnit({id: "pcs", name: "Pcs"});
+        setSelectedUnit({ id: "pcs", name: "Pcs" });
       } else {
-        setSelectedUnit({id: "pcs", name: "Pcs"});
+        setSelectedUnit({ id: "pcs", name: "Pcs" });
       }
     } else {
       console.log("❌ Product not found in list");
@@ -177,11 +182,12 @@ export default function IngredientsScreen() {
     setSelectedVariantId(variantId);
     const variant = availableVariants.find(v => v.id === variantId);
     if (variant?.unit) {
-      setSelectedUnit({id: variant.unit.id, name: variant.unit.name});
+      setSelectedUnit({ id: variant.unit.id, name: variant.unit.name });
     }
   };
 
   const handleSave = () => {
+    setIsSubmit(true);
     const selectedProduct = ingredients.find(p => p.id === selectedProductId);
     const selectedVariant = availableVariants.find(
       v => v.id === selectedVariantId
@@ -192,11 +198,11 @@ export default function IngredientsScreen() {
     console.log("🔍 Debug handleSave:", {
       selectedProductId,
       selectedProduct: selectedProduct
-        ? {id: selectedProduct.id, name: selectedProduct.name}
+        ? { id: selectedProduct.id, name: selectedProduct.name }
         : null,
       selectedVariantId,
       selectedVariant: selectedVariant
-        ? {id: selectedVariant.id, name: selectedVariant.name}
+        ? { id: selectedVariant.id, name: selectedVariant.name }
         : null,
       quantity: qtyNum,
       isEditMode,
@@ -216,7 +222,7 @@ export default function IngredientsScreen() {
         variant_name: selectedVariant?.name,
       },
       unit: selectedUnit
-        ? {id: selectedUnit.id, name: selectedUnit.name}
+        ? { id: selectedUnit.id, name: selectedUnit.name }
         : undefined,
       amount: qtyNum,
     };
@@ -235,14 +241,23 @@ export default function IngredientsScreen() {
     router.back();
   };
 
+  const handleDelete = () => {
+    if (isEditMode && editingIndex !== null) {
+      setIsSubmit(true);
+      removeIngredient(editingIndex);
+      setEditingIngredientIndex(null);
+      router.back();
+    }
+  };
+
   const isDirty = selectedProductId !== "" || quantity.trim() !== "";
 
   useEffect(() => {
     const sub = navigation.addListener("beforeRemove", e => {
       // Clear editing index when leaving
       setEditingIngredientIndex(null);
-      
-      if (!isDirty) {
+
+      if (!isDirty || isSubmit) {
         return;
       }
 
@@ -270,7 +285,7 @@ export default function IngredientsScreen() {
   };
 
   return (
-    <View style={{flex: 1, backgroundColor: Colors[colorScheme].background}}>
+    <View style={{ flex: 1, backgroundColor: Colors[colorScheme].background }}>
       <Header
         showHelp={false}
         title={isEditMode ? "Edit Bahan Resep" : "Tambah Bahan Resep"}
@@ -295,7 +310,7 @@ export default function IngredientsScreen() {
               color={Colors[colorScheme].primary}
             />
             <ThemedText
-              style={{marginTop: 16, color: Colors[colorScheme].icon}}
+              style={{ marginTop: 16, color: Colors[colorScheme].icon }}
             >
               Memuat daftar bahan...
             </ThemedText>
@@ -320,7 +335,7 @@ export default function IngredientsScreen() {
                 }
               }}
               items={[
-                {label: "Pilih Bahan", value: ""},
+                { label: "Pilih Bahan", value: "" },
                 ...ingredients.map(ing => ({
                   label: ing.name,
                   value: ing.id,
@@ -340,6 +355,7 @@ export default function IngredientsScreen() {
                     handleChangeVariant(found.id);
                   }
                 }}
+                disableAutoComplete
                 items={availableVariants.map(v => ({
                   label: v.name,
                   value: v.id,
@@ -367,6 +383,15 @@ export default function IngredientsScreen() {
       <View style={styles.bottomBar}>
         <View style={styles.contentWrapper}>
           <ThemedButton title="Simpan" onPress={handleSave} />
+          {isEditMode && (
+            <View style={{ marginTop: 8 }}>
+              <ThemedButton
+                title="Hapus Bahan"
+                variant="secondary"
+                onPress={handleDelete}
+              />
+            </View>
+          )}
         </View>
       </View>
 

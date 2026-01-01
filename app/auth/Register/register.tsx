@@ -7,32 +7,33 @@ import { ThemedText } from "@/components/themed-text";
 import { Colors } from "@/constants/theme";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { authApi } from "@/services";
+import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
-import { Alert, StyleSheet, TouchableOpacity, useWindowDimensions, View } from "react-native";
+import { Alert, Animated, StyleSheet, TouchableOpacity, useWindowDimensions, View } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-type LocationOption = {label: string; value: string};
+type LocationOption = { label: string; value: string };
 
-const businessTypes = [
-  {label: "Pilih Tipe Bisnis", value: ""},
-  {label: "Restoran", value: "restoran"},
-  {label: "Toko Kelontong", value: "toko-kelontong"},
-  {label: "Lainnya", value: "lainnya"},
-];
+import { businessTypes } from "@/constants/business-types";
 
 const WILAYAH_API_BASE = "https://wilayah.id/api";
 
 const RegisterScreen = () => {
   const colorScheme = useColorScheme() ?? "light";
-  const {width, height} = useWindowDimensions();
+  const { width, height } = useWindowDimensions();
   const isTablet = Math.min(width, height) >= 600;
   const isLandscape = width > height;
   const isTabletLandscape = isTablet && isLandscape;
   const styles = createStyles(colorScheme, isTablet, isTabletLandscape);
   const insets = useSafeAreaInsets();
   const router = useRouter();
+
+  // Step state
+  const [currentStep, setCurrentStep] = useState(1);
+  const totalSteps = 3;
+  const [progressAnim] = useState(new Animated.Value(1 / 3));
 
   // State for form fields
   const [businessName, setBusinessName] = useState("");
@@ -56,17 +57,26 @@ const RegisterScreen = () => {
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const [provinceOptions, setProvinceOptions] = useState<LocationOption[]>([
-    {label: "Pilih Provinsi", value: ""},
+    { label: "Pilih Provinsi", value: "" },
   ]);
   const [regencyOptions, setRegencyOptions] = useState<LocationOption[]>([
-    {label: "Pilih Kabupaten / Kota", value: ""},
+    { label: "Pilih Kabupaten / Kota", value: "" },
   ]);
   const [districtOptions, setDistrictOptions] = useState<LocationOption[]>([
-    {label: "Pilih Kecamatan", value: ""},
+    { label: "Pilih Kecamatan", value: "" },
   ]);
   const [villageOptions, setVillageOptions] = useState<LocationOption[]>([
-    {label: "Pilih Kelurahan", value: ""},
+    { label: "Pilih Kelurahan", value: "" },
   ]);
+
+  // Animate progress bar
+  useEffect(() => {
+    Animated.timing(progressAnim, {
+      toValue: currentStep / totalSteps,
+      duration: 400,
+      useNativeDriver: false,
+    }).start();
+  }, [currentStep]);
 
   useEffect(() => {
     const fetchProvinces = async () => {
@@ -75,8 +85,8 @@ const RegisterScreen = () => {
         const json = await res.json();
         const data = Array.isArray(json.data) ? json.data : [];
         setProvinceOptions([
-          {label: "Pilih Provinsi", value: ""},
-          ...data.map((item: {code: string; name: string}) => ({
+          { label: "Pilih Provinsi", value: "" },
+          ...data.map((item: { code: string; name: string }) => ({
             label: item.name,
             value: item.code,
           })),
@@ -91,7 +101,7 @@ const RegisterScreen = () => {
 
   useEffect(() => {
     if (!selectedProvince) {
-      setRegencyOptions([{label: "Pilih Kabupaten / Kota", value: ""}]);
+      setRegencyOptions([{ label: "Pilih Kabupaten / Kota", value: "" }]);
       setSelectedCity(null);
       setSelectedSubDistrict(null);
       setSelectedVillage(null);
@@ -109,8 +119,8 @@ const RegisterScreen = () => {
         const json = await res.json();
         const data = Array.isArray(json.data) ? json.data : [];
         setRegencyOptions([
-          {label: "Pilih Kabupaten / Kota", value: ""},
-          ...data.map((item: {code: string; name: string}) => ({
+          { label: "Pilih Kabupaten / Kota", value: "" },
+          ...data.map((item: { code: string; name: string }) => ({
             label: item.name,
             value: item.code,
           })),
@@ -126,15 +136,15 @@ const RegisterScreen = () => {
     setCityQuery("");
     setSubDistrictQuery("");
     setVillageQuery("");
-    setDistrictOptions([{label: "Pilih Kecamatan", value: ""}]);
-    setVillageOptions([{label: "Pilih Kelurahan", value: ""}]);
+    setDistrictOptions([{ label: "Pilih Kecamatan", value: "" }]);
+    setVillageOptions([{ label: "Pilih Kelurahan", value: "" }]);
 
     fetchRegencies();
   }, [selectedProvince?.value]);
 
   useEffect(() => {
     if (!selectedCity) {
-      setDistrictOptions([{label: "Pilih Kecamatan", value: ""}]);
+      setDistrictOptions([{ label: "Pilih Kecamatan", value: "" }]);
       setSelectedSubDistrict(null);
       setSelectedVillage(null);
       setSubDistrictQuery("");
@@ -150,8 +160,8 @@ const RegisterScreen = () => {
         const json = await res.json();
         const data = Array.isArray(json.data) ? json.data : [];
         setDistrictOptions([
-          {label: "Pilih Kecamatan", value: ""},
-          ...data.map((item: {code: string; name: string}) => ({
+          { label: "Pilih Kecamatan", value: "" },
+          ...data.map((item: { code: string; name: string }) => ({
             label: item.name,
             value: item.code,
           })),
@@ -163,7 +173,7 @@ const RegisterScreen = () => {
 
     setSelectedSubDistrict(null);
     setSelectedVillage(null);
-    setVillageOptions([{label: "Pilih Kelurahan", value: ""}]);
+    setVillageOptions([{ label: "Pilih Kelurahan", value: "" }]);
     setSubDistrictQuery("");
     setVillageQuery("");
 
@@ -172,7 +182,7 @@ const RegisterScreen = () => {
 
   useEffect(() => {
     if (!selectedSubDistrict) {
-      setVillageOptions([{label: "Pilih Kelurahan", value: ""}]);
+      setVillageOptions([{ label: "Pilih Kelurahan", value: "" }]);
       setSelectedVillage(null);
       setVillageQuery("");
       return;
@@ -186,8 +196,8 @@ const RegisterScreen = () => {
         const json = await res.json();
         const data = Array.isArray(json.data) ? json.data : [];
         setVillageOptions([
-          {label: "Pilih Kelurahan", value: ""},
-          ...data.map((item: {code: string; name: string}) => ({
+          { label: "Pilih Kelurahan", value: "" },
+          ...data.map((item: { code: string; name: string }) => ({
             label: item.name,
             value: item.code,
           })),
@@ -202,11 +212,8 @@ const RegisterScreen = () => {
     fetchVillages();
   }, [selectedSubDistrict?.value]);
 
-  const handleRegister = async () => {
-    // Reset errors
-    setErrors({});
-
-    // Validasi form
+  // Step 1 validation - Data Toko
+  const validateStep1 = () => {
     const newErrors: Record<string, string> = {};
 
     if (!businessName.trim()) newErrors.businessName = "Nama usaha wajib diisi";
@@ -214,6 +221,18 @@ const RegisterScreen = () => {
     if (!selectedVillage) newErrors.outletKelurahan = "Kelurahan wajib dipilih";
     if (!outletAddress.trim())
       newErrors.outletAddress = "Alamat outlet wajib diisi";
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      return false;
+    }
+    return true;
+  };
+
+  // Step 2 validation - Data Pemilik
+  const validateStep2 = () => {
+    const newErrors: Record<string, string> = {};
+
     if (!ownerName.trim()) newErrors.ownerName = "Nama pemilik wajib diisi";
     if (!phoneNumber.trim()) {
       newErrors.phoneNumber = "No. Handphone wajib diisi";
@@ -225,19 +244,55 @@ const RegisterScreen = () => {
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       newErrors.email = "Format email tidak valid";
     }
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      return false;
+    }
+    return true;
+  };
+
+  // Step 3 validation - Akun & Keamanan
+  const validateStep3 = () => {
+    const newErrors: Record<string, string> = {};
+
     if (!pin || pin.length < 6) newErrors.pin = "PIN minimal 6 angka";
     if (!agreedToTerms) {
       Alert.alert(
         "Perhatian",
         "Anda harus menyetujui Syarat dan Ketentuan untuk mendaftar"
       );
-      return;
+      return false;
     }
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
-      return;
+      return false;
     }
+    return true;
+  };
+
+  const handleNextStep = () => {
+    setErrors({});
+
+    if (currentStep === 1 && validateStep1()) {
+      setCurrentStep(2);
+    } else if (currentStep === 2 && validateStep2()) {
+      setCurrentStep(3);
+    }
+  };
+
+  const handlePrevStep = () => {
+    if (currentStep > 1) {
+      setErrors({});
+      setCurrentStep(currentStep - 1);
+    }
+  };
+
+  const handleRegister = async () => {
+    setErrors({});
+
+    if (!validateStep3()) return;
 
     setIsLoading(true);
 
@@ -247,17 +302,17 @@ const RegisterScreen = () => {
         bussiness_name: businessName,
         business_type: businessType,
         bussiness_province: selectedProvince
-          ? {id: selectedProvince.value, name: selectedProvince.label}
-          : {id: "", name: ""},
+          ? { id: selectedProvince.value, name: selectedProvince.label }
+          : { id: "", name: "" },
         bussiness_city: selectedCity
-          ? {id: selectedCity.value, name: selectedCity.label}
-          : {id: "", name: ""},
+          ? { id: selectedCity.value, name: selectedCity.label }
+          : { id: "", name: "" },
         bussiness_subdistrict: selectedSubDistrict
-          ? {id: selectedSubDistrict.value, name: selectedSubDistrict.label}
-          : {id: "", name: ""},
+          ? { id: selectedSubDistrict.value, name: selectedSubDistrict.label }
+          : { id: "", name: "" },
         bussiness_village: selectedVillage
-          ? {id: selectedVillage.value, name: selectedVillage.label}
-          : {id: "", name: ""},
+          ? { id: selectedVillage.value, name: selectedVillage.label }
+          : { id: "", name: "" },
         bussiness_address: outletAddress,
         owner_name: ownerName,
         owner_phone: phoneNumber,
@@ -272,10 +327,9 @@ const RegisterScreen = () => {
 
       console.log("✅ Registration success:", response);
 
-      // Navigate to OTP verification
       router.push({
         pathname: "/auth/Register/verify-otp",
-        params: {phone: phoneNumber},
+        params: { phone: phoneNumber },
       });
     } catch (error: any) {
       console.error("❌ Registration failed:", error);
@@ -298,81 +352,141 @@ const RegisterScreen = () => {
     }
   };
 
-  return (
-    <View style={styles.container}>
-      <Header title="Daftar" onHelpPress={() => router.push('/dashboard/help')} />
-      <KeyboardAwareScrollView
-        contentContainerStyle={[
-          styles.scrollContainer,
-          {paddingBottom: isTablet ? insets.bottom + 120 : insets.bottom + 80},
-        ]}
-        enableOnAndroid
-        keyboardOpeningTime={0}
-        extraScrollHeight={24}
-        showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled"
-        style={{
-          backgroundColor: Colors[colorScheme].background,
-          paddingVertical: isTablet ? 32 : 20,
-        }}
-      >
-        <View style={styles.contentWrapper}>
-          <ThemedText style={styles.subtitle}>
-            Halo Usahawan, lengkapi data dibawah ini.
-          </ThemedText>
+  const stepInfo = [
+    {
+      number: 1,
+      title: "Data Toko",
+      icon: "storefront-outline" as const,
+    },
+    {
+      number: 2,
+      title: "Identitas",
+      icon: "person-outline" as const,
+    },
+    {
+      number: 3,
+      title: "Keamanan",
+      icon: "shield-checkmark-outline" as const,
+    },
+  ];
 
-        <View style={styles.section}>
-          <ThemedInput
-            label="Nama Usaha"
-            value={businessName}
-            onChangeText={text => {
-              setBusinessName(text);
-              if (errors.businessName) {
-                setErrors({...errors, businessName: ""});
-              }
-            }}
-            error={errors.businessName}
-          />
+  const renderStepIndicator = () => (
+    <View style={styles.stepIndicatorContainer}>
+      {stepInfo.map((step, index) => {
+        const isActive = currentStep === step.number;
+        const isCompleted = currentStep > step.number;
+
+        return (
+          <React.Fragment key={step.number}>
+            {/* Step Item */}
+            <TouchableOpacity
+              style={styles.stepWrapper}
+              activeOpacity={0.7}
+              onPress={() => {
+                if (isCompleted) {
+                  setErrors({});
+                  setCurrentStep(step.number);
+                }
+              }}
+            >
+              <View style={[
+                styles.stepCircle,
+                isActive && styles.stepCircleActive,
+                isCompleted && styles.stepCircleCompleted
+              ]}>
+                {isCompleted ? (
+                  <Ionicons name="checkmark" size={14} color="#FFF" />
+                ) : (
+                  <ThemedText style={[
+                    styles.stepNumber,
+                    isActive && styles.stepNumberActive
+                  ]}>{step.number}</ThemedText>
+                )}
+              </View>
+              <ThemedText style={[
+                styles.stepLabel,
+                isActive && styles.stepLabelActive
+              ]}>{step.title}</ThemedText>
+            </TouchableOpacity>
+
+            {/* Line connector */}
+            {index < stepInfo.length - 1 && (
+              <View style={[
+                styles.stepLine,
+                isCompleted && styles.stepLineActive
+              ]} />
+            )}
+          </React.Fragment>
+        );
+      })}
+    </View>
+  );
+
+  // Step 1: Data Toko
+  const renderStep1 = () => (
+    <View style={styles.stepContent}>
+      <View style={styles.sectionTitleContainer}>
+        <ThemedText style={styles.sectionTitle}>Detail Usaha</ThemedText>
+        <ThemedText style={styles.sectionSubtitle}>Lengkapi data usaha Anda untuk mulai berjualan</ThemedText>
+      </View>
+
+      <ThemedInput
+        label="Nama Usaha"
+
+        value={businessName}
+        onChangeText={text => {
+          setBusinessName(text);
+          if (errors.businessName) setErrors({ ...errors, businessName: "" });
+        }}
+        error={errors.businessName}
+      />
+
+      <ComboInput
+        label="Tipe Bisnis"
+        value={businessType}
+        onChangeText={text => {
+          setBusinessType(text);
+          if (errors.businessType) setErrors({ ...errors, businessType: "" });
+        }}
+        items={businessTypes}
+        error={errors.businessType}
+      />
+
+      <View style={styles.divider} />
+      <ThemedText style={styles.groupLabel}>Alamat Outlet</ThemedText>
+
+      <ComboInput
+        label="Provinsi"
+        value={provinceQuery}
+        onChange={item => {
+          setSelectedProvince(item.value ? item : null);
+          setProvinceQuery(item.label);
+        }}
+        onChangeText={text => {
+          setProvinceQuery(text);
+          if (!text) setSelectedProvince(null);
+        }}
+        items={provinceOptions}
+      />
+
+      <ComboInput
+        label="Kabupaten / Kota"
+        value={cityQuery}
+        onChange={item => {
+          setSelectedCity(item.value ? item : null);
+          setCityQuery(item.label);
+        }}
+        onChangeText={text => {
+          setCityQuery(text);
+          if (!text) setSelectedCity(null);
+        }}
+        items={regencyOptions}
+      />
+
+      <View style={styles.rowInputs}>
+        <View style={{ flex: 1, paddingRight: 6 }}>
           <ComboInput
-            label="Pilih Tipe Bisnis"
-            value={businessType}
-            onChangeText={text => {
-              setBusinessType(text);
-              if (errors.businessType) {
-                setErrors({...errors, businessType: ""});
-              }
-            }}
-            items={businessTypes}
-            error={errors.businessType}
-          />
-          <ComboInput
-            label="Provinsi Outlet Utama"
-            value={provinceQuery}
-            onChange={item => {
-              setSelectedProvince(item.value ? item : null);
-              setProvinceQuery(item.label);
-            }}
-            onChangeText={text => {
-              setProvinceQuery(text);
-              if (!text) setSelectedProvince(null);
-            }}
-            items={provinceOptions}
-          />
-          <ComboInput
-            label="Kabupaten / Kota Outlet Utama"
-            value={cityQuery}
-            onChange={item => {
-              setSelectedCity(item.value ? item : null);
-              setCityQuery(item.label);
-            }}
-            onChangeText={text => {
-              setCityQuery(text);
-              if (!text) setSelectedCity(null);
-            }}
-            items={regencyOptions}
-          />
-          <ComboInput
-            label="Kecamatan Outlet Utama"
+            label="Kecamatan"
             value={subDistrictQuery}
             onChange={item => {
               setSelectedSubDistrict(item.value ? item : null);
@@ -384,15 +498,15 @@ const RegisterScreen = () => {
             }}
             items={districtOptions}
           />
+        </View>
+        <View style={{ flex: 1, paddingLeft: 6 }}>
           <ComboInput
-            label="Kelurahan Outlet Utama"
+            label="Kelurahan"
             value={villageQuery}
             onChange={item => {
               setSelectedVillage(item.value ? item : null);
               setVillageQuery(item.label);
-              if (errors.outletKelurahan) {
-                setErrors({...errors, outletKelurahan: ""});
-              }
+              if (errors.outletKelurahan) setErrors({ ...errors, outletKelurahan: "" });
             }}
             onChangeText={text => {
               setVillageQuery(text);
@@ -401,117 +515,205 @@ const RegisterScreen = () => {
             items={villageOptions}
             error={errors.outletKelurahan}
           />
-          <ThemedInput
-            label="Alamat Lengkap Outlet"
-            value={outletAddress}
-            onChangeText={text => {
-              setOutletAddress(text);
-              if (errors.outletAddress) {
-                setErrors({...errors, outletAddress: ""});
-              }
-            }}
-            error={errors.outletAddress}
-            multiline
-            numberOfLines={3}
-            inputContainerStyle={{
-              height: 120,
-              alignItems: "flex-start",
-            }}
-          />
         </View>
+      </View>
 
-        <View style={styles.section}>
-          <ThemedText type="subtitle" style={{marginBottom: 12}}>
-            Data Diri Pemilik Usaha
+      <ThemedInput
+        label="Alamat Lengkap"
+        value={outletAddress}
+        onChangeText={text => {
+          setOutletAddress(text);
+          if (errors.outletAddress) setErrors({ ...errors, outletAddress: "" });
+        }}
+        error={errors.outletAddress}
+        multiline
+        numberOfLines={3}
+        inputContainerStyle={{
+          height: 100,
+          alignItems: "flex-start",
+        }}
+      />
+    </View>
+  );
+
+  // Step 2: Data Pemilik
+  const renderStep2 = () => (
+    <View style={styles.stepContent}>
+      <View style={styles.sectionTitleContainer}>
+        <ThemedText style={styles.sectionTitle}>Data Pemilik</ThemedText>
+        <ThemedText style={styles.sectionSubtitle}>Informasi kontak pemilik usaha untuk verifikasi</ThemedText>
+      </View>
+
+      <ThemedInput
+        label="Nama Lengkap"
+
+        value={ownerName}
+        onChangeText={text => {
+          setOwnerName(text);
+          if (errors.ownerName) setErrors({ ...errors, ownerName: "" });
+        }}
+        error={errors.ownerName}
+      />
+
+      <ThemedInput
+        label="No. Handphone"
+
+        value={phoneNumber}
+        onChangeText={text => {
+          setPhoneNumber(text);
+          if (errors.phoneNumber) setErrors({ ...errors, phoneNumber: "" });
+        }}
+        keyboardType="phone-pad"
+        numericOnly
+        error={errors.phoneNumber}
+      />
+
+      <ThemedInput
+        label="Email"
+
+        value={email}
+        onChangeText={text => {
+          setEmail(text);
+          if (errors.email) setErrors({ ...errors, email: "" });
+        }}
+        keyboardType="email-address"
+        error={errors.email}
+      />
+
+      <View style={styles.infoBox}>
+        <Ionicons name="information-circle" size={20} color={Colors[colorScheme].primary} />
+        <ThemedText style={styles.infoBoxText}>
+          Pastikan nomor aktif untuk menerima kode OTP.
+        </ThemedText>
+      </View>
+    </View>
+  );
+
+  // Step 3: Akun & Keamanan
+  const renderStep3 = () => (
+    <View style={styles.stepContent}>
+      <View style={styles.sectionTitleContainer}>
+        <ThemedText style={styles.sectionTitle}>Keamanan Akun</ThemedText>
+        <ThemedText style={styles.sectionSubtitle}>Buat PIN untuk mengamankan transaksi Anda</ThemedText>
+      </View>
+
+      <ThemedInput
+        label="PIN 6 Angka"
+        value={pin}
+        onChangeText={text => {
+          setPin(text);
+          if (errors.pin) setErrors({ ...errors, pin: "" });
+        }}
+        numericOnly
+        isPassword
+        maxLength={6}
+        error={errors.pin}
+      />
+
+      <View style={[styles.infoBox, { marginTop: 4, marginBottom: 24 }]}>
+        <Ionicons name="lock-closed" size={20} color={Colors[colorScheme].primary} />
+        <ThemedText style={styles.infoBoxText}>
+          Jaga kerahasiaan PIN Anda.
+        </ThemedText>
+      </View>
+
+      <ThemedInput
+        label="Kode Referral (Opsional)"
+        value={referralCode}
+        onChangeText={setReferralCode}
+      />
+
+      <View style={styles.termsContainer}>
+        <Checkbox checked={agreedToTerms} onChange={setAgreedToTerms} />
+        <TouchableOpacity
+          activeOpacity={0.8}
+          onPress={() => setAgreedToTerms(!agreedToTerms)}
+          style={{ flex: 1 }}
+        >
+          <ThemedText style={styles.termsText}>
+            Saya menyetujui <ThemedText style={styles.link}>Syarat & Ketentuan</ThemedText> serta <ThemedText style={styles.link}>Kebijakan Privasi</ThemedText>.
           </ThemedText>
-          <ThemedInput
-            label="Nama Pemilik"
-            value={ownerName}
-            onChangeText={text => {
-              setOwnerName(text);
-              if (errors.ownerName) {
-                setErrors({...errors, ownerName: ""});
-              }
-            }}
-            error={errors.ownerName}
-          />
-          <ThemedInput
-            label="No. Handphone"
-            value={phoneNumber}
-            onChangeText={text => {
-              setPhoneNumber(text);
-              if (errors.phoneNumber) {
-                setErrors({...errors, phoneNumber: ""});
-              }
-            }}
-            keyboardType="phone-pad"
-            numericOnly
-            error={errors.phoneNumber}
-          />
-          <ThemedInput
-            label="No. PIN 6 Angka"
-            value={pin}
-            onChangeText={text => {
-              setPin(text);
-              if (errors.pin) {
-                setErrors({...errors, pin: ""});
-              }
-            }}
-            numericOnly
-            isPassword
-            maxLength={6}
-            error={errors.pin}
-          />
-          <ThemedInput
-            label="Email"
-            value={email}
-            onChangeText={text => {
-              setEmail(text);
-              if (errors.email) {
-                setErrors({...errors, email: ""});
-              }
-            }}
-            keyboardType="email-address"
-            error={errors.email}
-          />
-          <ThemedInput
-            label="Kode Referal (Opsional)"
-            value={referralCode}
-            onChangeText={setReferralCode}
-          />
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
 
-          <View style={styles.termsContainer}>
-            <Checkbox checked={agreedToTerms} onChange={setAgreedToTerms} />
-            <TouchableOpacity
-              activeOpacity={0.8}
-              onPress={() => setAgreedToTerms(!agreedToTerms)}
-              style={{flex: 1}}
-            >
-              <ThemedText style={styles.termsText}>
-                Dengan ini saya telah menyetujui{" "}
-                <ThemedText style={styles.link}>Syarat dan Ketentuan</ThemedText>{" "}
-                serta{" "}
-                <ThemedText style={styles.link}>Kebijakan Privasi</ThemedText>{" "}
-                Qasir
-              </ThemedText>
-            </TouchableOpacity>
-          </View>
+  const renderCurrentStep = () => {
+    switch (currentStep) {
+      case 1: return renderStep1();
+      case 2: return renderStep2();
+      case 3: return renderStep3();
+      default: return renderStep1();
+    }
+  };
+
+  return (
+    <View style={styles.container}>
+      {/* Header Fixed */}
+      <View style={styles.headerFixed}>
+        <Header
+          title="Daftar Akun Baru"
+          onHelpPress={() => router.push('/dashboard/help')}
+        />
+        <View style={styles.progressContainer}>
+          <Animated.View style={[styles.progressBar, {
+            width: progressAnim.interpolate({
+              inputRange: [0, 1],
+              outputRange: ['0%', '100%']
+            })
+          }]} />
         </View>
+      </View>
+
+      <KeyboardAwareScrollView
+        contentContainerStyle={[
+          styles.scrollContainer,
+          { paddingBottom: isTablet && !isTabletLandscape ? 120 : isTablet ? 300 : 250 },
+        ]}
+        enableOnAndroid
+        keyboardOpeningTime={0}
+        extraScrollHeight={120}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+        style={{
+          backgroundColor: Colors[colorScheme].background,
+        }}
+      >
+        <View style={styles.contentWrapper}>
+          {renderStepIndicator()}
+          <View style={styles.cardContainer}>
+            {renderCurrentStep()}
+          </View>
+          {/* Spacer to prevent content from being hidden by absolute footer */}
+          <View style={{ height: 120 }} />
         </View>
       </KeyboardAwareScrollView>
-      <View style={styles.bottomBar}>
-        <ThemedButton
-          title={isLoading ? "Mendaftar..." : "Daftar"}
-          onPress={handleRegister}
-          disabled={isLoading}
-        />
-        {/* {isLoading && (
-          <ActivityIndicator
-            size="small"
-            color={Colors[colorScheme].primary}
-            style={{marginTop: 8}}
+
+      {/* Bottom Bar Absolute */}
+      <View style={[styles.bottomBar, { paddingBottom: insets.bottom + 16 }]}>
+        <View style={styles.bottomBarButtons}>
+          {currentStep > 1 && (
+            <ThemedButton
+              title="Kembali"
+              variant="secondary"
+              onPress={handlePrevStep}
+              style={styles.btnBack}
+            />
+          )}
+
+          <ThemedButton
+            title={
+              currentStep < totalSteps
+                ? "Lanjut"
+                : isLoading
+                  ? "Memproses..."
+                  : "Daftar"
+            }
+            onPress={currentStep < totalSteps ? handleNextStep : handleRegister}
+            disabled={isLoading}
+            style={styles.btnNext}
           />
-        )} */}
+        </View>
       </View>
     </View>
   );
@@ -525,59 +727,182 @@ const createStyles = (
   StyleSheet.create({
     container: {
       flex: 1,
+      backgroundColor: Colors[colorScheme].background, // Full background
+    },
+    headerFixed: {
       backgroundColor: Colors[colorScheme].background,
-      paddingHorizontal: 0,
-      paddingBottom: isTabletLandscape ? 80: 20,
+      zIndex: 10,
+    },
+    progressContainer: {
+      height: 2,
+      backgroundColor: Colors[colorScheme].border2,
+      width: '100%',
+    },
+    progressBar: {
+      height: '100%',
+      backgroundColor: Colors[colorScheme].primary,
     },
     scrollContainer: {
       flexGrow: 1,
-      paddingBottom: isTabletLandscape ? 80: 20,
-      paddingHorizontal: isTablet ? 24 : 16,
+      paddingTop: 16,
+      justifyContent: isTablet && !isTabletLandscape ? "center" : undefined,
     },
     contentWrapper: {
       width: "100%",
-      maxWidth: isTabletLandscape ? 960 : undefined,
+      maxWidth: isTabletLandscape ? 600 : isTablet ? 500 : '100%',
       alignSelf: "center",
-      paddingHorizontal: isTablet ? 56 : 4,
-      paddingBottom: isTablet ? 80 : 40,
+      paddingHorizontal: isTablet ? 0 : 20,
     },
-    title: {
-      marginTop: 20,
+
+    // Step Indicator Simple
+    stepIndicatorContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginBottom: 24,
+      paddingHorizontal: 8,
     },
-    subtitle: {
-      marginTop: 8,
-      marginBottom: 20,
+    stepWrapper: {
+      alignItems: 'center',
+    },
+    stepCircle: {
+      width: 28,
+      height: 28,
+      borderRadius: 14,
+      backgroundColor: Colors[colorScheme].border2,
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginBottom: 6,
+    },
+    stepCircleActive: {
+      backgroundColor: Colors[colorScheme].primary,
+    },
+    stepCircleCompleted: {
+      backgroundColor: Colors[colorScheme].primary,
+    },
+    stepNumber: {
+      fontSize: 12,
+      fontWeight: 'bold',
       color: Colors[colorScheme].icon,
-      fontSize: isTablet ? 18 : 16,
     },
-    section: {
-      marginBottom: isTablet ? 24 : 16,
+    stepNumberActive: {
+      color: '#fff',
+    },
+    stepLabel: {
+      fontSize: 11,
+      color: Colors[colorScheme].icon,
+      fontWeight: '500',
+    },
+    stepLabelActive: {
+      color: Colors[colorScheme].primary,
+      fontWeight: '700',
+    },
+    stepLine: {
+      flex: 1,
+      height: 1,
+      backgroundColor: Colors[colorScheme].border2,
+      marginHorizontal: 8,
+      marginBottom: 16, // align with circle center roughly
+    },
+    stepLineActive: {
+      backgroundColor: Colors[colorScheme].primary,
+    },
+
+    // Card Like Container
+    cardContainer: {
+      // Clean clean look, no shadow/border for modern feel on mobile, just spacing
+    },
+    sectionTitleContainer: {
+      marginBottom: 24,
+    },
+    sectionTitle: {
+      fontSize: 22,
+      fontWeight: 'bold',
+      color: Colors[colorScheme].text,
+      marginBottom: 4,
+    },
+    sectionSubtitle: {
+      fontSize: 14,
+      color: Colors[colorScheme].icon,
+    },
+
+    // Step Content
+    stepContent: {
+      flex: 1,
+    },
+    divider: {
+      height: 1,
+      backgroundColor: Colors[colorScheme].border2,
+      marginVertical: 24,
+    },
+    groupLabel: {
+      fontSize: 14,
+      fontWeight: 'bold',
+      color: Colors[colorScheme].text,
+      marginBottom: 16,
+    },
+    rowInputs: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+    },
+    infoBox: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: `${Colors[colorScheme].primary}10`,
+      paddingHorizontal: 16,
+      paddingVertical: 12,
+      borderRadius: 8,
+      marginTop: 8,
+    },
+    infoBoxText: {
+      marginLeft: 10,
+      fontSize: 13,
+      color: Colors[colorScheme].text,
+      flex: 1,
     },
     termsContainer: {
-      flexDirection: "row",
-      alignItems: "flex-start",
+      flexDirection: 'row',
+      alignItems: 'flex-start',
       marginTop: 16,
-      marginBottom: isTablet ? 80 : 40,
     },
     termsText: {
       marginLeft: 10,
+      fontSize: 14,
+      lineHeight: 20,
+      color: Colors[colorScheme].icon,
       flex: 1,
-      lineHeight: isTablet ? 24 : 20,
-      fontSize: isTablet ? 16 : 14,
     },
     link: {
       color: Colors[colorScheme].primary,
-      textDecorationLine: "underline",
+      fontWeight: 'bold',
     },
+
+    // Bottom Bar
     bottomBar: {
-      position: "absolute",
+      backgroundColor: Colors[colorScheme].background,
+      borderTopWidth: 1,
+      borderTopColor: Colors[colorScheme].border2,
+      paddingTop: 16,
+      paddingHorizontal: 24,
+      position: 'absolute',
+      bottom: 0,
       left: 0,
       right: 0,
-      bottom: 0,
-      paddingHorizontal: 20,
-      paddingBottom: 16,
-      paddingTop: 8,
-      backgroundColor: Colors[colorScheme].background,
+      elevation: 10, // Shadow for android
+      shadowColor: "#000", // Shadow for iOS
+      shadowOffset: { width: 0, height: -2 },
+      shadowOpacity: 0.1,
+      shadowRadius: 4,
+    },
+    bottomBarButtons: {
+      flexDirection: 'row',
+      gap: 12,
+    },
+    btnBack: {
+      flex: 1,
+    },
+    btnNext: {
+      flex: 2,
     },
   });
 

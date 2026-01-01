@@ -346,7 +346,7 @@ const Sidebar: React.FC<SidebarProps> = ({
 
             <View style={styles.versionWrapper}>
               <Text style={styles.versionBrand}>ELBIC</Text>
-              <Text style={styles.versionText}>Versi 4.99.0-build.4</Text>
+              <Text style={styles.versionText}>Versi 1.0.0</Text>
             </View>
           </View>
         </View>

@@ -1,35 +1,35 @@
+import ConfirmPopup from "@/components/atoms/confirm-popup";
 import VariantItem from "@/components/atoms/variant-item";
 import ComboInput from "@/components/combo-input";
 import CostBarcodeFields from "@/components/cost-barcode-fields";
 import ConfirmationDialog, {
   ConfirmationDialogHandle,
 } from "@/components/drawers/confirmation-dialog";
-import ConfirmPopup from "@/components/atoms/confirm-popup";
 import Header from "@/components/header";
 import ImageUpload from "@/components/image-upload";
 import MenuRow from "@/components/menu-row";
 import CategoryPicker from "@/components/mollecules/category-picker";
 import MerkPicker from "@/components/mollecules/merk-picker";
-import {ThemedButton} from "@/components/themed-button";
-import {ThemedInput} from "@/components/themed-input";
-import {ThemedText} from "@/components/themed-text";
-import {Colors} from "@/constants/theme";
-import {useColorScheme} from "@/hooks/use-color-scheme";
-import {recipeApi} from "@/services";
+import { ThemedButton } from "@/components/themed-button";
+import { ThemedInput } from "@/components/themed-input";
+import { ThemedText } from "@/components/themed-text";
+import { Colors } from "@/constants/theme";
+import { useColorScheme } from "@/hooks/use-color-scheme";
+import { recipeApi } from "@/services";
+import assetApi, { prepareFileFromUri } from "@/services/endpoints/assets";
 import merkApi from "@/services/endpoints/merks";
 import productApi from "@/services/endpoints/products";
-import assetApi, {prepareFileFromUri} from "@/services/endpoints/assets";
-import {useProductFormStore} from "@/stores/product-form-store";
-import {Merk} from "@/types/api";
-import {useNavigation, useRouter} from "expo-router";
-import React, {useEffect, useRef, useState} from "react";
-import {Alert, StyleSheet, useWindowDimensions, View} from "react-native";
-import {KeyboardAwareScrollView} from "react-native-keyboard-aware-scroll-view";
-import {useSafeAreaInsets} from "react-native-safe-area-context";
+import { useProductFormStore } from "@/stores/product-form-store";
+import { Merk } from "@/types/api";
+import { useNavigation, useRouter } from "expo-router";
+import React, { useEffect, useRef, useState } from "react";
+import { Alert, StyleSheet, useWindowDimensions, View } from "react-native";
+import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function AddProductScreen() {
   const colorScheme = useColorScheme() ?? "light";
-  const {width, height} = useWindowDimensions();
+  const { width, height } = useWindowDimensions();
   const isTablet = Math.min(width, height) >= 600;
   const isLandscape = width > height;
   const isTabletLandscape = isTablet && isLandscape;
@@ -41,7 +41,8 @@ export default function AddProductScreen() {
   const confirmationRef = useRef<ConfirmationDialogHandle | null>(null);
 
   const [merks, setMerks] = useState<Merk[]>([]);
-  const [recipes, setRecipes] = useState<{id: string; name: string}[]>([]);
+  const [recipes, setRecipes] = useState<{ id: string; name: string }[]>([]);
+  const [recipeText, setRecipeText] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [showSuccessPopup, setShowSuccessPopup] = useState(false);
@@ -66,7 +67,7 @@ export default function AddProductScreen() {
     try {
       const response = await recipeApi.getRecipes();
       if (response.data) {
-        setRecipes(response.data.map(r => ({id: r.id, name: r.name})));
+        setRecipes(response.data.map(r => ({ id: r.id, name: r.name })));
       }
     } catch (error) {
       console.error("Failed to load recipes:", error);
@@ -194,7 +195,7 @@ export default function AddProductScreen() {
                 style: "cancel",
                 onPress: () => setIsSaving(false),
               },
-              {text: "Lanjutkan", onPress: () => {}},
+              { text: "Lanjutkan", onPress: () => { } },
             ]
           );
           return;
@@ -215,6 +216,8 @@ export default function AddProductScreen() {
       if (category && category.length > 10 && category.startsWith("cm")) {
         payload.category_id = category;
       }
+
+      console.log("resep : ", recipe);
 
       if (recipe && recipe.length > 10 && recipe.startsWith("cm")) {
         payload.recipe_id = recipe;
@@ -258,12 +261,29 @@ export default function AddProductScreen() {
         }
       }
 
-      // Variants - structure sudah sama dengan CreateProductVariantPayload,
-      // jadi bisa langsung dilempar ke payload tanpa mapping tambahan
-      payload.variants = variants.map(v => {
-        const {id, ...rest} = v;
-        return rest;
-      });
+      // Variants - map to include recipe_id if set
+      // If variants exist, add recipe_id to each. If no variants, backend creates a default variant.
+      // For default variant scenario, we add recipe_id to product-level fields that backend handles.
+      if (variants.length > 0) {
+        payload.variants = variants.map(v => {
+          const { id, ...rest } = v;
+          // If variant doesn't have its own recipe_id, use the one from the form
+          if (
+            !rest.recipe_id &&
+            recipe &&
+            recipe.length > 10 &&
+            recipe.startsWith("cm")
+          ) {
+            rest.recipe_id = recipe;
+          }
+          return rest;
+        });
+      }
+
+      // Ensure recipe_id is always strictly passed for the backend to handle default variant creation properly
+      if (recipe && recipe.length > 10 && recipe.startsWith("cm")) {
+        payload.recipe_id = recipe;
+      }
 
       // Jika tidak ada variant tambahan, jangan kirim field variants
       // Backend akan otomatis membuat variant default "Regular"
@@ -307,7 +327,7 @@ export default function AddProductScreen() {
   };
 
   return (
-    <View style={{flex: 1, backgroundColor: Colors[colorScheme].background}}>
+    <View style={{ flex: 1, backgroundColor: Colors[colorScheme].background }}>
       <Header title="Tambah Produk" showHelp={false} />
       <KeyboardAwareScrollView
         contentContainerStyle={{
@@ -360,10 +380,11 @@ export default function AddProductScreen() {
             />
             <ComboInput
               label="Resep Produk"
-              value={recipe}
+              value={recipeText}
               size="md"
-              onChangeText={setRecipe}
-              items={recipes.map(r => ({label: r.name, value: r.id}))}
+              onChangeText={setRecipeText}
+              onChange={(resep) => setRecipe(resep.value)}
+              items={recipes.map(r => ({ label: r.name, value: r.id }))}
             />
           </View>
         </View>
@@ -386,7 +407,7 @@ export default function AddProductScreen() {
         <View style={styles.sectionDivider} />
 
         <View style={styles.contentWrapper}>
-          <View style={{paddingHorizontal: 20, paddingVertical: 6}}>
+          <View style={{ paddingHorizontal: 20, paddingVertical: 6 }}>
             <MenuRow
               title="Atur Harga Modal dan Barcode"
               variant="toggle"
@@ -426,29 +447,29 @@ export default function AddProductScreen() {
                   pathname: "/dashboard/product/stock",
                   params: {
                     from: "add",
-                    ...(name ? {name} : {}),
-                    ...(price ? {price} : {}),
-                    ...(brand ? {brand} : {}),
-                    ...(category ? {category} : {}),
-                    ...(favorite ? {favorite: String(favorite)} : {}),
+                    ...(name ? { name } : {}),
+                    ...(price ? { price } : {}),
+                    ...(brand ? { brand } : {}),
+                    ...(category ? { category } : {}),
+                    ...(favorite ? { favorite: String(favorite) } : {}),
                     ...(enableCostBarcode
-                      ? {enableCostBarcode: String(enableCostBarcode)}
+                      ? { enableCostBarcode: String(enableCostBarcode) }
                       : {}),
-                    ...(imageUri ? {imageUri} : {}),
+                    ...(imageUri ? { imageUri } : {}),
                     ...(capitalPrice
-                      ? {capitalPrice: String(capitalPrice)}
+                      ? { capitalPrice: String(capitalPrice) }
                       : {}),
-                    ...(barcode ? {barcode} : {}),
+                    ...(barcode ? { barcode } : {}),
                     ...(variants.length
-                      ? {variants: JSON.stringify(variants)}
+                      ? { variants: JSON.stringify(variants) }
                       : {}),
                     ...(stock
                       ? {
-                          offlineStock: String(stock.offlineStock),
-                          unit: stock.unit,
-                          minStock: String(stock.minStock),
-                          notifyMin: stock.notifyMin ? "1" : "0",
-                        }
+                        offlineStock: String(stock.offlineStock),
+                        unit: stock.unit,
+                        minStock: String(stock.minStock),
+                        notifyMin: stock.notifyMin ? "1" : "0",
+                      }
                       : {}),
                   },
                 } as never)
@@ -471,7 +492,7 @@ export default function AddProductScreen() {
                     price={v.price}
                     stock={
                       v.is_stock_active && typeof v.stock === "number"
-                        ? {count: v.stock, unit: v.unit_id || "pcs"}
+                        ? { count: v.stock, unit: v.unit_id || "pcs" }
                         : undefined
                     }
                     onPress={() =>
@@ -483,15 +504,15 @@ export default function AddProductScreen() {
                           price: String(v.price),
                           ...(typeof v.stock === "number"
                             ? {
-                                offlineStock: String(v.stock),
-                                unit: v.unit_id || "pcs",
-                                minStock: String(v.min_stock || 0),
-                                notifyMin: v.notify_on_stock_ronouts
-                                  ? "1"
-                                  : "0",
-                              }
+                              offlineStock: String(v.stock),
+                              unit: v.unit_id || "pcs",
+                              minStock: String(v.min_stock || 0),
+                              notifyMin: v.notify_on_stock_ronouts
+                                ? "1"
+                                : "0",
+                            }
                             : {}),
-                          ...(v.id ? {variantId: v.id} : {}),
+                          ...(v.id ? { variantId: v.id } : {}),
                         },
                       } as never)
                     }

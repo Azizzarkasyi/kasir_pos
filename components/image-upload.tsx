@@ -4,12 +4,12 @@ import { Ionicons } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
 import React from "react";
 import {
-    Alert,
-    Image,
-    StyleSheet,
-    TouchableOpacity,
-    useWindowDimensions,
-    View
+  Alert,
+  Image,
+  StyleSheet,
+  TouchableOpacity,
+  useWindowDimensions,
+  View
 } from "react-native";
 import { ThemedText } from "./themed-text";
 
@@ -29,7 +29,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
   disabled = false,
 }) => {
   const colorScheme = useColorScheme() ?? "light";
-  const {width, height} = useWindowDimensions();
+  const { width, height } = useWindowDimensions();
   const isTablet = Math.min(width, height) >= 600;
   const styles = createStyles(colorScheme, isTablet);
 
@@ -57,8 +57,8 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
 
       // Launch image picker
       const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
-        allowsEditing: true,
+        mediaTypes: ["images"],
+        allowsEditing: false,
         aspect: [1, 1],
         quality: 0.8,
         exif: false, // Disable EXIF to prevent rendering issues
@@ -88,7 +88,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
     <View style={styles.container}>
       <View style={styles.square}>
         {uri ? (
-          <Image source={{uri}} style={styles.image} />
+          <Image source={{ uri }} style={styles.image} />
         ) : (
           <ThemedText style={styles.initials}>{initials}</ThemedText>
         )}

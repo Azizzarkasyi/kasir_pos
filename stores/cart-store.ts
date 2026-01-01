@@ -212,10 +212,15 @@ export const useCartStore = create<CartStore>((set, get) => ({
   },
 
   getSubtotal: () => {
-    return get().items.reduce(
+    const itemsSubtotal = get().items.reduce(
       (sum, item) => sum + item.unitPrice * item.quantity,
       0
     );
+    const ingredientsSubtotal = get().additionalIngredients.reduce(
+      (sum, item) => sum + item.unitPrice * item.quantity,
+      0
+    );
+    return itemsSubtotal + ingredientsSubtotal;
   },
 
   getTotalFees: () => {

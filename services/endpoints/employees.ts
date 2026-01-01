@@ -44,7 +44,7 @@ export const employeeApi = {
    * Update employee
    */
   async updateEmployee(
-    id: number,
+    id: string,
     data: UpdateEmployeeRequest
   ): Promise<ApiResponse<Employee>> {
     const response = await apiService.put<Employee>(`/employees/${id}`, data);

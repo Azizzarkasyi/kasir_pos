@@ -14,18 +14,18 @@ import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
-    Alert,
-    StyleSheet,
-    TouchableOpacity,
-    useWindowDimensions,
-    View,
+  Alert,
+  StyleSheet,
+  TouchableOpacity,
+  useWindowDimensions,
+  View,
 } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function AddEmployeeScreen() {
   const colorScheme = useColorScheme() ?? "light";
-  const {width, height} = useWindowDimensions();
+  const { width, height } = useWindowDimensions();
   const isTablet = Math.min(width, height) >= 600;
   const isLandscape = width > height;
   const isTabletLandscape = isTablet && isLandscape;
@@ -159,7 +159,7 @@ export default function AddEmployeeScreen() {
   };
 
   return (
-    <View style={{flex: 1, backgroundColor: Colors[colorScheme].background}}>
+    <View style={{ flex: 1, backgroundColor: Colors[colorScheme].background }}>
       <Header title="Tambah Pegawai" showHelp={false} />
       <KeyboardAwareScrollView
         contentContainerStyle={styles.scrollContent}
@@ -369,8 +369,8 @@ const createStyles = (
       alignSelf: "center",
     },
     sectionPadding: {
-      paddingHorizontal: isTablet ? 40 : 20,
-      paddingVertical: isTablet ? 28 : 16,
+      paddingHorizontal: isTablet ? 60 : 20,
+      paddingVertical: isTablet ? 24 : 16,
       gap: isTablet ? 12 : 8,
     },
     buttonContainer: {
@@ -399,7 +399,7 @@ const createStyles = (
       marginVertical: isTablet ? 28 : 20,
     },
     sectionTitle: {
-      fontSize: isTablet ? 20 : 16,
+      fontSize: isTablet ? 24 : 16,
       fontWeight: "600",
       color: Colors[colorScheme].text,
     },
@@ -414,7 +414,7 @@ const createStyles = (
       gap: isTablet ? 12 : 8,
     },
     roleLabel: {
-      fontSize: isTablet ? 20 : 14,
+      fontSize: isTablet ? 22 : 14,
       color: Colors[colorScheme].text,
     },
     outletSection: {

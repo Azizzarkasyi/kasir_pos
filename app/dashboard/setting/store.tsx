@@ -4,6 +4,7 @@ import Header from "@/components/header";
 import { ThemedButton } from "@/components/themed-button";
 import { ThemedInput } from "@/components/themed-input";
 import { ThemedText } from "@/components/themed-text";
+import { businessTypes } from "@/constants/business-types";
 import { Colors } from "@/constants/theme";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { settingsApi, StoreInfo } from "@/services";
@@ -20,7 +21,7 @@ import {
 } from "react-native";
 import { ScrollView } from "react-native-gesture-handler";
 
-type LocationOption = {label: string; value: string};
+type LocationOption = { label: string; value: string };
 
 const WILAYAH_API_BASE = "https://wilayah.id/api";
 
@@ -49,7 +50,7 @@ export default function StoreSettingScreen() {
 
   // Province state
   const [provinceOptions, setProvinceOptions] = useState<LocationOption[]>([
-    {label: "Pilih Provinsi", value: ""},
+    { label: "Pilih Provinsi", value: "" },
   ]);
   const [selectedProvince, setSelectedProvince] =
     useState<LocationOption | null>(null);
@@ -58,7 +59,7 @@ export default function StoreSettingScreen() {
 
   // City/Regency state
   const [cityOptions, setCityOptions] = useState<LocationOption[]>([
-    {label: "Pilih Kabupaten/Kota", value: ""},
+    { label: "Pilih Kabupaten/Kota", value: "" },
   ]);
   const [selectedCity, setSelectedCity] = useState<LocationOption | null>(null);
   const [cityQuery, setCityQuery] = useState("");
@@ -66,7 +67,7 @@ export default function StoreSettingScreen() {
 
   // Subdistrict/Kecamatan state
   const [subdistrictOptions, setSubdistrictOptions] = useState<LocationOption[]>([
-    {label: "Pilih Kecamatan", value: ""},
+    { label: "Pilih Kecamatan", value: "" },
   ]);
   const [selectedSubdistrict, setSelectedSubdistrict] =
     useState<LocationOption | null>(null);
@@ -75,7 +76,7 @@ export default function StoreSettingScreen() {
 
   // Village/Kelurahan state
   const [villageOptions, setVillageOptions] = useState<LocationOption[]>([
-    {label: "Pilih Kelurahan", value: ""},
+    { label: "Pilih Kelurahan", value: "" },
   ]);
   const [selectedVillage, setSelectedVillage] =
     useState<LocationOption | null>(null);
@@ -95,8 +96,8 @@ export default function StoreSettingScreen() {
         const data = Array.isArray(res.data.data) ? res.data.data : [];
 
         const options = [
-          {label: "Pilih Provinsi", value: ""},
-          ...data.map((item: {code: string; name: string}) => ({
+          { label: "Pilih Provinsi", value: "" },
+          ...data.map((item: { code: string; name: string }) => ({
             label: item.name,
             value: item.code,
           })),
@@ -126,7 +127,7 @@ export default function StoreSettingScreen() {
   // Fetch cities when province changes
   useEffect(() => {
     if (!selectedProvince || !selectedProvince.value) {
-      setCityOptions([{label: "Pilih Kabupaten/Kota", value: ""}]);
+      setCityOptions([{ label: "Pilih Kabupaten/Kota", value: "" }]);
       setSelectedCity(null);
       setCityQuery("");
       return;
@@ -136,13 +137,13 @@ export default function StoreSettingScreen() {
       try {
         const res = await axios.get(
           `${WILAYAH_API_BASE}/regencies/${selectedProvince.value}.json`,
-          {timeout: 10000, headers: {Accept: "application/json"}}
+          { timeout: 10000, headers: { Accept: "application/json" } }
         );
         const data = Array.isArray(res.data.data) ? res.data.data : [];
 
         const options = [
-          {label: "Pilih Kabupaten/Kota", value: ""},
-          ...data.map((item: {code: string; name: string}) => ({
+          { label: "Pilih Kabupaten/Kota", value: "" },
+          ...data.map((item: { code: string; name: string }) => ({
             label: item.name,
             value: item.code,
           })),
@@ -170,7 +171,7 @@ export default function StoreSettingScreen() {
   // Fetch subdistricts when city changes
   useEffect(() => {
     if (!selectedCity || !selectedCity.value) {
-      setSubdistrictOptions([{label: "Pilih Kecamatan", value: ""}]);
+      setSubdistrictOptions([{ label: "Pilih Kecamatan", value: "" }]);
       setSelectedSubdistrict(null);
       setSubdistrictQuery("");
       return;
@@ -180,13 +181,13 @@ export default function StoreSettingScreen() {
       try {
         const res = await axios.get(
           `${WILAYAH_API_BASE}/districts/${selectedCity.value}.json`,
-          {timeout: 10000, headers: {Accept: "application/json"}}
+          { timeout: 10000, headers: { Accept: "application/json" } }
         );
         const data = Array.isArray(res.data.data) ? res.data.data : [];
 
         const options = [
-          {label: "Pilih Kecamatan", value: ""},
-          ...data.map((item: {code: string; name: string}) => ({
+          { label: "Pilih Kecamatan", value: "" },
+          ...data.map((item: { code: string; name: string }) => ({
             label: item.name,
             value: item.code,
           })),
@@ -214,7 +215,7 @@ export default function StoreSettingScreen() {
   // Fetch villages when subdistrict changes
   useEffect(() => {
     if (!selectedSubdistrict || !selectedSubdistrict.value) {
-      setVillageOptions([{label: "Pilih Kelurahan", value: ""}]);
+      setVillageOptions([{ label: "Pilih Kelurahan", value: "" }]);
       setSelectedVillage(null);
       setVillageQuery("");
       return;
@@ -224,13 +225,13 @@ export default function StoreSettingScreen() {
       try {
         const res = await axios.get(
           `${WILAYAH_API_BASE}/villages/${selectedSubdistrict.value}.json`,
-          {timeout: 10000, headers: {Accept: "application/json"}}
+          { timeout: 10000, headers: { Accept: "application/json" } }
         );
         const data = Array.isArray(res.data.data) ? res.data.data : [];
 
         const options = [
-          {label: "Pilih Kelurahan", value: ""},
-          ...data.map((item: {code: string; name: string}) => ({
+          { label: "Pilih Kelurahan", value: "" },
+          ...data.map((item: { code: string; name: string }) => ({
             label: item.name,
             value: item.code,
           })),
@@ -262,11 +263,11 @@ export default function StoreSettingScreen() {
   const loadStoreData = async () => {
     try {
       const response = await settingsApi.getStoreInfo();
-      
+
       if (!response.data) {
         return;
       }
-      
+
       const storeData = response.data;
       setStore(storeData);
       setBusinessType(storeData.bussiness_type || "");
@@ -282,7 +283,7 @@ export default function StoreSettingScreen() {
 
       // Determine location data source - use branch data if store-level is empty
       const locationSource = storeData.province?.id ? storeData : storeData.branches?.[0];
-      
+
       if (locationSource) {
         // Handle province auto-select
         if (locationSource?.province) {
@@ -290,7 +291,7 @@ export default function StoreSettingScreen() {
           const provinceName = locationSource.province.name || "";
           pendingProvinceId.current = provinceId;
           setProvinceQuery(provinceName);
-          setSelectedProvince({label: provinceName, value: provinceId});
+          setSelectedProvince({ label: provinceName, value: provinceId });
         }
 
         // Handle city auto-select
@@ -299,7 +300,7 @@ export default function StoreSettingScreen() {
           const cityName = locationSource.city.name || "";
           pendingCityId.current = cityId;
           setCityQuery(cityName);
-          setSelectedCity({label: cityName, value: cityId});
+          setSelectedCity({ label: cityName, value: cityId });
         }
 
         // Handle subdistrict auto-select
@@ -308,7 +309,7 @@ export default function StoreSettingScreen() {
           const subdistrictName = locationSource.subdistrict.name || "";
           pendingSubdistrictId.current = subdistrictId;
           setSubdistrictQuery(subdistrictName);
-          setSelectedSubdistrict({label: subdistrictName, value: subdistrictId});
+          setSelectedSubdistrict({ label: subdistrictName, value: subdistrictId });
         }
 
         // Handle village auto-select
@@ -317,7 +318,7 @@ export default function StoreSettingScreen() {
           const villageName = locationSource.village.name || "";
           pendingVillageId.current = villageId;
           setVillageQuery(villageName);
-          setSelectedVillage({label: villageName, value: villageId});
+          setSelectedVillage({ label: villageName, value: villageId });
         }
       }
     } catch (error: any) {
@@ -340,7 +341,7 @@ export default function StoreSettingScreen() {
     }
 
     setIsSaving(true);
-    
+
     try {
       const updateData: any = {
         owner_name: ownerName.trim(),
@@ -383,7 +384,7 @@ export default function StoreSettingScreen() {
           name: selectedVillage.label,
         };
       }
-      
+
       const response = await settingsApi.updateStore(updateData);
       setShowSuccessPopup(true);
       setConfirmOpen(false);
@@ -410,7 +411,7 @@ export default function StoreSettingScreen() {
   }
 
   return (
-    <KeyboardAvoidingView 
+    <KeyboardAvoidingView
       style={styles.container}
       behavior={Platform.OS === "ios" ? "padding" : "height"}
       keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
@@ -431,142 +432,136 @@ export default function StoreSettingScreen() {
               disableAutoComplete={true}
               value={businessType}
               onChangeText={setBusinessType}
-                items={[
-                  { label: "Pilih Jenis Bisnis", value: "" },
-                  { label: "Jasa/Service Lainnya", value: "services_other" },
-                  { label: "Makanan/Minuman", value: "food_beverage" },
-                  { label: "Retail", value: "retail" },
-                  { label: "Restoran", value: "restoran" },
-                ]}
-              />
-            </View>
-            <ThemedInput
-              label="Nama Bisnis Toko"
-              value={storeName}
-              onChangeText={setStoreName}
+              items={businessTypes}
             />
-            <ThemedInput
-              label="Pajak Default"
-              value={defaultTax}
-              onChangeText={setDefaultTax}
-              keyboardType="decimal-pad"
-              rightIcon={<ThemedText type="default">%</ThemedText>}
-            />
-            <ThemedInput
-              label="Nama Pemilik"
-              value={ownerName}
-              onChangeText={setOwnerName}
-            />
-            <ThemedInput label="Nomor Telepon" value={phone} editable={false} />
-            {/* <ThemedText style={{color: "red"}}>
+          </View>
+          <ThemedInput
+            label="Nama Bisnis Toko"
+            value={storeName}
+            onChangeText={setStoreName}
+          />
+          <ThemedInput
+            label="Pajak Default"
+            value={defaultTax}
+            onChangeText={setDefaultTax}
+            keyboardType="decimal-pad"
+            rightIcon={<ThemedText type="default">%</ThemedText>}
+          />
+          <ThemedInput
+            label="Nama Pemilik"
+            value={ownerName}
+            onChangeText={setOwnerName}
+          />
+          <ThemedInput label="Nomor Telepon" value={phone} editable={false} />
+          {/* <ThemedText style={{color: "red"}}>
             * Have not verified yet
           </ThemedText> */}
-          </View>
+        </View>
 
-          <View style={styles.sectionCard}>
-            <ThemedText type="subtitle-2" style={{marginBottom:10}}>Lokasi Toko</ThemedText>
-            <ComboInput
-              label="Provinsi"
-              value={provinceQuery}
-              onChangeText={text => {
-                setProvinceQuery(text);
-                const found = provinceOptions.find(p => p.label === text);
-                if (found && found.value) {
-                  setSelectedProvince(found);
-                  // Reset child locations
-                  setSelectedCity(null);
-                  setCityQuery("");
-                  setSelectedSubdistrict(null);
-                  setSubdistrictQuery("");
-                  setSelectedVillage(null);
-                  setVillageQuery("");
-                }
-              }}
-              items={provinceOptions}
-            />
-            <ComboInput
-              label="Kabupaten/Kota"
-              value={cityQuery}
-              onChangeText={text => {
-                setCityQuery(text);
-                const found = cityOptions.find(c => c.label === text);
-                if (found && found.value) {
-                  setSelectedCity(found);
-                  // Reset child locations
-                  setSelectedSubdistrict(null);
-                  setSubdistrictQuery("");
-                  setSelectedVillage(null);
-                  setVillageQuery("");
-                }
-              }}
-              items={cityOptions}
-            />
-            <ComboInput
-              label="Kecamatan"
-              value={subdistrictQuery}
-              onChangeText={text => {
-                setSubdistrictQuery(text);
-                const found = subdistrictOptions.find(s => s.label === text);
-                if (found && found.value) {
-                  setSelectedSubdistrict(found);
-                  // Reset child location
-                  setSelectedVillage(null);
-                  setVillageQuery("");
-                }
-              }}
-              items={subdistrictOptions}
-            />
-            <ComboInput
-              label="Kelurahan"
-              value={villageQuery}
-              onChangeText={text => {
-                setVillageQuery(text);
-                const found = villageOptions.find(v => v.label === text);
-                if (found && found.value) {
-                  setSelectedVillage(found);
-                }
-              }}
-              items={villageOptions}
-            />
-            <ThemedInput
-              label="Alamat"
-              value={address}
-              onChangeText={setAddress}
-              multiline
-              inputContainerStyle={{
-                height: 120,
-                alignItems: "flex-start",
-                paddingVertical: 12,
-              }}
-            />
-          </View>
-
-          <View style={styles.bottomButtonWrapper}>
-            <ThemedButton
-              title={isSaving ? "SAVING..." : "SAVE"}
-              onPress={handleSaveStore}
-              disabled={isSaving}
-            />
-          </View>
-
-          <ConfirmPopup
-            visible={confirmOpen}
-            title="Konfirmasi"
-            message="Apakah Anda yakin ingin menyimpan perubahan?"
-            onCancel={() => setConfirmOpen(false)}
-            onConfirm={handleSaveStore}
+        <View style={styles.sectionCard}>
+          <ThemedText type="subtitle-2" style={{ marginBottom: 10 }}>Lokasi Toko</ThemedText>
+          <ComboInput
+            label="Provinsi"
+            value={provinceQuery}
+            onChangeText={text => {
+              setProvinceQuery(text);
+              const found = provinceOptions.find(p => p.label === text);
+              if (found && found.value) {
+                setSelectedProvince(found);
+                // Reset child locations
+                setSelectedCity(null);
+                setCityQuery("");
+                setSelectedSubdistrict(null);
+                setSubdistrictQuery("");
+                setSelectedVillage(null);
+                setVillageQuery("");
+              }
+            }}
+            items={provinceOptions}
           />
-
-          <ConfirmPopup
-            visible={showSuccessPopup}
-            successOnly
-            title="Berhasil"
-            message="Data toko berhasil diperbarui"
-            onConfirm={() => setShowSuccessPopup(false)}
-            onCancel={() => setShowSuccessPopup(false)}
+          <ComboInput
+            label="Kabupaten/Kota"
+            value={cityQuery}
+            onChangeText={text => {
+              setCityQuery(text);
+              const found = cityOptions.find(c => c.label === text);
+              if (found && found.value) {
+                setSelectedCity(found);
+                // Reset child locations
+                setSelectedSubdistrict(null);
+                setSubdistrictQuery("");
+                setSelectedVillage(null);
+                setVillageQuery("");
+              }
+            }}
+            items={cityOptions}
           />
+          <ComboInput
+            label="Kecamatan"
+            value={subdistrictQuery}
+            onChangeText={text => {
+              setSubdistrictQuery(text);
+              const found = subdistrictOptions.find(s => s.label === text);
+              if (found && found.value) {
+                setSelectedSubdistrict(found);
+                // Reset child location
+                setSelectedVillage(null);
+                setVillageQuery("");
+              }
+            }}
+            items={subdistrictOptions}
+          />
+          <ComboInput
+            label="Kelurahan"
+            value={villageQuery}
+            onChangeText={text => {
+              setVillageQuery(text);
+              const found = villageOptions.find(v => v.label === text);
+              if (found && found.value) {
+                setSelectedVillage(found);
+              }
+            }}
+            items={villageOptions}
+          />
+          <ThemedInput
+            label="Alamat"
+            value={address}
+            onChangeText={setAddress}
+            multiline
+            inputContainerStyle={{
+              height: 120,
+              alignItems: "flex-start",
+              paddingVertical: 12,
+            }}
+          />
+        </View>
 
-      </ScrollView> 
+        <View style={styles.bottomButtonWrapper}>
+          <ThemedButton
+            title={isSaving ? "SAVING..." : "SAVE"}
+            onPress={handleSaveStore}
+            disabled={isSaving}
+          />
+        </View>
+
+        <ConfirmPopup
+          visible={confirmOpen}
+          title="Konfirmasi"
+          message="Apakah Anda yakin ingin menyimpan perubahan?"
+          onCancel={() => setConfirmOpen(false)}
+          onConfirm={handleSaveStore}
+        />
+
+        <ConfirmPopup
+          visible={showSuccessPopup}
+          successOnly
+          title="Berhasil"
+          message="Data toko berhasil diperbarui"
+          onConfirm={() => setShowSuccessPopup(false)}
+          onCancel={() => setShowSuccessPopup(false)}
+        />
+
+      </ScrollView>
     </KeyboardAvoidingView>
   );
 }

@@ -19,7 +19,7 @@ import {
   StyleSheet,
   TouchableOpacity,
   useWindowDimensions,
-  View,
+  View
 } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -187,7 +187,7 @@ export default function EditEmployeeScreen() {
       console.log("📦 Updating employee:", payload);
 
       const response = await employeeApi.updateEmployee(
-        Number(params.id),
+        params.id as string,
         payload
       );
 
@@ -506,7 +506,7 @@ const createStyles = (
       alignSelf: "center",
     },
     sectionPadding: {
-      paddingHorizontal: isTablet ? 40 : 20,
+      paddingHorizontal: isTablet ? 60 : 20,
       paddingVertical: isTablet ? 24 : 16,
       gap: isTablet ? 12 : 8,
     },
@@ -537,7 +537,7 @@ const createStyles = (
       marginVertical: isTablet ? 28 : 20,
     },
     sectionTitle: {
-      fontSize: isTablet ? 20 : 16,
+      fontSize: isTablet ? 24 : 16,
       fontWeight: "600",
       color: Colors[colorScheme].text,
     },
@@ -552,7 +552,7 @@ const createStyles = (
       gap: isTablet ? 12 : 8,
     },
     roleLabel: {
-      fontSize: isTablet ? 20 : 14,
+      fontSize: isTablet ? 22 : 14,
       color: Colors[colorScheme].text,
     },
     outletSection: {

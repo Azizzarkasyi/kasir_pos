@@ -289,6 +289,7 @@ export default function TransactionHistoryPage() {
               <TransactionHistoryGroup
                 dateLabel={group.dateLabel}
                 totalAmount={group.totalAmount}
+                isTablet={isTablet}
               >
                 {group.transactions.map(txn => {
                   let time = "-";
@@ -338,7 +339,7 @@ export default function TransactionHistoryPage() {
               </TransactionHistoryGroup>
             )}
             keyExtractor={item => item.date}
-            contentContainerStyle={{ paddingBottom: 100 }}
+            contentContainerStyle={{ paddingHorizontal: isTablet ? 60 : 16, paddingBottom: 100 }}
             refreshControl={
               <RefreshControl
                 refreshing={refreshing}
@@ -388,7 +389,7 @@ const createStyles = (colorScheme: "light" | "dark", isTablet: boolean) =>
     },
     searchWrapper: {
       marginBottom: isTablet ? 20 : 16,
-      paddingHorizontal: isTablet ? 24 : 16,
+      paddingHorizontal: isTablet ? 60 : 16,
     },
     searchInner: {
       flexDirection: "row",

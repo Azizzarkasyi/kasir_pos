@@ -8,8 +8,8 @@ import { ApiError, ApiResponse } from "../types/api";
 import { APP_EVENTS, appEvents } from "./event-emitter";
 
 // Baca dari environment variable, fallback ke localhost jika tidak ada
-const API_URL = process.env.API_URL || "http://localhost:3001";
-// const API_URL = process.env.API_URL || "https://ad112ca513aa.ngrok-free.app";
+// Untuk akses service di laptop dari Android Emulator, gunakan 10.0.2.2
+const API_URL = process.env.API_URL || "http://10.0.2.2:3001";
 
 console.log("🔧 API Configuration:", { API_URL });
 

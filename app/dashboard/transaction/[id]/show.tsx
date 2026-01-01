@@ -519,7 +519,7 @@ const createStyles = (colorScheme: "light" | "dark", isTablet: boolean) =>
             flex: 1,
         },
         contentInner: {
-            paddingHorizontal: isTablet ? 24 : 16,
+            paddingHorizontal: isTablet ? 60 : 16,
             paddingVertical: isTablet ? 24 : 16,
             rowGap: isTablet ? 20 : 16,
         },

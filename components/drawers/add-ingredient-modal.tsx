@@ -106,6 +106,7 @@ const AddIngredientModal: React.FC<AddIngredientModalProps> = ({
                 name: product.name,
                 price: product.price,
                 stock: product.stock,
+                capital_price: product.capital_price,
             });
             setStep("quantity");
         }
@@ -126,7 +127,8 @@ const AddIngredientModal: React.FC<AddIngredientModalProps> = ({
             variantName: selectedVariant.name,
             productName: selectedProduct.name,
             quantity,
-            unitPrice: selectedVariant.price,
+            // Use capital_price for ingredients (cost price), fallback to price if not set
+            unitPrice: selectedVariant.capital_price ?? selectedVariant.price,
         });
         onClose();
     };
@@ -183,7 +185,7 @@ const AddIngredientModal: React.FC<AddIngredientModalProps> = ({
                                 <Text style={styles.ingredientInfo}>
                                     {item.variants && item.variants.length > 1
                                         ? `${item.variants.length} varian`
-                                        : `Rp ${(item.variants?.[0]?.price || item.price || 0).toLocaleString("id-ID")}`}
+                                        : `Rp ${(item.variants?.[0]?.capital_price || item.variants?.[0]?.price || item.capital_price || item.price || 0).toLocaleString("id-ID")}`}
                                 </Text>
                             </View>
                             <Ionicons
@@ -233,7 +235,7 @@ const AddIngredientModal: React.FC<AddIngredientModalProps> = ({
                         <Text style={styles.variantName}>{variant.name}</Text>
                         <View style={styles.variantSubtitlePill}>
                             <Text style={styles.variantSubtitleText}>
-                                {`Stok ${variant.stock ?? "-"} - Rp ${variant.price.toLocaleString("id-ID")}`}
+                                {`Stok ${variant.stock ?? "-"} - Rp ${(variant.capital_price ?? variant.price).toLocaleString("id-ID")}`}
                             </Text>
                         </View>
                     </View>
@@ -271,7 +273,7 @@ const AddIngredientModal: React.FC<AddIngredientModalProps> = ({
                     <Text style={styles.variantProductName}>{selectedProduct?.name}</Text>
                 </View>
                 <Text style={styles.priceText}>
-                    Rp {(selectedVariant?.price || 0).toLocaleString("id-ID")}
+                    Rp {(selectedVariant?.capital_price ?? selectedVariant?.price ?? 0).toLocaleString("id-ID")}
                 </Text>
             </View>
 

@@ -16,13 +16,13 @@ import React, { useState } from "react";
 import { Alert, StyleSheet, useWindowDimensions, View } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 
-type LocationOption = {label: string; value: string};
+type LocationOption = { label: string; value: string };
 
 const WILAYAH_API_BASE = "https://wilayah.id/api";
 
 export default function AddOutletScreen() {
   const colorScheme = useColorScheme() ?? "light";
-  const {width, height} = useWindowDimensions();
+  const { width, height } = useWindowDimensions();
   const isTablet = Math.min(width, height) >= 600;
   const isLandscape = width > height;
   const isTabletLandscape = isTablet && isLandscape;
@@ -49,16 +49,16 @@ export default function AddOutletScreen() {
   const [showSuccessPopup, setShowSuccessPopup] = useState(false);
 
   const [provinceOptions, setProvinceOptions] = useState<LocationOption[]>([
-    {label: "Pilih Provinsi", value: ""},
+    { label: "Pilih Provinsi", value: "" },
   ]);
   const [regencyOptions, setRegencyOptions] = useState<LocationOption[]>([
-    {label: "Pilih Kabupaten / Kota", value: ""},
+    { label: "Pilih Kabupaten / Kota", value: "" },
   ]);
   const [districtOptions, setDistrictOptions] = useState<LocationOption[]>([
-    {label: "Pilih Kecamatan", value: ""},
+    { label: "Pilih Kecamatan", value: "" },
   ]);
   const [villageOptions, setVillageOptions] = useState<LocationOption[]>([
-    {label: "Pilih Kelurahan", value: ""},
+    { label: "Pilih Kelurahan", value: "" },
   ]);
 
   // Fetch provinces on mount
@@ -79,8 +79,8 @@ export default function AddOutletScreen() {
         const data = Array.isArray(res.data.data) ? res.data.data : [];
 
         setProvinceOptions([
-          {label: "Pilih Provinsi", value: ""},
-          ...data.map((item: {code: string; name: string}) => ({
+          { label: "Pilih Provinsi", value: "" },
+          ...data.map((item: { code: string; name: string }) => ({
             label: item.name,
             value: item.code,
           })),
@@ -97,7 +97,7 @@ export default function AddOutletScreen() {
   // Fetch regencies when province changes
   React.useEffect(() => {
     if (!selectedProvince) {
-      setRegencyOptions([{label: "Pilih Kabupaten / Kota", value: ""}]);
+      setRegencyOptions([{ label: "Pilih Kabupaten / Kota", value: "" }]);
       setSelectedCity(null);
       setSelectedSubDistrict(null);
       setSelectedVillage(null);
@@ -127,8 +127,8 @@ export default function AddOutletScreen() {
         console.log("✅ Regencies count:", data.length);
 
         setRegencyOptions([
-          {label: "Pilih Kabupaten / Kota", value: ""},
-          ...data.map((item: {code: string; name: string}) => ({
+          { label: "Pilih Kabupaten / Kota", value: "" },
+          ...data.map((item: { code: string; name: string }) => ({
             label: item.name,
             value: item.code,
           })),
@@ -145,8 +145,8 @@ export default function AddOutletScreen() {
     setCityQuery("");
     setSubDistrictQuery("");
     setVillageQuery("");
-    setDistrictOptions([{label: "Pilih Kecamatan", value: ""}]);
-    setVillageOptions([{label: "Pilih Kelurahan", value: ""}]);
+    setDistrictOptions([{ label: "Pilih Kecamatan", value: "" }]);
+    setVillageOptions([{ label: "Pilih Kelurahan", value: "" }]);
 
     fetchRegencies();
   }, [selectedProvince?.value]);
@@ -154,7 +154,7 @@ export default function AddOutletScreen() {
   // Fetch districts when city changes
   React.useEffect(() => {
     if (!selectedCity) {
-      setDistrictOptions([{label: "Pilih Kecamatan", value: ""}]);
+      setDistrictOptions([{ label: "Pilih Kecamatan", value: "" }]);
       setSelectedSubDistrict(null);
       setSelectedVillage(null);
       setSubDistrictQuery("");
@@ -179,8 +179,8 @@ export default function AddOutletScreen() {
         console.log("✅ Districts count:", data.length);
 
         setDistrictOptions([
-          {label: "Pilih Kecamatan", value: ""},
-          ...data.map((item: {code: string; name: string}) => ({
+          { label: "Pilih Kecamatan", value: "" },
+          ...data.map((item: { code: string; name: string }) => ({
             label: item.name,
             value: item.code,
           })),
@@ -193,7 +193,7 @@ export default function AddOutletScreen() {
 
     setSelectedSubDistrict(null);
     setSelectedVillage(null);
-    setVillageOptions([{label: "Pilih Kelurahan", value: ""}]);
+    setVillageOptions([{ label: "Pilih Kelurahan", value: "" }]);
     setSubDistrictQuery("");
     setVillageQuery("");
 
@@ -203,7 +203,7 @@ export default function AddOutletScreen() {
   // Fetch villages when subdistrict changes
   React.useEffect(() => {
     if (!selectedSubDistrict) {
-      setVillageOptions([{label: "Pilih Kelurahan", value: ""}]);
+      setVillageOptions([{ label: "Pilih Kelurahan", value: "" }]);
       setSelectedVillage(null);
       setVillageQuery("");
       return;
@@ -229,8 +229,8 @@ export default function AddOutletScreen() {
         console.log("✅ Villages count:", data.length);
 
         setVillageOptions([
-          {label: "Pilih Kelurahan", value: ""},
-          ...data.map((item: {code: string; name: string}) => ({
+          { label: "Pilih Kelurahan", value: "" },
+          ...data.map((item: { code: string; name: string }) => ({
             label: item.name,
             value: item.code,
           })),
@@ -294,7 +294,7 @@ export default function AddOutletScreen() {
                 style: "cancel",
                 onPress: () => setIsSubmitting(false),
               },
-              {text: "Lanjutkan", onPress: () => {}},
+              { text: "Lanjutkan", onPress: () => { } },
             ]
           );
           return;
@@ -347,7 +347,7 @@ export default function AddOutletScreen() {
   };
 
   return (
-    <View style={{flex: 1, backgroundColor: Colors[colorScheme].background}}>
+    <View style={{ flex: 1, backgroundColor: Colors[colorScheme].background }}>
       <Header
         title="Tambah Outlet"
         showHelp={false}
@@ -487,12 +487,12 @@ export default function AddOutletScreen() {
         onConfirm={() => {
           setShowSuccessPopup(false);
           router.back();
-          router.setParams({refresh: Date.now().toString()});
+          router.setParams({ refresh: Date.now().toString() });
         }}
         onCancel={() => {
           setShowSuccessPopup(false);
           router.back();
-          router.setParams({refresh: Date.now().toString()});
+          router.setParams({ refresh: Date.now().toString() });
         }}
       />
     </View>

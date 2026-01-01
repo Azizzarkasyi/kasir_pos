@@ -222,20 +222,20 @@ const ReportDetailScreen = () => {
         showBack={true}
         showHelp={false}
         title="Detail Laporan"
-        left={
-          !isPhone ? (
-            <TouchableOpacity
-              onPress={openDrawer}
-              style={styles.headerIconButton}
-            >
-              <Ionicons
-                name="menu-outline"
-                size={isTablet ? 36 : 24}
-                color="white"
-              />
-            </TouchableOpacity>
-          ) : undefined
-        }
+        // left={
+        //   !isPhone ? (
+        //     <TouchableOpacity
+        //       onPress={openDrawer}
+        //       style={styles.headerIconButton}
+        //     >
+        //       <Ionicons
+        //         name="menu-outline"
+        //         size={isTablet ? 36 : 24}
+        //         color="white"
+        //       />
+        //     </TouchableOpacity>
+        //   ) : undefined
+        // }
         onBackPress={() => router.back()}
       />
       <ScrollView
@@ -539,7 +539,7 @@ const createStyles = (
       alignItems: "center",
     },
     scrollContainer: {
-      paddingHorizontal: isTablet ? 24 : 8,
+      paddingHorizontal: isTablet ? 60 : 16,
     },
     contentWrapper: {
       width: "100%",
@@ -666,14 +666,14 @@ const createStyles = (
     },
     sectionTitle: {
       marginBottom: isTablet ? 10 : 8,
-      fontSize: isTablet ? 20 : 18,
+      fontSize: isTablet ? 24 : 18,
       fontWeight: "600",
     },
     sectionSubtitle: {
       marginTop: 0,
       marginBottom: isTablet ? 14 : 12,
       color: Colors[colorScheme].icon,
-      fontSize: isTablet ? 14 : 12,
+      fontSize: isTablet ? 18 : 12,
     },
     metricsGrid: {
       flexDirection: "row",
@@ -692,13 +692,13 @@ const createStyles = (
       justifyContent: "space-between",
     },
     metricTitle: {
-      fontSize: isTablet ? 18 : 12,
+      fontSize: isTablet ? 20 : 12,
       fontWeight: "400",
       color: Colors[colorScheme].text,
       marginBottom: isTablet ? 6 : 2,
     },
     metricValue: {
-      fontSize: isTablet ? 24 : 14,
+      fontSize: isTablet ? 28 : 14,
       fontWeight: "bold",
       color: Colors[colorScheme].text,
       marginBottom: isTablet ? 6 : 2,
@@ -707,7 +707,7 @@ const createStyles = (
       color: "white",
     },
     metricSubtitle: {
-      fontSize: isTablet ? 16 : 12,
+      fontSize: isTablet ? 18 : 12,
       color: Colors[colorScheme].icon,
       marginTop: isTablet ? 4 : 8,
     },

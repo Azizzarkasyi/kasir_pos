@@ -1,6 +1,7 @@
 import EmployeeCard from "@/components/employee-card";
 import Header from "@/components/header";
 import { ThemedInput } from "@/components/themed-input";
+import { ThemedText } from "@/components/themed-text";
 import ProBadge from "@/components/ui/pro-badge";
 import { Colors } from "@/constants/theme";
 import { useColorScheme } from "@/hooks/use-color-scheme";
@@ -59,7 +60,6 @@ export default function EmployeeScreen() {
 
       if (response.data) {
         setEmployees(response.data);
-        console.log("✅ Employees loaded:", response.data.length);
       }
     } catch (error: any) {
       console.error("❌ Failed to load employees:", error);
@@ -98,7 +98,7 @@ export default function EmployeeScreen() {
       <Header title="Pegawai" showHelp={false} />
       <View style={[styles.contentContainer, isDisabled && styles.disabledOverlay]} pointerEvents={isDisabled ? "none" : "auto"}>
         <View style={styles.contentWrapper}>
-          <View style={[styles.searchRow, { paddingHorizontal: isTablet ? 40 : 20 }]}>
+          <View style={[styles.searchRow, { paddingHorizontal: isTablet ? 60 : 20 }]}>
             <View style={{ flex: 1 }}>
               <ThemedInput
                 label="Cari Pegawai"
@@ -129,31 +129,53 @@ export default function EmployeeScreen() {
               keyExtractor={item => String(item.id)}
               refreshing={refreshing}
               onRefresh={() => loadEmployees(true)}
+              contentContainerStyle={{ paddingHorizontal: isTablet ? 60 : 20 }}
               renderItem={({ item }) => (
                 <EmployeeCard
                   initials={item.name.slice(0, 2).toUpperCase()}
                   name={item.name}
                   phone={item.phone || "-"}
                   role={item.role || "Staff"}
+                  isTablet={isTablet}
                   isDisabled={item.is_disabled}
                   onPress={() => {
                     if (isDisabled || item.is_disabled) return;
                     router.push({
                       pathname: "/dashboard/employee/edit",
                       params: {
-                        id: String(item.id),
+                        id: item.id,
                       },
                     } as never);
                   }}
                 />
               )}
               ListEmptyComponent={
-                <View style={{ alignItems: "center", marginTop: 40 }}>
+                <View style={[styles.emptyState, { paddingTop: isTablet ? 120 : 80 }]}>
                   <Ionicons
                     name="people-outline"
-                    size={48}
+                    size={isTablet ? 80 : 60}
                     color={Colors[colorScheme].icon}
                   />
+                  <ThemedText style={{
+                    fontSize: isTablet ? 28 : 20,
+                    fontWeight: "600",
+                    color: Colors[colorScheme].text,
+                    marginTop: 20,
+                    marginBottom: 8
+                  }}>
+                    {search ? "Pegawai Tidak Ditemukan" : "Belum Ada Pegawai"}
+                  </ThemedText>
+                  <ThemedText style={{
+                    fontSize: isTablet ? 20 : 14,
+                    color: Colors[colorScheme].icon,
+                    textAlign: "center",
+                    maxWidth: 300,
+                    lineHeight: isTablet ? 28 : 22
+                  }}>
+                    {search
+                      ? `Tidak ada pegawai dengan nama "${search}"`
+                      : "Tambahkan pegawai pertama Anda untuk membantu operasional toko"}
+                  </ThemedText>
                 </View>
               }
             />
@@ -242,5 +264,10 @@ const createStyles = (colorScheme: "light" | "dark", isTablet: boolean, isTablet
     },
     disabledOverlay: {
       opacity: 0.5,
+    },
+    emptyState: {
+      flex: 1,
+      alignItems: "center",
+      justifyContent: "center",
     },
   });

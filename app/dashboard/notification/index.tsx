@@ -363,7 +363,7 @@ const createStyles = (colorScheme: "light" | "dark", isTablet: boolean, isTablet
     },
     tabRow: {
       flexDirection: "row",
-      paddingHorizontal: isTablet ? 24 : 16,
+      paddingHorizontal: isTablet ? 60 : 16,
       paddingTop: isTablet ? 16 : 12,
       paddingBottom: isTablet ? 10 : 6,
       gap: isTablet ? 8 : 6,
@@ -385,11 +385,11 @@ const createStyles = (colorScheme: "light" | "dark", isTablet: boolean, isTablet
       backgroundColor: Colors[colorScheme].background,
     },
     tabText: {
-      fontSize: isTablet ? 14 : 12,
+      fontSize: isTablet ? 18 : 12,
       color: Colors[colorScheme].text,
     },
     tabTextActive: {
-      fontSize: isTablet ? 14 : 12,
+      fontSize: isTablet ? 18 : 12,
       color: Colors[colorScheme].primary,
       fontWeight: "600",
     },
@@ -416,7 +416,8 @@ const createStyles = (colorScheme: "light" | "dark", isTablet: boolean, isTablet
       color: Colors[colorScheme].icon,
     },
     listContainer: {
-      padding: isTablet ? 20 : 12,
+      paddingHorizontal: isTablet ? 60 : 12,
+      paddingTop: isTablet ? 20 : 12,
       paddingBottom: 100,
     },
     notificationCard: {
@@ -452,7 +453,7 @@ const createStyles = (colorScheme: "light" | "dark", isTablet: boolean, isTablet
       gap: 6,
     },
     notificationTitle: {
-      fontSize: isTablet ? 15 : 13,
+      fontSize: isTablet ? 20 : 13,
       fontWeight: "600",
       flex: 1,
     },
@@ -463,9 +464,9 @@ const createStyles = (colorScheme: "light" | "dark", isTablet: boolean, isTablet
       backgroundColor: Colors[colorScheme].primary,
     },
     notificationMessage: {
-      fontSize: isTablet ? 13 : 12,
+      fontSize: isTablet ? 18 : 12,
       color: Colors[colorScheme].icon,
-      lineHeight: isTablet ? 18 : 16,
+      lineHeight: isTablet ? 24 : 16,
     },
     notificationFooter: {
       flexDirection: "row",
@@ -474,7 +475,7 @@ const createStyles = (colorScheme: "light" | "dark", isTablet: boolean, isTablet
       marginTop: 2,
     },
     notificationTime: {
-      fontSize: isTablet ? 11 : 10,
+      fontSize: isTablet ? 16 : 10,
       color: Colors[colorScheme].icon,
     },
     ctaIndicator: {
