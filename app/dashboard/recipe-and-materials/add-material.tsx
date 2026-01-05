@@ -26,7 +26,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function AddProductScreen() {
   const colorScheme = useColorScheme() ?? "light";
-  const {width, height} = useWindowDimensions();
+  const { width, height } = useWindowDimensions();
   const isTablet = Math.min(width, height) >= 600;
   const isLandscape = width > height;
   const isTabletLandscape = isTablet && isLandscape;
@@ -38,7 +38,7 @@ export default function AddProductScreen() {
   const confirmationRef = useRef<ConfirmationDialogHandle | null>(null);
 
   const [merks, setMerks] = useState<Merk[]>([]);
-  const [recipes, setRecipes] = useState<{id: string; name: string}[]>([]);
+  const [recipes, setRecipes] = useState<{ id: string; name: string }[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [showSuccessPopup, setShowSuccessPopup] = useState(false);
@@ -63,7 +63,7 @@ export default function AddProductScreen() {
     try {
       const response = await recipeApi.getRecipes();
       if (response.data) {
-        setRecipes(response.data.map(r => ({id: r.id, name: r.name})));
+        setRecipes(response.data.map(r => ({ id: r.id, name: r.name })));
       }
     } catch (error) {
       console.error("Failed to load recipes:", error);
@@ -186,7 +186,7 @@ export default function AddProductScreen() {
                 style: "cancel",
                 onPress: () => setIsSaving(false),
               },
-              {text: "Lanjutkan", onPress: () => {}},
+              { text: "Lanjutkan", onPress: () => { } },
             ]
           );
           return;
@@ -242,11 +242,7 @@ export default function AddProductScreen() {
         payload.min_stock = stock.minStock;
         payload.notify_on_stock_ronouts = stock.notifyMin;
 
-        if (
-          stock.unit &&
-          stock.unit.length > 10 &&
-          stock.unit.startsWith("cm")
-        ) {
+        if (stock.unit) {
           payload.unit_id = stock.unit;
         }
       }
@@ -255,7 +251,7 @@ export default function AddProductScreen() {
       // jadi bisa langsung dilempar ke payload tanpa mapping tambahan
       console.log("📦 Variants from store before mapping:", variants);
       payload.variants = variants.map(v => {
-        const {id, ...rest} = v;
+        const { id, ...rest } = v;
         return rest;
       });
       console.log(
@@ -277,7 +273,7 @@ export default function AddProductScreen() {
   };
 
   return (
-    <View style={{flex: 1, backgroundColor: Colors[colorScheme].background}}>
+    <View style={{ flex: 1, backgroundColor: Colors[colorScheme].background }}>
       <Header title="Tambah Bahan" showHelp={false} />
       <KeyboardAwareScrollView
         contentContainerStyle={{
@@ -347,29 +343,29 @@ export default function AddProductScreen() {
                   pathname: "/dashboard/product/stock",
                   params: {
                     from: "add",
-                    ...(name ? {name} : {}),
-                    ...(price ? {price} : {}),
-                    ...(brand ? {brand} : {}),
-                    ...(category ? {category} : {}),
-                    ...(favorite ? {favorite: String(favorite)} : {}),
+                    ...(name ? { name } : {}),
+                    ...(price ? { price } : {}),
+                    ...(brand ? { brand } : {}),
+                    ...(category ? { category } : {}),
+                    ...(favorite ? { favorite: String(favorite) } : {}),
                     ...(enableCostBarcode
-                      ? {enableCostBarcode: String(enableCostBarcode)}
+                      ? { enableCostBarcode: String(enableCostBarcode) }
                       : {}),
-                    ...(imageUri ? {imageUri} : {}),
+                    ...(imageUri ? { imageUri } : {}),
                     ...(capitalPrice
-                      ? {capitalPrice: String(capitalPrice)}
+                      ? { capitalPrice: String(capitalPrice) }
                       : {}),
-                    ...(barcode ? {barcode} : {}),
+                    ...(barcode ? { barcode } : {}),
                     ...(variants.length
-                      ? {variants: JSON.stringify(variants)}
+                      ? { variants: JSON.stringify(variants) }
                       : {}),
                     ...(stock
                       ? {
-                          offlineStock: String(stock.offlineStock),
-                          unit: stock.unit,
-                          minStock: String(stock.minStock),
-                          notifyMin: stock.notifyMin ? "1" : "0",
-                        }
+                        offlineStock: String(stock.offlineStock),
+                        unit: stock.unit,
+                        minStock: String(stock.minStock),
+                        notifyMin: stock.notifyMin ? "1" : "0",
+                      }
                       : {}),
                   },
                 } as never)
@@ -392,7 +388,7 @@ export default function AddProductScreen() {
                     price={v.price}
                     stock={
                       v.is_stock_active && typeof v.stock === "number"
-                        ? {count: v.stock, unit: v.unit_id || "pcs"}
+                        ? { count: v.stock, unit: v.unit_id || "pcs" }
                         : undefined
                     }
                     onPress={() =>
@@ -404,15 +400,15 @@ export default function AddProductScreen() {
                           price: String(v.price),
                           ...(typeof v.stock === "number"
                             ? {
-                                offlineStock: String(v.stock),
-                                unit: v.unit_id || "pcs",
-                                minStock: String(v.min_stock || 0),
-                                notifyMin: v.notify_on_stock_ronouts
-                                  ? "1"
-                                  : "0",
-                              }
+                              offlineStock: String(v.stock),
+                              unit: v.unit_id || "pcs",
+                              minStock: String(v.min_stock || 0),
+                              notifyMin: v.notify_on_stock_ronouts
+                                ? "1"
+                                : "0",
+                            }
                             : {}),
-                          ...(v.id ? {variantId: v.id} : {}),
+                          ...(v.id ? { variantId: v.id } : {}),
                         },
                       } as never)
                     }

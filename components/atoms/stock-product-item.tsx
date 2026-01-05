@@ -9,6 +9,7 @@ type StockProductItemProps = {
   name: string;
   variant?: string;
   quantity: number | string;
+  unit?: string;
   onPress?: () => void;
   isTablet?: boolean;
   isDisabled?: boolean;
@@ -18,6 +19,7 @@ const StockProductItem: React.FC<StockProductItemProps> = ({
   name,
   variant,
   quantity,
+  unit,
   onPress,
   isTablet = false,
   isDisabled = false,
@@ -65,7 +67,12 @@ const StockProductItem: React.FC<StockProductItemProps> = ({
         </View>
       ) : (
         <View style={styles.qtyBox}>
-          <ThemedText style={styles.qtyText}>{quantity}</ThemedText>
+          <View style={styles.qtyRow}>
+            <ThemedText style={styles.qtyText}>{quantity}</ThemedText>
+            {unit && (
+              <ThemedText style={styles.unitText}> {unit}</ThemedText>
+            )}
+          </View>
         </View>
       )}
     </TouchableOpacity>
@@ -122,10 +129,20 @@ const createStyles = (colorScheme: "light" | "dark", isTablet: boolean) =>
       alignItems: "center",
       justifyContent: "center",
     },
+    qtyRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: isTablet ? 4 : 2,
+    },
     qtyText: {
       fontWeight: "600",
       fontSize: isTablet ? 20 : 12,
       color: Colors[colorScheme].text,
+    },
+    unitText: {
+      fontSize: isTablet ? 14 : 10,
+      color: Colors[colorScheme].icon,
+      marginTop: 0,
     },
     disabledBadge: {
       backgroundColor: Colors[colorScheme].border,

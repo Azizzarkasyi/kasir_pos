@@ -9,7 +9,9 @@ import { APP_EVENTS, appEvents } from "./event-emitter";
 
 // Baca dari environment variable, fallback ke localhost jika tidak ada
 // Untuk akses service di laptop dari Android Emulator, gunakan 10.0.2.2
-const API_URL = process.env.API_URL || "http://10.0.2.2:3001";
+// const API_URL = process.env.API_URL || "http://10.0.2.2:3001";
+// const API_URL = process.env.API_URL || "http://192.168.1.5:3001";
+const API_URL = process.env.API_URL || "https://pos-be.basofi.my.id";
 
 console.log("🔧 API Configuration:", { API_URL });
 

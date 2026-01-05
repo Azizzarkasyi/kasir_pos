@@ -252,11 +252,7 @@ export default function AddProductScreen() {
         payload.min_stock = stock.minStock;
         payload.notify_on_stock_ronouts = stock.notifyMin;
 
-        if (
-          stock.unit &&
-          stock.unit.length > 10 &&
-          stock.unit.startsWith("cm")
-        ) {
+        if (stock.unit) {
           payload.unit_id = stock.unit;
         }
       }
@@ -288,28 +284,6 @@ export default function AddProductScreen() {
       // Jika tidak ada variant tambahan, jangan kirim field variants
       // Backend akan otomatis membuat variant default "Regular"
 
-      console.log("=== CREATE PRODUCT PAYLOAD ===");
-      console.log("Name:", payload.name);
-      console.log("Price:", payload.price);
-      console.log("Merk ID:", payload.merk_id || "null");
-      console.log("Category ID:", payload.category_id || "null");
-      console.log("Recipe ID:", payload.recipe_id || "null");
-      console.log("Is Favorite:", payload.is_favorite);
-      console.log("Photo URL:", payload.photo_url || "null");
-      console.log("Barcode:", payload.barcode || "null");
-      console.log("Capital Price:", payload.capital_price || "null");
-      console.log("Is Stock Active:", payload.is_stock_active || false);
-      console.log("Stock:", payload.stock || "null");
-      console.log("Min Stock:", payload.min_stock || "null");
-      console.log(
-        "Notify on Stock Runouts:",
-        payload.notify_on_stock_ronouts || false
-      );
-      console.log("Unit ID:", payload.unit_id || "null");
-      console.log("Variants Count:", payload.variants?.length || 0);
-      if (payload.variants && payload.variants.length > 0) {
-        console.log("Variants:", JSON.stringify(payload.variants, null, 2));
-      }
       console.log("Full Payload:", JSON.stringify(payload, null, 2));
       console.log("==============================");
 

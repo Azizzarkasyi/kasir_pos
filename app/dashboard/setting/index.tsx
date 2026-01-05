@@ -5,6 +5,7 @@ import Skeleton from "@/components/atoms/skeleton";
 import Header from "@/components/header";
 import { ThemedButton } from "@/components/themed-button";
 import { ThemedText } from "@/components/themed-text";
+import ProBadge from "@/components/ui/pro-badge";
 import { Colors } from "@/constants/theme";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { useUserPlan } from "@/hooks/use-user-plan";
@@ -151,13 +152,28 @@ export default function SettingScreen() {
               showBottomBorder={true}
             />
             {userRole === 'owner' && (
-              <SettingListItem
-                leftIconName="storefront-outline"
-                title="Store"
-                onPress={() => router.push("/dashboard/setting/store" as never)}
-                showTopBorder={false}
-                showBottomBorder={true}
-              />
+              <>
+                <SettingListItem
+                  leftIconName="storefront-outline"
+                  title="Store"
+                  onPress={() => router.push("/dashboard/setting/store" as never)}
+                  showTopBorder={false}
+                  showBottomBorder={true}
+                />
+                <SettingListItem
+                  leftIconName="swap-horizontal-outline"
+                  title="Konversi Unit"
+                  onPress={() => {
+                    if (!isBasic) {
+                      router.push("/dashboard/setting/unit-conversions" as never);
+                    }
+                  }}
+                  showTopBorder={false}
+                  showBottomBorder={true}
+                  disabled={isBasic}
+                  rightComponent={isBasic ? <ProBadge size="small" /> : undefined}
+                />
+              </>
             )}
           </View>
           <View style={{ height: 80 }} />

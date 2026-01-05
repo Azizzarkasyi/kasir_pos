@@ -334,11 +334,11 @@ const NotificationScreen = () => {
         />
       ) : (
         <View style={styles.emptyStateWrapper}>
-          <Image
+          {/* <Image
             source={require("@/assets/ilustrations/empty-notif.png")}
             style={styles.emptyImage}
             resizeMode="contain"
-          />
+          /> */}
           <ThemedText style={styles.emptyText}>Belum Ada Notifikasi</ThemedText>
         </View>
       )}
@@ -400,9 +400,9 @@ const createStyles = (colorScheme: "light" | "dark", isTablet: boolean, isTablet
     },
     emptyStateWrapper: {
       flex: 1,
+      width: "100%",
       alignItems: "center",
       justifyContent: "center",
-      paddingHorizontal: isTablet ? 32 : 24,
       marginTop: isTablet ? -20 : -40,
     },
     emptyImage: {
@@ -410,10 +410,13 @@ const createStyles = (colorScheme: "light" | "dark", isTablet: boolean, isTablet
       height: isTablet ? 480 : 400,
       borderRadius: 16,
       marginBottom: isTablet ? 20 : 16,
+      alignSelf: "center",
     },
     emptyText: {
+      width: "100%",
       fontSize: isTablet ? 18 : 16,
       color: Colors[colorScheme].icon,
+      textAlign: "center",
     },
     listContainer: {
       paddingHorizontal: isTablet ? 60 : 12,

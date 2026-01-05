@@ -3,7 +3,10 @@ import {
   CreateProductRequest,
   GetStockHistoryResponse,
   Product,
-  UpdateProductRequest
+  UpdateProductRequest,
+  AvailableConversionsResponse,
+  ConvertStockRequest,
+  ConvertStockResponse,
 } from "../../types/api";
 import apiService from "../api";
 
@@ -25,7 +28,7 @@ export const productApi = {
     return response;
   },
 
-  async getProductStock(params?:{
+  async getProductStock(params?: {
     search?: string;
   }): Promise<ApiResponse<Product[]>> {
     const response = await apiService.get<Product[]>("/products/stocks", params);
@@ -104,6 +107,8 @@ export const productApi = {
    * @param variantId - Variant ID
    * @param action_type - adjust_stock | add_stock | remove_stock
    * @param amount - Stock amount
+   * @param note - Optional note
+   * @param unit_id - Optional unit ID for the amount
    */
   async updateStock(
     variantId: string,
@@ -111,6 +116,7 @@ export const productApi = {
       action_type: "adjust_stock" | "add_stock" | "remove_stock";
       amount: number;
       note: string;
+      unit_id?: string;
     }
   ): Promise<ApiResponse<any>> {
     const response = await apiService.put<any>(
@@ -140,7 +146,7 @@ export const productApi = {
     end_date?: string;
     product_id?: string;
     variant_id?: string;
-    action_type?: "IN" | "OUT" | "ADJUST";
+    action_type?: "IN" | "OUT" | "ADJUST" | "CONVERSION";
   }): Promise<ApiResponse<GetStockHistoryResponse>> {
     const response = await apiService.get<GetStockHistoryResponse>(
       "/products/stock-history",
@@ -149,7 +155,31 @@ export const productApi = {
     return response;
   },
 
+  /**
+   * Get available unit conversions for a variant
+   */
+  async getAvailableConversions(
+    variantId: string
+  ): Promise<ApiResponse<AvailableConversionsResponse>> {
+    const response = await apiService.get<AvailableConversionsResponse>(
+      `/products/${variantId}/conversions`
+    );
+    return response;
+  },
 
+  /**
+   * Convert stock to a different unit
+   */
+  async convertStock(
+    variantId: string,
+    data: ConvertStockRequest
+  ): Promise<ApiResponse<ConvertStockResponse>> {
+    const response = await apiService.post<ConvertStockResponse>(
+      `/products/${variantId}/convert`,
+      data
+    );
+    return response;
+  },
 };
 
 export default productApi;

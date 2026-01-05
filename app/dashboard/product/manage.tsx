@@ -42,68 +42,93 @@ export default function ManageProductsScreen() {
           <View style={styles.contentWrapper}>
             <View style={isTablet ? styles.spacerTablet : styles.spacer} />
 
-          <View
-            style={[
-              styles.menuWrapper,
-              isTablet && styles.menuWrapperTablet,
-              {
-                borderBottomWidth: StyleSheet.hairlineWidth,
-                borderBottomColor: Colors[colorScheme].border,
-              },
-            ]}
-          >
-            <MenuRow
-              title="Produk"
-              subtitle="Kelola semua produk untuk katalog toko kamu di sini."
-              variant="link"
-              showBottomBorder={false}
-              onPress={() => router.push("/dashboard/product/products" as never)}
-            />
-          </View>
+            <View
+              style={[
+                styles.menuWrapper,
+                isTablet && styles.menuWrapperTablet,
+                {
+                  borderBottomWidth: StyleSheet.hairlineWidth,
+                  borderBottomColor: Colors[colorScheme].border,
+                },
+              ]}
+            >
+              <MenuRow
+                title="Produk"
+                subtitle="Kelola semua produk untuk katalog toko kamu di sini."
+                variant="link"
+                showBottomBorder={false}
+                onPress={() => router.push("/dashboard/product/products" as never)}
+              />
+            </View>
 
-          <View
-            style={[
-              styles.menuWrapper,
-              isTablet && styles.menuWrapperTablet,
-              {
-                borderBottomWidth: StyleSheet.hairlineWidth,
-                borderBottomColor: Colors[colorScheme].border,
-              },
-            ]}
-          >
-            <MenuRow
-              title="Atur Stok"
-              subtitle="Ubah, tambah, atau kurangi stok produk dengan cepat."
-              variant="link"
-              showBottomBorder={false}
-              onPress={() => router.push("/dashboard/stock/manage" as never)}
-            />
-          </View>
+            <View
+              style={[
+                styles.menuWrapper,
+                isTablet && styles.menuWrapperTablet,
+                {
+                  borderBottomWidth: StyleSheet.hairlineWidth,
+                  borderBottomColor: Colors[colorScheme].border,
+                },
+              ]}
+            >
+              <MenuRow
+                title="Atur Stok"
+                subtitle="Ubah, tambah, atau kurangi stok produk dengan cepat."
+                variant="link"
+                showBottomBorder={false}
+                onPress={() => router.push("/dashboard/stock/manage" as never)}
+              />
+            </View>
 
-          <View
-            style={[
-              styles.menuWrapper,
-              isTablet && styles.menuWrapperTablet,
-              {
-                borderBottomWidth: StyleSheet.hairlineWidth,
-                borderBottomColor: Colors[colorScheme].border,
-              },
-            ]}
-          >
-            <MenuRow
-              title="Bahan Baku & Resep"
-              subtitle="Buat resep produk dari bahan baku."
-              variant="link"
-              showBottomBorder={false}
-              onPress={() => {
-                if (!isBasic) {
-                  router.push("/dashboard/recipe-and-materials" as never);
-                }
-              }}
-              disabled={isBasic}
-              rightComponent={isBasic ? <ProBadge size="small" /> : undefined}
-            />
-          </View>
+            <View
+              style={[
+                styles.menuWrapper,
+                isTablet && styles.menuWrapperTablet,
+                {
+                  borderBottomWidth: StyleSheet.hairlineWidth,
+                  borderBottomColor: Colors[colorScheme].border,
+                },
+              ]}
+            >
+              <MenuRow
+                title="Konversi Stok"
+                subtitle="Konversi stok produk ke unit yang berbeda."
+                variant="link"
+                showBottomBorder={false}
+                onPress={() => {
+                  if (!isBasic) {
+                    router.push("/dashboard/stock/conversion" as never);
+                  }
+                }}
+                disabled={isBasic}
+                rightComponent={isBasic ? <ProBadge size="small" /> : undefined}
+              />
+            </View>
+
+            <View
+              style={[
+                styles.menuWrapper,
+                isTablet && styles.menuWrapperTablet,
+                {
+                  borderBottomWidth: StyleSheet.hairlineWidth,
+                  borderBottomColor: Colors[colorScheme].border,
+                },
+              ]}
+            >
+              <MenuRow
+                title="Bahan Baku & Resep"
+                subtitle="Buat resep produk dari bahan baku."
+                variant="link"
+                showBottomBorder={false}
+                onPress={() => {
+                  if (!isBasic) {
+                    router.push("/dashboard/recipe-and-materials" as never);
+                  }
+                }}
+                disabled={isBasic}
+                rightComponent={isBasic ? <ProBadge size="small" /> : undefined}
+              />
+            </View>
           </View>
         </ScrollView>
       </View>

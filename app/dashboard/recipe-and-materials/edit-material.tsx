@@ -32,7 +32,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function EditProductScreen() {
   const colorScheme = useColorScheme() ?? "light";
-  const {width, height} = useWindowDimensions();
+  const { width, height } = useWindowDimensions();
   const isTablet = Math.min(width, height) >= 600;
   const isLandscape = width > height;
   const isTabletLandscape = isTablet && isLandscape;
@@ -77,7 +77,7 @@ export default function EditProductScreen() {
   }>();
 
   const [merks, setMerks] = useState<Merk[]>([]);
-  const [recipes, setRecipes] = useState<{id: string; name: string}[]>([]);
+  const [recipes, setRecipes] = useState<{ id: string; name: string }[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [productData, setProductData] = useState<Product | null>(null);
@@ -162,7 +162,7 @@ export default function EditProductScreen() {
     try {
       const response = await recipeApi.getRecipes();
       if (response.data) {
-        setRecipes(response.data.map(r => ({id: r.id, name: r.name})));
+        setRecipes(response.data.map(r => ({ id: r.id, name: r.name })));
       }
     } catch (error) {
       console.error("Failed to load recipes:", error);
@@ -255,7 +255,7 @@ export default function EditProductScreen() {
                 style: "cancel",
                 onPress: () => setIsSaving(false),
               },
-              {text: "Lanjutkan", onPress: () => {}},
+              { text: "Lanjutkan", onPress: () => { } },
             ]
           );
           return;
@@ -320,7 +320,7 @@ export default function EditProductScreen() {
             if (typeof v.notify_on_stock_ronouts === "boolean") {
               cleaned.notify_on_stock_ronouts = v.notify_on_stock_ronouts;
             }
-            if (v.unit_id && v.unit_id.length > 10 && v.unit_id.startsWith("cm")) {
+            if (v.unit_id) {
               cleaned.unit_id = v.unit_id;
             }
           }
@@ -353,11 +353,11 @@ export default function EditProductScreen() {
 
   if (isLoading) {
     return (
-      <View style={{flex: 1, backgroundColor: Colors[colorScheme].background}}>
+      <View style={{ flex: 1, backgroundColor: Colors[colorScheme].background }}>
         <Header title="Edit Bahan" showHelp={false} />
-        <View style={{flex: 1, justifyContent: "center", alignItems: "center"}}>
+        <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
           <ActivityIndicator size="large" color={Colors[colorScheme].primary} />
-          <ThemedText style={{marginTop: 16, color: Colors[colorScheme].icon}}>
+          <ThemedText style={{ marginTop: 16, color: Colors[colorScheme].icon }}>
             Memuat data produk...
           </ThemedText>
         </View>
@@ -366,7 +366,7 @@ export default function EditProductScreen() {
   }
 
   return (
-    <View style={{flex: 1, backgroundColor: Colors[colorScheme].background}}>
+    <View style={{ flex: 1, backgroundColor: Colors[colorScheme].background }}>
       <Header title="Edit Bahan" showHelp={false} />
       <KeyboardAwareScrollView
         contentContainerStyle={{
@@ -450,10 +450,10 @@ export default function EditProductScreen() {
                       key={idx}
                       initials={(v.name || "VR").slice(0, 2).toUpperCase()}
                       name={v.name}
-                      price={v.capital_price??0}
+                      price={v.capital_price ?? 0}
                       stock={
                         v.is_stock_active && typeof v.stock === "number"
-                          ? {count: v.stock, unit: v.unit_id || "pcs"}
+                          ? { count: v.stock, unit: v.unit_id || "pcs" }
                           : undefined
                       }
                       onPress={() =>
@@ -461,19 +461,19 @@ export default function EditProductScreen() {
                           pathname: "/dashboard/recipe-and-materials/variant",
                           params: {
                             from: "edit",
-                            ...(v.id ? {variantId: v.id} : {}),
+                            ...(v.id ? { variantId: v.id } : {}),
                             name: v.name,
                             price: String(v.price),
                             capitalPrice: String(v.capital_price),
                             ...(typeof v.stock === "number"
                               ? {
-                                  offlineStock: String(v.stock),
-                                  unit: v.unit_id || "pcs",
-                                  minStock: String(v.min_stock || 0),
-                                  notifyMin: v.notify_on_stock_ronouts
-                                    ? "1"
-                                    : "0",
-                                }
+                                offlineStock: String(v.stock),
+                                unit: v.unit_id || "pcs",
+                                minStock: String(v.min_stock || 0),
+                                notifyMin: v.notify_on_stock_ronouts
+                                  ? "1"
+                                  : "0",
+                              }
                               : {}),
                           },
                         } as never)
@@ -511,7 +511,7 @@ export default function EditProductScreen() {
                   "Konfirmasi",
                   "Yakin ingin menghapus bahan ini? Tindakan ini tidak dapat dibatalkan.",
                   [
-                    {text: "Batal", style: "cancel"},
+                    { text: "Batal", style: "cancel" },
                     {
                       text: "Hapus",
                       style: "destructive",

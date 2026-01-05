@@ -169,9 +169,9 @@ export default function EditProductScreen() {
             barcode: v.barcode || undefined,
             capital_price: v.capital_price || undefined,
           }));
-          console.log("variants",variants)
+          console.log("variants", variants)
           setVariants(() => mappedVariants);
-          
+
         }
       }
     } catch (error: any) {
@@ -361,11 +361,7 @@ export default function EditProductScreen() {
               if (typeof v.notify_on_stock_ronouts === "boolean") {
                 cleaned.notify_on_stock_ronouts = v.notify_on_stock_ronouts;
               }
-              if (
-                v.unit_id &&
-                v.unit_id.length > 10 &&
-                v.unit_id.startsWith("cm")
-              ) {
+              if (v.unit_id) {
                 cleaned.unit_id = v.unit_id;
               }
             }

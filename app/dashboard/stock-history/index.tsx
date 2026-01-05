@@ -58,7 +58,7 @@ const StockHistoryItem = ({
   let amountPrefix = "";
   let amountColor = Colors[colorScheme].text;
 
-  // type: "add_stock" | "remove_stock" | "adjust_stock" | "sale"
+  // type: "add_stock" | "remove_stock" | "adjust_stock" | "sale" | "conversion"
   if (item.type === "add_stock") {
     iconName = "package-up";
     iconColor = Colors[colorScheme].primary; // Green-ish
@@ -74,6 +74,11 @@ const StockHistoryItem = ({
     iconColor = Colors[colorScheme].warning; // Orange
     amountPrefix = item.amount > 0 ? "+" : "";
     amountColor = item.amount > 0 ? Colors[colorScheme].primary : Colors[colorScheme].danger;
+  } else if (item.type === "conversion") {
+    iconName = "swap-horizontal";
+    iconColor = "#2196F3"; // Blue for conversion
+    amountPrefix = "→";
+    amountColor = "#2196F3";
   }
 
   // Format time
@@ -108,7 +113,9 @@ const StockHistoryItem = ({
 
       <View style={styles.itemRight}>
         <Text style={[styles.amountText, { color: amountColor, fontSize: isTablet ? 22 : 14 }]}>
-          {amountPrefix}{Math.abs(item.amount)}
+          {item.type === "conversion"
+            ? `${item.prev_stock} → ${item.curr_stock}`
+            : `${amountPrefix}${Math.abs(item.amount)}`}
         </Text>
         <Text style={[styles.timeText, { color: Colors[colorScheme].icon, fontSize: isTablet ? 18 : 12 }]}>
           {timeStr}
@@ -233,6 +240,8 @@ const StockHistoryScreen = () => {
         prevStock: item.prev_stock.toString(),
         currStock: item.curr_stock.toString(),
         note: item.note || "",
+        fromUnitId: item.from_unit_id || "",
+        toUnitId: item.to_unit_id || "",
         createdAt: item.created_at,
         updatedAt: item.created_at,
       },

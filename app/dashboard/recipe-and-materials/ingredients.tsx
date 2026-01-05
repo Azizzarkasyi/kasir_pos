@@ -1,5 +1,6 @@
 import ConfirmPopup from "@/components/atoms/confirm-popup";
 import ComboInput from "@/components/combo-input";
+import UnitPicker from "@/components/mollecules/unit-picker";
 import Header from "@/components/header";
 import { ThemedButton } from "@/components/themed-button";
 import { ThemedInput } from "@/components/themed-input";
@@ -8,6 +9,7 @@ import { Colors } from "@/constants/theme";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import productApi from "@/services/endpoints/products";
 import { useRecipeFormStore } from "@/stores/recipe-form-store";
+import { UNITS, UnitType } from "@/constants/units";
 import { Product, ProductVariant } from "@/types/api";
 import { useNavigation, useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
@@ -68,6 +70,7 @@ export default function IngredientsScreen() {
     id: string;
     name: string;
   } | null>(null);
+  const [unitTypeFilter, setUnitTypeFilter] = useState<UnitType | undefined>(undefined);
   const [availableVariants, setAvailableVariants] = useState<ProductVariant[]>(
     []
   );
@@ -116,7 +119,17 @@ export default function IngredientsScreen() {
             const found = response.data.find((p: Product) => p.id === productId);
             console.log("found", found?.variants?.[0]?.unit);
             if (found) {
-              setSelectedUnit({ id: found?.variants?.[0]?.unit_id || "", name: found?.variants?.[0]?.unit?.name || "" });
+              // Use unit from editing ingredient if available, otherwise use variant unit
+              const unitToUse = editingIngredient.unit || {
+                id: found?.variants?.[0]?.unit_id || "",
+                name: found?.variants?.[0]?.unit?.name || "",
+              };
+              setSelectedUnit(unitToUse);
+
+              // Set unit type filter based on variant unit
+              const variantUnit = UNITS.find(u => u.id === unitToUse.id);
+              setUnitTypeFilter(variantUnit?.type);
+
               const vars = found.variants || [];
               setAvailableVariants(vars);
               if (editingIngredient.ingredient.variant_id) {
@@ -137,6 +150,26 @@ export default function IngredientsScreen() {
     loadIngredients();
   }, []);
 
+  // Helper to resolve unit from variant
+  const resolveUnit = (variant: ProductVariant | undefined) => {
+    if (!variant) return null;
+
+    // 1. Try to get full unit object if available
+    if (variant.unit) {
+      return { id: variant.unit.id, name: variant.unit.name };
+    }
+
+    // 2. Fallback to unit_id mapping
+    if (variant.unit_id) {
+      const knownUnit = UNITS.find(u => u.id === variant.unit_id);
+      if (knownUnit) {
+        return { id: knownUnit.id, name: knownUnit.name };
+      }
+    }
+
+    return { id: "pcs", name: "Pcs" };
+  };
+
   const handleChangeIngredient = (productId: string) => {
     console.log("🔍 Selecting product:", productId);
     setSelectedProductId(productId);
@@ -156,24 +189,27 @@ export default function IngredientsScreen() {
       // Auto-select variant if only one, and get unit from it
       if (vars.length === 1) {
         setSelectedVariantId(vars[0].id);
-        // Get unit from variant
-        const variantUnit = vars[0].unit;
-        if (variantUnit) {
-          setSelectedUnit({ id: variantUnit.id, name: variantUnit.name });
-        } else {
-          setSelectedUnit({ id: "pcs", name: "Pcs" });
+        const resolvedUnit = resolveUnit(vars[0]);
+        if (resolvedUnit) {
+          setSelectedUnit(resolvedUnit);
+          // Set unit type filter
+          const unitInfo = UNITS.find(u => u.id === resolvedUnit.id);
+          setUnitTypeFilter(unitInfo?.type);
         }
       } else if (vars.length > 1) {
         setSelectedVariantId("");
         setSelectedUnit({ id: "pcs", name: "Pcs" });
+        setUnitTypeFilter("count"); // Default to count for multiple variants until selected
       } else {
         setSelectedUnit({ id: "pcs", name: "Pcs" });
+        setUnitTypeFilter("count");
       }
     } else {
       console.log("❌ Product not found in list");
       setSelectedUnit(null);
       setAvailableVariants([]);
       setSelectedVariantId("");
+      setUnitTypeFilter(undefined);
     }
   };
 
@@ -181,8 +217,12 @@ export default function IngredientsScreen() {
   const handleChangeVariant = (variantId: string) => {
     setSelectedVariantId(variantId);
     const variant = availableVariants.find(v => v.id === variantId);
-    if (variant?.unit) {
-      setSelectedUnit({ id: variant.unit.id, name: variant.unit.name });
+    const resolvedUnit = resolveUnit(variant);
+    if (resolvedUnit) {
+      setSelectedUnit(resolvedUnit);
+      // Set unit type filter
+      const unitInfo = UNITS.find(u => u.id === resolvedUnit.id);
+      setUnitTypeFilter(unitInfo?.type);
     }
   };
 
@@ -365,8 +405,24 @@ export default function IngredientsScreen() {
           </>
         )}
         <View style={styles.quantityRow}>
-          <View style={styles.unitBox}>
-            <Text style={styles.unitText}>{selectedUnit?.name ?? "-"}</Text>
+          <View style={styles.unitInputContainer}>
+            <UnitPicker
+              label="Unit"
+              value={selectedUnit?.id || ""}
+              onChange={(unitId) => {
+                console.log("🔄 UnitPicker onChange triggered:", unitId);
+                const unit = UNITS.find(u => u.id === unitId);
+                console.log("🔄 Found unit in UNITS:", unit);
+                if (unit) {
+                  console.log("🔄 Setting selectedUnit to:", { id: unit.id, name: unit.name });
+                  setSelectedUnit({ id: unit.id, name: unit.name });
+                } else {
+                  console.log("❌ Unit not found in UNITS constant");
+                }
+              }}
+              usePredefined={true}
+              filterByType={unitTypeFilter}
+            />
           </View>
 
           <View style={styles.quantityInputWrapper}>
@@ -429,22 +485,11 @@ const createStyles = (
     },
     quantityRow: {
       flexDirection: "row",
-      alignItems: "center",
+      alignItems: "flex-start",
       gap: isTablet ? 16 : 12,
     },
-    unitBox: {
-      minWidth: isTablet ? 100 : 72,
-      height: isTablet ? 64 : 56,
-      paddingHorizontal: isTablet ? 16 : 12,
-      borderWidth: 1,
-      borderRadius: isTablet ? 12 : 8,
-      borderColor: Colors[colorScheme].border,
-      justifyContent: "center",
-      alignItems: "center",
-    },
-    unitText: {
-      fontSize: isTablet ? 18 : 14,
-      color: Colors[colorScheme].text,
+    unitInputContainer: {
+      width: isTablet ? 160 : 140,
     },
     quantityInputWrapper: {
       flex: 1,

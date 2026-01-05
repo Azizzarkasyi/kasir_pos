@@ -18,7 +18,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function StockSettingsScreen() {
   const colorScheme = useColorScheme() ?? "light";
-  const {width, height} = useWindowDimensions();
+  const { width, height } = useWindowDimensions();
   const isTablet = Math.min(width, height) >= 600;
   const isLandscape = width > height;
   const isTabletLandscape = isTablet && isLandscape;
@@ -89,7 +89,7 @@ export default function StockSettingsScreen() {
   }, [navigation, isDirty, isSubmit]);
 
   return (
-    <View style={{flex: 1, backgroundColor: Colors[colorScheme].background}}>
+    <View style={{ flex: 1, backgroundColor: Colors[colorScheme].background }}>
       <Header title="Kelola Stok" showHelp={false} />
 
       <KeyboardAwareScrollView
@@ -105,24 +105,25 @@ export default function StockSettingsScreen() {
       >
         <View style={styles.contentWrapper}>
           <ThemedInput
-          label="Stok Toko Offline"
-          value={String(offlineStock)}
-          onChangeText={v => setOfflineStock(Number(v))}
-          numericOnly
-        />
+            label="Stok Toko Offline"
+            value={String(offlineStock)}
+            onChangeText={v => setOfflineStock(Number(v))}
+            numericOnly
+          />
 
-        <UnitPicker
-          label="Pilih Satuan Unit"
-          value={unit}
-          onChange={setUnit}
-        />
+          <UnitPicker
+            label="Pilih Satuan Unit"
+            value={unit}
+            onChange={setUnit}
+            usePredefined={true}
+          />
 
-        <ThemedInput
-          label="Minimum Stok"
-          value={String(minStock)}
-          onChangeText={v => setMinStock(Number(v))}
-          numericOnly
-        />
+          <ThemedInput
+            label="Minimum Stok"
+            value={String(minStock)}
+            onChangeText={v => setMinStock(Number(v))}
+            numericOnly
+          />
 
           <View style={styles.row}>
             <Checkbox checked={notifyMin} onChange={setNotifyMin} />

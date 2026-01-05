@@ -1,9 +1,11 @@
 
 import ComboInput from "@/components/combo-input";
+import UnitPicker from "@/components/mollecules/unit-picker";
 import { ThemedButton } from "@/components/themed-button";
 import { ThemedInput } from "@/components/themed-input";
 import { ThemedText } from "@/components/themed-text";
 import { Colors } from "@/constants/theme";
+import { UNITS, UnitType } from "@/constants/units";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import React, { useEffect, useRef, useState } from "react";
 import {
@@ -24,8 +26,9 @@ type EditStockModalProps = {
   productLabel: string;
   initialQuantity: number;
   previousQuantity?: number;
+  variantUnitId?: string;
   onClose: () => void;
-  onSubmit: (params: { quantity: number; mode: any , note: string}) => void;
+  onSubmit: (params: { quantity: number; mode: any, note: string, unitId?: string }) => void;
 };
 
 const STOCK_MODES = [
@@ -39,6 +42,7 @@ const EditStockModal: React.FC<EditStockModalProps> = ({
   productLabel,
   initialQuantity,
   previousQuantity,
+  variantUnitId,
   onClose,
   onSubmit,
 }) => {
@@ -52,6 +56,8 @@ const EditStockModal: React.FC<EditStockModalProps> = ({
   const [mode, setMode] = useState(STOCK_MODES[0].value);
   const [modeText, setModeText] = useState(STOCK_MODES[0].label);
   const [note, setNote] = useState("");
+  const [selectedUnitId, setSelectedUnitId] = useState<string>("");
+  const [unitTypeFilter, setUnitTypeFilter] = useState<UnitType | undefined>(undefined);
 
   const opacity = useRef(new Animated.Value(1)).current;
   const scale = useRef(new Animated.Value(1)).current;
@@ -59,12 +65,18 @@ const EditStockModal: React.FC<EditStockModalProps> = ({
   useEffect(() => {
     if (visible) {
       setInternalVisible(true);
-
       opacity.setValue(1);
+
+      // Set default unit from variant and filter by type
+      if (variantUnitId) {
+        setSelectedUnitId(variantUnitId);
+        const variantUnit = UNITS.find(u => u.id === variantUnitId);
+        setUnitTypeFilter(variantUnit?.type);
+      }
     } else {
       setInternalVisible(false);
     }
-  }, [visible, initialQuantity, opacity]);
+  }, [visible, initialQuantity, opacity, variantUnitId]);
 
   const handleChangeQty = (delta: number) => {
     setQuantity(q => {
@@ -79,12 +91,14 @@ const EditStockModal: React.FC<EditStockModalProps> = ({
     setMode(STOCK_MODES[0].value);
     setModeText(STOCK_MODES[0].label);
     setNote("");
+    setSelectedUnitId("");
+    setUnitTypeFilter(undefined);
     onClose();
   };
 
   const handleSave = () => {
-    console.log("📦 Updating stock:", { quantity, mode, note });
-    onSubmit({ quantity, mode, note });
+    console.log("📦 Updating stock:", { quantity, mode, note, unitId: selectedUnitId });
+    onSubmit({ quantity, mode, note, unitId: selectedUnitId });
     handleClose();
   };
 
@@ -161,8 +175,18 @@ const EditStockModal: React.FC<EditStockModalProps> = ({
             <View style={styles.previousRow}>
               <ThemedText style={styles.previousLabel}>Stok Sebelumnya</ThemedText>
               <ThemedText style={styles.previousValue}>
-                {previousQuantity ?? initialQuantity}
+                {previousQuantity ?? initialQuantity} {variantUnitId ? UNITS.find(u => u.id === variantUnitId)?.symbol : ""}
               </ThemedText>
+            </View>
+
+            <View style={{ marginTop: 12 }}>
+              <UnitPicker
+                label="Unit"
+                value={selectedUnitId}
+                onChange={setSelectedUnitId}
+                usePredefined={true}
+                filterByType={unitTypeFilter}
+              />
             </View>
 
             <View style={{ marginTop: 12 }}>

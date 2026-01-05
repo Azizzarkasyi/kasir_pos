@@ -1,6 +1,6 @@
 import Checkbox from "@/components/checkbox";
 import ConfirmationDialog, {
-    ConfirmationDialogHandle,
+  ConfirmationDialogHandle,
 } from "@/components/drawers/confirmation-dialog";
 import Header from "@/components/header";
 import UnitPicker from "@/components/mollecules/unit-picker";
@@ -18,7 +18,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function StockSettingsScreen() {
   const colorScheme = useColorScheme() ?? "light";
-  const {width, height} = useWindowDimensions();
+  const { width, height } = useWindowDimensions();
   const isTablet = Math.min(width, height) >= 600;
   const isLandscape = width > height;
   const isTabletLandscape = isTablet && isLandscape;
@@ -68,7 +68,7 @@ export default function StockSettingsScreen() {
           const base =
             pendingVariant && pendingVariant.id === variantId
               ? pendingVariant
-              : ({id: String(variantId)} as any);
+              : ({ id: String(variantId) } as any);
 
           setPendingVariant({
             ...base,
@@ -79,9 +79,9 @@ export default function StockSettingsScreen() {
             prev.map(v =>
               v.id === variantId
                 ? {
-                    ...v,
-                    ...buildStockFields(),
-                  }
+                  ...v,
+                  ...buildStockFields(),
+                }
                 : v,
             ),
           );
@@ -96,7 +96,7 @@ export default function StockSettingsScreen() {
   };
 
   useEffect(() => {
-      console.log("variant_id",variantId)
+    console.log("variant_id", variantId)
 
     if (!variantId) return;
 
@@ -152,7 +152,7 @@ export default function StockSettingsScreen() {
   }, [navigation, isDirty, isSubmit]);
 
   return (
-    <View style={{flex: 1, backgroundColor: Colors[colorScheme].background}}>
+    <View style={{ flex: 1, backgroundColor: Colors[colorScheme].background }}>
       <Header title="Kelola Stok Varian" showHelp={false} />
 
       <KeyboardAwareScrollView
@@ -168,24 +168,25 @@ export default function StockSettingsScreen() {
       >
         <View style={styles.contentWrapper}>
           <ThemedInput
-          label="Stok Toko Offline"
-          value={String(offlineStock)}
-          onChangeText={v => setOfflineStock(Number(v))}
-          numericOnly
-        />
+            label="Stok Toko Offline"
+            value={String(offlineStock)}
+            onChangeText={v => setOfflineStock(Number(v))}
+            numericOnly
+          />
 
-        <UnitPicker
-          label="Pilih Satuan Unit"
-          value={unit}
-          onChange={setUnit}
-        />
+          <UnitPicker
+            label="Pilih Satuan Unit"
+            value={unit}
+            onChange={setUnit}
+            usePredefined={true}
+          />
 
-        <ThemedInput
-          label="Minimum Stok"
-          value={String(minStock)}
-          onChangeText={v => setMinStock(Number(v))}
-          numericOnly
-        />
+          <ThemedInput
+            label="Minimum Stok"
+            value={String(minStock)}
+            onChangeText={v => setMinStock(Number(v))}
+            numericOnly
+          />
 
           <View style={styles.row}>
             <Checkbox checked={notifyMin} onChange={setNotifyMin} />

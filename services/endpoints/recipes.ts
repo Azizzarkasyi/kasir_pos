@@ -6,6 +6,7 @@ export interface RecipeItem {
   variant_id?: string;
   productVariantId?: string | null;
   quantity: number;
+  unit_id?: string;
 
   productVariant?: {
     id: string;

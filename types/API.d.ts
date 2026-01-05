@@ -353,6 +353,7 @@ interface RecipeItemData {
   product_id: string;
   quantity: number;
   productVariantId: string | null;
+  unit_id?: string | null;
   created_at: string;
   updated_at: string;
   product?: ProductData;

@@ -2,6 +2,7 @@ import Header from "@/components/header";
 import { DashboardMenuKey } from "@/components/layouts/dashboard/menu-config";
 import Sidebar from "@/components/layouts/dashboard/sidebar";
 import { Colors } from "@/constants/theme";
+import { UNITS } from "@/constants/units";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { formatDetailDate } from "@/utils/date-utils";
 import { useLocalSearchParams, useRouter } from "expo-router";
@@ -24,12 +25,19 @@ const StockHistoryDetailScreen = () => {
   // Parse parameters
   const productName = params.productName as string || "Produk Tidak Diketahui";
   const variantName = params.variantName as string || "Varian";
-  const actionType = (params.actionType as "add_stock" | "remove_stock" | "adjust_stock" | "sale") || "add_stock";
+  const actionType = (params.actionType as "add_stock" | "remove_stock" | "adjust_stock" | "sale" | "conversion") || "add_stock";
   const amount = parseInt(params.amount as string) || 0;
   const prevStock = parseInt(params.prevStock as string) || 0;
   const currStock = parseInt(params.currStock as string) || 0;
   const note = params.note as string;
+  const fromUnitId = params.fromUnitId as string;
+  const toUnitId = params.toUnitId as string;
   const createdAt = params.createdAt as string || "";
+
+  // Get unit symbols
+  const fromUnitSymbol = fromUnitId ? UNITS.find(u => u.id === fromUnitId)?.symbol : "pcs";
+  const toUnitSymbol = toUnitId ? UNITS.find(u => u.id === toUnitId)?.symbol : "pcs";
+  const unitSymbol = fromUnitSymbol; // Default to from unit for display
 
   const openDrawer = React.useCallback(() => setIsDrawerOpen(true), []);
   const closeDrawer = React.useCallback(() => setIsDrawerOpen(false), []);
@@ -44,6 +52,8 @@ const StockHistoryDetailScreen = () => {
         return { label: "Stok Keluar", color: Colors[colorScheme].danger, icon: "arrow-up-circle-outline" };
       case "adjust_stock":
         return { label: "Penyesuaian", color: Colors[colorScheme].warning, icon: "create-outline" };
+      case "conversion":
+        return { label: "Konversi", color: Colors[colorScheme].primary, icon: "swap-horizontal" };
       case "sale":
         return { label: "Terjual", color: "#8b5cf6", icon: "cart-outline" };
       default:
@@ -96,7 +106,7 @@ const StockHistoryDetailScreen = () => {
             <View style={styles.infoRow}>
               <Text style={styles.infoLabel}>Jumlah</Text>
               <Text style={[styles.infoValue, { color: config.color, fontWeight: 'bold' }]}>
-                {actionType === 'add_stock' ? '+' : ''}{actionType === 'remove_stock' || actionType === 'sale' ? '-' : ''}{Math.abs(amount)} pcs
+                {actionType === 'add_stock' ? '+' : ''}{actionType === 'remove_stock' || actionType === 'sale' ? '-' : ''}{Math.abs(amount)} {unitSymbol}
               </Text>
             </View>
           </View>
@@ -112,11 +122,11 @@ const StockHistoryDetailScreen = () => {
           <View style={styles.infoWrapper}>
             <View style={styles.infoRow}>
               <Text style={styles.infoLabel}>Stok Awal</Text>
-              <Text style={styles.infoValue}>{prevStock}</Text>
+              <Text style={styles.infoValue}>{prevStock} {actionType === 'conversion' ? fromUnitSymbol : unitSymbol}</Text>
             </View>
             <View style={styles.infoRow}>
               <Text style={styles.infoLabel}>Stok Akhir</Text>
-              <Text style={styles.infoValue}>{currStock}</Text>
+              <Text style={styles.infoValue}>{currStock} {actionType === 'conversion' ? toUnitSymbol : unitSymbol}</Text>
             </View>
             <View style={styles.infoRow}>
               <Text style={styles.infoLabel}>Waktu</Text>

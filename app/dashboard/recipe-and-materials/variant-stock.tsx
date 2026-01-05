@@ -8,17 +8,18 @@ import { ThemedButton } from "@/components/themed-button";
 import { ThemedInput } from "@/components/themed-input";
 import { ThemedText } from "@/components/themed-text";
 import { Colors } from "@/constants/theme";
+import { getUnitById } from "@/constants/units";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { useProductFormStore } from "@/stores/product-form-store";
 import { useLocalSearchParams, useNavigation, useRouter } from "expo-router";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { StyleSheet, View, useWindowDimensions } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function StockSettingsScreen() {
   const colorScheme = useColorScheme() ?? "light";
-  const {width, height} = useWindowDimensions();
+  const { width, height } = useWindowDimensions();
   const isTablet = Math.min(width, height) >= 600;
   const isLandscape = width > height;
   const isTabletLandscape = isTablet && isLandscape;
@@ -26,7 +27,7 @@ export default function StockSettingsScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const navigation = useNavigation();
-  const {variantId, from, action} = useLocalSearchParams<{
+  const { variantId, from, action } = useLocalSearchParams<{
     variantId?: string;
     from?: string;
     action?: string;
@@ -70,7 +71,7 @@ export default function StockSettingsScreen() {
           const base =
             pendingVariant && pendingVariant.id === variantId
               ? pendingVariant
-              : ({id: String(variantId)} as any);
+              : ({ id: String(variantId) } as any);
 
           const updated = {
             ...base,
@@ -83,9 +84,9 @@ export default function StockSettingsScreen() {
             const updated = prev.map(v =>
               v.id === variantId
                 ? {
-                    ...v,
-                    ...stockFields,
-                  }
+                  ...v,
+                  ...stockFields,
+                }
                 : v
             );
             console.log("💾 Updated variants:", updated);
@@ -155,8 +156,15 @@ export default function StockSettingsScreen() {
     return sub;
   }, [navigation, isDirty, isSubmit]);
 
+  // Derive unit type from selected unit for filtering convertible units
+  const currentUnitType = useMemo(() => {
+    if (!unit) return undefined;
+    const unitData = getUnitById(unit);
+    return unitData?.type;
+  }, [unit]);
+
   return (
-    <View style={{flex: 1, backgroundColor: Colors[colorScheme].background}}>
+    <View style={{ flex: 1, backgroundColor: Colors[colorScheme].background }}>
       <Header title="Kelola Stok Varian Bahan" showHelp={false} />
 
       <KeyboardAwareScrollView
@@ -182,6 +190,8 @@ export default function StockSettingsScreen() {
             label="Pilih Satuan Unit"
             value={unit}
             onChange={setUnit}
+            usePredefined={true}
+            filterByType={currentUnitType}
           />
 
           <ThemedInput

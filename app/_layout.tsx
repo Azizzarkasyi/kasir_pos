@@ -177,7 +177,17 @@ export default function RootLayout() {
               options={{ headerShown: false, title: "Kelola Stok" }}
             />
 
+            <Stack.Screen
+              name="dashboard/stock/conversion/index"
+              options={{ headerShown: false, title: "Konversi Stok" }}
+            />
+            <Stack.Screen
+              name="dashboard/stock/conversion/[variantId]"
+              options={{ headerShown: false, title: "Konversi Stok" }}
+            />
+
             {/* recipe and materials */}
+
 
             <Stack.Screen
               name="dashboard/recipe-and-materials/index"
@@ -259,6 +269,10 @@ export default function RootLayout() {
             <Stack.Screen
               name="dashboard/setting/umum"
               options={{ headerShown: false, title: "Umum" }}
+            />
+            <Stack.Screen
+              name="dashboard/setting/unit-conversions"
+              options={{ headerShown: false, title: "Konversi Unit" }}
             />
             {/* <Stack.Screen
           name="dashboard/stock/manage"

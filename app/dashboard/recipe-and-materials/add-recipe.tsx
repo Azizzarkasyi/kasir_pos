@@ -6,23 +6,23 @@ import ConfirmationDialog, {
 import ConfirmPopup from "@/components/atoms/confirm-popup";
 import Header from "@/components/header";
 import ImageUpload from "@/components/image-upload";
-import {ThemedButton} from "@/components/themed-button";
-import {ThemedInput} from "@/components/themed-input";
-import {ThemedText} from "@/components/themed-text";
-import {Colors} from "@/constants/theme";
-import {useColorScheme} from "@/hooks/use-color-scheme";
-import assetApi, {prepareFileFromUri} from "@/services/endpoints/assets";
+import { ThemedButton } from "@/components/themed-button";
+import { ThemedInput } from "@/components/themed-input";
+import { ThemedText } from "@/components/themed-text";
+import { Colors } from "@/constants/theme";
+import { useColorScheme } from "@/hooks/use-color-scheme";
+import assetApi, { prepareFileFromUri } from "@/services/endpoints/assets";
 import recipeApi from "@/services/endpoints/recipes";
-import {useRecipeFormStore} from "@/stores/recipe-form-store";
-import {useNavigation, useRouter} from "expo-router";
-import React, {useEffect, useRef, useState} from "react";
-import {Alert, StyleSheet, useWindowDimensions, View} from "react-native";
-import {KeyboardAwareScrollView} from "react-native-keyboard-aware-scroll-view";
-import {useSafeAreaInsets} from "react-native-safe-area-context";
+import { useRecipeFormStore } from "@/stores/recipe-form-store";
+import { useNavigation, useRouter } from "expo-router";
+import React, { useEffect, useRef, useState } from "react";
+import { Alert, StyleSheet, useWindowDimensions, View } from "react-native";
+import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function AddProductScreen() {
   const colorScheme = useColorScheme() ?? "light";
-  const {width, height} = useWindowDimensions();
+  const { width, height } = useWindowDimensions();
   const isTablet = Math.min(width, height) >= 600;
   const isLandscape = width > height;
   const isTabletLandscape = isTablet && isLandscape;
@@ -106,6 +106,7 @@ export default function AddProductScreen() {
           product_id: ing.ingredient.id,
           variant_id: ing.ingredient.variant_id,
           quantity: ing.amount,
+          unit_id: ing.unit?.id,
         })),
       };
 
@@ -126,7 +127,7 @@ export default function AddProductScreen() {
   };
 
   return (
-    <View style={{flex: 1, backgroundColor: Colors[colorScheme].background}}>
+    <View style={{ flex: 1, backgroundColor: Colors[colorScheme].background }}>
       <Header
         showHelp={false}
         title="Tambah Resep"
@@ -151,7 +152,7 @@ export default function AddProductScreen() {
               onImageSelected={uri => setImageUri(uri)}
             />
 
-            <View style={{height: 24}} />
+            <View style={{ height: 24 }} />
 
             <ThemedInput
               label="Nama Resep"

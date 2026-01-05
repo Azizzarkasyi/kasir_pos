@@ -10,6 +10,7 @@ import { ThemedButton } from "@/components/themed-button";
 import { ThemedInput } from "@/components/themed-input";
 import { ThemedText } from "@/components/themed-text";
 import { Colors } from "@/constants/theme";
+import { UNITS } from "@/constants/units";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import recipeApi from "@/services/endpoints/recipes";
 import { useRecipeFormStore } from "@/stores/recipe-form-store";
@@ -27,7 +28,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function EditRecipeScreen() {
   const colorScheme = useColorScheme() ?? "light";
-  const {width, height} = useWindowDimensions();
+  const { width, height } = useWindowDimensions();
   const isTablet = Math.min(width, height) >= 600;
   const isLandscape = width > height;
   const isTabletLandscape = isTablet && isLandscape;
@@ -43,7 +44,7 @@ export default function EditRecipeScreen() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleteIndex, setDeleteIndex] = useState<number | null>(null);
 
-  const {id} = useLocalSearchParams<{id?: string}>();
+  const { id } = useLocalSearchParams<{ id?: string }>();
 
   const name = useRecipeFormStore(state => state.name);
   const category = useRecipeFormStore(state => state.category);
@@ -82,7 +83,7 @@ export default function EditRecipeScreen() {
               variant_name: item.productVariant?.name || "",
             },
             amount: item.quantity,
-            unit: undefined,
+            unit: item.unit_id ? { id: item.unit_id, name: UNITS.find(u => u.id === item.unit_id)?.name || item.unit_id } : undefined,
           }));
 
           setIngredients(mappedIngredients);
@@ -156,6 +157,7 @@ export default function EditRecipeScreen() {
           product_id: ing.ingredient.id,
           variant_id: ing.ingredient.variant_id,
           quantity: ing.amount,
+          unit_id: ing.unit?.id,
         })),
       };
 
@@ -177,15 +179,15 @@ export default function EditRecipeScreen() {
 
   if (isLoading) {
     return (
-      <View style={{flex: 1, backgroundColor: Colors[colorScheme].background}}>
+      <View style={{ flex: 1, backgroundColor: Colors[colorScheme].background }}>
         <Header
           showHelp={false}
           title="Edit Resep"
           withNotificationButton={false}
         />
-        <View style={{flex: 1, justifyContent: "center", alignItems: "center"}}>
+        <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
           <ActivityIndicator size="large" color={Colors[colorScheme].primary} />
-          <ThemedText style={{marginTop: 16, color: Colors[colorScheme].icon}}>
+          <ThemedText style={{ marginTop: 16, color: Colors[colorScheme].icon }}>
             Memuat data resep...
           </ThemedText>
         </View>
@@ -194,7 +196,7 @@ export default function EditRecipeScreen() {
   }
 
   return (
-    <View style={{flex: 1, backgroundColor: Colors[colorScheme].background}}>
+    <View style={{ flex: 1, backgroundColor: Colors[colorScheme].background }}>
       <Header
         showHelp={false}
         title="Edit Resep"
@@ -219,7 +221,7 @@ export default function EditRecipeScreen() {
               onImageSelected={uri => setImageUri(uri)}
             />
 
-            <View style={{height: 24}} />
+            <View style={{ height: 24 }} />
 
             <ThemedInput
               label="Nama Resep"
@@ -231,10 +233,10 @@ export default function EditRecipeScreen() {
               value={category}
               onChangeText={setCategory}
               items={[
-                {label: "Pilih Kategori", value: ""},
-                {label: "Umum", value: "umum"},
-                {label: "Minuman", value: "minuman"},
-                {label: "Makanan", value: "makanan"},
+                { label: "Pilih Kategori", value: "" },
+                { label: "Umum", value: "umum" },
+                { label: "Minuman", value: "minuman" },
+                { label: "Makanan", value: "makanan" },
               ]}
             />
 

@@ -5,6 +5,7 @@ import Header from "@/components/header";
 import { ThemedInput } from "@/components/themed-input";
 import { ThemedText } from "@/components/themed-text";
 import { Colors } from "@/constants/theme";
+import { UNITS } from "@/constants/units";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import productApi from "@/services/endpoints/products";
 import { Product } from "@/types/api";
@@ -70,7 +71,7 @@ export default function ManageStockScreen() {
             productName: variant.product?.name || 'Unknown Product',
             variantName: variant.name,
             quantity: variant.stock || 0,
-            unit: undefined, // Unit will be loaded from unit_id if needed
+            unit: variant.unit_id || undefined,
             isDisabled: variant.product?.is_disabled || variant.is_disabled || false,
           });
         });
@@ -169,6 +170,7 @@ export default function ManageStockScreen() {
                   name={item.productName}
                   variant={item.variantName}
                   quantity={item.quantity}
+                  unit={item.unit ? UNITS.find(u => u.id === item.unit)?.symbol : undefined}
                   isDisabled={item.isDisabled}
                   isTablet={isTablet}
                   onPress={() => {
@@ -192,23 +194,23 @@ export default function ManageStockScreen() {
             : ""
         }
         initialQuantity={editingItem?.quantity ?? 0}
+        variantUnitId={editingItem?.unit || undefined}
         onClose={() => {
           if (!isUpdatingStock) {
             setEditingItem(null);
           }
         }}
-        onSubmit={async ({ quantity, mode, note }) => {
+        onSubmit={async ({ quantity, mode, note, unitId }) => {
           if (!editingItem) return;
 
           try {
             setIsUpdatingStock(true);
 
-
-
             console.log("📦 Updating stock:", {
               mode,
               variantId: editingItem.variantId,
               amount: quantity,
+              unitId,
               product: editingItem.productName,
               variant: editingItem.variantName,
             });
@@ -217,6 +219,7 @@ export default function ManageStockScreen() {
               action_type: mode,
               amount: quantity,
               note,
+              unit_id: unitId,
             });
 
             console.log("✅ Stock updated successfully");

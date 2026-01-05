@@ -361,14 +361,18 @@ export type GetSalesStatsResponse = ApiResponse<SalesStatsData>;
 // Stock History Types
 export interface ProductStockHistory {
   id: string;
-  action_type: "IN" | "OUT" | "ADJUST";
+  action_type: "IN" | "OUT" | "ADJUST" | "CONVERSION";
   amount: number;
   prev_stock: number;
   curr_stock: number;
-  type: "add_stock" | "remove_stock" | "adjust_stock" | "sale";
+  type: "add_stock" | "remove_stock" | "adjust_stock" | "sale" | "conversion";
   note: string | null;
   created_at: string;
   product_display_name: string;
+  // Conversion fields
+  from_unit_id?: string;
+  to_unit_id?: string;
+  conversion_rate?: number;
   variant: {
     id: string;
     name: string;
@@ -385,3 +389,54 @@ export interface ProductStockHistory {
 }
 
 export type GetStockHistoryResponse = PaginatedResponse<ProductStockHistory>;
+
+// Unit Conversion Types
+export interface UnitConversion {
+  id: string;
+  store_id: string;
+  from_unit_id: string;
+  to_unit_id: string;
+  conversion_rate: number;
+  created_at: string;
+}
+
+export interface CreateUnitConversionRequest {
+  from_unit_id: string;
+  to_unit_id: string;
+  conversion_rate: number;
+}
+
+export interface ConvertStockRequest {
+  to_unit_id: string;
+  amount: number;
+  note?: string;
+}
+
+export interface AvailableConversion {
+  conversion_id: string;
+  to_unit_id: string;
+  conversion_rate: number;
+  result_stock: number;
+}
+
+export interface AvailableConversionsResponse {
+  variant: {
+    id: string;
+    name: string;
+    product_name: string;
+    current_stock: number;
+    unit: { id: string; name: string } | null;
+  };
+  available_conversions: AvailableConversion[];
+}
+
+export interface ConvertStockResponse {
+  variant_id: string;
+  from_unit_id: string;
+  to_unit_id: string;
+  from_amount: number;
+  to_amount: number;
+  prev_stock: number;
+  curr_stock: number;
+  conversion_rate: number;
+}

@@ -1,6 +1,6 @@
 import Checkbox from "@/components/checkbox";
 import ConfirmationDialog, {
-    ConfirmationDialogHandle,
+  ConfirmationDialogHandle,
 } from "@/components/drawers/confirmation-dialog";
 import Header from "@/components/header";
 import UnitPicker from "@/components/mollecules/unit-picker";
@@ -19,7 +19,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function StockSettingsScreen() {
   const colorScheme = useColorScheme() ?? "light";
-  const {width, height} = useWindowDimensions();
+  const { width, height } = useWindowDimensions();
   const isTablet = Math.min(width, height) >= 600;
   const isLandscape = width > height;
   const isTabletLandscape = isTablet && isLandscape;
@@ -90,52 +90,53 @@ export default function StockSettingsScreen() {
   }, [navigation, isDirty, isSubmit]);
 
   return (
-    <View style={{flex: 1, backgroundColor: Colors[colorScheme].background}}>
+    <View style={{ flex: 1, backgroundColor: Colors[colorScheme].background }}>
       <Header title="Kelola Stok" showHelp={false} />
 
       <View style={isDisabled ? styles.disabledOverlay : undefined} pointerEvents={isDisabled ? "none" : "auto"}>
-      <KeyboardAwareScrollView
-        contentContainerStyle={{
-          paddingVertical: isTablet ? 44 : 40,
-          paddingBottom: insets.bottom + (isTablet ? 96 : 80),
-        }}
-        enableOnAndroid
-        keyboardOpeningTime={0}
-        extraScrollHeight={24}
-        keyboardShouldPersistTaps="handled"
-        showsVerticalScrollIndicator={false}
-      >
-        <View style={styles.contentWrapper}>
-          <ThemedInput
-          label="Stok Toko Offline"
-          value={String(offlineStock)}
-          onChangeText={v => setOfflineStock(Number(v))}
-          numericOnly
-          editable={!isDisabled}
-        />
+        <KeyboardAwareScrollView
+          contentContainerStyle={{
+            paddingVertical: isTablet ? 44 : 40,
+            paddingBottom: insets.bottom + (isTablet ? 96 : 80),
+          }}
+          enableOnAndroid
+          keyboardOpeningTime={0}
+          extraScrollHeight={24}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+        >
+          <View style={styles.contentWrapper}>
+            <ThemedInput
+              label="Stok Toko Offline"
+              value={String(offlineStock)}
+              onChangeText={v => setOfflineStock(Number(v))}
+              numericOnly
+              editable={!isDisabled}
+            />
 
-        <UnitPicker
-          label="Pilih Satuan Unit"
-          value={unit}
-          onChange={setUnit}
-        />
+            <UnitPicker
+              label="Pilih Satuan Unit"
+              value={unit}
+              onChange={setUnit}
+              usePredefined={true}
+            />
 
-        <ThemedInput
-          label="Minimum Stok"
-          value={String(minStock)}
-          onChangeText={v => setMinStock(Number(v))}
-          numericOnly
-          editable={!isDisabled}
-        />
+            <ThemedInput
+              label="Minimum Stok"
+              value={String(minStock)}
+              onChangeText={v => setMinStock(Number(v))}
+              numericOnly
+              editable={!isDisabled}
+            />
 
-          <View style={styles.row}>
-            <Checkbox checked={notifyMin} onChange={isDisabled ? () => {} : setNotifyMin} />
-            <ThemedText style={styles.rowText}>
-              Kirimkan notifikasi saat stok mencapai batas minimum
-            </ThemedText>
+            <View style={styles.row}>
+              <Checkbox checked={notifyMin} onChange={isDisabled ? () => { } : setNotifyMin} />
+              <ThemedText style={styles.rowText}>
+                Kirimkan notifikasi saat stok mencapai batas minimum
+              </ThemedText>
+            </View>
           </View>
-        </View>
-      </KeyboardAwareScrollView>
+        </KeyboardAwareScrollView>
       </View>
 
       <View style={styles.bottomBar}>

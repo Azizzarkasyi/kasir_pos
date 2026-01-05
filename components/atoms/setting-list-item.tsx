@@ -11,6 +11,8 @@ type SettingListItemProps = {
   onPress?: () => void;
   showTopBorder?: boolean;
   showBottomBorder?: boolean;
+  disabled?: boolean;
+  rightComponent?: React.ReactNode;
 };
 
 const SettingListItem: React.FC<SettingListItemProps> = ({
@@ -19,9 +21,11 @@ const SettingListItem: React.FC<SettingListItemProps> = ({
   onPress,
   showTopBorder = true,
   showBottomBorder = true,
+  disabled = false,
+  rightComponent,
 }) => {
   const colorScheme = useColorScheme() ?? "light";
-  const {width, height} = useWindowDimensions();
+  const { width, height } = useWindowDimensions();
   const isTablet = Math.min(width, height) >= 600;
   const styles = createStyles(colorScheme, isTablet);
   const top =
@@ -36,18 +40,23 @@ const SettingListItem: React.FC<SettingListItemProps> = ({
           borderTopWidth: showTopBorder ? top : 0,
           borderBottomWidth: showBottomBorder ? bottom : 0,
         },
+        disabled && styles.disabledRow,
       ]}
-      onPress={onPress}
-      activeOpacity={0.8}
+      onPress={disabled ? undefined : onPress}
+      activeOpacity={disabled ? 1 : 0.8}
+      disabled={disabled}
     >
       <View style={styles.titleRow}>
         <Ionicons
           name={leftIconName}
           size={isTablet ? 32 : 24}
-          color={Colors[colorScheme].primary}
+          color={disabled ? Colors[colorScheme].icon : Colors[colorScheme].primary}
         />
-        <ThemedText style={styles.rowTitle}>{title}</ThemedText>
+        <ThemedText style={[styles.rowTitle, disabled && styles.disabledTitle]}>
+          {title}
+        </ThemedText>
       </View>
+      {rightComponent && <View>{rightComponent}</View>}
     </TouchableOpacity>
   );
 };
@@ -71,6 +80,12 @@ const createStyles = (colorScheme: "light" | "dark", isTablet: boolean) =>
     rowTitle: {
       fontSize: isTablet ? 20 : 14,
       fontWeight: "500",
+      color: Colors[colorScheme].icon,
+    },
+    disabledRow: {
+      opacity: 0.5,
+    },
+    disabledTitle: {
       color: Colors[colorScheme].icon,
     },
   });

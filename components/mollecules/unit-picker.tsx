@@ -1,42 +1,51 @@
 import { Colors } from "@/constants/theme";
+import { UNITS, UNIT_TYPE_LABELS, UnitType, Unit as PredefinedUnit } from "@/constants/units";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { unitApi } from "@/services";
 import { Unit } from "@/types/api";
 import { Ionicons } from "@expo/vector-icons";
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
-    ActivityIndicator,
-    Animated,
-    Modal,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
-    useWindowDimensions,
+  ActivityIndicator,
+  Animated,
+  Modal,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+  useWindowDimensions,
 } from "react-native";
 import AddUnitModal from "../drawers/add-unit-modal";
 import { ThemedButton } from "../themed-button";
 
- type UnitPickerProps = {
+type UnitPickerProps = {
   label?: string;
   value: string; // unit ID
   onChange: (unitId: string) => void;
   size?: "sm" | "md" | "base";
- };
+  /** Use predefined units from constants/units.ts instead of API */
+  usePredefined?: boolean;
+  /** Filter by unit type (only when usePredefined=true) */
+  filterByType?: UnitType;
+};
 
- const UnitPicker: React.FC<UnitPickerProps> = ({
+const UnitPicker: React.FC<UnitPickerProps> = ({
   label = "Pilih Unit",
   value,
   onChange,
   size = "md",
- }) => {
+  usePredefined = false,
+  filterByType,
+}) => {
   const colorScheme = useColorScheme() ?? "light";
-  const {width, height} = useWindowDimensions();
+  const { width, height } = useWindowDimensions();
   const isTablet = Math.min(width, height) >= 600;
   const styles = createStyles(colorScheme, size, isTablet);
   const [visible, setVisible] = React.useState(false);
   const [isAdd, setIsAdd] = React.useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
 
   const focusAnim = useRef(new Animated.Value(value ? 1 : 0)).current;
 
@@ -51,7 +60,30 @@ import { ThemedButton } from "../themed-button";
   const [loading, setLoading] = React.useState(false);
   const [unitList, setUnitList] = React.useState<Unit[]>([]);
 
+  // Get predefined units, optionally filtered by type
+  const predefinedUnits = useMemo(() => {
+    if (!usePredefined) return [];
+    if (filterByType) {
+      return UNITS.filter(u => u.type === filterByType);
+    }
+    return UNITS;
+  }, [usePredefined, filterByType]);
+
+  // Group predefined units by type for display
+  const groupedPredefinedUnits = useMemo(() => {
+    if (!usePredefined || filterByType) return null; // Don't group if filtered
+    const groups: Record<UnitType, PredefinedUnit[]> = {} as any;
+    for (const unit of UNITS) {
+      if (!groups[unit.type]) {
+        groups[unit.type] = [];
+      }
+      groups[unit.type].push(unit);
+    }
+    return groups;
+  }, [usePredefined, filterByType]);
+
   const loadUnits = React.useCallback(async () => {
+    if (usePredefined) return; // Skip API call when using predefined
     try {
       setLoading(true);
       const response = await unitApi.getUnits();
@@ -63,7 +95,7 @@ import { ThemedButton } from "../themed-button";
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [usePredefined]);
 
   React.useEffect(() => {
     loadUnits();
@@ -72,7 +104,9 @@ import { ThemedButton } from "../themed-button";
   const openModal = () => {
     setIsAdd(false);
     setVisible(true);
-    loadUnits();
+    if (!usePredefined) {
+      loadUnits();
+    }
   };
 
   const closeModal = () => {
@@ -83,7 +117,7 @@ import { ThemedButton } from "../themed-button";
   const handleSubmit = async (unitName: string) => {
     try {
       setLoading(true);
-      const response = await unitApi.createUnit({name: unitName});
+      const response = await unitApi.createUnit({ name: unitName });
       if (response.data) {
         await loadUnits();
         onChange(response.data.id);
@@ -97,10 +131,49 @@ import { ThemedButton } from "../themed-button";
     }
   };
 
+  // Filter units based on search query
+  const filteredPredefinedUnits = useMemo(() => {
+    if (!searchQuery.trim()) return predefinedUnits;
+    const query = searchQuery.toLowerCase();
+    return predefinedUnits.filter(
+      unit =>
+        unit.name.toLowerCase().includes(query) ||
+        unit.symbol.toLowerCase().includes(query)
+    );
+  }, [predefinedUnits, searchQuery]);
+
+  const filteredGroupedUnits = useMemo(() => {
+    if (!searchQuery.trim()) return groupedPredefinedUnits;
+    if (!groupedPredefinedUnits) return null;
+    const query = searchQuery.toLowerCase();
+    const filtered: Record<UnitType, PredefinedUnit[]> = {} as any;
+    for (const [type, units] of Object.entries(groupedPredefinedUnits)) {
+      const filteredUnits = units.filter(
+        unit =>
+          unit.name.toLowerCase().includes(query) ||
+          unit.symbol.toLowerCase().includes(query)
+      );
+      if (filteredUnits.length > 0) {
+        filtered[type as UnitType] = filteredUnits;
+      }
+    }
+    return Object.keys(filtered).length > 0 ? filtered : null;
+  }, [groupedPredefinedUnits, searchQuery]);
+
+  const filteredApiUnits = useMemo(() => {
+    if (!searchQuery.trim()) return unitList;
+    const query = searchQuery.toLowerCase();
+    return unitList.filter(unit => unit.name.toLowerCase().includes(query));
+  }, [unitList, searchQuery]);
+
   const selectedUnit = React.useMemo(() => {
+    if (usePredefined) {
+      const unit = UNITS.find(u => u.id === value);
+      return unit ? `${unit.name} (${unit.symbol})` : "";
+    }
     const unit = unitList.find(u => u.id === value);
     return unit ? unit.name : "";
-  }, [value, unitList]);
+  }, [value, unitList, usePredefined]);
 
   const labelTopRange: [number, number] =
     size === "sm" ? [14, -8] : size === "md" ? [16, -8] : [18, -8];
@@ -109,10 +182,10 @@ import { ThemedButton } from "../themed-button";
     size === "sm"
       ? isTablet ? [18, 14] : [14, 12]
       : size === "md"
-      ? isTablet ? [20, 14] : [15, 12]
-      : isTablet
-      ? [22, 14]
-      : [16, 12];
+        ? isTablet ? [20, 14] : [15, 12]
+        : isTablet
+          ? [22, 14]
+          : [16, 12];
 
   const labelStyle = {
     top: focusAnim.interpolate({
@@ -191,25 +264,123 @@ import { ThemedButton } from "../themed-button";
               <Text style={styles.modalTitle}>Pilih Unit</Text>
             </View>
 
+            {/* Search Input */}
+            <View style={styles.searchContainer}>
+              <Ionicons
+                name="search"
+                size={isTablet ? 20 : 16}
+                color={Colors[colorScheme].icon}
+                style={styles.searchIcon}
+              />
+              <TextInput
+                style={styles.searchInput}
+                placeholder="Cari unit..."
+                placeholderTextColor={Colors[colorScheme].icon}
+                value={searchQuery}
+                onChangeText={setSearchQuery}
+              />
+              {searchQuery.length > 0 && (
+                <TouchableOpacity
+                  onPress={() => setSearchQuery("")}
+                  style={styles.clearButton}
+                >
+                  <Ionicons
+                    name="close-circle"
+                    size={isTablet ? 20 : 16}
+                    color={Colors[colorScheme].icon}
+                  />
+                </TouchableOpacity>
+              )}
+            </View>
+
             <ScrollView style={styles.listContainer}>
-              {loading ? (
+              {loading && !usePredefined ? (
                 <View style={styles.loadingContainer}>
                   <ActivityIndicator
                     size="small"
                     color={Colors[colorScheme].primary}
                   />
                 </View>
+              ) : usePredefined && filteredGroupedUnits ? (
+                // Grouped predefined units with search
+                Object.entries(filteredGroupedUnits).map(([type, units]) => (
+                  <View key={type}>
+                    <View style={styles.groupHeaderContainer}>
+                      <Text style={styles.groupHeader}>
+                        {UNIT_TYPE_LABELS[type as UnitType]}
+                      </Text>
+                    </View>
+                    {units.map(item => (
+                      <TouchableOpacity
+                        key={item.id}
+                        style={styles.listItem}
+                        activeOpacity={0.7}
+                        onPress={() => {
+                          onChange(item.id);
+                          closeModal();
+                        }}
+                      >
+                        <Text
+                          style={[
+                            styles.listItemText,
+                            item.id === value && {
+                              color: Colors[colorScheme].primary,
+                              fontWeight: "600",
+                            },
+                          ]}
+                        >
+                          {item.name} ({item.symbol})
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                ))
+              ) : usePredefined && filteredPredefinedUnits.length > 0 ? (
+                // Filtered predefined units (flat list)
+                filteredPredefinedUnits.map(item => (
+                  <TouchableOpacity
+                    key={item.id}
+                    style={styles.listItem}
+                    activeOpacity={0.7}
+                    onPress={() => {
+                      onChange(item.id);
+                      closeModal();
+                    }}
+                  >
+                    <Text
+                      style={[
+                        styles.listItemText,
+                        item.id === value && {
+                          color: Colors[colorScheme].primary,
+                          fontWeight: "600",
+                        },
+                      ]}
+                    >
+                      {item.name} ({item.symbol})
+                    </Text>
+                  </TouchableOpacity>
+                ))
+              ) : (usePredefined && searchQuery && filteredPredefinedUnits.length === 0) || (!usePredefined && searchQuery && filteredApiUnits.length === 0) ? (
+                <Text
+                  style={[
+                    styles.listItemText,
+                    { textAlign: "center", paddingVertical: 20 },
+                  ]}
+                >
+                  Unit tidak ditemukan
+                </Text>
               ) : unitList.length === 0 ? (
                 <Text
                   style={[
                     styles.listItemText,
-                    {textAlign: "center", paddingVertical: 20},
+                    { textAlign: "center", paddingVertical: 20 },
                   ]}
                 >
                   Belum ada unit
                 </Text>
               ) : (
-                unitList.map(item => (
+                // API units (original behavior)
+                filteredApiUnits.map(item => (
                   <TouchableOpacity
                     key={item.id}
                     style={styles.listItem}
@@ -235,12 +406,15 @@ import { ThemedButton } from "../themed-button";
               )}
             </ScrollView>
 
-            <ThemedButton
-              size="sm"
-              title="Tambah Unit"
-              style={{marginTop: 8}}
-              onPress={() => setIsAdd(true)}
-            />
+            {/* Hide "Tambah Unit" when using predefined units */}
+            {!usePredefined && (
+              <ThemedButton
+                size="sm"
+                title="Tambah Unit"
+                style={{ marginTop: 8 }}
+                onPress={() => setIsAdd(true)}
+              />
+            )}
             <View style={styles.modalFooter}>
               <ThemedButton
                 size="sm"
@@ -254,13 +428,13 @@ import { ThemedButton } from "../themed-button";
       </Modal>
     </View>
   );
- };
+};
 
- const createStyles = (
+const createStyles = (
   colorScheme: "light" | "dark",
   size: "sm" | "md" | "base",
   isTablet: boolean
- ) =>
+) =>
   StyleSheet.create({
     container: {
       width: "100%",
@@ -350,6 +524,46 @@ import { ThemedButton } from "../themed-button";
       fontSize: isTablet ? 22 : 16,
       color: Colors[colorScheme].text,
     },
+    groupHeaderContainer: {
+      alignItems: "center",
+      paddingVertical: isTablet ? 12 : 8,
+      paddingTop: isTablet ? 18 : 14,
+    },
+    groupHeader: {
+      fontSize: isTablet ? 16 : 13,
+      fontWeight: "600",
+      color: Colors[colorScheme].primary,
+      paddingHorizontal: isTablet ? 20 : 16,
+      paddingVertical: isTablet ? 10 : 8,
+      borderWidth: 1.5,
+      borderColor: Colors[colorScheme].primary,
+      borderRadius: isTablet ? 20 : 16,
+      backgroundColor: Colors[colorScheme].background,
+    },
+    searchContainer: {
+      flexDirection: "row",
+      alignItems: "center",
+      borderWidth: 1,
+      borderColor: Colors[colorScheme].border,
+      borderRadius: isTablet ? 10 : 8,
+      paddingHorizontal: isTablet ? 14 : 12,
+      paddingVertical: isTablet ? 10 : 8,
+      marginTop: isTablet ? 8 : 4,
+      marginBottom: isTablet ? 8 : 4,
+      backgroundColor: Colors[colorScheme].background,
+    },
+    searchIcon: {
+      marginRight: isTablet ? 10 : 8,
+    },
+    searchInput: {
+      flex: 1,
+      fontSize: isTablet ? 18 : 15,
+      color: Colors[colorScheme].text,
+      padding: 0,
+    },
+    clearButton: {
+      padding: isTablet ? 4 : 2,
+    },
   });
 
- export default UnitPicker;
+export default UnitPicker;
