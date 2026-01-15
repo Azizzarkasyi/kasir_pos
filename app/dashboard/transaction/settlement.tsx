@@ -11,7 +11,7 @@ import { useBranchStore } from "@/stores/branch-store";
 import { useCartStore } from "@/stores/cart-store";
 import { Transaction } from "@/types/api";
 import { Ionicons } from "@expo/vector-icons";
-import { useLocalSearchParams, useRouter } from "expo-router";
+import { useLocalSearchParams, useNavigation, useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import { Alert, ScrollView, Share, StyleSheet, Text, TouchableOpacity, useWindowDimensions, View } from "react-native";
 
@@ -33,6 +33,7 @@ export default function TransactionSettlementPage() {
   const isTabletLandscape = isTablet && isLandscape;
   const styles = createStyles(colorScheme, isTablet, isTabletLandscape);
   const router = useRouter();
+  const navigation = useNavigation();
   const params = useLocalSearchParams();
 
   const { getTotalAmount, clearCart } = useCartStore();
@@ -46,6 +47,35 @@ export default function TransactionSettlementPage() {
   const [store, setStore] = useState<StoreInfo | null>(null);
   const [struckConfig, setStruckConfig] = useState<StruckConfig | null>(null);
   const [isPrinting, setIsPrinting] = useState(false);
+
+  const [isNavigating, setIsNavigating] = useState(false);
+  const [navigateToNewTransaction, setNavigateToNewTransaction] = useState(false);
+
+  // Handle back navigation - redirect to summary page (not transaction)
+  // This only intercepts hardware back button, not "Transaksi Baru" button
+  useEffect(() => {
+    const unsubscribe = navigation.addListener("beforeRemove", (e) => {
+      // Prevent double navigation
+      if (isNavigating) return;
+      
+      // If user clicked "Transaksi Baru", allow navigation to transaction page
+      if (navigateToNewTransaction) return;
+      
+      // Prevent default back behavior
+      e.preventDefault();
+      
+      // Set flag to prevent re-entry
+      setIsNavigating(true);
+      
+      // Use setTimeout to avoid issues with navigation during listener
+      // Navigate to summary page (Ringkasan Transaksi)
+      setTimeout(() => {
+        router.replace("/dashboard/transaction/summary");
+      }, 0);
+    });
+
+    return unsubscribe;
+  }, [navigation, router, isNavigating, navigateToNewTransaction]);
 
   useEffect(() => {
     // Parse transaction data from params, then fetch full detail from API using id
@@ -293,6 +323,8 @@ export default function TransactionSettlementPage() {
 
   const handleNewTransaction = () => {
     clearCart();
+    // Set flag to allow navigation to transaction page (bypass beforeRemove)
+    setNavigateToNewTransaction(true);
     router.replace("/dashboard/transaction");
   };
 

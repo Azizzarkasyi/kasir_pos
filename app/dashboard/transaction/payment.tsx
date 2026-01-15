@@ -135,6 +135,21 @@ export default function PaymentPage() {
 
 
   const handlePayment = async () => {
+    // Validasi cart tidak kosong
+    if (cartItems.length === 0) {
+      Alert.alert(
+        "Keranjang Kosong",
+        "Tidak ada produk untuk dibayar",
+        [
+          {
+            text: "OK",
+            onPress: () => router.replace("/dashboard/transaction"),
+          },
+        ]
+      );
+      return;
+    }
+
     // Validasi pembayaran
     if (Number(amount) < totalAmount) {
       Alert.alert(
@@ -190,8 +205,9 @@ export default function PaymentPage() {
           createdAt: response.data.createdAt || new Date().toISOString(),
         };
 
-        // Clear cart
-        clearCart();
+        // NOTE: Don't clear cart here - keep products visible when user presses back
+        // Cart will be cleared when user clicks "Transaksi Baru" in settlement page
+        // or when entering the transaction page fresh
 
         // Navigate to settlement page
         router.push({

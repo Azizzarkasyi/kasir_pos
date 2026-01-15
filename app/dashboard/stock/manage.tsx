@@ -134,14 +134,6 @@ export default function ManageStockScreen() {
                 width="100%"
               />
             </View>
-
-            <TouchableOpacity style={styles.scanButton} onPress={() => { }}>
-              <AntDesign
-                name="scan"
-                size={isTablet ? 32 : 24}
-                color={Colors[colorScheme].text}
-              />
-            </TouchableOpacity>
           </View>
         </View>
 

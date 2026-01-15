@@ -17,7 +17,7 @@ import { useBranchStore } from "@/stores/branch-store";
 import { useCartStore } from "@/stores/cart-store";
 import { Category, Product } from "@/types/api";
 import { AntDesign, Ionicons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
+import { useNavigation, useRouter } from "expo-router";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
@@ -60,6 +60,7 @@ export default function PaymentPage() {
   const isTabletLandscape = isTablet && isLandscape;
   const styles = createStyles(colorScheme, isTablet, isTabletLandscape);
   const router = useRouter();
+  const navigation = useNavigation();
   const { isPro, isDisabled } = useUserPlan();
 
   const [activeTab, setActiveTab] = useState<"manual" | "product" | "favorite">(
@@ -101,9 +102,35 @@ export default function PaymentPage() {
   // Get current branch from store
   const { currentBranchId } = useBranchStore();
 
+  // Clear cart when entering transaction page
+  // This ensures fresh state when user navigates from other menus
+  // Settlement page uses router.replace() so it won't trigger this when redirecting
   useEffect(() => {
     clearCart();
-  }, [])
+  }, []);
+
+  // Handle back navigation - redirect to home page to prevent looping
+  const [isNavigatingHome, setIsNavigatingHome] = useState(false);
+  
+  useEffect(() => {
+    const unsubscribe = navigation.addListener("beforeRemove", (e) => {
+      // Prevent double navigation
+      if (isNavigatingHome) return;
+      
+      // Prevent default back behavior
+      e.preventDefault();
+      
+      // Set flag to prevent re-entry
+      setIsNavigatingHome(true);
+      
+      // Use setTimeout to avoid issues with navigation during listener
+      setTimeout(() => {
+        router.replace("/dashboard/home");
+      }, 0);
+    });
+
+    return unsubscribe;
+  }, [navigation, router, isNavigatingHome]);
 
   useEffect(() => {
     if (isPro && savedDevice?.connectionType === "usb") {
@@ -129,6 +156,19 @@ export default function PaymentPage() {
     getTotalItems,
     getTotalAmount,
   } = useCartStore();
+
+  // Sync checkoutProducts local state with cartItems from Zustand store
+  // This ensures UI consistency when cart is cleared from other pages (e.g., payment.tsx)
+  useEffect(() => {
+    // Convert cartItems to checkoutProducts format
+    const syncedProducts: CheckoutItemData[] = cartItems.map(item => ({
+      productId: item.productId,
+      variantId: item.variantId,
+      quantity: item.quantity,
+      note: item.note,
+    }));
+    setCheckoutProducts(syncedProducts);
+  }, [cartItems]);
 
   // Fetch products from API
   const fetchProducts = useCallback(async () => {

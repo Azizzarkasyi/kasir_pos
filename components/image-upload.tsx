@@ -13,6 +13,27 @@ import {
 } from "react-native";
 import { ThemedText } from "./themed-text";
 
+// API URL from environment - same as api.ts
+const API_HOST = process.env.API_URL || "http://192.168.1.8:3001";
+
+/**
+ * Fix image URLs that contain localhost - replace with correct API host
+ * This is needed because backend might store URLs with localhost which won't work on mobile devices
+ */
+const fixImageUrl = (url: string | null | undefined): string | undefined => {
+  if (!url) return undefined;
+  
+  // If it's a local file (not http), return as-is
+  if (!url.startsWith("http")) return url;
+  
+  // Replace localhost or 127.0.0.1 with the correct API host
+  const fixedUrl = url
+    .replace(/http:\/\/localhost:\d+/, API_HOST)
+    .replace(/http:\/\/127\.0\.0\.1:\d+/, API_HOST);
+  
+  return fixedUrl;
+};
+
 interface ImageUploadProps {
   uri?: string | null;
   initials?: string;
@@ -88,7 +109,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
     <View style={styles.container}>
       <View style={styles.square}>
         {uri ? (
-          <Image source={{ uri }} style={styles.image} />
+          <Image source={{ uri: fixImageUrl(uri) }} style={styles.image} />
         ) : (
           <ThemedText style={styles.initials}>{initials}</ThemedText>
         )}
