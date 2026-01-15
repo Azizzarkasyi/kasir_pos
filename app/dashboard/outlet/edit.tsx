@@ -3,16 +3,16 @@ import SectionDivider from "@/components/atoms/section-divider";
 import ComboInput from "@/components/combo-input";
 import Header from "@/components/header";
 import ImageUpload from "@/components/image-upload";
-import { ThemedButton } from "@/components/themed-button";
-import { ThemedInput } from "@/components/themed-input";
-import { ThemedText } from "@/components/themed-text";
-import { Colors } from "@/constants/theme";
-import { useColorScheme } from "@/hooks/use-color-scheme";
-import assetApi, { prepareFileFromUri } from "@/services/endpoints/assets";
-import { Branch, branchApi } from "@/services/endpoints/branches";
+import {ThemedButton} from "@/components/themed-button";
+import {ThemedInput} from "@/components/themed-input";
+import {ThemedText} from "@/components/themed-text";
+import {Colors} from "@/constants/theme";
+import {useColorScheme} from "@/hooks/use-color-scheme";
+import assetApi, {prepareFileFromUri} from "@/services/endpoints/assets";
+import {Branch, branchApi} from "@/services/endpoints/branches";
 import axios from "axios";
-import { useLocalSearchParams, useRouter } from "expo-router";
-import React, { useEffect, useState } from "react";
+import {useLocalSearchParams, useRouter} from "expo-router";
+import React, {useEffect, useState} from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -20,15 +20,15 @@ import {
   useWindowDimensions,
   View,
 } from "react-native";
-import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
+import {KeyboardAwareScrollView} from "react-native-keyboard-aware-scroll-view";
 
-type LocationOption = { label: string; value: string };
+type LocationOption = {label: string; value: string};
 
 const WILAYAH_API_BASE = "https://wilayah.id/api";
 
 export default function EditOutletScreen() {
   const colorScheme = useColorScheme() ?? "light";
-  const { width, height } = useWindowDimensions();
+  const {width, height} = useWindowDimensions();
   const isTablet = Math.min(width, height) >= 600;
   const isLandscape = width > height;
   const isTabletLandscape = isTablet && isLandscape;
@@ -58,18 +58,21 @@ export default function EditOutletScreen() {
   const [address, setAddress] = useState("");
   const [imageUri, setImageUri] = useState<string | null>(null);
   const [showSuccessPopup, setShowSuccessPopup] = useState(false);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [showExitConfirm, setShowExitConfirm] = useState(false);
+  const [initialData, setInitialData] = useState<any>(null);
 
   const [provinceOptions, setProvinceOptions] = useState<LocationOption[]>([
-    { label: "Pilih Provinsi", value: "" },
+    {label: "Pilih Provinsi", value: ""},
   ]);
   const [regencyOptions, setRegencyOptions] = useState<LocationOption[]>([
-    { label: "Pilih Kabupaten / Kota", value: "" },
+    {label: "Pilih Kabupaten / Kota", value: ""},
   ]);
   const [districtOptions, setDistrictOptions] = useState<LocationOption[]>([
-    { label: "Pilih Kecamatan", value: "" },
+    {label: "Pilih Kecamatan", value: ""},
   ]);
   const [villageOptions, setVillageOptions] = useState<LocationOption[]>([
-    { label: "Pilih Kelurahan", value: "" },
+    {label: "Pilih Kelurahan", value: ""},
   ]);
 
   // Fetch provinces on mount
@@ -91,8 +94,8 @@ export default function EditOutletScreen() {
         console.log("✅ Provinces count:", data.length);
 
         setProvinceOptions([
-          { label: "Pilih Provinsi", value: "" },
-          ...data.map((item: { code: string; name: string }) => ({
+          {label: "Pilih Provinsi", value: ""},
+          ...data.map((item: {code: string; name: string}) => ({
             label: item.name,
             value: item.code,
           })),
@@ -123,8 +126,8 @@ export default function EditOutletScreen() {
         );
         const data = Array.isArray(res.data.data) ? res.data.data : [];
         setRegencyOptions([
-          { label: "Pilih Kabupaten / Kota", value: "" },
-          ...data.map((item: { code: string; name: string }) => ({
+          {label: "Pilih Kabupaten / Kota", value: ""},
+          ...data.map((item: {code: string; name: string}) => ({
             label: item.name,
             value: item.code,
           })),
@@ -154,8 +157,8 @@ export default function EditOutletScreen() {
         );
         const data = Array.isArray(res.data.data) ? res.data.data : [];
         setDistrictOptions([
-          { label: "Pilih Kecamatan", value: "" },
-          ...data.map((item: { code: string; name: string }) => ({
+          {label: "Pilih Kecamatan", value: ""},
+          ...data.map((item: {code: string; name: string}) => ({
             label: item.name,
             value: item.code,
           })),
@@ -185,8 +188,8 @@ export default function EditOutletScreen() {
         );
         const data = Array.isArray(res.data.data) ? res.data.data : [];
         setVillageOptions([
-          { label: "Pilih Kelurahan", value: "" },
-          ...data.map((item: { code: string; name: string }) => ({
+          {label: "Pilih Kelurahan", value: ""},
+          ...data.map((item: {code: string; name: string}) => ({
             label: item.name,
             value: item.code,
           })),
@@ -223,7 +226,7 @@ export default function EditOutletScreen() {
             value: String(data.province.id),
           });
           setProvinceQuery(data.province.name);
-          setSelectedCity({ label: data.city.name, value: String(data.city.id) });
+          setSelectedCity({label: data.city.name, value: String(data.city.id)});
           setCityQuery(data.city.name);
           setSelectedSubDistrict({
             label: data.subdistrict.name,
@@ -241,6 +244,18 @@ export default function EditOutletScreen() {
             setImageUri(data.image_url);
           }
           console.log("✅ Form fields populated");
+
+          // Save initial data for comparison
+          setInitialData({
+            name: data.name,
+            phone: data.phone || "",
+            province: data.province.id,
+            city: data.city.id,
+            subdistrict: data.subdistrict.id,
+            village: data.village.id,
+            address: data.address,
+            imageUri: data.image_url,
+          });
         }
       } catch (error: any) {
         console.error("❌ Failed to fetch branch:", error);
@@ -253,6 +268,46 @@ export default function EditOutletScreen() {
 
     fetchBranch();
   }, [branchId]);
+
+  // Check if data has changed
+  useEffect(() => {
+    if (!initialData) return;
+
+    const hasChanges =
+      name !== initialData.name ||
+      phone !== initialData.phone ||
+      address !== initialData.address ||
+      selectedProvince?.value !== String(initialData.province) ||
+      selectedCity?.value !== String(initialData.city) ||
+      selectedSubDistrict?.value !== String(initialData.subdistrict) ||
+      selectedVillage?.value !== String(initialData.village) ||
+      (imageUri !== initialData.imageUri && imageUri !== null);
+
+    setHasUnsavedChanges(hasChanges);
+  }, [
+    name,
+    phone,
+    address,
+    selectedProvince,
+    selectedCity,
+    selectedSubDistrict,
+    selectedVillage,
+    imageUri,
+    initialData,
+  ]);
+
+  const handleBackPress = () => {
+    if (hasUnsavedChanges) {
+      setShowExitConfirm(true);
+    } else {
+      router.back();
+    }
+  };
+
+  const handleConfirmExit = () => {
+    setShowExitConfirm(false);
+    router.back();
+  };
 
   const handleSave = async () => {
     // Validation
@@ -290,7 +345,7 @@ export default function EditOutletScreen() {
                 style: "cancel",
                 onPress: () => setIsSubmitting(false),
               },
-              { text: "Lanjutkan", onPress: () => { } },
+              {text: "Lanjutkan", onPress: () => {}},
             ]
           );
           return;
@@ -341,6 +396,7 @@ export default function EditOutletScreen() {
 
       if (response.data) {
         console.log("✅ Branch updated:", response.data);
+        setHasUnsavedChanges(false);
         setShowSuccessPopup(true);
       }
     } catch (error: any) {
@@ -353,15 +409,15 @@ export default function EditOutletScreen() {
 
   if (isLoading) {
     return (
-      <View style={{ flex: 1, backgroundColor: Colors[colorScheme].background }}>
+      <View style={{flex: 1, backgroundColor: Colors[colorScheme].background}}>
         <Header
           title="Ubah Outlet"
           showHelp={false}
           withNotificationButton={false}
         />
-        <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+        <View style={{flex: 1, justifyContent: "center", alignItems: "center"}}>
           <ActivityIndicator size="large" color={Colors[colorScheme].primary} />
-          <ThemedText style={{ marginTop: 16, color: Colors[colorScheme].icon }}>
+          <ThemedText style={{marginTop: 16, color: Colors[colorScheme].icon}}>
             Memuat data outlet...
           </ThemedText>
         </View>
@@ -370,11 +426,12 @@ export default function EditOutletScreen() {
   }
 
   return (
-    <View style={{ flex: 1, backgroundColor: Colors[colorScheme].background }}>
+    <View style={{flex: 1, backgroundColor: Colors[colorScheme].background}}>
       <Header
         title="Ubah Outlet"
         showHelp={false}
         withNotificationButton={false}
+        onBackPress={handleBackPress}
       />
       <KeyboardAwareScrollView
         contentContainerStyle={styles.scrollContent}
@@ -515,6 +572,14 @@ export default function EditOutletScreen() {
           setShowSuccessPopup(false);
           router.back();
         }}
+      />
+
+      <ConfirmPopup
+        visible={showExitConfirm}
+        title="Perubahan Belum Disimpan"
+        message="Anda memiliki perubahan yang belum disimpan. Apakah Anda yakin ingin keluar?"
+        onConfirm={handleConfirmExit}
+        onCancel={() => setShowExitConfirm(false)}
       />
     </View>
   );

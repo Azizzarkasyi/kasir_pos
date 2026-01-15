@@ -7,19 +7,19 @@ import Header from "@/components/header";
 import ImageUpload from "@/components/image-upload";
 import CategoryPicker from "@/components/mollecules/category-picker";
 import MerkPicker from "@/components/mollecules/merk-picker";
-import { ThemedButton } from "@/components/themed-button";
-import { ThemedInput } from "@/components/themed-input";
-import { ThemedText } from "@/components/themed-text";
-import { Colors } from "@/constants/theme";
-import { useColorScheme } from "@/hooks/use-color-scheme";
-import { recipeApi } from "@/services";
-import assetApi, { prepareFileFromUri } from "@/services/endpoints/assets";
+import {ThemedButton} from "@/components/themed-button";
+import {ThemedInput} from "@/components/themed-input";
+import {ThemedText} from "@/components/themed-text";
+import {Colors} from "@/constants/theme";
+import {useColorScheme} from "@/hooks/use-color-scheme";
+import {recipeApi} from "@/services";
+import assetApi, {prepareFileFromUri} from "@/services/endpoints/assets";
 import merkApi from "@/services/endpoints/merks";
 import productApi from "@/services/endpoints/products";
-import { useProductFormStore } from "@/stores/product-form-store";
-import { Merk, Product } from "@/types/api";
-import { useLocalSearchParams, useNavigation, useRouter } from "expo-router";
-import React, { useEffect, useRef, useState } from "react";
+import {useProductFormStore} from "@/stores/product-form-store";
+import {Merk, Product} from "@/types/api";
+import {useLocalSearchParams, useNavigation, useRouter} from "expo-router";
+import React, {useEffect, useRef, useState} from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -27,12 +27,12 @@ import {
   useWindowDimensions,
   View,
 } from "react-native";
-import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+import {KeyboardAwareScrollView} from "react-native-keyboard-aware-scroll-view";
+import {useSafeAreaInsets} from "react-native-safe-area-context";
 
 export default function EditProductScreen() {
   const colorScheme = useColorScheme() ?? "light";
-  const { width, height } = useWindowDimensions();
+  const {width, height} = useWindowDimensions();
   const isTablet = Math.min(width, height) >= 600;
   const isLandscape = width > height;
   const isTabletLandscape = isTablet && isLandscape;
@@ -43,6 +43,9 @@ export default function EditProductScreen() {
 
   const confirmationRef = useRef<ConfirmationDialogHandle | null>(null);
   const [showSuccessPopup, setShowSuccessPopup] = useState(false);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [showExitConfirm, setShowExitConfirm] = useState(false);
+  const [initialData, setInitialData] = useState<any>(null);
 
   const {
     name,
@@ -77,7 +80,7 @@ export default function EditProductScreen() {
   }>();
 
   const [merks, setMerks] = useState<Merk[]>([]);
-  const [recipes, setRecipes] = useState<{ id: string; name: string }[]>([]);
+  const [recipes, setRecipes] = useState<{id: string; name: string}[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [productData, setProductData] = useState<Product | null>(null);
@@ -137,6 +140,16 @@ export default function EditProductScreen() {
           }));
           setVariants(() => mappedVariants);
         }
+
+        // Save initial data for change detection
+        setInitialData({
+          name: product.name,
+          brand: product.merk_id || "",
+          category: product.category_id || "",
+          favorite: product.is_favorite || false,
+          imageUri: product.photo_url || null,
+          variants: product.variants || [],
+        });
       }
     } catch (error: any) {
       console.error("Failed to load product:", error);
@@ -162,7 +175,7 @@ export default function EditProductScreen() {
     try {
       const response = await recipeApi.getRecipes();
       if (response.data) {
-        setRecipes(response.data.map(r => ({ id: r.id, name: r.name })));
+        setRecipes(response.data.map(r => ({id: r.id, name: r.name})));
       }
     } catch (error) {
       console.error("Failed to load recipes:", error);
@@ -187,9 +200,43 @@ export default function EditProductScreen() {
         stock.notifyMin)) ||
     variants.length > 0;
 
+  // Detect changes
+  useEffect(() => {
+    if (!initialData) return;
+
+    const currentVariantsStr = JSON.stringify(
+      variants.map(v => ({
+        name: v.name,
+        price: v.price,
+        capital_price: v.capital_price,
+        stock: v.stock,
+        unit_id: v.unit_id,
+      }))
+    );
+    const initialVariantsStr = JSON.stringify(
+      initialData.variants.map((v: any) => ({
+        name: v.name,
+        price: v.price,
+        capital_price: v.capital_price,
+        stock: v.stock,
+        unit_id: v.unit_id,
+      }))
+    );
+
+    const changed =
+      name !== initialData.name ||
+      brand !== initialData.brand ||
+      category !== initialData.category ||
+      favorite !== initialData.favorite ||
+      imageUri !== initialData.imageUri ||
+      currentVariantsStr !== initialVariantsStr;
+
+    setHasUnsavedChanges(changed);
+  }, [name, brand, category, favorite, imageUri, variants, initialData]);
+
   useEffect(() => {
     const sub = navigation.addListener("beforeRemove", e => {
-      if (!isDirty) {
+      if (!hasUnsavedChanges) {
         return;
       }
 
@@ -210,9 +257,24 @@ export default function EditProductScreen() {
     });
 
     return sub;
-  }, [navigation, isDirty]);
+  }, [navigation, hasUnsavedChanges]);
 
   const formatIDR = (n: number) => new Intl.NumberFormat("id-ID").format(n);
+
+  const handleBackPress = () => {
+    if (hasUnsavedChanges) {
+      setShowExitConfirm(true);
+    } else {
+      router.back();
+    }
+  };
+
+  const handleConfirmExit = () => {
+    setShowExitConfirm(false);
+    setHasUnsavedChanges(false);
+    reset();
+    router.back();
+  };
 
   const handleSave = async () => {
     if (!params.id) {
@@ -255,7 +317,7 @@ export default function EditProductScreen() {
                 style: "cancel",
                 onPress: () => setIsSaving(false),
               },
-              { text: "Lanjutkan", onPress: () => { } },
+              {text: "Lanjutkan", onPress: () => {}},
             ]
           );
           return;
@@ -316,7 +378,8 @@ export default function EditProductScreen() {
 
           if (v.is_stock_active) {
             if (typeof v.stock === "number") cleaned.stock = v.stock;
-            if (typeof v.min_stock === "number") cleaned.min_stock = v.min_stock;
+            if (typeof v.min_stock === "number")
+              cleaned.min_stock = v.min_stock;
             if (typeof v.notify_on_stock_ronouts === "boolean") {
               cleaned.notify_on_stock_ronouts = v.notify_on_stock_ronouts;
             }
@@ -335,12 +398,19 @@ export default function EditProductScreen() {
 
       payload.variants = allVariants;
 
-      console.log("📦 Final payload.variants:", JSON.stringify(payload.variants, null, 2));
-      console.log("📦 Total variants being sent:", payload.variants?.length || 0);
+      console.log(
+        "📦 Final payload.variants:",
+        JSON.stringify(payload.variants, null, 2)
+      );
+      console.log(
+        "📦 Total variants being sent:",
+        payload.variants?.length || 0
+      );
       console.log("Updating product:", payload);
       const response = await productApi.updateProduct(params.id, payload);
 
       if (response.data) {
+        setHasUnsavedChanges(false);
         setShowSuccessPopup(true);
       }
     } catch (error: any) {
@@ -353,11 +423,11 @@ export default function EditProductScreen() {
 
   if (isLoading) {
     return (
-      <View style={{ flex: 1, backgroundColor: Colors[colorScheme].background }}>
+      <View style={{flex: 1, backgroundColor: Colors[colorScheme].background}}>
         <Header title="Edit Bahan" showHelp={false} />
-        <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+        <View style={{flex: 1, justifyContent: "center", alignItems: "center"}}>
           <ActivityIndicator size="large" color={Colors[colorScheme].primary} />
-          <ThemedText style={{ marginTop: 16, color: Colors[colorScheme].icon }}>
+          <ThemedText style={{marginTop: 16, color: Colors[colorScheme].icon}}>
             Memuat data produk...
           </ThemedText>
         </View>
@@ -366,8 +436,12 @@ export default function EditProductScreen() {
   }
 
   return (
-    <View style={{ flex: 1, backgroundColor: Colors[colorScheme].background }}>
-      <Header title="Edit Bahan" showHelp={false} />
+    <View style={{flex: 1, backgroundColor: Colors[colorScheme].background}}>
+      <Header
+        title="Edit Bahan"
+        showHelp={false}
+        onBackPress={handleBackPress}
+      />
       <KeyboardAwareScrollView
         contentContainerStyle={{
           paddingTop: 18,
@@ -453,7 +527,7 @@ export default function EditProductScreen() {
                       price={v.capital_price ?? 0}
                       stock={
                         v.is_stock_active && typeof v.stock === "number"
-                          ? { count: v.stock, unit: v.unit_id || "pcs" }
+                          ? {count: v.stock, unit: v.unit_id || "pcs"}
                           : undefined
                       }
                       onPress={() =>
@@ -461,19 +535,19 @@ export default function EditProductScreen() {
                           pathname: "/dashboard/recipe-and-materials/variant",
                           params: {
                             from: "edit",
-                            ...(v.id ? { variantId: v.id } : {}),
+                            ...(v.id ? {variantId: v.id} : {}),
                             name: v.name,
                             price: String(v.price),
                             capitalPrice: String(v.capital_price),
                             ...(typeof v.stock === "number"
                               ? {
-                                offlineStock: String(v.stock),
-                                unit: v.unit_id || "pcs",
-                                minStock: String(v.min_stock || 0),
-                                notifyMin: v.notify_on_stock_ronouts
-                                  ? "1"
-                                  : "0",
-                              }
+                                  offlineStock: String(v.stock),
+                                  unit: v.unit_id || "pcs",
+                                  minStock: String(v.min_stock || 0),
+                                  notifyMin: v.notify_on_stock_ronouts
+                                    ? "1"
+                                    : "0",
+                                }
                               : {}),
                           },
                         } as never)
@@ -511,7 +585,7 @@ export default function EditProductScreen() {
                   "Konfirmasi",
                   "Yakin ingin menghapus bahan ini? Tindakan ini tidak dapat dibatalkan.",
                   [
-                    { text: "Batal", style: "cancel" },
+                    {text: "Batal", style: "cancel"},
                     {
                       text: "Hapus",
                       style: "destructive",
@@ -562,6 +636,13 @@ export default function EditProductScreen() {
           reset();
           router.back();
         }}
+      />
+      <ConfirmPopup
+        visible={showExitConfirm}
+        title="Perubahan Belum Disimpan"
+        message="Anda memiliki perubahan yang belum disimpan. Apakah Anda yakin ingin keluar?"
+        onConfirm={handleConfirmExit}
+        onCancel={() => setShowExitConfirm(false)}
       />
     </View>
   );

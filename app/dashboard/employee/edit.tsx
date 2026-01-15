@@ -3,37 +3,37 @@ import SectionDivider from "@/components/atoms/section-divider";
 import SelectBranchModal from "@/components/drawers/select-branch-modal";
 import Header from "@/components/header";
 import RadioButton from "@/components/radio-button";
-import { ThemedButton } from "@/components/themed-button";
-import { ThemedInput } from "@/components/themed-input";
-import { ThemedText } from "@/components/themed-text";
-import { Colors } from "@/constants/theme";
-import { useColorScheme } from "@/hooks/use-color-scheme";
-import { Branch } from "@/services";
+import {ThemedButton} from "@/components/themed-button";
+import {ThemedInput} from "@/components/themed-input";
+import {ThemedText} from "@/components/themed-text";
+import {Colors} from "@/constants/theme";
+import {useColorScheme} from "@/hooks/use-color-scheme";
+import {Branch} from "@/services";
 import employeeApi from "@/services/endpoints/employees";
-import { Ionicons } from "@expo/vector-icons";
-import { useLocalSearchParams, useRouter } from "expo-router";
-import React, { useEffect, useState } from "react";
+import {Ionicons} from "@expo/vector-icons";
+import {useLocalSearchParams, useRouter} from "expo-router";
+import React, {useEffect, useState} from "react";
 import {
   ActivityIndicator,
   Alert,
   StyleSheet,
   TouchableOpacity,
   useWindowDimensions,
-  View
+  View,
 } from "react-native";
-import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+import {KeyboardAwareScrollView} from "react-native-keyboard-aware-scroll-view";
+import {useSafeAreaInsets} from "react-native-safe-area-context";
 
 export default function EditEmployeeScreen() {
   const colorScheme = useColorScheme() ?? "light";
-  const { width, height } = useWindowDimensions();
+  const {width, height} = useWindowDimensions();
   const isTablet = Math.min(width, height) >= 600;
   const isLandscape = width > height;
   const isTabletLandscape = isTablet && isLandscape;
   const styles = createStyles(colorScheme, isTablet, isTabletLandscape);
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const params = useLocalSearchParams<{ id?: string }>();
+  const params = useLocalSearchParams<{id?: string}>();
 
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
@@ -47,12 +47,30 @@ export default function EditEmployeeScreen() {
   const [isSaving, setIsSaving] = useState(false);
   const [showSuccessPopup, setShowSuccessPopup] = useState(false);
   const [showDeleteSuccessPopup, setShowDeleteSuccessPopup] = useState(false);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [showExitConfirm, setShowExitConfirm] = useState(false);
+  const [initialData, setInitialData] = useState<any>(null);
 
   useEffect(() => {
     loadEmployee();
   }, []);
 
   console.log(params.id);
+
+  // Check if data has changed
+  useEffect(() => {
+    if (!initialData) return;
+
+    const hasChanges =
+      name !== initialData.name ||
+      phone !== initialData.phone ||
+      email !== initialData.email ||
+      role !== initialData.role ||
+      pin.length > 0 ||
+      selectedBranches.length !== initialData.selectedBranches.length;
+
+    setHasUnsavedChanges(hasChanges);
+  }, [name, phone, email, role, pin, selectedBranches, initialData]);
 
   const loadEmployee = async () => {
     if (!params.id) {
@@ -97,6 +115,15 @@ export default function EditEmployeeScreen() {
           }));
           setSelectedBranches(branches);
         }
+
+        // Save initial data for comparison
+        setInitialData({
+          name: employee.name,
+          phone: employee.phone || "",
+          email: employee.email,
+          role: roleToSet,
+          selectedBranches: employee.branches || [],
+        });
 
         console.log("✅ Employee loaded:", employee);
       }
@@ -193,6 +220,7 @@ export default function EditEmployeeScreen() {
 
       if (response.data) {
         console.log("✅ Employee updated successfully:", response.data);
+        setHasUnsavedChanges(false);
         setShowSuccessPopup(true);
       }
     } catch (error: any) {
@@ -203,12 +231,25 @@ export default function EditEmployeeScreen() {
     }
   };
 
+  const handleBackPress = () => {
+    if (hasUnsavedChanges) {
+      setShowExitConfirm(true);
+    } else {
+      router.back();
+    }
+  };
+
+  const handleConfirmExit = () => {
+    setShowExitConfirm(false);
+    router.back();
+  };
+
   const handleDelete = () => {
     Alert.alert(
       "Hapus Pegawai",
       "Apakah Anda yakin ingin menghapus pegawai ini?",
       [
-        { text: "Batal", style: "cancel" },
+        {text: "Batal", style: "cancel"},
         {
           text: "Hapus",
           style: "destructive",
@@ -234,11 +275,11 @@ export default function EditEmployeeScreen() {
 
   if (isLoading) {
     return (
-      <View style={{ flex: 1, backgroundColor: Colors[colorScheme].background }}>
+      <View style={{flex: 1, backgroundColor: Colors[colorScheme].background}}>
         <Header title="Edit Pegawai" showHelp={false} />
-        <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+        <View style={{flex: 1, justifyContent: "center", alignItems: "center"}}>
           <ActivityIndicator size="large" color={Colors[colorScheme].primary} />
-          <ThemedText style={{ marginTop: 16, color: Colors[colorScheme].icon }}>
+          <ThemedText style={{marginTop: 16, color: Colors[colorScheme].icon}}>
             Memuat data pegawai...
           </ThemedText>
         </View>
@@ -247,8 +288,12 @@ export default function EditEmployeeScreen() {
   }
 
   return (
-    <View style={{ flex: 1, backgroundColor: Colors[colorScheme].background }}>
-      <Header title="Edit Pegawai" showHelp={false} />
+    <View style={{flex: 1, backgroundColor: Colors[colorScheme].background}}>
+      <Header
+        title="Edit Pegawai"
+        showHelp={false}
+        onBackPress={handleBackPress}
+      />
       <KeyboardAwareScrollView
         contentContainerStyle={styles.scrollContent}
         enableOnAndroid
@@ -413,7 +458,9 @@ export default function EditEmployeeScreen() {
                       <TouchableOpacity
                         style={styles.removeBranchButton}
                         onPress={() => {
-                          const newBranches = selectedBranches.filter(b => b.id !== branch.id);
+                          const newBranches = selectedBranches.filter(
+                            b => b.id !== branch.id
+                          );
                           setSelectedBranches(newBranches);
                         }}
                       >
@@ -486,6 +533,14 @@ export default function EditEmployeeScreen() {
           setShowDeleteSuccessPopup(false);
           router.back();
         }}
+      />
+
+      <ConfirmPopup
+        visible={showExitConfirm}
+        title="Perubahan Belum Disimpan"
+        message="Anda memiliki perubahan yang belum disimpan. Apakah Anda yakin ingin keluar?"
+        onConfirm={handleConfirmExit}
+        onCancel={() => setShowExitConfirm(false)}
       />
     </View>
   );
@@ -638,4 +693,3 @@ const createStyles = (
       padding: 8,
     },
   });
-

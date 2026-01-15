@@ -6,16 +6,16 @@ import ConfirmationDialog, {
 } from "@/components/drawers/confirmation-dialog";
 import Header from "@/components/header";
 import ImageUpload from "@/components/image-upload";
-import { ThemedButton } from "@/components/themed-button";
-import { ThemedInput } from "@/components/themed-input";
-import { ThemedText } from "@/components/themed-text";
-import { Colors } from "@/constants/theme";
-import { UNITS } from "@/constants/units";
-import { useColorScheme } from "@/hooks/use-color-scheme";
+import {ThemedButton} from "@/components/themed-button";
+import {ThemedInput} from "@/components/themed-input";
+import {ThemedText} from "@/components/themed-text";
+import {Colors} from "@/constants/theme";
+import {UNITS} from "@/constants/units";
+import {useColorScheme} from "@/hooks/use-color-scheme";
 import recipeApi from "@/services/endpoints/recipes";
-import { useRecipeFormStore } from "@/stores/recipe-form-store";
-import { useLocalSearchParams, useNavigation, useRouter } from "expo-router";
-import React, { useEffect, useRef, useState } from "react";
+import {useRecipeFormStore} from "@/stores/recipe-form-store";
+import {useLocalSearchParams, useNavigation, useRouter} from "expo-router";
+import React, {useEffect, useRef, useState} from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -23,12 +23,12 @@ import {
   useWindowDimensions,
   View,
 } from "react-native";
-import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+import {KeyboardAwareScrollView} from "react-native-keyboard-aware-scroll-view";
+import {useSafeAreaInsets} from "react-native-safe-area-context";
 
 export default function EditRecipeScreen() {
   const colorScheme = useColorScheme() ?? "light";
-  const { width, height } = useWindowDimensions();
+  const {width, height} = useWindowDimensions();
   const isTablet = Math.min(width, height) >= 600;
   const isLandscape = width > height;
   const isTabletLandscape = isTablet && isLandscape;
@@ -43,8 +43,11 @@ export default function EditRecipeScreen() {
   const [showSuccessPopup, setShowSuccessPopup] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleteIndex, setDeleteIndex] = useState<number | null>(null);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [showExitConfirm, setShowExitConfirm] = useState(false);
+  const [initialData, setInitialData] = useState<any>(null);
 
-  const { id } = useLocalSearchParams<{ id?: string }>();
+  const {id} = useLocalSearchParams<{id?: string}>();
 
   const name = useRecipeFormStore(state => state.name);
   const category = useRecipeFormStore(state => state.category);
@@ -55,7 +58,9 @@ export default function EditRecipeScreen() {
   const setImageUri = useRecipeFormStore(state => state.setImageUri);
   const setIngredients = useRecipeFormStore(state => state.setIngredients);
   const removeIngredient = useRecipeFormStore(state => state.removeIngredient);
-  const setEditingIngredientIndex = useRecipeFormStore(state => state.setEditingIngredientIndex);
+  const setEditingIngredientIndex = useRecipeFormStore(
+    state => state.setEditingIngredientIndex
+  );
   const resetForm = useRecipeFormStore(state => state.reset);
 
   // Load recipe data
@@ -83,11 +88,24 @@ export default function EditRecipeScreen() {
               variant_name: item.productVariant?.name || "",
             },
             amount: item.quantity,
-            unit: item.unit_id ? { id: item.unit_id, name: UNITS.find(u => u.id === item.unit_id)?.name || item.unit_id } : undefined,
+            unit: item.unit_id
+              ? {
+                  id: item.unit_id,
+                  name:
+                    UNITS.find(u => u.id === item.unit_id)?.name ||
+                    item.unit_id,
+                }
+              : undefined,
           }));
 
           setIngredients(mappedIngredients);
           console.log("✅ Recipe loaded:", recipe);
+
+          // Save initial data for comparison
+          setInitialData({
+            name: recipe.name,
+            ingredients: mappedIngredients,
+          });
         }
       } catch (error: any) {
         console.error("❌ Failed to load recipe:", error);
@@ -132,6 +150,30 @@ export default function EditRecipeScreen() {
 
   const formatIDR = (n: number) => new Intl.NumberFormat("id-ID").format(n);
 
+  // Check if data has changed
+  React.useEffect(() => {
+    if (!initialData) return;
+
+    const hasChanges =
+      name !== initialData.name ||
+      ingredients.length !== initialData.ingredients.length;
+
+    setHasUnsavedChanges(hasChanges);
+  }, [name, ingredients, initialData]);
+
+  const handleBackPress = () => {
+    if (hasUnsavedChanges) {
+      setShowExitConfirm(true);
+    } else {
+      router.back();
+    }
+  };
+
+  const handleConfirmExit = () => {
+    setShowExitConfirm(false);
+    router.back();
+  };
+
   const handleSave = async () => {
     if (!id) {
       Alert.alert("Error", "ID resep tidak ditemukan");
@@ -167,6 +209,7 @@ export default function EditRecipeScreen() {
 
       if (response.data) {
         console.log("✅ Recipe updated successfully:", response.data);
+        setHasUnsavedChanges(false);
         setShowSuccessPopup(true);
       }
     } catch (error: any) {
@@ -179,15 +222,16 @@ export default function EditRecipeScreen() {
 
   if (isLoading) {
     return (
-      <View style={{ flex: 1, backgroundColor: Colors[colorScheme].background }}>
+      <View style={{flex: 1, backgroundColor: Colors[colorScheme].background}}>
         <Header
           showHelp={false}
           title="Edit Resep"
           withNotificationButton={false}
+          onBackPress={handleBackPress}
         />
-        <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+        <View style={{flex: 1, justifyContent: "center", alignItems: "center"}}>
           <ActivityIndicator size="large" color={Colors[colorScheme].primary} />
-          <ThemedText style={{ marginTop: 16, color: Colors[colorScheme].icon }}>
+          <ThemedText style={{marginTop: 16, color: Colors[colorScheme].icon}}>
             Memuat data resep...
           </ThemedText>
         </View>
@@ -196,11 +240,12 @@ export default function EditRecipeScreen() {
   }
 
   return (
-    <View style={{ flex: 1, backgroundColor: Colors[colorScheme].background }}>
+    <View style={{flex: 1, backgroundColor: Colors[colorScheme].background}}>
       <Header
         showHelp={false}
         title="Edit Resep"
         withNotificationButton={false}
+        onBackPress={handleBackPress}
       />
       <KeyboardAwareScrollView
         contentContainerStyle={{
@@ -221,7 +266,7 @@ export default function EditRecipeScreen() {
               onImageSelected={uri => setImageUri(uri)}
             />
 
-            <View style={{ height: 24 }} />
+            <View style={{height: 24}} />
 
             <ThemedInput
               label="Nama Resep"
@@ -233,10 +278,10 @@ export default function EditRecipeScreen() {
               value={category}
               onChangeText={setCategory}
               items={[
-                { label: "Pilih Kategori", value: "" },
-                { label: "Umum", value: "umum" },
-                { label: "Minuman", value: "minuman" },
-                { label: "Makanan", value: "makanan" },
+                {label: "Pilih Kategori", value: ""},
+                {label: "Umum", value: "umum"},
+                {label: "Minuman", value: "minuman"},
+                {label: "Makanan", value: "makanan"},
               ]}
             />
 
@@ -333,6 +378,13 @@ export default function EditRecipeScreen() {
           setShowDeleteConfirm(false);
           setDeleteIndex(null);
         }}
+      />
+      <ConfirmPopup
+        visible={showExitConfirm}
+        title="Perubahan Belum Disimpan"
+        message="Anda memiliki perubahan yang belum disimpan. Apakah Anda yakin ingin keluar?"
+        onConfirm={handleConfirmExit}
+        onCancel={() => setShowExitConfirm(false)}
       />
     </View>
   );

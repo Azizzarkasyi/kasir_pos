@@ -1,7 +1,7 @@
+import ConfirmPopup from "@/components/atoms/confirm-popup";
 import ConfirmationDialog, {
   ConfirmationDialogHandle,
 } from "@/components/drawers/confirmation-dialog";
-import ConfirmPopup from "@/components/atoms/confirm-popup";
 import Header from "@/components/header";
 import ImageUpload from "@/components/image-upload";
 import {ThemedButton} from "@/components/themed-button";
@@ -9,8 +9,8 @@ import {ThemedInput} from "@/components/themed-input";
 import {ThemedText} from "@/components/themed-text";
 import {Colors} from "@/constants/theme";
 import {useColorScheme} from "@/hooks/use-color-scheme";
-import assetApi, {prepareFileFromUri} from "@/services/endpoints/assets";
 import {settingsApi, UserProfile} from "@/services";
+import assetApi, {prepareFileFromUri} from "@/services/endpoints/assets";
 import {useRouter} from "expo-router";
 import React, {useEffect, useState} from "react";
 import {
@@ -45,6 +45,9 @@ export default function ProfileSettingScreen() {
   const [showProfileSuccessPopup, setShowProfileSuccessPopup] = useState(false);
   const [showPinSuccessPopup, setShowPinSuccessPopup] = useState(false);
   const [showDeleteSuccessPopup, setShowDeleteSuccessPopup] = useState(false);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [showExitConfirm, setShowExitConfirm] = useState(false);
+  const [initialData, setInitialData] = useState<any>(null);
   const confirmationDialogRef = React.useRef<ConfirmationDialogHandle | null>(
     null
   );
@@ -52,6 +55,18 @@ export default function ProfileSettingScreen() {
   useEffect(() => {
     loadProfile();
   }, []);
+
+  // Detect changes
+  useEffect(() => {
+    if (!initialData) return;
+
+    const changed =
+      name !== initialData.name ||
+      email !== initialData.email ||
+      photoUri !== initialData.photoUri;
+
+    setHasUnsavedChanges(changed);
+  }, [name, email, photoUri, initialData]);
 
   const loadProfile = async () => {
     try {
@@ -62,6 +77,13 @@ export default function ProfileSettingScreen() {
         setEmail(response.data.email);
         setPhone(response.data.phone);
         setPhotoUri(response.data.profile_url);
+
+        // Save initial data for change detection
+        setInitialData({
+          name: response.data.name,
+          email: response.data.email,
+          photoUri: response.data.profile_url,
+        });
       }
     } catch (error: any) {
       console.error("❌ Failed to load profile:", error);
@@ -69,6 +91,20 @@ export default function ProfileSettingScreen() {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleBackPress = () => {
+    if (hasUnsavedChanges) {
+      setShowExitConfirm(true);
+    } else {
+      router.back();
+    }
+  };
+
+  const handleConfirmExit = () => {
+    setShowExitConfirm(false);
+    setHasUnsavedChanges(false);
+    router.back();
   };
 
   const handleSaveProfile = async () => {
@@ -126,6 +162,7 @@ export default function ProfileSettingScreen() {
       }
 
       await settingsApi.updateProfile(payload);
+      setHasUnsavedChanges(false);
       setShowProfileSuccessPopup(true);
       loadProfile();
     } catch (error: any) {
@@ -206,7 +243,7 @@ export default function ProfileSettingScreen() {
 
   return (
     <View style={styles.container}>
-      <Header title="Profile" showHelp={false} />
+      <Header title="Profile" showHelp={false} onBackPress={handleBackPress} />
       <ScrollView
         contentContainerStyle={styles.scrollContainer}
         showsVerticalScrollIndicator={false}
@@ -332,6 +369,14 @@ export default function ProfileSettingScreen() {
           setShowDeleteSuccessPopup(false);
           router.replace("/auth/Login/login");
         }}
+      />
+
+      <ConfirmPopup
+        visible={showExitConfirm}
+        title="Perubahan Belum Disimpan"
+        message="Anda memiliki perubahan yang belum disimpan. Apakah Anda yakin ingin keluar?"
+        onConfirm={handleConfirmExit}
+        onCancel={() => setShowExitConfirm(false)}
       />
     </View>
   );

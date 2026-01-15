@@ -8,19 +8,19 @@ import ImageUpload from "@/components/image-upload";
 import MenuRow from "@/components/menu-row";
 import CategoryPicker from "@/components/mollecules/category-picker";
 import MerkPicker from "@/components/mollecules/merk-picker";
-import { ThemedButton } from "@/components/themed-button";
-import { ThemedInput } from "@/components/themed-input";
-import { ThemedText } from "@/components/themed-text";
-import { Colors } from "@/constants/theme";
-import { useColorScheme } from "@/hooks/use-color-scheme";
-import { recipeApi } from "@/services";
-import assetApi, { prepareFileFromUri } from "@/services/endpoints/assets";
+import {ThemedButton} from "@/components/themed-button";
+import {ThemedInput} from "@/components/themed-input";
+import {ThemedText} from "@/components/themed-text";
+import {Colors} from "@/constants/theme";
+import {useColorScheme} from "@/hooks/use-color-scheme";
+import {recipeApi} from "@/services";
+import assetApi, {prepareFileFromUri} from "@/services/endpoints/assets";
 import merkApi from "@/services/endpoints/merks";
 import productApi from "@/services/endpoints/products";
-import { useProductFormStore } from "@/stores/product-form-store";
-import { Merk, Product } from "@/types/api";
-import { useLocalSearchParams, useNavigation, useRouter } from "expo-router";
-import React, { useEffect, useRef, useState } from "react";
+import {useProductFormStore} from "@/stores/product-form-store";
+import {Merk, Product} from "@/types/api";
+import {useLocalSearchParams, useNavigation, useRouter} from "expo-router";
+import React, {useEffect, useRef, useState} from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -28,12 +28,12 @@ import {
   useWindowDimensions,
   View,
 } from "react-native";
-import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+import {KeyboardAwareScrollView} from "react-native-keyboard-aware-scroll-view";
+import {useSafeAreaInsets} from "react-native-safe-area-context";
 
 export default function EditProductScreen() {
   const colorScheme = useColorScheme() ?? "light";
-  const { width, height } = useWindowDimensions();
+  const {width, height} = useWindowDimensions();
   const isTablet = Math.min(width, height) >= 600;
   const isLandscape = width > height;
   const isTabletLandscape = isTablet && isLandscape;
@@ -77,12 +77,15 @@ export default function EditProductScreen() {
   }>();
 
   const [merks, setMerks] = useState<Merk[]>([]);
-  const [recipes, setRecipes] = useState<{ id: string; name: string }[]>([]);
+  const [recipes, setRecipes] = useState<{id: string; name: string}[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [productData, setProductData] = useState<Product | null>(null);
   const [defaultVariantId, setDefaultVariantId] = useState<string | null>(null);
   const [showSuccessPopup, setShowSuccessPopup] = useState(false);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [showExitConfirm, setShowExitConfirm] = useState(false);
+  const [initialData, setInitialData] = useState<any>(null);
 
   React.useEffect(() => {
     loadProduct();
@@ -169,10 +172,20 @@ export default function EditProductScreen() {
             barcode: v.barcode || undefined,
             capital_price: v.capital_price || undefined,
           }));
-          console.log("variants", variants)
+          console.log("variants", variants);
           setVariants(() => mappedVariants);
-
         }
+
+        // Save initial data for comparison
+        setInitialData({
+          name: product.name,
+          brand: product.merk_id || "",
+          category: product.category_id || "",
+          favorite: product.is_favorite || false,
+          imageUri: product.photo_url || null,
+          price: defaultVariant ? String(defaultVariant.price) : "0",
+          variants: product.variants || [],
+        });
       }
     } catch (error: any) {
       console.error("Failed to load product:", error);
@@ -198,7 +211,7 @@ export default function EditProductScreen() {
     try {
       const response = await recipeApi.getRecipes();
       if (response.data) {
-        setRecipes(response.data.map(r => ({ id: r.id, name: r.name })));
+        setRecipes(response.data.map(r => ({id: r.id, name: r.name})));
       }
     } catch (error) {
       console.error("Failed to load recipes:", error);
@@ -248,6 +261,35 @@ export default function EditProductScreen() {
     return sub;
   }, [navigation, isDirty]);
 
+  // Check if data has changed
+  React.useEffect(() => {
+    if (!initialData) return;
+
+    const hasChanges =
+      name !== initialData.name ||
+      brand !== initialData.brand ||
+      category !== initialData.category ||
+      favorite !== initialData.favorite ||
+      price !== initialData.price ||
+      (imageUri !== initialData.imageUri && imageUri !== null) ||
+      variants.length !== initialData.variants.length;
+
+    setHasUnsavedChanges(hasChanges);
+  }, [name, brand, category, favorite, price, imageUri, variants, initialData]);
+
+  const handleBackPress = () => {
+    if (hasUnsavedChanges) {
+      setShowExitConfirm(true);
+    } else {
+      router.back();
+    }
+  };
+
+  const handleConfirmExit = () => {
+    setShowExitConfirm(false);
+    router.back();
+  };
+
   const formatIDR = (n: number) => new Intl.NumberFormat("id-ID").format(n);
 
   const handleSave = async () => {
@@ -296,7 +338,7 @@ export default function EditProductScreen() {
                 style: "cancel",
                 onPress: () => setIsSaving(false),
               },
-              { text: "Lanjutkan", onPress: () => { } },
+              {text: "Lanjutkan", onPress: () => {}},
             ]
           );
           return;
@@ -333,41 +375,40 @@ export default function EditProductScreen() {
 
       // 2. Tambahkan variant non-default yang sudah ada (filter yang bukan default variant)
       if (variants.length > 0) {
-        const nonDefaultVariants = variants
-          .map(v => {
-            const cleaned: any = {
-              id: v.id,
-              name: v.name,
-              price: v.price,
-              capital_price: v.capital_price || 0,
-              is_stock_active: v.is_stock_active || false,
-            };
+        const nonDefaultVariants = variants.map(v => {
+          const cleaned: any = {
+            id: v.id,
+            name: v.name,
+            price: v.price,
+            capital_price: v.capital_price || 0,
+            is_stock_active: v.is_stock_active || false,
+          };
 
-            // Only add fields that have valid values
-            if (v.barcode) cleaned.barcode = v.barcode;
+          // Only add fields that have valid values
+          if (v.barcode) cleaned.barcode = v.barcode;
 
-            if (
-              v.recipe_id &&
-              v.recipe_id.length > 10 &&
-              v.recipe_id.startsWith("cm")
-            ) {
-              cleaned.recipe_id = v.recipe_id;
+          if (
+            v.recipe_id &&
+            v.recipe_id.length > 10 &&
+            v.recipe_id.startsWith("cm")
+          ) {
+            cleaned.recipe_id = v.recipe_id;
+          }
+
+          if (v.is_stock_active) {
+            if (typeof v.stock === "number") cleaned.stock = v.stock;
+            if (typeof v.min_stock === "number")
+              cleaned.min_stock = v.min_stock;
+            if (typeof v.notify_on_stock_ronouts === "boolean") {
+              cleaned.notify_on_stock_ronouts = v.notify_on_stock_ronouts;
             }
-
-            if (v.is_stock_active) {
-              if (typeof v.stock === "number") cleaned.stock = v.stock;
-              if (typeof v.min_stock === "number")
-                cleaned.min_stock = v.min_stock;
-              if (typeof v.notify_on_stock_ronouts === "boolean") {
-                cleaned.notify_on_stock_ronouts = v.notify_on_stock_ronouts;
-              }
-              if (v.unit_id) {
-                cleaned.unit_id = v.unit_id;
-              }
+            if (v.unit_id) {
+              cleaned.unit_id = v.unit_id;
             }
+          }
 
-            return cleaned;
-          });
+          return cleaned;
+        });
         allVariants.push(...nonDefaultVariants);
       }
 
@@ -386,11 +427,11 @@ export default function EditProductScreen() {
 
   if (isLoading) {
     return (
-      <View style={{ flex: 1, backgroundColor: Colors[colorScheme].background }}>
+      <View style={{flex: 1, backgroundColor: Colors[colorScheme].background}}>
         <Header title="Edit Produk" showHelp={false} />
-        <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+        <View style={{flex: 1, justifyContent: "center", alignItems: "center"}}>
           <ActivityIndicator size="large" color={Colors[colorScheme].primary} />
-          <ThemedText style={{ marginTop: 16, color: Colors[colorScheme].icon }}>
+          <ThemedText style={{marginTop: 16, color: Colors[colorScheme].icon}}>
             Memuat data produk...
           </ThemedText>
         </View>
@@ -399,8 +440,12 @@ export default function EditProductScreen() {
   }
 
   return (
-    <View style={{ flex: 1, backgroundColor: Colors[colorScheme].background }}>
-      <Header title="Edit Produk" showHelp={false} />
+    <View style={{flex: 1, backgroundColor: Colors[colorScheme].background}}>
+      <Header
+        title="Edit Produk"
+        showHelp={false}
+        onBackPress={handleBackPress}
+      />
       <KeyboardAwareScrollView
         contentContainerStyle={{
           paddingTop: 18,
@@ -544,7 +589,7 @@ export default function EditProductScreen() {
                     price={v.price}
                     stock={
                       v.is_stock_active && typeof v.stock === "number"
-                        ? { count: v.stock, unit: v.unit_id || "pcs" }
+                        ? {count: v.stock, unit: v.unit_id || "pcs"}
                         : undefined
                     }
                     onPress={() =>
@@ -552,24 +597,26 @@ export default function EditProductScreen() {
                         pathname: "/dashboard/product/variant",
                         params: {
                           from: "edit",
-                          ...(v.id ? { variantId: v.id } : {}),
+                          ...(v.id ? {variantId: v.id} : {}),
                           name: v.name,
                           price: String(v.price),
-                          ...(v.recipe_id ? { recipe: v.recipe_id } : {}),
+                          ...(v.recipe_id ? {recipe: v.recipe_id} : {}),
                           ...(v.capital_price
-                            ? { capitalPrice: String(v.capital_price) }
+                            ? {capitalPrice: String(v.capital_price)}
                             : {}),
-                          ...(v.barcode ? { barcode: v.barcode } : {}),
-                          ...((v.barcode || v.capital_price) ? { enableCostBarcode: "true" } : {}),
+                          ...(v.barcode ? {barcode: v.barcode} : {}),
+                          ...(v.barcode || v.capital_price
+                            ? {enableCostBarcode: "true"}
+                            : {}),
                           ...(typeof v.stock === "number"
                             ? {
-                              offlineStock: String(v.stock),
-                              unit: v.unit_id || "pcs",
-                              minStock: String(v.min_stock || 0),
-                              notifyMin: v.notify_on_stock_ronouts
-                                ? "1"
-                                : "0",
-                            }
+                                offlineStock: String(v.stock),
+                                unit: v.unit_id || "pcs",
+                                minStock: String(v.min_stock || 0),
+                                notifyMin: v.notify_on_stock_ronouts
+                                  ? "1"
+                                  : "0",
+                              }
                             : {}),
                         },
                       } as never)
@@ -587,7 +634,7 @@ export default function EditProductScreen() {
                   pathname: "/dashboard/product/variant",
                   params: {
                     from: "edit",
-                    editAction: "add"
+                    editAction: "add",
                   },
                 } as never)
               }
@@ -606,7 +653,7 @@ export default function EditProductScreen() {
                   "Konfirmasi",
                   "Yakin ingin menghapus produk ini? Tindakan ini tidak dapat dibatalkan.",
                   [
-                    { text: "Batal", style: "cancel" },
+                    {text: "Batal", style: "cancel"},
                     {
                       text: "Hapus",
                       style: "destructive",
@@ -658,6 +705,14 @@ export default function EditProductScreen() {
           reset();
           router.back();
         }}
+      />
+
+      <ConfirmPopup
+        visible={showExitConfirm}
+        title="Perubahan Belum Disimpan"
+        message="Anda memiliki perubahan yang belum disimpan. Apakah Anda yakin ingin keluar?"
+        onConfirm={handleConfirmExit}
+        onCancel={() => setShowExitConfirm(false)}
       />
     </View>
   );
