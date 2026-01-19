@@ -54,6 +54,7 @@ export interface User {
   email?: string;
   role?: string;
   plan?: string;
+  plan_expired_at?: string;
   is_verified?: boolean;
   is_disabled?: boolean;
 }

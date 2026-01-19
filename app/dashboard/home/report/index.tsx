@@ -77,7 +77,18 @@ const ReportDetailScreen = () => {
       setAppliedEnd(r.end);
       return;
     }
-    // custom: keep appliedStart/appliedEnd until user presses Terapkan
+    if (rangePreset === "custom") {
+      // Reset custom inputs so user must select again
+      setCustomStart("");
+      setCustomEnd("");
+      setStartDate(new Date());
+      setEndDate(new Date());
+      // Optionally keep appliedStart/End as is (showing previous data) 
+      // until they click Terapkan, or clear them to show "All time"/"Empty"?
+      // Based on request "reset... jadi perlu select lg", clearing the input state 
+      // seems to be the primary goal. 
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [getMonthRange, rangePreset]);
 
   const fetchReportData = React.useCallback(async () => {
@@ -120,16 +131,15 @@ const ReportDetailScreen = () => {
     setRefreshing(false);
   }, [fetchReportData]);
 
-  const handleApplyCustom = () => {
-    setAppliedStart(customStart || undefined);
-    setAppliedEnd(customEnd || undefined);
-  };
+
 
   const onStartDatePickerChange = (event: any, selectedDate?: Date) => {
     setShowStartPicker(false);
     if (selectedDate) {
       setStartDate(selectedDate);
-      setCustomStart(formatISODate(selectedDate));
+      const formatted = formatISODate(selectedDate);
+      setCustomStart(formatted);
+      setAppliedStart(formatted);
     }
   };
 
@@ -137,7 +147,9 @@ const ReportDetailScreen = () => {
     setShowEndPicker(false);
     if (selectedDate) {
       setEndDate(selectedDate);
-      setCustomEnd(formatISODate(selectedDate));
+      const formatted = formatISODate(selectedDate);
+      setCustomEnd(formatted);
+      setAppliedEnd(formatted);
     }
   };
 
@@ -361,9 +373,7 @@ const ReportDetailScreen = () => {
                     onChange={onEndDatePickerChange}
                   />
                 )}
-                <TouchableOpacity style={styles.applyButton} onPress={handleApplyCustom}>
-                  <ThemedText style={styles.applyButtonText}>Terapkan</ThemedText>
-                </TouchableOpacity>
+
               </View>
             )}
           </View>

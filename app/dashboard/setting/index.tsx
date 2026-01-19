@@ -22,7 +22,6 @@ export default function SettingScreen() {
   const isTablet = Math.min(width, height) >= 600;
   const isLandscape = width > height;
   const isTabletLandscape = isTablet && isLandscape;
-  const styles = createStyles(colorScheme, isTablet, isTabletLandscape);
   const router = useRouter();
   const VERSION = "1.0.0";
   const [profile, setProfile] = useState<UserProfile | null>(null);
@@ -30,12 +29,33 @@ export default function SettingScreen() {
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [showLogoutPopup, setShowLogoutPopup] = useState(false);
   const { userRole } = usePermissions();
-  const { isBasic, isPro, isTrial, plan } = useUserPlan();
+  const { isBasic, isPro, isTrial, plan, planExpiredAt } = useUserPlan();
+  const styles = createStyles(colorScheme, isTablet, isTabletLandscape, isTrial);
 
   const getPlanDisplayName = () => {
     if (isPro) return "PRO";
     if (isTrial) return "TRIAL";
     return "Basic";
+  };
+
+  const getPlanExpiryText = () => {
+    if (isBasic || !planExpiredAt) return null;
+    try {
+      const date = new Date(planExpiredAt);
+      if (isNaN(date.getTime())) return null;
+
+      const formattedDate = date.toLocaleDateString('id-ID', {
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric'
+      });
+
+      return isTrial
+        ? `Trial berakhir pada ${formattedDate}`
+        : `Berlangganan hingga ${formattedDate}`;
+    } catch (error) {
+      return null;
+    }
   };
 
   useEffect(() => {
@@ -123,6 +143,11 @@ export default function SettingScreen() {
                   <ThemedText style={styles.infoVersion}>
                     Version {VERSION} • {profile?.role || "User"} • {getPlanDisplayName()}
                   </ThemedText>
+                  {!isBasic && planExpiredAt && (
+                    <ThemedText style={styles.infoExpiry}>
+                      {getPlanExpiryText()}
+                    </ThemedText>
+                  )}
                 </>
               )}
             </View>
@@ -193,7 +218,7 @@ export default function SettingScreen() {
   );
 }
 
-const createStyles = (colorScheme: "light" | "dark", isTablet: boolean, isTabletLandscape: boolean) =>
+const createStyles = (colorScheme: "light" | "dark", isTablet: boolean, isTabletLandscape: boolean, isTrial: boolean) =>
   StyleSheet.create({
     container: {
       flex: 1,
@@ -302,6 +327,12 @@ const createStyles = (colorScheme: "light" | "dark", isTablet: boolean, isTablet
       fontSize: isTablet ? 18 : 13,
       color: Colors[colorScheme].icon,
       marginTop: isTablet ? 4 : 2,
+    },
+    infoExpiry: {
+      fontSize: isTablet ? 16 : 12,
+      color: isTrial ? '#FF9800' : Colors[colorScheme].icon,
+      marginTop: 2,
+      fontWeight: '500',
     },
     profileSkeleton: {
       flex: 1,

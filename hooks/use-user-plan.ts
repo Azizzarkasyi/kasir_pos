@@ -9,15 +9,16 @@ export const useUserPlan = () => {
   const isBasic = !isPro && !isTrial && !isLoading;
   const isDisabled = user?.is_disabled === true;
   const hasProAccess = isPro || isTrial;
-  
-  return { 
-    isPro, 
-    loading: isLoading, 
+
+  return {
+    isPro,
+    loading: isLoading,
     isBasic,
     isTrial,
     isDisabled,
     hasProAccess,
     refreshUser,
-    plan
+    plan,
+    planExpiredAt: user?.plan_expired_at || null,
   };
 };

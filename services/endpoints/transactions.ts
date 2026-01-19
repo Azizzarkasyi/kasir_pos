@@ -126,7 +126,7 @@ export const transactionApi = {
    * Cancel transaction
    */
   async cancelTransaction(id: number): Promise<ApiResponse<Transaction>> {
-    const response = await apiService.patch<any>(`/transactions/${id}/cancel`);
+    const response = await apiService.post<any>(`/transactions/${id}/cancel`);
 
     // Transform response
     if (response.data) {

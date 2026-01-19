@@ -57,20 +57,20 @@ export default function TransactionSettlementPage() {
     const unsubscribe = navigation.addListener("beforeRemove", (e) => {
       // Prevent double navigation
       if (isNavigating) return;
-      
+
       // If user clicked "Transaksi Baru", allow navigation to transaction page
       if (navigateToNewTransaction) return;
-      
+
       // Prevent default back behavior
       e.preventDefault();
-      
+
       // Set flag to prevent re-entry
       setIsNavigating(true);
-      
+
       // Use setTimeout to avoid issues with navigation during listener
-      // Navigate to summary page (Ringkasan Transaksi)
+      // Navigate to transaction list page
       setTimeout(() => {
-        router.replace("/dashboard/transaction/summary");
+        router.replace("/dashboard/transaction");
       }, 0);
     });
 
@@ -337,6 +337,7 @@ export default function TransactionSettlementPage() {
     >
       <Header
         showBack
+        onBackPress={() => router.replace("/dashboard/transaction")}
         showHelp={false}
         title="Pembayaran Berhasil"
         withNotificationButton={false}

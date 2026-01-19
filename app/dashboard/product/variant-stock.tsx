@@ -12,7 +12,7 @@ import { useColorScheme } from "@/hooks/use-color-scheme";
 import { useProductFormStore } from "@/stores/product-form-store";
 import { useLocalSearchParams, useNavigation, useRouter } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
-import { StyleSheet, View, useWindowDimensions } from "react-native";
+import { Alert, StyleSheet, View, useWindowDimensions } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -52,6 +52,11 @@ export default function StockSettingsScreen() {
 
   const handleSave = async () => {
     try {
+      if (offlineStock > 0 && !unit) {
+        Alert.alert("Validasi", "Satuan unit harus dipilih jika stok lebih dari 0");
+        return;
+      }
+
       setIsSubmit(true);
 
       const buildStockFields = () => ({

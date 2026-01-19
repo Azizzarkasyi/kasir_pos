@@ -339,7 +339,7 @@ export default function TransactionDetailPage() {
                 <View style={styles.sectionCard}>
                     <View style={styles.sectionHeaderRowPrimary}>
                         <Text style={styles.sectionTitle}>Detail Transaksi</Text>
-                        <Text style={styles.sectionCode}>#{transaction.invoiceNumber}</Text>
+                        <Text style={styles.sectionCode}>{`#${transaction.invoiceNumber}`}</Text>
                     </View>
 
                     <View style={styles.divider} />
@@ -363,6 +363,7 @@ export default function TransactionDetailPage() {
                                 size="medium"
                                 variant="secondary"
                                 onPress={handleCancelTransaction}
+                                disabled={transaction.paymentStatus === "cancelled"}
                             />
                             <ThemedButton
                                 title="Kirim Struk"
@@ -465,40 +466,39 @@ export default function TransactionDetailPage() {
                                         })}
                                     </>
                                 ) : null}
-                            </View>
-                            <View style={styles.summaryWrapper}>
+                            </View><View style={styles.summaryWrapper}>
                                 <View style={styles.summaryRow}>
                                     <Text style={styles.summaryLabel}>Subtotal</Text>
                                     <Text style={styles.summaryValue}>
-                                        Rp {formatCurrency(subtotal)}
+                                        {`Rp ${formatCurrency(subtotal)}`}
                                     </Text>
                                 </View>
                                 {transaction?.tax && transaction.tax > 0 && (
                                     <View style={styles.summaryRow}>
                                         <Text style={styles.summaryLabel}>Pajak</Text>
                                         <Text style={styles.summaryValue}>
-                                            Rp {formatCurrency(transaction.tax)}
+                                            {`Rp ${formatCurrency(transaction.tax)}`}
                                         </Text>
                                     </View>
                                 )}
                                 <View style={styles.summaryRow}>
                                     <Text style={styles.summaryLabel}>
-                                        Total ({totalProduk} Produk)
+                                        {`Total (${totalProduk} Produk)`}
                                     </Text>
                                     <Text style={styles.summaryValue}>
-                                        Rp {formatCurrency(total)}
+                                        {`Rp ${formatCurrency(total)}`}
                                     </Text>
                                 </View>
                                 <View style={styles.summaryRow}>
                                     <Text style={styles.summaryLabel}>Dibayar</Text>
                                     <Text style={styles.summaryValue}>
-                                        Rp {formatCurrency(dibayar)}
+                                        {`Rp ${formatCurrency(dibayar)}`}
                                     </Text>
                                 </View>
                                 <View style={styles.summaryRow}>
                                     <Text style={styles.summaryLabel}>Kembalian</Text>
                                     <Text style={styles.summaryValue}>
-                                        Rp {formatCurrency(kembalian)}
+                                        {`Rp ${formatCurrency(kembalian)}`}
                                     </Text>
                                 </View>
                             </View>

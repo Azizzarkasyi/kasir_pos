@@ -4,7 +4,7 @@
     "slug": "kasir-pos",
     "version": "1.0.0",
     "orientation": "default",
-    "icon": "./assets/images/icon.png",
+    "icon": "./assets/logos/5.png",
     "scheme": "kasirpos",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
@@ -19,7 +19,7 @@
     "android": {
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
-        "foregroundImage": "./assets/images/android-icon-foreground.png",
+        "foregroundImage": "./assets/logos/5.png",
         "backgroundImage": "./assets/images/android-icon-background.png",
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
@@ -38,14 +38,14 @@
     },
     "web": {
       "output": "static",
-      "favicon": "./assets/images/favicon.png"
+      "favicon": "./assets/logos/5.png"
     },
     "plugins": [
       "expo-router",
       [
         "expo-splash-screen",
         {
-          "image": "./assets/images/splash-icon.png",
+          "image": "./assets/logos/5.png",
           "imageWidth": 200,
           "resizeMode": "contain",
           "backgroundColor": "#ffffff",
@@ -76,8 +76,9 @@
     "extra": {
       "router": {},
       "eas": {
-        "projectId": "513965f3-c2d4-4867-ba0e-fe27671a341d"
+        "projectId": "9e9de915-4627-42c6-ba30-226989543041"
       }
-    }
+    },
+    "owner": "basofi"
   }
 }

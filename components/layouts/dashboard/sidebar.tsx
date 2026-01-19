@@ -8,9 +8,11 @@ import { usePermissions } from "@/hooks/usePermissions";
 import { authApi, settingsApi, UserProfile } from "@/services";
 import { AntDesign } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import Constants from "expo-constants";
 import { usePathname, useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
+  Image,
   ScrollView,
   StyleSheet,
   Text,
@@ -19,6 +21,17 @@ import {
   View,
 } from "react-native";
 import { DASHBOARD_MENU_ITEMS, getDashboardRouteForKey } from "./menu-config";
+
+const API_HOST = Constants.expoConfig?.extra?.apiUrl || process.env.API_URL || "http://192.168.1.7:3001";
+
+const fixImageUrl = (url: string | null | undefined): string | undefined => {
+  if (!url) return undefined;
+  if (!url.startsWith("http")) return url;
+  const fixedUrl = url
+    .replace(/http:\/\/localhost:\d+/, API_HOST)
+    .replace(/http:\/\/127\.0\.0\.1:\d+/, API_HOST);
+  return fixedUrl;
+};
 
 type SidebarItemProps = {
   label: string;
@@ -123,6 +136,7 @@ const Sidebar: React.FC<SidebarProps> = ({
     try {
       // Load user profile
       const profileResponse = await settingsApi.getProfile();
+      console.log("profileResponse", profileResponse);
       if (profileResponse.data) {
         setProfile(profileResponse.data);
       }
@@ -155,6 +169,7 @@ const Sidebar: React.FC<SidebarProps> = ({
           console.error("❌ Failed to load branches:", error);
         }
       }
+      console.log("loading profile data")
     } catch (error: any) {
       console.error("❌ Failed to load user data:", error);
     } finally {
@@ -204,16 +219,21 @@ const Sidebar: React.FC<SidebarProps> = ({
               }}
               style={styles.profileRow}
             >
-              <View style={styles.avatarCircle}>
-                {profile?.profile_url ? (
-                  <Text>Photo</Text>
-                ) : (
-                  <AntDesign
-                    name="user"
-                    size={isTablet ? 32 : 28}
-                    color={Colors[colorScheme].primary}
-                  />
-                )}
+              <View style={styles.avatarWrapper}>
+                <View style={styles.avatarCircle}>
+                  {profile?.profile_url ? (
+                    <Image
+                      source={{ uri: fixImageUrl(profile.profile_url) }}
+                      style={styles.avatarImage}
+                    />
+                  ) : (
+                    <AntDesign
+                      name="user"
+                      size={isTablet ? 32 : 28}
+                      color={Colors[colorScheme].primary}
+                    />
+                  )}
+                </View>
                 <View style={[styles.badgeFree, !isBasic && styles.badgePro]}>
                   <Text style={[styles.badgeFreeText, !isBasic && styles.badgeProText]}>
                     {isBasic ? "BASIC" : isTrial ? "TRIAL" : "PRO"}
@@ -438,6 +458,11 @@ const createStyles = (colorScheme: "light" | "dark", isTablet: boolean) =>
       marginBottom: isTablet ? 20 : 12,
       gap: isTablet ? 20 : 12,
     },
+    avatarWrapper: {
+      position: "relative",
+      alignItems: "center",
+      justifyContent: "center",
+    },
     avatarCircle: {
       width: isTablet ? 72 : 56,
       height: isTablet ? 72 : 56,
@@ -446,6 +471,11 @@ const createStyles = (colorScheme: "light" | "dark", isTablet: boolean) =>
       borderColor: Colors[colorScheme].primary,
       alignItems: "center",
       justifyContent: "center",
+      overflow: "hidden",
+    },
+    avatarImage: {
+      width: "100%",
+      height: "100%",
     },
     badgeFree: {
       position: "absolute",
