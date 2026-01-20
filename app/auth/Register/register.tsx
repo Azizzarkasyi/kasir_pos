@@ -321,15 +321,13 @@ const RegisterScreen = () => {
         is_accept_tos: agreedToTerms,
       };
 
-      console.log("📤 Registering with:", registerData);
 
-      const response = await authApi.register(registerData);
+      const response = await authApi.register(registerData) as any;
 
-      console.log("✅ Registration success:", response);
 
       router.push({
         pathname: "/auth/Register/verify-otp",
-        params: { phone: phoneNumber },
+        params: { phone: response.data?.user?.phone },
       });
     } catch (error: any) {
       console.error("❌ Registration failed:", error);
