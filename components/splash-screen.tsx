@@ -2,12 +2,12 @@ import { Colors } from "@/constants/theme";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import React, { useEffect, useMemo, useRef } from "react"; // Tambahkan useMemo
 import {
-  Animated,
-  Easing,
-  Image,
-  StatusBar,
-  StyleSheet,
-  View,
+    Animated,
+    Easing,
+    Image,
+    StatusBar,
+    StyleSheet,
+    View,
 } from "react-native";
 
 // --- KUMPULAN KATA-KATA MUTIARA/SEMANGAT ---
@@ -49,9 +49,7 @@ export default function SplashScreen() {
   const fillProgress = useRef(new Animated.Value(0)).current;
   const breathAnim = useRef(new Animated.Value(0)).current;
 
-  const logoSource = isDark
-    ? require("../assets/logos/3.png")
-    : require("../assets/logos/2.png");
+  const logoSource = require("../assets/logos/logo_elbic.png");
 
   useEffect(() => {
     Animated.sequence([

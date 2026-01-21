@@ -1,7 +1,7 @@
-import {Colors} from "@/constants/theme";
-import {useColorScheme} from "@/hooks/use-color-scheme";
-import React, {useEffect, useRef, useState} from "react";
-import {Animated, Image, StatusBar, StyleSheet, Text, View} from "react-native";
+import { Colors } from "@/constants/theme";
+import { useColorScheme } from "@/hooks/use-color-scheme";
+import React, { useEffect, useRef, useState } from "react";
+import { Animated, Image, StatusBar, StyleSheet, Text, View } from "react-native";
 
 interface LoadingLoginScreenProps {
   text?: string; // text bersifat opsional
@@ -50,11 +50,7 @@ export default function LoadingLoginScreen({
       {/* Bagian Logo (Tengah) */}
       <View style={styles.logoContainer}>
         <Image
-          source={
-            colorScheme == "dark"
-              ? require("../assets/logos/3.png")
-              : require("../assets/logos/2.png")
-          }
+          source={require("../assets/logos/logo_elbic.png")}
           style={{width: 200, height: 200}}
           resizeMode="contain"
         />
