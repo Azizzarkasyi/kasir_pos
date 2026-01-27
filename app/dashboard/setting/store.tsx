@@ -8,7 +8,9 @@ import { businessTypes } from "@/constants/business-types";
 import { Colors } from "@/constants/theme";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { settingsApi, StoreInfo } from "@/services";
+import { useTaxStore } from "@/stores/tax-store";
 import axios from "axios";
+import { useNavigation, useRouter } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
@@ -47,6 +49,12 @@ export default function StoreSettingScreen() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [showSuccessPopup, setShowSuccessPopup] = useState(false);
+  const router = useRouter();
+  const navigation = useNavigation();
+  const [initialData, setInitialData] = useState<any>(null);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [showExitConfirm, setShowExitConfirm] = useState(false);
+  const [pendingAction, setPendingAction] = useState<any>(null);
 
   // Province state
   const [provinceOptions, setProvinceOptions] = useState<LocationOption[]>([
@@ -260,6 +268,71 @@ export default function StoreSettingScreen() {
     loadStoreData();
   }, []);
 
+  // Check for unsaved changes
+  useEffect(() => {
+    if (!initialData) return;
+
+    const currentData = {
+      businessType,
+      storeName,
+      defaultTax,
+      ownerName,
+      phone,
+      address,
+      provinceValue: selectedProvince?.value,
+      cityValue: selectedCity?.value,
+      subdistrictValue: selectedSubdistrict?.value,
+      villageValue: selectedVillage?.value,
+    };
+
+    const hasChanges = JSON.stringify(currentData) !== JSON.stringify(initialData);
+    setHasUnsavedChanges(hasChanges);
+  }, [
+    businessType,
+    storeName,
+    defaultTax,
+    ownerName,
+    phone,
+    address,
+    selectedProvince,
+    selectedCity,
+    selectedSubdistrict,
+    selectedVillage,
+    initialData
+  ]);
+
+  // Handle system back button
+  useEffect(() => {
+    const unsubscribe = navigation.addListener("beforeRemove", (e: any) => {
+      if (!hasUnsavedChanges) {
+        return;
+      }
+
+      e.preventDefault();
+      setPendingAction(e.data.action);
+      setShowExitConfirm(true);
+    });
+
+    return unsubscribe;
+  }, [navigation, hasUnsavedChanges]);
+
+  const handleBackPress = () => {
+    if (hasUnsavedChanges) {
+      setShowExitConfirm(true);
+    } else {
+      router.back();
+    }
+  };
+
+  const handleConfirmExit = () => {
+    setShowExitConfirm(false);
+    if (pendingAction) {
+      navigation.dispatch(pendingAction);
+    } else {
+      router.back();
+    }
+  };
+
   const loadStoreData = async () => {
     try {
       const response = await settingsApi.getStoreInfo();
@@ -321,6 +394,20 @@ export default function StoreSettingScreen() {
           setSelectedVillage({ label: villageName, value: villageId });
         }
       }
+
+      // Set initial data for comparison
+      setInitialData({
+        businessType: storeData.bussiness_type || "",
+        storeName: storeData.branches?.[0].name || "",
+        defaultTax: storeData.tax?.toString() || "0",
+        ownerName: storeData.owner_name || "",
+        phone: storeData.owner_phone || "",
+        address: storeData.address || "",
+        provinceValue: locationSource?.province?.id ? String(locationSource.province.id) : undefined,
+        cityValue: locationSource?.city?.id ? String(locationSource.city.id) : undefined,
+        subdistrictValue: locationSource?.subdistrict?.id ? String(locationSource.subdistrict.id) : undefined,
+        villageValue: locationSource?.village?.id ? String(locationSource.village.id) : undefined,
+      });
     } catch (error: any) {
       console.error("❌ Failed to load store:", error);
       Alert.alert("Error", "Gagal memuat data toko");
@@ -386,8 +473,13 @@ export default function StoreSettingScreen() {
       }
 
       const response = await settingsApi.updateStore(updateData);
+
+      // Update local tax store
+      useTaxStore.getState().setTaxRate(parseFloat(defaultTax) || 0);
+
       setShowSuccessPopup(true);
       setConfirmOpen(false);
+      setHasUnsavedChanges(false);
       loadStoreData();
     } catch (error: any) {
       console.error("❌ Failed to update store:", error);
@@ -416,7 +508,7 @@ export default function StoreSettingScreen() {
       behavior={Platform.OS === "ios" ? "padding" : "height"}
       keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
     >
-      <Header title="Toko" showHelp={false} />
+      <Header title="Toko" showHelp={false} onBackPress={handleBackPress} />
       <ScrollView
         contentContainerStyle={styles.scrollContainer}
         showsVerticalScrollIndicator={false}
@@ -559,6 +651,17 @@ export default function StoreSettingScreen() {
           message="Data toko berhasil diperbarui"
           onConfirm={() => setShowSuccessPopup(false)}
           onCancel={() => setShowSuccessPopup(false)}
+        />
+
+        <ConfirmPopup
+          visible={showExitConfirm}
+          title="Perubahan Belum Disimpan"
+          message="Anda memiliki perubahan yang belum disimpan. Apakah Anda yakin ingin keluar?"
+          onConfirm={handleConfirmExit}
+          onCancel={() => {
+            setShowExitConfirm(false);
+            setPendingAction(null);
+          }}
         />
 
       </ScrollView>

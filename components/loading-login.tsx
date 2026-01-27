@@ -39,7 +39,7 @@ export default function LoadingLoginScreen({
     <View
       style={[
         styles.container,
-        {backgroundColor: Colors[colorScheme].background},
+        { backgroundColor: Colors[colorScheme].background },
       ]}
     >
       <StatusBar
@@ -50,8 +50,8 @@ export default function LoadingLoginScreen({
       {/* Bagian Logo (Tengah) */}
       <View style={styles.logoContainer}>
         <Image
-          source={require("../assets/logos/logo_elbic.png")}
-          style={{width: 200, height: 200}}
+          source={require("../assets/logos/logo_mise.png")}
+          style={{ width: 200, height: 200 }}
           resizeMode="contain"
         />
       </View>
@@ -62,7 +62,7 @@ export default function LoadingLoginScreen({
         <View
           style={[
             styles.progressBarBackground,
-            {backgroundColor: colorScheme === "dark" ? "#333" : "#E0E0E0"},
+            { backgroundColor: colorScheme === "dark" ? "#333" : "#E0E0E0" },
           ]}
           onLayout={e => setBarWidth(e.nativeEvent.layout.width)}
         >
@@ -78,7 +78,7 @@ export default function LoadingLoginScreen({
           />
         </View>
 
-        <Text style={[styles.loadingText, {color: Colors[colorScheme].icon}]}>
+        <Text style={[styles.loadingText, { color: Colors[colorScheme].icon }]}>
           Menyiapkan Toko Kamu...
         </Text>
       </View>

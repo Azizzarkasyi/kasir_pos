@@ -30,22 +30,22 @@ export default function LoginScreen() {
   const [credential, setCredential] = useState("");
   const [pin, setPin] = useState("");
   const [credentialError, setCredentialError] = useState("");
-  const {setCurrentBranch} = useBranchStore();
-  const {setUser, startPeriodicFetch} = useUserStore();
+  const { setCurrentBranch } = useBranchStore();
+  const { setUser, startPeriodicFetch } = useUserStore();
   const [pinError, setPinError] = useState("");
   const router = useRouter();
   const [isLoggingIn, setIsLoggingIn] = useState(false);
-  const {width, height} = useWindowDimensions();
+  const { width, height } = useWindowDimensions();
   const isTablet = Math.min(width, height) >= 600;
 
   const styles = createStyles(colorScheme, isTablet);
   const countryItems = [
-    {label: "Indonesia", value: "🇮🇩"},
-    {label: "Malaysia", value: "🇲🇾"},
-    {label: "Singapore", value: "🇸🇬"},
-    {label: "Thailand", value: "🇹🇭"},
-    {label: "Philippines", value: "🇵🇭"},
-    {label: "Brunei", value: "🇧🇳"},
+    { label: "Indonesia", value: "🇮🇩" },
+    { label: "Malaysia", value: "🇲🇾" },
+    { label: "Singapore", value: "🇸🇬" },
+    { label: "Thailand", value: "🇹🇭" },
+    { label: "Philippines", value: "🇵🇭" },
+    { label: "Brunei", value: "🇧🇳" },
   ];
   const [countryCode, setCountryCode] = useState(countryItems[0].value);
 
@@ -105,7 +105,7 @@ export default function LoginScreen() {
         );
 
         // Import authApi di bagian atas file
-        const {authApi} = await import("@/services");
+        const { authApi } = await import("@/services");
 
         const result = await authApi.login(credential, pin, isPhoneLogin);
 
@@ -118,7 +118,7 @@ export default function LoginScreen() {
           setIsLoggingIn(false);
           router.push({
             pathname: "/auth/Register/verify-otp",
-            params: {phone: result.user?.phone || ""},
+            params: { phone: result.user?.phone || "" },
           } as never);
           return;
         }
@@ -151,13 +151,13 @@ export default function LoginScreen() {
 
         // D. Navigate ke dashboard jika berhasil dan sudah terverifikasi
         setIsLoggingIn(false);
-        
+
         // Start periodic user data fetching
         startPeriodicFetch();
-        
+
         // Fetch tax rate after successful login
         useTaxStore.getState().fetchTaxRate();
-        
+
         router.replace("/dashboard/home" as never);
       } catch (error: any) {
         console.error("❌ Login failed:", error);
@@ -195,14 +195,14 @@ export default function LoginScreen() {
       <KeyboardAwareScrollView
         contentContainerStyle={[
           styles.scrollContainer,
-          {paddingBottom: insets.bottom},
+          { paddingBottom: insets.bottom },
         ]}
         enableOnAndroid
         keyboardOpeningTime={0}
         extraScrollHeight={Platform.OS === "ios" ? 16 : 24}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
-        style={{backgroundColor: Colors[colorScheme].background}}
+        style={{ backgroundColor: Colors[colorScheme].background }}
       >
         <Image
           source={require("@/assets/ilustrations/login.png")}
@@ -211,13 +211,13 @@ export default function LoginScreen() {
 
         <View style={styles.formContainer}>
           {isPhoneLogin ? (
-            <View style={{flexDirection: "row", alignItems: "flex-start"}}>
+            <View style={{ flexDirection: "row", alignItems: "flex-start" }}>
               <CountryCodePicker
                 value={countryCode}
                 onChange={setCountryCode}
                 items={countryItems}
               />
-              <View style={{flex: 1, marginLeft: 8}}>
+              <View style={{ flex: 1, marginLeft: 8 }}>
                 <ThemedInput
                   label="No. Handphone"
                   value={credential}
@@ -227,7 +227,7 @@ export default function LoginScreen() {
                   }}
                   keyboardType="phone-pad"
                   error={credentialError}
-                  containerStyle={{marginTop: 0}}
+                  containerStyle={{ marginTop: 0 }}
                 />
               </View>
             </View>
@@ -263,17 +263,17 @@ export default function LoginScreen() {
 
           <ThemedButton
             title="Masuk"
-            style={{marginTop: 32}}
+            style={{ marginTop: 32 }}
             onPress={handleLogin}
           />
         </View>
 
-        <View style={{marginTop: isTablet ? 20 : 0}}>
+        <View style={{ marginTop: isTablet ? 20 : 0 }}>
           <SmallLogo />
         </View>
 
         <View style={styles.footer}>
-          <TouchableOpacity>
+          <TouchableOpacity onPress={() => router.push("/auth/Login/forgot-pin")}>
             <ThemedText style={styles.footerText}>Lupa PIN ?</ThemedText>
           </TouchableOpacity>
         </View>

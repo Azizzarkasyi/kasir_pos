@@ -283,7 +283,7 @@ export default function TransactionSummaryPage() {
             <Text
               style={[styles.summaryLabel, { color: Colors[colorScheme].icon }]}
             >
-              Pajak ({useTaxStore.getState().taxRate}%)
+              Pajak ({useTaxStore(state => state.taxRate)}%)
             </Text>
             <Text
               style={[styles.summaryValue, { color: Colors[colorScheme].text }]}

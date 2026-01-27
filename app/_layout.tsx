@@ -2,7 +2,7 @@ import DashboardBottomNav from "@/components/layouts/dashboard/bottom-nav";
 import CustomSplashScreen from "@/components/splash-screen";
 import { Colors } from "@/constants/theme";
 import { useColorScheme } from "@/hooks/use-color-scheme";
-import { appEvents, APP_EVENTS } from "@/services/event-emitter";
+import { APP_EVENTS, appEvents } from "@/services/event-emitter";
 import {
   Roboto_400Regular,
   Roboto_500Medium,
@@ -86,6 +86,10 @@ export default function RootLayout() {
             />
             <Stack.Screen
               name="auth/Register/verify-otp"
+              options={{ headerShown: false }}
+            />
+            <Stack.Screen
+              name="auth/Login/forgot-pin"
               options={{ headerShown: false }}
             />
 

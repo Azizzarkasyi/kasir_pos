@@ -4,15 +4,15 @@ import ConfirmationDialog, {
 } from "@/components/drawers/confirmation-dialog";
 import Header from "@/components/header";
 import ImageUpload from "@/components/image-upload";
-import {ThemedButton} from "@/components/themed-button";
-import {ThemedInput} from "@/components/themed-input";
-import {ThemedText} from "@/components/themed-text";
-import {Colors} from "@/constants/theme";
-import {useColorScheme} from "@/hooks/use-color-scheme";
-import {settingsApi, UserProfile} from "@/services";
-import assetApi, {prepareFileFromUri} from "@/services/endpoints/assets";
-import {useRouter} from "expo-router";
-import React, {useEffect, useState} from "react";
+import { ThemedButton } from "@/components/themed-button";
+import { ThemedInput } from "@/components/themed-input";
+import { ThemedText } from "@/components/themed-text";
+import { Colors } from "@/constants/theme";
+import { useColorScheme } from "@/hooks/use-color-scheme";
+import { settingsApi, UserProfile } from "@/services";
+import assetApi, { prepareFileFromUri } from "@/services/endpoints/assets";
+import { useNavigation, useRouter } from "expo-router";
+import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -20,16 +20,17 @@ import {
   useWindowDimensions,
   View,
 } from "react-native";
-import {ScrollView} from "react-native-gesture-handler";
+import { ScrollView } from "react-native-gesture-handler";
 
 export default function ProfileSettingScreen() {
   const colorScheme = useColorScheme() ?? "light";
-  const {width, height} = useWindowDimensions();
+  const { width, height } = useWindowDimensions();
   const isTablet = Math.min(width, height) >= 600;
   const isLandscape = width > height;
   const isTabletLandscape = isTablet && isLandscape;
   const styles = createStyles(colorScheme, isTablet, isTabletLandscape);
   const router = useRouter();
+  const navigation = useNavigation();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [photoUri, setPhotoUri] = useState<string | undefined>(undefined);
   const [name, setName] = useState("");
@@ -47,6 +48,7 @@ export default function ProfileSettingScreen() {
   const [showDeleteSuccessPopup, setShowDeleteSuccessPopup] = useState(false);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [showExitConfirm, setShowExitConfirm] = useState(false);
+  const [pendingAction, setPendingAction] = useState<any>(null);
   const [initialData, setInitialData] = useState<any>(null);
   const confirmationDialogRef = React.useRef<ConfirmationDialogHandle | null>(
     null
@@ -65,8 +67,29 @@ export default function ProfileSettingScreen() {
       email !== initialData.email ||
       photoUri !== initialData.photoUri;
 
+    console.log("Change Detection:", {
+      current: { name, email, photoUri },
+      initial: initialData,
+      changed,
+    });
+
     setHasUnsavedChanges(changed);
   }, [name, email, photoUri, initialData]);
+
+  // Handle system back button
+  useEffect(() => {
+    const unsubscribe = navigation.addListener("beforeRemove", (e) => {
+      if (!hasUnsavedChanges) {
+        return;
+      }
+
+      e.preventDefault();
+      setPendingAction(e.data.action);
+      setShowExitConfirm(true);
+    });
+
+    return unsubscribe;
+  }, [navigation, hasUnsavedChanges]);
 
   const loadProfile = async () => {
     try {
@@ -80,6 +103,11 @@ export default function ProfileSettingScreen() {
 
         // Save initial data for change detection
         setInitialData({
+          name: response.data.name,
+          email: response.data.email,
+          photoUri: response.data.profile_url,
+        });
+        console.log("Initial data set:", {
           name: response.data.name,
           email: response.data.email,
           photoUri: response.data.profile_url,
@@ -104,7 +132,12 @@ export default function ProfileSettingScreen() {
   const handleConfirmExit = () => {
     setShowExitConfirm(false);
     setHasUnsavedChanges(false);
-    router.back();
+
+    if (pendingAction) {
+      navigation.dispatch(pendingAction);
+    } else {
+      router.back();
+    }
   };
 
   const handleSaveProfile = async () => {
@@ -142,7 +175,7 @@ export default function ProfileSettingScreen() {
                 style: "cancel",
                 onPress: () => setIsSaving(false),
               },
-              {text: "Lanjutkan", onPress: () => {}},
+              { text: "Lanjutkan", onPress: () => { } },
             ]
           );
           return;
@@ -233,7 +266,7 @@ export default function ProfileSettingScreen() {
       <View
         style={[
           styles.container,
-          {justifyContent: "center", alignItems: "center"},
+          { justifyContent: "center", alignItems: "center" },
         ]}
       >
         <ActivityIndicator size="large" color={Colors[colorScheme].primary} />
@@ -376,7 +409,10 @@ export default function ProfileSettingScreen() {
         title="Perubahan Belum Disimpan"
         message="Anda memiliki perubahan yang belum disimpan. Apakah Anda yakin ingin keluar?"
         onConfirm={handleConfirmExit}
-        onCancel={() => setShowExitConfirm(false)}
+        onCancel={() => {
+          setShowExitConfirm(false);
+          setPendingAction(null);
+        }}
       />
     </View>
   );

@@ -149,7 +149,7 @@ export default function ShareStruckPage() {
     const storePhone = store?.owner_phone || "";
     const storeLogo = struckConfig?.logo_url || null;
     const headerDescription = struckConfig?.header_description || "";
-    const footerDescription = struckConfig?.footer_description || "Powered by ELBIC";
+    const footerDescription = struckConfig?.footer_description || "Powered by MISE";
 
     const additionalFeesList =
         transaction?.additional_fees && transaction.additional_fees.length > 0
@@ -191,7 +191,7 @@ export default function ShareStruckPage() {
                         dibayar
                     )}\nKembali: Rp ${formatCurrency(
                         kembalian
-                    )}\n\nPowered by ELBIC\nwww.qasir.id`;
+                    )}\n\nPowered by MISE\nwww.mise.id`;
 
             await Share.share({
                 message: receiptText,
@@ -449,8 +449,8 @@ export default function ShareStruckPage() {
 
                         <View style={styles.footerWrapper}>
                             <Text style={styles.footerText}>{footerDescription}</Text>
-                            <Text style={styles.footerText}>Powered by ELBIC</Text>
-                            <Text style={styles.footerText}>www.elbic.id</Text>
+                            <Text style={styles.footerText}>Powered by MISE</Text>
+                            <Text style={styles.footerText}>www.mise.id</Text>
                         </View>
                     </View>
                 </ScrollView>

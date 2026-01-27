@@ -107,11 +107,11 @@ export const authApi = {
     useScannerStore.getState().clearSavedDevice();
     useUserStore.getState().clearUser();
     useUserStore.getState().stopPeriodicFetch();
-    
+
     // Reset tax store
     const { useTaxStore } = await import("../../stores/tax-store");
     useTaxStore.getState().setTaxRate(0);
-    
+
     // Also reset branch store
     const { useBranchStore } = await import("../../stores/branch-store");
     useBranchStore.getState().clearCurrentBranch();
@@ -172,6 +172,16 @@ export const authApi = {
    */
   async getUserBranches(): Promise<ApiResponse<any[]>> {
     const response = await apiService.get<any[]>("/auth/branches");
+    return response;
+  },
+
+  /**
+   * Request Forgot PIN link
+   */
+  async requestForgotPin(phone: string): Promise<ApiResponse<any>> {
+    const response = await apiService.post<any>("/auth/forgot-pin/request", {
+      phone,
+    });
     return response;
   },
 };

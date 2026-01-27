@@ -13,16 +13,15 @@ import { settingsApi, StruckConfig } from "@/services";
 import assetApi, { prepareFileFromUri } from "@/services/endpoints/assets";
 import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useNavigation } from "@react-navigation/native";
-import { useRouter } from "expo-router";
+
+import { useNavigation, useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
-    ActivityIndicator,
-    Alert,
-    StyleSheet,
-    TouchableOpacity,
-    useWindowDimensions,
-    View,
+  ActivityIndicator,
+  Alert,
+  TouchableOpacity,
+  useWindowDimensions,
+  View
 } from "react-native";
 import { ScrollView } from "react-native-gesture-handler";
 
@@ -46,6 +45,11 @@ export default function ReceiptSettingScreen() {
   const [isSaving, setIsSaving] = useState(false);
   const [showSuccessPopup, setShowSuccessPopup] = useState(false);
   const [branchId, setBranchId] = useState<string>("");
+
+  const [initialData, setInitialData] = useState<any>(null);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [showExitConfirm, setShowExitConfirm] = useState(false);
+  const [pendingAction, setPendingAction] = useState<any>(null);
 
   useEffect(() => {
     loadBranchAndConfig();
@@ -83,6 +87,12 @@ export default function ReceiptSettingScreen() {
         setLogoUri(response.data.logo_url);
         setExtraNotes(response.data.header_description || "");
         setMessage(response.data.footer_description || "");
+
+        setInitialData({
+          logoUri: response.data.logo_url,
+          extraNotes: response.data.header_description || "",
+          message: response.data.footer_description || "",
+        });
       }
     } catch (error: any) {
       console.error("❌ Failed to load struck config:", error);
@@ -137,6 +147,7 @@ export default function ReceiptSettingScreen() {
         footer_description: message.trim(),
       });
       setShowSuccessPopup(true);
+      setHasUnsavedChanges(false);
       loadStruckConfig(branchId);
     } catch (error: any) {
       console.error("❌ Failed to save struck config:", error);
@@ -146,6 +157,54 @@ export default function ReceiptSettingScreen() {
       );
     } finally {
       setIsSaving(false);
+    }
+  };
+
+
+
+  // Check for unsaved changes
+  useEffect(() => {
+    if (!initialData) return;
+
+    const currentData = {
+      logoUri,
+      extraNotes,
+      message,
+    };
+
+    const hasChanges = JSON.stringify(currentData) !== JSON.stringify(initialData);
+    setHasUnsavedChanges(hasChanges);
+  }, [logoUri, extraNotes, message, initialData]);
+
+  // Handle system back button
+  useEffect(() => {
+    const unsubscribe = navigation.addListener("beforeRemove", (e) => {
+      if (!hasUnsavedChanges) {
+        return;
+      }
+
+      e.preventDefault();
+      setPendingAction(e.data.action);
+      setShowExitConfirm(true);
+    });
+
+    return unsubscribe;
+  }, [navigation, hasUnsavedChanges]);
+
+  const handleBackPress = () => {
+    if (hasUnsavedChanges) {
+      setShowExitConfirm(true);
+    } else {
+      router.back();
+    }
+  };
+
+  const handleConfirmExit = () => {
+    setShowExitConfirm(false);
+    if (pendingAction) {
+      navigation.dispatch(pendingAction);
+    } else {
+      router.back();
     }
   };
 
@@ -177,7 +236,7 @@ export default function ReceiptSettingScreen() {
 
   return (
     <View style={styles.container}>
-      <Header title="Atur Struk" showHelp={false} />
+      <Header title="Atur Struk" showHelp={false} onBackPress={handleBackPress} />
       <ScrollView
         contentContainerStyle={styles.scrollContainer}
         showsVerticalScrollIndicator={false}
@@ -326,99 +385,26 @@ export default function ReceiptSettingScreen() {
 
         <ConfirmPopup
           visible={showSuccessPopup}
-        successOnly
+          successOnly
           title="Berhasil"
           message="Konfigurasi struk berhasil disimpan"
           onConfirm={() => setShowSuccessPopup(false)}
           onCancel={() => setShowSuccessPopup(false)}
+        />
+
+        <ConfirmPopup
+          visible={showExitConfirm}
+          title="Perubahan Belum Disimpan"
+          message="Anda memiliki perubahan yang belum disimpan. Apakah Anda yakin ingin keluar?"
+          onConfirm={handleConfirmExit}
+          onCancel={() => {
+            setShowExitConfirm(false);
+            setPendingAction(null);
+          }}
         />
       </ScrollView>
     </View>
   );
 }
 
-const createStyles = (
-  colorScheme: "light" | "dark",
-  isTablet: boolean,
-  isTabletLandscape: boolean
-) =>
-  StyleSheet.create({
-    container: {
-      flex: 1,
-      backgroundColor: Colors[colorScheme].background,
-    },
-    scrollContainer: {
-      paddingHorizontal: isTablet ? 60 : 20,
-      paddingBottom: isTablet ? 120 : 100,
-    },
-    contentWrapper: {
-      width: "100%",
-      maxWidth: isTabletLandscape ? 960 : undefined,
-      alignSelf: "center",
-    },
-    sectionCard: {
-      marginTop: isTablet ? 20 : 12,
-      borderColor: Colors[colorScheme].icon,
-      borderRadius: isTablet ? 12 : 8,
-      backgroundColor: Colors[colorScheme].background,
-      paddingHorizontal: isTablet ? 16 : 8,
-      paddingVertical: isTablet ? 16 : 8,
-    },
-    sectionDivider: {
-      marginTop: isTablet ? 20 : 12,
-      height: isTablet ? 12 : 8,
-      backgroundColor: Colors[colorScheme].secondary,
-      borderRadius: isTablet ? 12 : 8,
-    },
-    logoRow: {
-      flexDirection: "row",
-      alignItems: "center",
-    },
-    helperText: {
-      marginTop: isTablet ? 10 : 6,
-      color: Colors[colorScheme].icon,
-      fontSize: isTablet ? 18 : 14,
-    },
-    counterRow: {
-      alignItems: "flex-end",
-      marginTop: isTablet ? -12 : -8,
-      marginBottom: isTablet ? 12 : 8,
-    },
-    sectionCardHighlight: {
-      marginTop: isTablet ? 20 : 12,
-      borderWidth: 1,
-      borderColor: "#FFA000",
-      borderRadius: isTablet ? 12 : 8,
-      backgroundColor: Colors[colorScheme].background,
-      paddingHorizontal: isTablet ? 20 : 12,
-      paddingVertical: isTablet ? 20 : 12,
-      flexDirection: "row",
-      alignItems: "center",
-      gap: isTablet ? 16 : 8,
-    },
-    rightChevron: {
-      width: isTablet ? 32 : 24,
-      height: isTablet ? 32 : 24,
-      alignItems: "center",
-      justifyContent: "center",
-    },
-    extraDescription: {
-      color: Colors[colorScheme].icon,
-      marginTop: isTablet ? 8 : 4,
-      fontSize: isTablet ? 18 : 12,
-      lineHeight: isTablet ? 24 : 16,
-    },
-    bottomButtonWrapper: {
-      marginTop: isTablet ? 32 : 16,
-    },
-    disabledSection: {
-      opacity: 0.5,
-    },
-    disabledSectionCard: {
-      opacity: 0.5,
-      borderColor: Colors[colorScheme].border,
-    },
-    disabledText: {
-      color: Colors[colorScheme].icon,
-    },
-  });
+

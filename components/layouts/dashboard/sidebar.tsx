@@ -355,7 +355,7 @@ const Sidebar: React.FC<SidebarProps> = ({
               </Text>
               <View style={styles.feedbackRow}>
                 <Text style={styles.feedbackSubtitle}>Beri masukan untuk </Text>
-                <Text style={styles.feedbackLink}>ELBIC</Text>
+                <Text style={styles.feedbackLink}>MISE</Text>
                 <AntDesign
                   name="right"
                   size={isTablet ? 18 : 14}
@@ -365,7 +365,7 @@ const Sidebar: React.FC<SidebarProps> = ({
             </View>
 
             <View style={styles.versionWrapper}>
-              <Text style={styles.versionBrand}>ELBIC</Text>
+              <Text style={styles.versionBrand}>MISE</Text>
               <Text style={styles.versionText}>Versi 1.0.0</Text>
             </View>
           </View>

@@ -138,14 +138,13 @@ export default function ShareStruckPage() {
       const additionalFeesText =
         additionalFeesList && additionalFeesList.length > 0
           ? `\n\n--- BIAYA TAMBAHAN ---\n${additionalFeesList
-              .map(
-                fee => `${fee.name}: Rp ${formatCurrency(fee.amount || 0)}`
-              )
-              .join("\n")}`
+            .map(
+              fee => `${fee.name}: Rp ${formatCurrency(fee.amount || 0)}`
+            )
+            .join("\n")}`
           : "";
 
-      const receiptText = `STRUK PEMBAYARAN\n\n${storeLine}${addressLine}\n\nNo. Struk: ${
-        transaction?.invoiceNumber || "-"
+      const receiptText = `STRUK PEMBAYARAN\n\n${storeLine}${addressLine}\n\nNo. Struk: ${transaction?.invoiceNumber || "-"
         }\nWaktu: ${transactionDate}\nPembayaran: ${paymentMethod}\n\n--- DETAIL PEMBELIAN ---\n${items
           .map(
             (item, i) =>
@@ -161,7 +160,7 @@ export default function ShareStruckPage() {
             dibayar
           )}\nKembali: Rp ${formatCurrency(
             kembalian
-          )}\n\nPowered by ELBIC\nwww.qasir.id`;
+          )}\n\nPowered by MISE\nwww.mise.id`;
 
       await Share.share({
         message: receiptText,
@@ -338,8 +337,8 @@ export default function ShareStruckPage() {
             </View>
 
             <View style={styles.footerWrapper}>
-              <Text style={styles.footerText}>Powered by ELBIC</Text>
-              <Text style={styles.footerText}>www.elbic.id</Text>
+              <Text style={styles.footerText}>Powered by MISE</Text>
+              <Text style={styles.footerText}>www.mise.id</Text>
             </View>
           </View>
         </ScrollView>

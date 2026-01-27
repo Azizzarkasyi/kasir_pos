@@ -80,7 +80,7 @@ export async function printReceipt(params: {
 
     // Use struck config or fallback to defaults
     const headerDescription = struckConfig?.header_description || "";
-    const footerDescription = struckConfig?.footer_description || "Powered by ELBIC";
+    const footerDescription = struckConfig?.footer_description || "Powered by MISE";
     const displayTransactionNote = struckConfig?.display_transaction_note ?? false;
     const displayRunningNumbers = struckConfig?.display_running_number ?? false;
     const displayUnitNextToQty = struckConfig?.display_unit_next_to_qty ?? false;
@@ -285,8 +285,8 @@ export async function printReceipt(params: {
     }
 
     await BluetoothEscposPrinter.printText("\n\n" + footerDescription + "\n\r", {});
-    await BluetoothEscposPrinter.printText("Powered by ELBIC\n\r", {});
-    await BluetoothEscposPrinter.printText("www.elbic.id\n\r\n\r", {});
+    await BluetoothEscposPrinter.printText("Powered by MISE\n\r", {});
+    await BluetoothEscposPrinter.printText("www.mise.id\n\r\n\r", {});
 
     // Feed
     await BluetoothEscposPrinter.printText("\n\r\n\r", {});
@@ -375,7 +375,7 @@ export async function printKitchenReceipt(params: {
     await BluetoothEscposPrinter.printerAlign(
         BluetoothEscposPrinter.ALIGN.CENTER
     );
-    await BluetoothEscposPrinter.printText("Powered by ELBIC\n\r", {});
+    await BluetoothEscposPrinter.printText("Powered by MISE\n\r", {});
 
     // Feed
     await BluetoothEscposPrinter.printText("\n\r\n\r", {});
@@ -430,7 +430,7 @@ export async function generateReceiptHTML(params: ReceiptPDFParams): Promise<str
     const storePhone = store?.owner_phone || "";
     let storeLogo = struckConfig?.logo_url || null;
     const headerDescription = struckConfig?.header_description || "";
-    const footerDescription = struckConfig?.footer_description || "Powered by ELBIC";
+    const footerDescription = struckConfig?.footer_description || "Powered by MISE";
     const displayTransactionNote = struckConfig?.display_transaction_note ?? false;
     const displayRunningNumbers = struckConfig?.display_running_number ?? false;
     const displayUnitNextToQty = struckConfig?.display_unit_next_to_qty ?? false;
@@ -744,8 +744,8 @@ export async function generateReceiptHTML(params: ReceiptPDFParams): Promise<str
 
                 <div class="footer">
                     <div class="footer-text">${footerDescription}</div>
-                    <div class="footer-text">Powered by ELBIC</div>
-                    <div class="footer-text">www.elbic.id</div>
+                    <div class="footer-text">Powered by MISE</div>
+                    <div class="footer-text">www.mise.id</div>
                 </div>
             </div>
         </body>

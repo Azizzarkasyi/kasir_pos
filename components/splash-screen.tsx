@@ -2,12 +2,12 @@ import { Colors } from "@/constants/theme";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import React, { useEffect, useMemo, useRef } from "react"; // Tambahkan useMemo
 import {
-    Animated,
-    Easing,
-    Image,
-    StatusBar,
-    StyleSheet,
-    View,
+  Animated,
+  Easing,
+  Image,
+  StatusBar,
+  StyleSheet,
+  View,
 } from "react-native";
 
 // --- KUMPULAN KATA-KATA MUTIARA/SEMANGAT ---
@@ -49,7 +49,7 @@ export default function SplashScreen() {
   const fillProgress = useRef(new Animated.Value(0)).current;
   const breathAnim = useRef(new Animated.Value(0)).current;
 
-  const logoSource = require("../assets/logos/logo_elbic.png");
+  const logoSource = require("../assets/logos/logo_mise.png");
 
   useEffect(() => {
     Animated.sequence([
@@ -144,7 +144,7 @@ export default function SplashScreen() {
     <View
       style={[
         styles.container,
-        {backgroundColor: Colors[colorScheme].background},
+        { backgroundColor: Colors[colorScheme].background },
       ]}
     >
       <StatusBar
@@ -156,12 +156,12 @@ export default function SplashScreen() {
         <Animated.View style={[styles.logoWrapper, entranceStyle]}>
           <Animated.Image
             source={logoSource}
-            style={[styles.logoBase, {tintColor: emptyColor}, breathStyle]}
+            style={[styles.logoBase, { tintColor: emptyColor }, breathStyle]}
             resizeMode="contain"
           />
 
           <Animated.View
-            style={[styles.overflowContainer, {height: heightAnim}]}
+            style={[styles.overflowContainer, { height: heightAnim }]}
           >
             <Image
               source={logoSource}
@@ -173,7 +173,7 @@ export default function SplashScreen() {
 
         {/* MENGGUNAKAN RANDOM TEXT */}
         <Animated.Text
-          style={[styles.loadingText, {color: textColor}, textStyle]}
+          style={[styles.loadingText, { color: textColor }, textStyle]}
         >
           {randomText}
         </Animated.Text>

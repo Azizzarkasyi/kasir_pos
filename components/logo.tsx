@@ -8,7 +8,7 @@ const Logo = () => {
 
   return (
     <View style={styles.logoContainer}>
-      <Image source={require('../assets/logos/logo_elbic.png')} style={styles.logoImage} />
+      <Image source={require('../assets/logos/logo_mise.png')} style={styles.logoImage} />
     </View>
   );
 };
