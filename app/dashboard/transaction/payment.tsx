@@ -289,8 +289,6 @@ export default function PaymentPage() {
                 >
                   Rp {formatCurrency(amount)}
                 </Text>
-
-
               </View>
 
               {/* Input catatan */}
@@ -313,66 +311,115 @@ export default function PaymentPage() {
                 />
               </View>
 
-              {/* Calculator */}
-              <View style={styles.calculatorWrapper}>
-                <PaymentCalculator
-                  value={amount}
-                  onChangeValue={(value) => {
-                    if (value === "exact") {
-                      // Set amount to total bill when "Uang Pas" is clicked
-                      setAmount(totalAmount.toString());
-                    } else {
-                      setAmount(value);
-                    }
-                  }}
-                  paymentMethodBadge={
-                    <TouchableOpacity
-                      style={styles.paymentMethodBadge}
-                      onPress={() => setShowPaymentMethodModal(true)}
-                    >
-                      <Ionicons
-                        name="wallet-outline"
-                        size={isTablet ? 18 : 14}
-                        color={Colors[colorScheme].text}
-                      />
-                      <Text style={styles.paymentMethodText}>
-                        {getPaymentMethodLabel(paymentMethod)}
-                      </Text>
-                      <Ionicons
-                        name="chevron-down-outline"
-                        size={isTablet ? 12 : 10}
-                        color={Colors[colorScheme].icon}
-                      />
-                    </TouchableOpacity>
-                  }
-                />
+              {/* Payment Method Selector */}
+              <View style={styles.paymentMethodWrapper}>
+                <TouchableOpacity
+                  style={styles.paymentMethodSelector}
+                  onPress={() => setShowPaymentMethodModal(true)}
+                >
+                  <Ionicons
+                    name="wallet-outline"
+                    size={isTablet ? 18 : 14}
+                    color={Colors[colorScheme].text}
+                  />
+                  <Text style={styles.paymentMethodText}>
+                    {getPaymentMethodLabel(paymentMethod)}
+                  </Text>
+                  <Ionicons
+                    name="chevron-down-outline"
+                    size={isTablet ? 12 : 10}
+                    color={Colors[colorScheme].icon}
+                  />
+                </TouchableOpacity>
               </View>
+
+              {/* Calculator - Only in portrait mode */}
+              {!isTabletLandscape && (
+                <View style={styles.calculatorWrapper}>
+                  <PaymentCalculator
+                    value={amount}
+                    onChangeValue={(value) => {
+                      if (value === "exact") {
+                        setAmount(totalAmount.toString());
+                      } else {
+                        setAmount(value);
+                      }
+                    }}
+                  />
+                </View>
+              )}
+
+              {/* Bottom continue button - Only in portrait mode */}
+              {!isTabletLandscape && (
+                <View style={styles.bottomWrapper}>
+                  <TouchableOpacity
+                    style={[
+                      styles.continueButton,
+                      {
+                        backgroundColor:
+                          isProcessing || Number(amount) < totalAmount
+                            ? Colors[colorScheme].border
+                            : Colors[colorScheme].primary,
+                      },
+                    ]}
+                    onPress={handlePayment}
+                    disabled={isProcessing || Number(amount) < totalAmount}
+                  >
+                    <Text style={[styles.continueButtonText, { color: "white" }]}>
+                      {isProcessing
+                        ? "Memproses..."
+                        : Number(amount) < totalAmount
+                          ? "Jumlah Bayar Kurang"
+                          : "Proses Pembayaran"}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              )}
             </View>
 
-            {/* Bottom continue button */}
-            <View style={styles.bottomWrapper}>
-              <TouchableOpacity
-                style={[
-                  styles.continueButton,
-                  {
-                    backgroundColor:
-                      isProcessing || Number(amount) < totalAmount
-                        ? Colors[colorScheme].border
-                        : Colors[colorScheme].primary,
-                  },
-                ]}
-                onPress={handlePayment}
-                disabled={isProcessing || Number(amount) < totalAmount}
-              >
-                <Text style={[styles.continueButtonText, { color: "white" }]}>
-                  {isProcessing
-                    ? "Memproses..."
-                    : Number(amount) < totalAmount
-                      ? "Jumlah Bayar Kurang"
-                      : "Proses Pembayaran"}
-                </Text>
-              </TouchableOpacity>
-            </View>
+            {/* Right Column - Calculator in Landscape Mode */}
+            {isTabletLandscape && (
+              <View style={styles.rightColumn}>
+                {/* Calculator */}
+                <View style={styles.rightCalculatorWrapper}>
+                  <PaymentCalculator
+                    value={amount}
+                    onChangeValue={(value) => {
+                      if (value === "exact") {
+                        setAmount(totalAmount.toString());
+                      } else {
+                        setAmount(value);
+                      }
+                    }}
+                  />
+                </View>
+
+                {/* Bottom continue button */}
+                <View style={styles.rightBottomWrapper}>
+                  <TouchableOpacity
+                    style={[
+                      styles.continueButton,
+                      {
+                        backgroundColor:
+                          isProcessing || Number(amount) < totalAmount
+                            ? Colors[colorScheme].border
+                            : Colors[colorScheme].primary,
+                      },
+                    ]}
+                    onPress={handlePayment}
+                    disabled={isProcessing || Number(amount) < totalAmount}
+                  >
+                    <Text style={[styles.continueButtonText, { color: "white" }]}>
+                      {isProcessing
+                        ? "Memproses..."
+                        : Number(amount) < totalAmount
+                          ? "Jumlah Bayar Kurang"
+                          : "Proses Pembayaran"}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            )}
           </>
         )}
       </View>
@@ -445,8 +492,35 @@ const createStyles = (colorScheme: "light" | "dark", isTablet: boolean, isTablet
       borderRightColor: Colors[colorScheme].border,
     },
     rightColumn: {
-      flex: isTabletLandscape ? 1 : undefined,
-      justifyContent: isTabletLandscape ? "flex-end" : undefined,
+      flex: isTabletLandscape ? 1.2 : undefined,
+      paddingHorizontal: isTablet ? 24 : 16,
+      paddingTop: isTablet ? 24 : 16,
+      justifyContent: "space-between",
+    },
+    paymentMethodWrapper: {
+      marginBottom: isTablet ? 16 : 12,
+      paddingHorizontal: isTablet ? 16 : 12,
+    },
+
+    paymentMethodSelector: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: isTablet ? 12 : 8,
+      backgroundColor: Colors[colorScheme].secondary,
+      paddingHorizontal: isTablet ? 20 : 16,
+      paddingVertical: isTablet ? 14 : 10,
+      borderRadius: 100,
+      borderWidth: 1,
+      borderColor: Colors[colorScheme].border,
+      justifyContent: "center",
+    },
+    rightCalculatorWrapper: {
+      flex: 1,
+      justifyContent: "center",
+    },
+    rightBottomWrapper: {
+      paddingVertical: isTablet ? 20 : 16,
+      backgroundColor: Colors[colorScheme].background,
     },
     amountWrapper: {
       alignItems: "center",
@@ -559,18 +633,9 @@ const createStyles = (colorScheme: "light" | "dark", isTablet: boolean, isTablet
     },
     calculatorWrapper: {
       marginTop: isTablet ? 20 : 16,
+      flex: 1,
     },
-    paymentMethodBadge: {
-      flexDirection: "row",
-      alignItems: "center",
-      gap: isTablet ? 8 : 6,
-      backgroundColor: Colors[colorScheme].secondary,
-      paddingHorizontal: isTablet ? 16 : 12,
-      paddingVertical: isTablet ? 10 : 6,
-      borderRadius: 100,
-      borderWidth: 1,
-      borderColor: Colors[colorScheme].border,
-    },
+
     paymentMethodIcon: {
       marginRight: 6,
     },

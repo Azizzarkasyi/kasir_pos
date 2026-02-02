@@ -9,6 +9,7 @@ import React, { useEffect, useState } from "react";
 import {
     ActivityIndicator,
     LayoutAnimation,
+    Linking,
     Platform,
     ScrollView,
     StyleSheet,
@@ -136,16 +137,19 @@ const HelpScreen = () => {
 
                     <View style={styles.contactSection}>
                         <ThemedText style={styles.contactTitle}>
-                            Masih butuh bantuan?
+                            Bantuan Lanjut?
                         </ThemedText>
-                        <TouchableOpacity style={styles.contactButton}>
+                        <TouchableOpacity
+                            style={styles.contactButton}
+                            onPress={() => Linking.openURL('https://wa.me/6281554073742')}
+                        >
                             <Ionicons
-                                name="chatbubble-ellipses-outline"
+                                name="logo-whatsapp"
                                 size={20}
                                 color="white"
                             />
                             <ThemedText style={styles.contactButtonText}>
-                                Hubungi Kami
+                                Hubungi Admin via WhatsApp
                             </ThemedText>
                         </TouchableOpacity>
                     </View>

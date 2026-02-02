@@ -6,13 +6,14 @@ import { useColorScheme } from "@/hooks/use-color-scheme";
 import { useUserPlan } from "@/hooks/use-user-plan";
 import { usePermissions } from "@/hooks/usePermissions";
 import { authApi, settingsApi, UserProfile } from "@/services";
-import { AntDesign } from "@expo/vector-icons";
+import { AntDesign, Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import Constants from "expo-constants";
 import { usePathname, useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
   Image,
+  Linking,
   ScrollView,
   StyleSheet,
   Text,
@@ -349,6 +350,26 @@ const Sidebar: React.FC<SidebarProps> = ({
           </ScrollView>
 
           <View style={styles.bottomSection}>
+            <TouchableOpacity
+              style={styles.whatsappCard}
+              onPress={() => Linking.openURL('https://wa.me/6281554073742')}
+            >
+              <View style={styles.whatsappContent}>
+                <View style={styles.whatsappIconWrapper}>
+                  <Ionicons name="logo-whatsapp" size={isTablet ? 24 : 20} color="#25D366" />
+                </View>
+                <View>
+                  <Text style={styles.whatsappTitle}>Bantuan Lanjut?</Text>
+                  <Text style={styles.whatsappSubtitle}>Hubungi Admin via WhatsApp</Text>
+                </View>
+              </View>
+              <AntDesign
+                name="right"
+                size={isTablet ? 18 : 14}
+                color={Colors[colorScheme].primary}
+              />
+            </TouchableOpacity>
+
             <View style={styles.feedbackCard}>
               <Text style={styles.feedbackTitle}>
                 Bantu kami jadi lebih baik
@@ -632,5 +653,40 @@ const createStyles = (colorScheme: "light" | "dark", isTablet: boolean) =>
       top: -6,
       right: -6,
       zIndex: 1,
+    },
+    whatsappCard: {
+      borderRadius: 12,
+      paddingHorizontal: isTablet ? 20 : 12,
+      paddingVertical: isTablet ? 14 : 10,
+      backgroundColor: Colors[colorScheme].secondary,
+      marginBottom: isTablet ? 12 : 8,
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      borderWidth: 1,
+      borderColor: Colors[colorScheme].border2,
+    },
+    whatsappContent: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: isTablet ? 16 : 12,
+    },
+    whatsappIconWrapper: {
+      width: isTablet ? 44 : 36,
+      height: isTablet ? 44 : 36,
+      borderRadius: isTablet ? 22 : 18,
+      backgroundColor: "#25D36615",
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    whatsappTitle: {
+      fontSize: isTablet ? 16 : 13,
+      fontWeight: "700",
+      color: Colors[colorScheme].text,
+    },
+    whatsappSubtitle: {
+      fontSize: isTablet ? 14 : 11,
+      color: Colors[colorScheme].icon,
+      marginTop: 2,
     },
   });
