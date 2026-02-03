@@ -17,14 +17,25 @@ import React, { useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
+  ScrollView,
   StyleSheet,
   Text,
   TextInput,
-  TouchableOpacity, useWindowDimensions,
-  View
+  TouchableOpacity,
+  useWindowDimensions,
+  View,
 } from "react-native";
 
-type PaymentMethod = "cash" | "debt" | "qris" | "grab" | "shopee_food" | "bank_transfer" | "e_wallet" | "credit_card" | "debit_card";
+type PaymentMethod =
+  | "cash"
+  | "debt"
+  | "qris"
+  | "grab"
+  | "shopee_food"
+  | "bank_transfer"
+  | "e_wallet"
+  | "credit_card"
+  | "debit_card";
 
 const getPaymentMethodLabel = (method: PaymentMethod): string => {
   const labels: Record<PaymentMethod, string> = {
@@ -39,6 +50,159 @@ const getPaymentMethodLabel = (method: PaymentMethod): string => {
     debit_card: "Kartu Debit",
   };
   return labels[method] || method;
+};
+
+// Left Column Content Component
+interface LeftColumnContentProps {
+  amount: string;
+  setAmount: (value: string) => void;
+  totalAmount: number;
+  receiptNote: string;
+  setReceiptNote: (value: string) => void;
+  customerName: string;
+  setCustomerNameLocal: (value: string) => void;
+  paymentMethod: PaymentMethod;
+  setShowPaymentMethodModal: (value: boolean) => void;
+  isProcessing: boolean;
+  handlePayment: () => void;
+  formatCurrency: (value: string | number) => string;
+  colorScheme: "light" | "dark";
+  isTablet: boolean;
+  isTabletLandscape: boolean;
+  styles: ReturnType<typeof createStyles>;
+}
+
+const LeftColumnContent: React.FC<LeftColumnContentProps> = ({
+  amount,
+  setAmount,
+  totalAmount,
+  receiptNote,
+  setReceiptNote,
+  customerName,
+  setCustomerNameLocal,
+  paymentMethod,
+  setShowPaymentMethodModal,
+  isProcessing,
+  handlePayment,
+  formatCurrency,
+  colorScheme,
+  isTablet,
+  isTabletLandscape,
+  styles,
+}) => {
+  return (
+    <>
+      {/* Payment Method Badge */}
+      <View style={styles.amountWrapper}>
+        <Text style={[styles.amountLabel, { color: Colors[colorScheme].icon }]}>
+          Total Tagihan
+        </Text>
+        <Text
+          style={[
+            styles.amountValue,
+            {
+              color: Colors[colorScheme].text,
+              fontSize: isTablet ? 32 : 22,
+            },
+          ]}
+        >
+          Rp {formatCurrency(totalAmount)}
+        </Text>
+
+        <Text style={[styles.amountLabel, { color: Colors[colorScheme].icon }]}>
+          Jumlah Dibayar
+        </Text>
+        <Text style={[styles.amountValue, { color: Colors[colorScheme].text }]}>
+          Rp {formatCurrency(amount)}
+        </Text>
+      </View>
+
+      {/* Input catatan */}
+      <View style={styles.noteWrapper}>
+        <TextInput
+          value={receiptNote}
+          onChangeText={setReceiptNote}
+          placeholder="Catatan struk"
+          placeholderTextColor={Colors[colorScheme].icon}
+          style={styles.noteInput}
+        />
+      </View>
+      <View style={styles.noteWrapper}>
+        <TextInput
+          value={customerName}
+          onChangeText={setCustomerNameLocal}
+          placeholder="Nama Customer (opsional)"
+          placeholderTextColor={Colors[colorScheme].icon}
+          style={styles.noteInput}
+        />
+      </View>
+
+      {/* Payment Method Selector */}
+      <View style={styles.paymentMethodWrapper}>
+        <TouchableOpacity
+          style={styles.paymentMethodSelector}
+          onPress={() => setShowPaymentMethodModal(true)}
+        >
+          <Ionicons
+            name="wallet-outline"
+            size={isTablet ? 18 : 14}
+            color={Colors[colorScheme].text}
+          />
+          <Text style={styles.paymentMethodText}>
+            {getPaymentMethodLabel(paymentMethod)}
+          </Text>
+          <Ionicons
+            name="chevron-down-outline"
+            size={isTablet ? 12 : 10}
+            color={Colors[colorScheme].icon}
+          />
+        </TouchableOpacity>
+      </View>
+
+      {/* Calculator - Only in portrait mode */}
+      {!isTabletLandscape && (
+        <View style={styles.calculatorWrapper}>
+          <PaymentCalculator
+            value={amount}
+            onChangeValue={(value) => {
+              if (value === "exact") {
+                setAmount(totalAmount.toString());
+              } else {
+                setAmount(value);
+              }
+            }}
+          />
+        </View>
+      )}
+
+      {/* Bottom continue button - Only in portrait mode */}
+      {!isTabletLandscape && (
+        <View style={styles.bottomWrapper}>
+          <TouchableOpacity
+            style={[
+              styles.continueButton,
+              {
+                backgroundColor:
+                  isProcessing || Number(amount) < totalAmount
+                    ? Colors[colorScheme].border
+                    : Colors[colorScheme].primary,
+              },
+            ]}
+            onPress={handlePayment}
+            disabled={isProcessing || Number(amount) < totalAmount}
+          >
+            <Text style={[styles.continueButtonText, { color: "white" }]}>
+              {isProcessing
+                ? "Memproses..."
+                : Number(amount) < totalAmount
+                  ? "Jumlah Bayar Kurang"
+                  : "Proses Pembayaran"}
+            </Text>
+          </TouchableOpacity>
+        </View>
+      )}
+    </>
+  );
 };
 
 export default function PaymentPage() {
@@ -85,7 +249,7 @@ export default function PaymentPage() {
       try {
         await fetchTaxRate();
       } catch (error) {
-        console.error('Failed to fetch tax rate:', error);
+        console.error("Failed to fetch tax rate:", error);
       } finally {
         setIsInitializing(false);
       }
@@ -101,7 +265,10 @@ export default function PaymentPage() {
       const action = e.data.action;
 
       // Check if the navigation is going forward (to settlement)
-      if (action.type === 'NAVIGATE' && (action.payload as any)?.name === '/dashboard/transaction/settlement') {
+      if (
+        action.type === "NAVIGATE" &&
+        (action.payload as any)?.name === "/dashboard/transaction/settlement"
+      ) {
         return;
       }
 
@@ -132,21 +299,15 @@ export default function PaymentPage() {
     return withDots;
   };
 
-
-
   const handlePayment = async () => {
     // Validasi cart tidak kosong
     if (cartItems.length === 0) {
-      Alert.alert(
-        "Keranjang Kosong",
-        "Tidak ada produk untuk dibayar",
-        [
-          {
-            text: "OK",
-            onPress: () => router.replace("/dashboard/transaction"),
-          },
-        ]
-      );
+      Alert.alert("Keranjang Kosong", "Tidak ada produk untuk dibayar", [
+        {
+          text: "OK",
+          onPress: () => router.replace("/dashboard/transaction"),
+        },
+      ]);
       return;
     }
 
@@ -169,7 +330,7 @@ export default function PaymentPage() {
       // Prepare transaction data
       const transactionData = {
         payment_method: paymentMethod,
-        items: cartItems.map(item => ({
+        items: cartItems.map((item) => ({
           product_id: item.productId,
           variant_id: item.variantId || undefined,
           quantity: item.quantity,
@@ -179,11 +340,11 @@ export default function PaymentPage() {
         paid_amount: Number(amount),
         customer_name: customerName || undefined,
         note: receiptNote || undefined,
-        additional_fees: additionalFees.map(fee => ({
+        additional_fees: additionalFees.map((fee) => ({
           name: fee.name,
           amount: fee.amount,
         })),
-        additional_ingredients: additionalIngredients.map(ing => ({
+        additional_ingredients: additionalIngredients.map((ing) => ({
           variant_id: ing.variantId,
           quantity: ing.quantity,
         })),
@@ -252,130 +413,62 @@ export default function PaymentPage() {
       <View style={styles.mainWrapper}>
         {isInitializing ? (
           <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color={Colors[colorScheme].primary} />
+            <ActivityIndicator
+              size="large"
+              color={Colors[colorScheme].primary}
+            />
             <Text style={styles.loadingText}>Memuat data pajak...</Text>
             <Text style={styles.loadingSubtext}>Mohon tunggu sebentar</Text>
           </View>
         ) : (
           <>
             {/* Left Column - Amount & Inputs */}
-            <View style={styles.leftColumn}>
-              {/* Payment Method Badge */}
-              <View style={styles.amountWrapper}>
-                <Text
-                  style={[styles.amountLabel, { color: Colors[colorScheme].icon }]}
-                >
-                  Total Tagihan
-                </Text>
-                <Text
-                  style={[
-                    styles.amountValue,
-                    {
-                      color: Colors[colorScheme].text,
-                      fontSize: isTablet ? 32 : 22,
-                    },
-                  ]}
-                >
-                  Rp {formatCurrency(totalAmount)}
-                </Text>
-
-                <Text
-                  style={[styles.amountLabel, { color: Colors[colorScheme].icon }]}
-                >
-                  Jumlah Dibayar
-                </Text>
-                <Text
-                  style={[styles.amountValue, { color: Colors[colorScheme].text }]}
-                >
-                  Rp {formatCurrency(amount)}
-                </Text>
-              </View>
-
-              {/* Input catatan */}
-              <View style={styles.noteWrapper}>
-                <TextInput
-                  value={receiptNote}
-                  onChangeText={setReceiptNote}
-                  placeholder="Catatan struk"
-                  placeholderTextColor={Colors[colorScheme].icon}
-                  style={styles.noteInput}
+            {isTablet && !isTabletLandscape ? (
+              <ScrollView
+                style={styles.leftColumn}
+                contentContainerStyle={styles.leftColumnContent}
+              >
+                <LeftColumnContent
+                  amount={amount}
+                  setAmount={setAmount}
+                  totalAmount={totalAmount}
+                  receiptNote={receiptNote}
+                  setReceiptNote={setReceiptNote}
+                  customerName={customerName}
+                  setCustomerNameLocal={setCustomerNameLocal}
+                  paymentMethod={paymentMethod}
+                  setShowPaymentMethodModal={setShowPaymentMethodModal}
+                  isProcessing={isProcessing}
+                  handlePayment={handlePayment}
+                  formatCurrency={formatCurrency}
+                  colorScheme={colorScheme}
+                  isTablet={isTablet}
+                  isTabletLandscape={isTabletLandscape}
+                  styles={styles}
+                />
+              </ScrollView>
+            ) : (
+              <View style={styles.leftColumn}>
+                <LeftColumnContent
+                  amount={amount}
+                  setAmount={setAmount}
+                  totalAmount={totalAmount}
+                  receiptNote={receiptNote}
+                  setReceiptNote={setReceiptNote}
+                  customerName={customerName}
+                  setCustomerNameLocal={setCustomerNameLocal}
+                  paymentMethod={paymentMethod}
+                  setShowPaymentMethodModal={setShowPaymentMethodModal}
+                  isProcessing={isProcessing}
+                  handlePayment={handlePayment}
+                  formatCurrency={formatCurrency}
+                  colorScheme={colorScheme}
+                  isTablet={isTablet}
+                  isTabletLandscape={isTabletLandscape}
+                  styles={styles}
                 />
               </View>
-              <View style={styles.noteWrapper}>
-                <TextInput
-                  value={customerName}
-                  onChangeText={setCustomerNameLocal}
-                  placeholder="Nama Customer (opsional)"
-                  placeholderTextColor={Colors[colorScheme].icon}
-                  style={styles.noteInput}
-                />
-              </View>
-
-              {/* Payment Method Selector */}
-              <View style={styles.paymentMethodWrapper}>
-                <TouchableOpacity
-                  style={styles.paymentMethodSelector}
-                  onPress={() => setShowPaymentMethodModal(true)}
-                >
-                  <Ionicons
-                    name="wallet-outline"
-                    size={isTablet ? 18 : 14}
-                    color={Colors[colorScheme].text}
-                  />
-                  <Text style={styles.paymentMethodText}>
-                    {getPaymentMethodLabel(paymentMethod)}
-                  </Text>
-                  <Ionicons
-                    name="chevron-down-outline"
-                    size={isTablet ? 12 : 10}
-                    color={Colors[colorScheme].icon}
-                  />
-                </TouchableOpacity>
-              </View>
-
-              {/* Calculator - Only in portrait mode */}
-              {!isTabletLandscape && (
-                <View style={styles.calculatorWrapper}>
-                  <PaymentCalculator
-                    value={amount}
-                    onChangeValue={(value) => {
-                      if (value === "exact") {
-                        setAmount(totalAmount.toString());
-                      } else {
-                        setAmount(value);
-                      }
-                    }}
-                  />
-                </View>
-              )}
-
-              {/* Bottom continue button - Only in portrait mode */}
-              {!isTabletLandscape && (
-                <View style={styles.bottomWrapper}>
-                  <TouchableOpacity
-                    style={[
-                      styles.continueButton,
-                      {
-                        backgroundColor:
-                          isProcessing || Number(amount) < totalAmount
-                            ? Colors[colorScheme].border
-                            : Colors[colorScheme].primary,
-                      },
-                    ]}
-                    onPress={handlePayment}
-                    disabled={isProcessing || Number(amount) < totalAmount}
-                  >
-                    <Text style={[styles.continueButtonText, { color: "white" }]}>
-                      {isProcessing
-                        ? "Memproses..."
-                        : Number(amount) < totalAmount
-                          ? "Jumlah Bayar Kurang"
-                          : "Proses Pembayaran"}
-                    </Text>
-                  </TouchableOpacity>
-                </View>
-              )}
-            </View>
+            )}
 
             {/* Right Column - Calculator in Landscape Mode */}
             {isTabletLandscape && (
@@ -436,7 +529,11 @@ export default function PaymentPage() {
   );
 }
 
-const createStyles = (colorScheme: "light" | "dark", isTablet: boolean, isTabletLandscape: boolean) =>
+const createStyles = (
+  colorScheme: "light" | "dark",
+  isTablet: boolean,
+  isTabletLandscape: boolean
+) =>
   StyleSheet.create({
     container: {
       flex: 1,
@@ -491,6 +588,9 @@ const createStyles = (colorScheme: "light" | "dark", isTablet: boolean, isTablet
       borderRightWidth: isTabletLandscape ? 1 : 0,
       borderRightColor: Colors[colorScheme].border,
     },
+    leftColumnContent: {
+      flexGrow: 1,
+    },
     rightColumn: {
       flex: isTabletLandscape ? 1.2 : undefined,
       paddingHorizontal: isTablet ? 24 : 16,
@@ -501,7 +601,6 @@ const createStyles = (colorScheme: "light" | "dark", isTablet: boolean, isTablet
       marginBottom: isTablet ? 16 : 12,
       paddingHorizontal: isTablet ? 16 : 12,
     },
-
     paymentMethodSelector: {
       flexDirection: "row",
       alignItems: "center",
@@ -595,7 +694,6 @@ const createStyles = (colorScheme: "light" | "dark", isTablet: boolean, isTablet
       color: Colors[colorScheme].secondary,
       fontWeight: "600",
     },
-
     bottomWrapper: {
       paddingHorizontal: isTablet ? 24 : 16,
       paddingVertical: isTablet ? 20 : 16,
@@ -635,7 +733,6 @@ const createStyles = (colorScheme: "light" | "dark", isTablet: boolean, isTablet
       marginTop: isTablet ? 20 : 16,
       flex: 1,
     },
-
     paymentMethodIcon: {
       marginRight: 6,
     },
